@@ -74,6 +74,13 @@
       "37-sdk-regression-suite-guard.log"
     ]
   },
+  "live_canary_readiness_validation": {
+    "status": "pending",
+    "logs": [],
+    "required_logs": [
+      "38-live-canary-readiness-drill.log"
+    ]
+  },
   "release_decision": {
     "validated_release": false,
     "reason": "Template only. Do not mark validated_release=true until all required evidence sections pass with attached logs and the final artifact hash is recorded."
