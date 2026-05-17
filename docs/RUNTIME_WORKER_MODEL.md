@@ -60,10 +60,17 @@ seam for real workers. Providers can read WebSocket/geoblock/resource/reconcile
 state, but the snapshot must declare `no_trading_side_effect=true`; the runtime
 loop consumes snapshots and never submits or cancels.
 
+`pmx-runtime::elect_heartbeat_lease_owner()` models heartbeat lease owner
+election without I/O. It chooses the freshest healthy candidate, uses worker id
+as a deterministic tie-breaker, and fails closed when there is no fresh healthy
+owner or when the local instance is not the owner. `pmx-service::
+record_heartbeat_lease_election_tick()` persists that result through the same
+provider snapshot bridge, so stale lease ownership becomes a runtime blocker
+before submit decisions.
+
 Remaining work:
 
 ```text
 - Connect concrete network providers to the deterministic worker-loop boundary.
-- Persist real heartbeat lease owner election from deployment runtime.
 - Connect reconcile backlog worker to remote order observations.
 ```
