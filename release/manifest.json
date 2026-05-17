@@ -7,7 +7,7 @@
   "official_sdk_crate": "polymarket_client_sdk_v2",
   "official_sdk_version": "=0.6.0-canary.1",
   "rust_msrv": "1.88.0",
-  "evidence_status": "v0.23.1 validation-promotion: Rust, SDK, PostgreSQL, credentialed non-trading smoke, sign-only dry-run, local static, contract, artifact, and governance gates passed in the recorded local environment; live submit/cancel remain blocked.",
+  "evidence_status": "v0.23.1 validation-promotion: Rust, SDK, PostgreSQL, credentialed non-trading smoke, sign-only dry-run, shadow execution, reconciliation drift, rollback, observability, local static, contract, artifact, and governance gates passed in the recorded local environment; live submit/cancel remain blocked.",
   "validated_gates_landed": [
     "cargo-fmt-v0.10",
     "cargo-check-v0.10",
@@ -32,10 +32,8 @@
   "remaining_blockers": [
     "production-readiness-not-claimed",
     "live-submit-live-cancel-production-deployment-remain-blocked",
-    "shadow-execution-drill-must-remain-non-posting",
     "reconciliation-drift-drill-is-local-simulation-not-live-remote-reconcile",
     "rollback-kill-switch-drill-is-local-simulation-not-production-runbook",
-    "observability-per-order-trace-evidence-needs-service-level-integration",
     "external-final-artifact-sidecar-hash-must-be-preserved-with-zip"
   ],
   "v024_source_changes": [
@@ -65,10 +63,6 @@
     "zip-aware-release-hygiene"
   ],
   "required_next_gates": [
-    "shadow-execution-would-submit-non-posting-drill-current-gate",
-    "reconciliation-drift-drill-current-gate",
-    "rollback-kill-switch-drill-current-gate",
-    "service-level-observability-trace-evidence-generation",
     "polymarket-execution-engine/validation/run_current_gates.sh-after-any-behavior-change"
   ],
   "v023_source_changes": [
@@ -87,7 +81,12 @@
     "shadow-execution-non-posting-drill",
     "reconciliation-drift-local-drill",
     "rollback-kill-switch-local-drill",
-    "automatic-evidence-manifest-sections-for-shadow-readiness"
+    "automatic-evidence-manifest-sections-for-shadow-readiness",
+    "shadow-execution-current-gate-pass-by-default",
+    "observability-evidence-manifest-section",
+    "reconciliation-drift-multi-scenario-drill",
+    "rollback-kill-switch-expanded-fallback-drill",
+    "live-canary-rehearsal-expanded-stage-drill"
   ],
   "canonical_evidence": {
     "manifest_path": "polymarket-execution-engine/evidence/current/manifest.json",

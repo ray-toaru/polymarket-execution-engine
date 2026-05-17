@@ -65,7 +65,9 @@ Evidence:
 Boundary:
 
 - Current proof is enough for shadow-readiness, not live submit readiness.
-- Future shadow drills should add explicit replay, duplicate submit, terminal-state, and advisory-lock contention evidence under a real PostgreSQL process.
+- Repository/API evidence covers replay, idempotency, terminal-state, advisory
+  lock, and partial unique index invariants. Live submit readiness still needs
+  canary evidence before any funds-moving path.
 
 ## Shadow-readiness drill evidence
 
@@ -74,14 +76,19 @@ Boundary:
 - Kill-switch and rollback drill: `32-kill-switch-rollback-drill.log`.
 - Migration framework guard: `33-migration-framework-guard.log`.
 - Runtime worker status query guard: `42-runtime-worker-status-query.log`.
-- Automatic evidence manifest sections: `shadow_execution_validation`, `reconciliation_drift_validation`, `rollback_kill_switch_validation`, and `runtime_worker_status_validation`.
+- Observability evidence guard: `43-observability-evidence.log`.
+- Automatic evidence manifest sections: `shadow_execution_validation`,
+  `reconciliation_drift_validation`, `rollback_kill_switch_validation`,
+  `runtime_worker_status_validation`, and
+  `observability_evidence_validation`.
 
 Boundary:
 
 - The shadow drill performs a public market read and local candidate-order construction only.
 - The reconciliation and rollback drills are local simulations. They are not a substitute for production runbooks or live remote reconciliation.
 - Per-order lifecycle trace propagation now has a durable `order_events.correlation_id`
-  field and order-event query API; broader trace export/dashboarding remains future work.
+  field, order-event query API, shadow/reconcile trace IDs, and a
+  manifest-bound observability guard; external dashboarding remains future work.
 - Runtime worker status inspection now has a read-only `/v1/runtime/workers`
   API and manifest-bound guard; external dashboarding remains future work.
 - The migration framework records version/checksum evidence for local validation. It does not yet prove production migration rollback, dry-run, or drift handling.
