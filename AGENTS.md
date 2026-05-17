@@ -2,7 +2,7 @@
 
 ## Scope
 
-Applies to this repository, the Rust execution plane. Module-level `AGENTS.md` files under `crates/`, `adapters/`, `openapi/`, `migrations/`, and `validation/` add stricter local rules for high-risk boundaries.
+Applies to this repository, the Rust execution plane. module-level `AGENTS.md` files under `crates/`, `adapters/`, `openapi/`, `migrations/`, and `validation/` add stricter local rules for high-risk boundaries.
 
 ## Boundary
 
