@@ -35,6 +35,11 @@ post_order / cancel_order: forbidden
 `validation/check_sdk_standard_sign_only.py` guards the source against exposing a
 remote side-effect path.
 
+`OfficialSdkStandardSignOnlyPlan` is the default non-posting construct boundary:
+it validates the standard profile, maps the executor plan into SDK builder
+metadata, and returns only a `signed_order_ref` namespace. It does not expose raw
+signed orders and cannot post or cancel.
+
 ## Dependency boundary
 
 Allowed dependency direction:

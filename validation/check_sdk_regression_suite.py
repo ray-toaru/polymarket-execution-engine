@@ -14,6 +14,8 @@ DOC = ROOT / "docs" / "SDK_REGRESSION_SUITE.md"
 
 REQUIRED_ADAPTER_TOKENS = [
     "standard_sign_only_profile_is_non_posting_v2_pusd",
+    "standard_sign_only_plan_is_default_sdk_construct_path_without_raw_payload",
+    "standard_sign_only_plan_rejects_profile_that_can_post_or_expose_raw_order",
     "plan_mapping_normalizes_limit_orders",
     "plan_mapping_supports_market_amount",
     "plan_mapping_maps_ioc_to_sdk_fak",

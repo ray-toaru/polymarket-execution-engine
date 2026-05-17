@@ -257,6 +257,17 @@ pub struct SignOnlyDryRunReceipt {
     pub posted: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct OfficialSdkStandardSignOnlyPlan {
+    pub profile: OfficialSdkStandardSignOnlyProfile,
+    pub mapping: OfficialSdkOrderBuilderMapping,
+    pub signed_order_ref_namespace: String,
+    pub exposes_raw_signed_order: bool,
+    pub may_post_order: bool,
+    pub may_cancel_order: bool,
+}
+
 /// Build a conservative sign-only lifecycle trace that can be persisted by the executor.
 ///
 /// The trace deliberately terminates at `SignedDryRun`. It is invalid for this helper to
@@ -567,6 +578,22 @@ pub fn validate_standard_sign_only_profile(
         ));
     }
     Ok(())
+}
+
+pub fn standard_sign_only_plan_for_order(
+    profile: OfficialSdkStandardSignOnlyProfile,
+    plan: &OfficialSdkPlanOrder,
+) -> Result<OfficialSdkStandardSignOnlyPlan, OfficialSdkAdapterError> {
+    validate_standard_sign_only_profile(&profile)?;
+    let mapping = official_sdk_plan_to_builder_mapping(plan)?;
+    Ok(OfficialSdkStandardSignOnlyPlan {
+        profile,
+        mapping,
+        signed_order_ref_namespace: "sign-only".into(),
+        exposes_raw_signed_order: false,
+        may_post_order: false,
+        may_cancel_order: false,
+    })
 }
 
 pub fn official_sdk_plan_to_builder_mapping(
@@ -1242,6 +1269,39 @@ mod tests {
         assert!(!profile.exposes_raw_signed_order);
         assert!(!profile.may_post_order);
         assert!(!profile.may_cancel_order);
+    }
+
+    #[test]
+    fn standard_sign_only_plan_is_default_sdk_construct_path_without_raw_payload() {
+        let plan = standard_sign_only_plan_for_order(
+            OfficialSdkStandardSignOnlyProfile::default(),
+            &sample_plan_limit(),
+        )
+        .expect("standard sign-only plan");
+        assert_eq!(plan.signed_order_ref_namespace, "sign-only");
+        assert_eq!(plan.mapping.order_kind, "LIMIT");
+        assert_eq!(plan.mapping.time_in_force.as_deref(), Some("GTC"));
+        assert!(!plan.exposes_raw_signed_order);
+        assert!(!plan.may_post_order);
+        assert!(!plan.may_cancel_order);
+    }
+
+    #[test]
+    fn standard_sign_only_plan_rejects_profile_that_can_post_or_expose_raw_order() {
+        let mut profile = OfficialSdkStandardSignOnlyProfile::default();
+        profile.exposes_raw_signed_order = true;
+        let err = standard_sign_only_plan_for_order(profile, &sample_plan_limit())
+            .expect_err("raw order exposure must be rejected");
+        assert!(
+            err.to_string()
+                .contains("must not expose raw signed orders")
+        );
+
+        let mut profile = OfficialSdkStandardSignOnlyProfile::default();
+        profile.may_post_order = true;
+        let err = standard_sign_only_plan_for_order(profile, &sample_plan_limit())
+            .expect_err("posting profile must be rejected");
+        assert!(err.to_string().contains("post orders"));
     }
 
     #[test]

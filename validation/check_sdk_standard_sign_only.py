@@ -13,6 +13,8 @@ MANIFEST = ROOT / "validation" / "write_v0_23_evidence_manifest.py"
 
 REQUIRED = [
     "OfficialSdkStandardSignOnlyProfile",
+    "OfficialSdkStandardSignOnlyPlan",
+    "standard_sign_only_plan_for_order",
     "CLOB_V2_COLLATERAL_SYMBOL",
     "CLOB_V2_SIGNING_PROTOCOL",
     "uses_deposit_wallet_order_path",
@@ -23,6 +25,8 @@ REQUIRED = [
     "plan_mapping_maps_ioc_to_sdk_fak",
     "plan_mapping_preserves_metadata_without_exposing_signed_payload",
     "standard_sign_only_profile_is_non_posting_v2_pusd",
+    "standard_sign_only_plan_is_default_sdk_construct_path_without_raw_payload",
+    "standard_sign_only_plan_rejects_profile_that_can_post_or_expose_raw_order",
     "builder_attribution",
     "fee_rate_bps",
     "funder",

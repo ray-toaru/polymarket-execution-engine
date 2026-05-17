@@ -20,7 +20,7 @@ plan -> builder mapping, SDK error normalization, and liveness/reconcile classif
 4. sign-only dry-run: done
 5. plan -> SDK order builder mapping: done for LIMIT and MARKET validation boundary
 6. SDK error normalization: done
-7. standard sign-only profile: CLOB V2 / pUSD / deposit-wallet semantics / redacted metadata only
+7. standard sign-only profile and plan: CLOB V2 / pUSD / deposit-wallet semantics / redacted metadata only
 8. live-submit denied-path tests
 9. manual live-submit readiness review
 ```
@@ -32,4 +32,13 @@ plan -> builder mapping, SDK error normalization, and liveness/reconcile classif
 - no SignedOrderEnvelope in OpenAPI/Python control
 - no post_order in sign-only dry-run
 - no live submit without feature + env + config + runtime gates
+```
+
+Current v0.25 closure:
+
+```text
+OfficialSdkStandardSignOnlyPlan validates the standard profile and maps executor
+orders into SDK builder metadata while returning only a signed_order_ref
+namespace. Raw signed order exposure, post_order, and cancel_order remain
+forbidden.
 ```
