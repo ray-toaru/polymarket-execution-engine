@@ -282,6 +282,22 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ReconcileReport' }
+  /v1/admin/reconcile-order-local:
+    post:
+      operationId: reconcileOrderLocal
+      security:
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReconcileOrderLocalRequest' }
+      responses:
+        '202':
+          description: Local order lifecycle reconciliation accepted without remote side effects
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReconcileOrderLocalResponse' }
 components:
   securitySchemes:
     ServiceToken:
@@ -534,6 +550,68 @@ components:
         cancel_id: { type: string }
         order_id: { type: string }
         state: { type: string, enum: [REQUESTED, REMOTE_ACCEPTED, CONFIRMED_CANCELED, NOT_CANCELED, REMOTE_UNKNOWN, RECONCILE_REQUIRED] }
+    OrderLifecycleState:
+      type: string
+      enum: [PLANNED, SIGNED, POST_REQUESTED, POSTED, PARTIALLY_FILLED, FILLED, CANCEL_REQUESTED, CANCEL_REMOTE_ACCEPTED, CANCEL_CONFIRMED, REMOTE_UNKNOWN, PARTIAL_REMOTE_UNKNOWN, FAILED]
+    OrderEventKind:
+      type: string
+      enum: [SIGNED, POST_REQUESTED, REMOTE_POSTED, REMOTE_REJECTED, REMOTE_UNKNOWN, PARTIAL_FILL, FULL_FILL, CANCEL_REQUESTED, CANCEL_REMOTE_ACCEPTED, CANCEL_CONFIRMED, RECONCILE_OPEN, RECONCILE_MISSING]
+    RemoteOrderObservation:
+      type: string
+      enum: [OPEN, MISSING, UNKNOWN]
+    OrderLifecycleDivergenceKind:
+      type: string
+      enum: [NONE, LOCAL_REMOTE_UNKNOWN_REMOTE_OPEN, LOCAL_REMOTE_UNKNOWN_REMOTE_MISSING, LOCAL_REMOTE_UNKNOWN_STILL_UNKNOWN, TERMINAL_LOCAL_REMOTE_MISMATCH]
+    OrderLifecycleRecord:
+      type: object
+      additionalProperties: false
+      required: [order_id, execution_id, account_id, condition_id, token_id, side, lifecycle_state, remote_order_id, remote_state, created_at, updated_at]
+      properties:
+        order_id: { type: string }
+        execution_id: { type: string }
+        account_id: { type: string }
+        condition_id: { type: string }
+        token_id: { type: string }
+        side: { type: string }
+        lifecycle_state: { $ref: '#/components/schemas/OrderLifecycleState' }
+        remote_order_id: { type: [string, 'null'] }
+        remote_state: { type: [string, 'null'] }
+        created_at: { type: [string, 'null'], format: date-time, readOnly: true }
+        updated_at: { type: [string, 'null'], format: date-time, readOnly: true }
+    OrderLifecycleDivergence:
+      type: object
+      additionalProperties: false
+      required: [kind, event, operator_required, no_remote_side_effect, reason]
+      properties:
+        kind: { $ref: '#/components/schemas/OrderLifecycleDivergenceKind' }
+        event:
+          anyOf:
+            - $ref: '#/components/schemas/OrderEventKind'
+            - type: 'null'
+        operator_required: { type: boolean }
+        no_remote_side_effect: { type: boolean }
+        reason: { type: string }
+    ReconcileOrderLocalRequest:
+      type: object
+      additionalProperties: false
+      required: [account_id, order_id, remote_observation, reason]
+      properties:
+        account_id: { type: string }
+        order_id: { type: string }
+        remote_observation: { $ref: '#/components/schemas/RemoteOrderObservation' }
+        reason: { type: string }
+    ReconcileOrderLocalResponse:
+      type: object
+      additionalProperties: false
+      required: [order_id, divergence, updated_order, no_remote_side_effect]
+      properties:
+        order_id: { type: string }
+        divergence: { $ref: '#/components/schemas/OrderLifecycleDivergence' }
+        updated_order:
+          anyOf:
+            - $ref: '#/components/schemas/OrderLifecycleRecord'
+            - type: 'null'
+        no_remote_side_effect: { type: boolean }
     KillSwitchRequest:
       type: object
       additionalProperties: false

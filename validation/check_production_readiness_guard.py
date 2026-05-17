@@ -103,10 +103,14 @@ def main() -> int:
     manifest_writer = MANIFEST_WRITER.read_text()
     if "36-production-readiness-guard.log" not in gates:
         failures.append("run_v0_23_gates.sh must emit production readiness guard log")
+    if "41-production-hardening-config.log" not in gates:
+        failures.append("run_v0_23_gates.sh must emit production hardening config log")
     if '"productionization_validation"' not in manifest_writer:
         failures.append("evidence manifest must include productionization_validation")
     if "36-production-readiness-guard.log" not in manifest_writer:
         failures.append("evidence manifest must capture production readiness guard log")
+    if '"production_hardening_config_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include production_hardening_config_validation")
 
     if failures:
         for failure in failures:

@@ -75,6 +75,12 @@ SECTIONS: dict[str, list[str]] = {
     "live_canary_blocked_validation": [
         "39-live-canary-blocked-drill.log",
     ],
+    "live_canary_rehearsal_validation": [
+        "40-live-canary-rehearsal-drill.log",
+    ],
+    "production_hardening_config_validation": [
+        "41-production-hardening-config.log",
+    ],
     "local_static_validation": [
         "18-plan-storage-guard.log",
         "19-live-submit-static-guard.log",

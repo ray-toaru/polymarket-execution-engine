@@ -348,6 +348,29 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
     );
     assert_eq!(reconcile["checked_orders"], 0);
 
+    let (status, local_reconcile_missing) = request_json(
+        app.clone(),
+        "POST",
+        "/v1/admin/reconcile-order-local",
+        Some("admin-token-test-v07"),
+        Some(json!({
+            "account_id": "acct-http-e2e-1",
+            "order_id": "missing-order-v24-1",
+            "remote_observation": "MISSING",
+            "reason": "admin local reconcile missing smoke"
+        })),
+    )
+    .await;
+    assert_eq!(
+        status,
+        StatusCode::NOT_FOUND,
+        "local reconcile missing response: {local_reconcile_missing}"
+    );
+    assert_eq!(
+        local_reconcile_missing["correlation_id"].as_str().is_some(),
+        true
+    );
+
     let lifecycle_uri = format!("/v1/lifecycle/executions/{execution_id}/events");
     let (status, lifecycle_events) = request_json(
         app.clone(),

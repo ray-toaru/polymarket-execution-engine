@@ -48,6 +48,11 @@ backlog, then emits normalized `RuntimeSignal` values and fail-closed
 remote-unknown states block submit; recovery is allow-like only after all
 required inputs are healthy.
 
+`RuntimeWorkerProvider` and `RuntimeWorkerProviderSnapshot` define the provider
+seam for real workers. Providers can read WebSocket/geoblock/resource/reconcile
+state, but the snapshot must declare `no_trading_side_effect=true`; the runtime
+loop consumes snapshots and never submits or cancels.
+
 Remaining work:
 
 ```text

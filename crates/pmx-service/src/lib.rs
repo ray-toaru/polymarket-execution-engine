@@ -99,6 +99,25 @@ pub struct RuntimeWorkerTickReceipt {
     pub observations_recorded: usize,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StandardSignOnlyConstructionRequest {
+    pub execution_id: String,
+    pub account_id: String,
+    pub plan_hash: String,
+    pub signed_order_ref: String,
+    pub no_remote_side_effect: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StandardSignOnlyConstructionReceipt {
+    pub execution_id: String,
+    pub signed_order_ref: String,
+    pub lifecycle_records: Vec<SignOnlyLifecycleRecord>,
+    pub no_remote_side_effect: bool,
+}
+
 #[async_trait]
 pub trait RuntimeStateProvider: Clone + Send + Sync + 'static {
     async fn capture_runtime_state(
@@ -432,6 +451,7 @@ where
     pub async fn reconcile_order_lifecycle_divergence(
         &self,
         order_id: &str,
+        account_id: Option<&str>,
         remote_observation: RemoteOrderObservation,
         reason: &str,
         correlation_id: Option<String>,
@@ -445,6 +465,13 @@ where
         let Some(order) = self.store.load_order_lifecycle(order_id).await? else {
             return Ok(None);
         };
+        if let Some(account_id) = account_id
+            && order.account_id != account_id
+        {
+            return Err(ServiceError::Conflict(
+                "order lifecycle account_id does not match request".into(),
+            ));
+        }
         let divergence =
             classify_order_lifecycle_divergence(&order.lifecycle_state, remote_observation);
         let updated = if let Some(event) = divergence.event.clone() {
@@ -507,6 +534,87 @@ where
         query: SignOnlyLifecycleQuery,
     ) -> Result<Vec<SignOnlyLifecycleRecord>, ServiceError> {
         Ok(self.store.list_sign_only_lifecycle_events(&query).await?)
+    }
+
+    pub async fn record_standard_sign_only_construction(
+        &self,
+        req: StandardSignOnlyConstructionRequest,
+    ) -> Result<StandardSignOnlyConstructionReceipt, ServiceError> {
+        if req.execution_id.trim().is_empty()
+            || req.account_id.trim().is_empty()
+            || req.plan_hash.trim().is_empty()
+            || req.signed_order_ref.trim().is_empty()
+        {
+            return Err(ServiceError::BadRequest(
+                "execution_id, account_id, plan_hash and signed_order_ref must be non-empty".into(),
+            ));
+        }
+        if !req.no_remote_side_effect {
+            return Err(ServiceError::BadRequest(
+                "standard sign-only construction must not contain remote side effects".into(),
+            ));
+        }
+        if !req.signed_order_ref.starts_with("sign-only:") {
+            return Err(ServiceError::BadRequest(
+                "standard sign-only construction requires a redacted sign-only ref".into(),
+            ));
+        }
+        let plan = self.store.load_plan_summary(&req.execution_id).await?;
+        if plan.account_id.0 != req.account_id {
+            return Err(ServiceError::Conflict(
+                "sign-only construction account_id does not match execution plan".into(),
+            ));
+        }
+        if plan.plan_hash.0 != req.plan_hash {
+            return Err(ServiceError::Conflict(
+                "sign-only construction plan_hash does not match execution plan".into(),
+            ));
+        }
+
+        let stages = [
+            (
+                SignOnlyLifecycleEventKind::PrepareReservation,
+                SignOnlyLifecycleState::ReservationPrepared,
+                None,
+                "prepare-reservation",
+            ),
+            (
+                SignOnlyLifecycleEventKind::RequestSigning,
+                SignOnlyLifecycleState::SigningRequested,
+                None,
+                "request-signing",
+            ),
+            (
+                SignOnlyLifecycleEventKind::SignedWithoutPost,
+                SignOnlyLifecycleState::SignedDryRun,
+                Some(req.signed_order_ref.clone()),
+                "signed-without-post",
+            ),
+        ];
+        let mut lifecycle_records = Vec::with_capacity(stages.len());
+        for (event, state, signed_order_ref, stage) in stages {
+            let record = self
+                .record_sign_only_lifecycle_event(SignOnlyLifecycleRecord {
+                    execution_id: ExecutionId(req.execution_id.clone()),
+                    account_id: AccountId(req.account_id.clone()),
+                    state,
+                    event,
+                    client_event_id: Some(format!("sdk-standard:{}:{stage}", req.plan_hash)),
+                    signed_order_ref,
+                    no_remote_side_effect: true,
+                    event_id: None,
+                    created_at: None,
+                })
+                .await?;
+            lifecycle_records.push(record);
+        }
+
+        Ok(StandardSignOnlyConstructionReceipt {
+            execution_id: req.execution_id,
+            signed_order_ref: req.signed_order_ref,
+            lifecycle_records,
+            no_remote_side_effect: true,
+        })
     }
 
     pub async fn normalize(&self, intent: TradeIntent) -> Result<NormalizedIntent, ServiceError> {
@@ -1165,6 +1273,40 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn service_records_standard_sign_only_construction_without_raw_payload() {
+        let store = InMemoryStore::default();
+        let service = ExecutorService::new(store.clone());
+        seed_test_plan(&store, "exec-sdk-standard", "acct-sdk-standard").await;
+
+        let receipt = service
+            .record_standard_sign_only_construction(StandardSignOnlyConstructionRequest {
+                execution_id: "exec-sdk-standard".into(),
+                account_id: "acct-sdk-standard".into(),
+                plan_hash: "hash-exec-sdk-standard".into(),
+                signed_order_ref: "sign-only:digest-ref".into(),
+                no_remote_side_effect: true,
+            })
+            .await
+            .expect("record standard sign-only construction");
+
+        assert!(receipt.no_remote_side_effect);
+        assert_eq!(receipt.lifecycle_records.len(), 3);
+        assert_eq!(
+            receipt.lifecycle_records.last().unwrap().state,
+            SignOnlyLifecycleState::SignedDryRun
+        );
+        assert_eq!(
+            receipt
+                .lifecycle_records
+                .last()
+                .unwrap()
+                .signed_order_ref
+                .as_deref(),
+            Some("sign-only:digest-ref")
+        );
+    }
+
+    #[tokio::test]
     async fn service_rejects_sign_only_sequence_mismatch() {
         let store = InMemoryStore::default();
         let service = ExecutorService::new(store.clone());
@@ -1421,6 +1563,7 @@ mod tests {
         let (first_divergence, first_update) = service
             .reconcile_order_lifecycle_divergence(
                 "order-divergence",
+                Some("acct-1"),
                 RemoteOrderObservation::Missing,
                 "remote read observed missing",
                 Some("corr-divergence-1".into()),
@@ -1442,6 +1585,7 @@ mod tests {
         let (second_divergence, second_update) = service
             .reconcile_order_lifecycle_divergence(
                 "order-divergence",
+                Some("acct-1"),
                 RemoteOrderObservation::Missing,
                 "remote read still missing",
                 Some("corr-divergence-2".into()),

@@ -124,6 +124,41 @@ impl ServiceBackend {
         }
     }
 
+    async fn reconcile_order_lifecycle_divergence(
+        &self,
+        order_id: &str,
+        account_id: Option<&str>,
+        remote_observation: RemoteOrderObservation,
+        reason: &str,
+        correlation_id: Option<String>,
+    ) -> Result<Option<(OrderLifecycleDivergence, Option<OrderLifecycleRecord>)>, ServiceError>
+    {
+        match self {
+            Self::InMemory(service) => {
+                service
+                    .reconcile_order_lifecycle_divergence(
+                        order_id,
+                        account_id,
+                        remote_observation,
+                        reason,
+                        correlation_id,
+                    )
+                    .await
+            }
+            Self::Postgres(service) => {
+                service
+                    .reconcile_order_lifecycle_divergence(
+                        order_id,
+                        account_id,
+                        remote_observation,
+                        reason,
+                        correlation_id,
+                    )
+                    .await
+            }
+        }
+    }
+
     async fn list_execution_lifecycle_events(
         &self,
         query: ExecutionLifecycleQuery,
@@ -218,6 +253,10 @@ fn router_with_state(state: AppState) -> Router {
         .route("/v1/admin/kill-switch", post(set_kill_switch))
         .route("/v1/admin/cancel-order", post(cancel_order_placeholder))
         .route("/v1/admin/reconcile", post(reconcile_placeholder))
+        .route(
+            "/v1/admin/reconcile-order-local",
+            post(reconcile_order_local),
+        )
         .with_state(state)
 }
 
@@ -685,6 +724,24 @@ pub struct CancelOrderRequest {
     pub reason: String,
 }
 
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReconcileOrderLocalRequest {
+    pub account_id: String,
+    pub order_id: String,
+    pub remote_observation: RemoteOrderObservation,
+    pub reason: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReconcileOrderLocalResponse {
+    pub order_id: String,
+    pub divergence: OrderLifecycleDivergence,
+    pub updated_order: Option<OrderLifecycleRecord>,
+    pub no_remote_side_effect: bool,
+}
+
 async fn cancel_order_placeholder(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -839,4 +896,81 @@ async fn reconcile_placeholder(
     )
     .await?;
     Ok((StatusCode::ACCEPTED, Json(report)))
+}
+
+async fn reconcile_order_local(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(req): Json<ReconcileOrderLocalRequest>,
+) -> ApiResult<ReconcileOrderLocalResponse> {
+    let principal = require(&headers, Operation::Reconcile)?;
+    let correlation_id = correlation_id_from_headers(&headers);
+    let fingerprint = request_fingerprint(&req);
+    if req.account_id.trim().is_empty()
+        || req.order_id.trim().is_empty()
+        || req.reason.trim().is_empty()
+    {
+        record_admin_audit(
+            &state,
+            &principal,
+            "ReconcileOrderLocal",
+            fingerprint,
+            Some(correlation_id.clone()),
+            "REJECTED bad_request",
+        )
+        .await?;
+        return Err(api_error_with_correlation(
+            StatusCode::BAD_REQUEST,
+            "account_id, order_id and reason must be non-empty",
+            correlation_id,
+        ));
+    }
+    let Some((divergence, updated_order)) = state
+        .service
+        .reconcile_order_lifecycle_divergence(
+            &req.order_id,
+            Some(&req.account_id),
+            req.remote_observation,
+            &req.reason,
+            Some(correlation_id.clone()),
+        )
+        .await
+        .map_err(service_error)?
+    else {
+        record_admin_audit(
+            &state,
+            &principal,
+            "ReconcileOrderLocal",
+            fingerprint,
+            Some(correlation_id.clone()),
+            "REJECTED missing_order",
+        )
+        .await?;
+        return Err(api_error_with_correlation(
+            StatusCode::NOT_FOUND,
+            "order lifecycle not found",
+            correlation_id,
+        ));
+    };
+    record_admin_audit(
+        &state,
+        &principal,
+        "ReconcileOrderLocal",
+        fingerprint,
+        Some(correlation_id.clone()),
+        format!(
+            "ACCEPTED kind={:?} correlation_id={}",
+            divergence.kind, correlation_id
+        ),
+    )
+    .await?;
+    Ok((
+        StatusCode::ACCEPTED,
+        Json(ReconcileOrderLocalResponse {
+            order_id: req.order_id,
+            divergence,
+            updated_order,
+            no_remote_side_effect: true,
+        }),
+    ))
 }

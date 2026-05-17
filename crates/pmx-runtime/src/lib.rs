@@ -349,6 +349,56 @@ pub struct RuntimeWorkerLoopInput {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RuntimeWorkerProviderSnapshot {
+    pub account_id: String,
+    pub lease_owner_id: String,
+    pub instance_id: String,
+    pub market_websocket_connected: bool,
+    pub market_websocket_stale: bool,
+    pub user_websocket_connected: bool,
+    pub user_websocket_stale: bool,
+    pub geoblock_status: GeoblockStatus,
+    pub resource_refresh_fresh: bool,
+    pub remote_unknown_orders: u32,
+    pub observed_at: DateTime<Utc>,
+    pub provider_name: String,
+    pub no_trading_side_effect: bool,
+}
+
+impl RuntimeWorkerProviderSnapshot {
+    pub fn into_loop_input(self) -> RuntimeWorkerLoopInput {
+        RuntimeWorkerLoopInput {
+            account_id: self.account_id,
+            lease_owner_id: self.lease_owner_id,
+            instance_id: self.instance_id,
+            market_websocket_connected: self.market_websocket_connected,
+            market_websocket_stale: self.market_websocket_stale,
+            user_websocket_connected: self.user_websocket_connected,
+            user_websocket_stale: self.user_websocket_stale,
+            geoblock_status: self.geoblock_status,
+            resource_refresh_fresh: self.resource_refresh_fresh,
+            remote_unknown_orders: self.remote_unknown_orders,
+            observed_at: self.observed_at,
+        }
+    }
+}
+
+pub trait RuntimeWorkerProvider {
+    fn snapshot(&self) -> RuntimeWorkerProviderSnapshot;
+}
+
+pub fn runtime_worker_loop_tick_from_provider<P: RuntimeWorkerProvider>(
+    provider: &P,
+) -> RuntimeWorkerLoopTick {
+    let snapshot = provider.snapshot();
+    assert!(
+        snapshot.no_trading_side_effect,
+        "runtime worker providers must not trade"
+    );
+    runtime_worker_loop_tick(snapshot.into_loop_input())
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RuntimeWorkerLoopTick {
     pub account_id: String,
     pub lease_owner_active: bool,
@@ -694,5 +744,39 @@ mod capability_tests_v07 {
         assert!(tick.lease_owner_active);
         assert!(tick.submit_allowed_by_runtime);
         assert!(tick.actions.iter().all(|action| !action.should_fail_closed));
+    }
+
+    struct FakeRuntimeWorkerProvider(RuntimeWorkerProviderSnapshot);
+
+    impl RuntimeWorkerProvider for FakeRuntimeWorkerProvider {
+        fn snapshot(&self) -> RuntimeWorkerProviderSnapshot {
+            self.0.clone()
+        }
+    }
+
+    #[test]
+    fn runtime_worker_provider_snapshot_feeds_loop_without_trading_side_effects() {
+        let provider = FakeRuntimeWorkerProvider(RuntimeWorkerProviderSnapshot {
+            account_id: "acct-provider".into(),
+            lease_owner_id: "worker-1".into(),
+            instance_id: "worker-1".into(),
+            market_websocket_connected: true,
+            market_websocket_stale: false,
+            user_websocket_connected: false,
+            user_websocket_stale: true,
+            geoblock_status: GeoblockStatus::Allowed,
+            resource_refresh_fresh: true,
+            remote_unknown_orders: 0,
+            observed_at: Utc::now(),
+            provider_name: "fake-provider".into(),
+            no_trading_side_effect: true,
+        });
+        let tick = runtime_worker_loop_tick_from_provider(&provider);
+        assert!(!tick.submit_allowed_by_runtime);
+        assert!(
+            tick.actions
+                .iter()
+                .any(|action| action.capability == "websocket:user" && action.should_fail_closed)
+        );
     }
 }

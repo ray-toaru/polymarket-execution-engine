@@ -11,6 +11,7 @@ STORE = ROOT / "crates" / "pmx-store" / "src" / "lib.rs"
 POSTGRES = ROOT / "crates" / "pmx-store" / "src" / "postgres.rs"
 MIGRATION = ROOT / "migrations" / "0001_initial.sql"
 ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src" / "lib.rs"
+SERVICE = ROOT / "crates" / "pmx-service" / "src" / "lib.rs"
 
 REQUIRED = {
     CORE: [
@@ -41,6 +42,12 @@ REQUIRED = {
         "sign-only receipt unexpectedly indicates remote posting",
         "sign_only_lifecycle_records_are_persistable_and_non_mutating",
         "sign_only_lifecycle_rejects_posted_receipt",
+    ],
+    SERVICE: [
+        "StandardSignOnlyConstructionRequest",
+        "StandardSignOnlyConstructionReceipt",
+        "record_standard_sign_only_construction",
+        "service_records_standard_sign_only_construction_without_raw_payload",
     ],
 }
 

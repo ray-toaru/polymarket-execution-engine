@@ -41,4 +41,9 @@ OfficialSdkStandardSignOnlyPlan validates the standard profile and maps executor
 orders into SDK builder metadata while returning only a signed_order_ref
 namespace. Raw signed order exposure, post_order, and cancel_order remain
 forbidden.
+
+The executor service records the standard sign-only construction through
+record_standard_sign_only_construction. The service verifies execution_id,
+account_id, and plan_hash against the stored plan, requires a redacted
+sign-only: reference, and persists only local sign-only lifecycle events.
 ```

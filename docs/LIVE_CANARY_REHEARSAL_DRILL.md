@@ -1,0 +1,26 @@
+# Live canary rehearsal drill
+
+This is a blocked_dry_run rehearsal for the future canary runbook. It must run
+with no live submit and no live cancel capability enabled.
+
+The rehearsal walks the local decision sequence only:
+
+- whitelist_check
+- caps_check
+- operator_approval_check
+- reservation_check
+- idempotency_check
+- reconcile_check
+- cancel_only_fallback_check
+
+Expected output:
+
+```text
+rehearsal_status = blocked_dry_run
+posted = false
+cancelled = false
+remote_side_effects = false
+```
+
+This drill is not approval to run a live canary. Live submit and live cancel
+remain blocked until a future reviewed release decision changes that boundary.
