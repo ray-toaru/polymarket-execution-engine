@@ -63,6 +63,9 @@ SECTIONS: dict[str, list[str]] = {
     "sdk_standard_sign_only_validation": [
         "35-sdk-standard-sign-only-guard.log",
     ],
+    "sdk_regression_suite_validation": [
+        "37-sdk-regression-suite-guard.log",
+    ],
     "productionization_validation": [
         "36-production-readiness-guard.log",
     ],
