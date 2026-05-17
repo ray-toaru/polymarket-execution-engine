@@ -15,6 +15,7 @@ REQUIRED = [
     "OfficialSdkStandardSignOnlyProfile",
     "OfficialSdkStandardSignOnlyPlan",
     "standard_sign_only_plan_for_order",
+    "standard_sign_only_default_plan_for_order",
     "CLOB_V2_COLLATERAL_SYMBOL",
     "CLOB_V2_SIGNING_PROTOCOL",
     "uses_deposit_wallet_order_path",

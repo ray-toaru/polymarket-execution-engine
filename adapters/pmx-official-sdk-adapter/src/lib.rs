@@ -685,6 +685,12 @@ pub fn standard_sign_only_plan_for_order(
     })
 }
 
+pub fn standard_sign_only_default_plan_for_order(
+    plan: &OfficialSdkPlanOrder,
+) -> Result<OfficialSdkStandardSignOnlyPlan, OfficialSdkAdapterError> {
+    standard_sign_only_plan_for_order(OfficialSdkStandardSignOnlyProfile::default(), plan)
+}
+
 pub fn official_sdk_plan_to_builder_mapping(
     plan: &OfficialSdkPlanOrder,
 ) -> Result<OfficialSdkOrderBuilderMapping, OfficialSdkAdapterError> {
@@ -1362,14 +1368,14 @@ mod tests {
 
     #[test]
     fn standard_sign_only_plan_is_default_sdk_construct_path_without_raw_payload() {
-        let plan = standard_sign_only_plan_for_order(
-            OfficialSdkStandardSignOnlyProfile::default(),
-            &sample_plan_limit(),
-        )
-        .expect("standard sign-only plan");
+        let plan = standard_sign_only_default_plan_for_order(&sample_plan_limit())
+            .expect("standard sign-only plan");
         assert_eq!(plan.signed_order_ref_namespace, "sign-only");
         assert_eq!(plan.mapping.order_kind, "LIMIT");
         assert_eq!(plan.mapping.time_in_force.as_deref(), Some("GTC"));
+        assert_eq!(plan.profile.clob_host, CLOB_V2_HOST);
+        assert_eq!(plan.profile.collateral_symbol, CLOB_V2_COLLATERAL_SYMBOL);
+        assert!(plan.profile.uses_deposit_wallet_order_path);
         assert!(!plan.exposes_raw_signed_order);
         assert!(!plan.may_post_order);
         assert!(!plan.may_cancel_order);

@@ -2,7 +2,7 @@
 
 > Status: current v0.23.0 source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
-Status: v0.10 implementation note for `pmx-official-sdk-adapter`.
+Status: v0.23 implementation note for `pmx-official-sdk-adapter`.
 
 ## Plan -> order builder mapping
 
@@ -20,6 +20,13 @@ Current sign-only dry-run path:
 ```text
 SignOnlyDryRunRequest
 -> OfficialSdkPlanOrder
+-> standard_sign_only_default_plan_for_order()
+-> default OfficialSdkStandardSignOnlyProfile
+   - CLOB V2 production host
+   - pUSD collateral metadata
+   - deposit wallet order path
+   - no raw signed order exposure
+   - no post_order / cancel_order capability
 -> official_sdk_plan_to_builder_mapping()
 -> SDK limit_order().build()
 -> SDK sign()
@@ -56,4 +63,4 @@ remote_unknown_orders > 0 -> ReconcileRequired
 otherwise -> Healthy
 ```
 
-This is classification logic only. Full WebSocket session management, heartbeat scheduling, geoblock handling, and reconcile worker wiring remain follow-up work beyond v0.10.
+This is classification logic only. Full remote WebSocket session management and live submit/cancel remain blocked unless a later reviewed release decision changes that after full gates pass.
