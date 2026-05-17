@@ -1,0 +1,22 @@
+{
+  "captured_at": "2026-05-17T11:48:03.064765+00:00",
+  "drill": "reconciliation_drift",
+  "local_state": {
+    "lifecycle_state": "POST_REQUESTED",
+    "order_id": "shadow-local-order",
+    "remote_order_id": "remote-shadow-order"
+  },
+  "reconcile_decision": {
+    "drift_detected": true,
+    "reason": "remote missing after local post-request must fail closed",
+    "resulting_lifecycle_state": "REMOTE_UNKNOWN",
+    "submit_allowed": false
+  },
+  "remote_observation": {
+    "observed_state": "MISSING",
+    "remote_order_id": "remote-shadow-order"
+  },
+  "remote_side_effects": false,
+  "schema_version": 1,
+  "status": "pass"
+}

@@ -1,1 +1,21 @@
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.29s
+    Checking serde_core v1.0.228
+    Checking serde v1.0.228
+    Checking serde_json v1.0.149
+    Checking chrono v0.4.44
+    Checking uuid v1.23.1
+    Checking pmx-core v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
+    Checking postgres-types v0.2.13
+    Checking tokio-postgres v0.7.17
+    Checking pmx-store v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
+    Checking pmx-policy v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
+    Checking axum-core v0.4.5
+    Checking serde_urlencoded v0.7.1
+    Checking serde_path_to_error v0.1.20
+    Checking axum v0.7.9
+    Checking pmx-service v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
+    Checking pmx-authz v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-authz)
+    Checking pmx-api v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
+    Checking pmx-gateway v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
+    Checking pmx-runtime v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
+    Checking pmx-release v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-release)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 21.60s

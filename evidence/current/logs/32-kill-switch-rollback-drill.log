@@ -1,0 +1,48 @@
+{
+  "cancelled": false,
+  "captured_at": "2026-05-17T11:48:03.119415+00:00",
+  "drill": "rollback_kill_switch",
+  "failed_scenarios": [],
+  "posted": false,
+  "remote_side_effects": false,
+  "scenarios": [
+    {
+      "kill_switch_open": false,
+      "name": "config_kill_switch_closed",
+      "postgres_status": "READY",
+      "rollback_action": "BLOCK_SUBMIT_AND_KEEP_PREVIOUS_SAFE_STATE",
+      "runtime_status": "READY",
+      "sdk_status": "READY",
+      "submit_allowed": false
+    },
+    {
+      "kill_switch_open": true,
+      "name": "runtime_degraded",
+      "postgres_status": "READY",
+      "rollback_action": "BLOCK_SUBMIT_AND_KEEP_PREVIOUS_SAFE_STATE",
+      "runtime_status": "DEGRADED",
+      "sdk_status": "READY",
+      "submit_allowed": false
+    },
+    {
+      "kill_switch_open": true,
+      "name": "sdk_failure",
+      "postgres_status": "READY",
+      "rollback_action": "BLOCK_SUBMIT_AND_KEEP_PREVIOUS_SAFE_STATE",
+      "runtime_status": "READY",
+      "sdk_status": "FAILED",
+      "submit_allowed": false
+    },
+    {
+      "kill_switch_open": true,
+      "name": "postgres_unavailable",
+      "postgres_status": "UNAVAILABLE",
+      "rollback_action": "BLOCK_SUBMIT_AND_KEEP_PREVIOUS_SAFE_STATE",
+      "runtime_status": "READY",
+      "sdk_status": "READY",
+      "submit_allowed": false
+    }
+  ],
+  "schema_version": 1,
+  "status": "pass"
+}
