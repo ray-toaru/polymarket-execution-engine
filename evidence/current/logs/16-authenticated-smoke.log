@@ -1,39 +1,8 @@
-   Compiling sha3 v0.11.0
-   Compiling rfc6979 v0.4.0
-   Compiling ecdsa v0.16.9
-   Compiling k256 v0.13.4
-   Compiling alloy-primitives v1.6.0
-   Compiling alloy-sol-macro-expander v1.6.0
-   Compiling alloy-sol-macro v1.6.0
-   Compiling alloy-eip2124 v0.2.0
-   Compiling alloy-serde v1.6.3
-   Compiling alloy-eip7702 v0.6.3
-   Compiling alloy-eip2930 v0.2.3
-   Compiling alloy-eip7928 v0.3.4
-   Compiling alloy-eips v1.6.3
-   Compiling alloy-trie v0.9.5
-   Compiling alloy-sol-types v1.6.0
-   Compiling alloy-consensus v1.6.3
-   Compiling alloy-consensus-any v1.6.3
-   Compiling alloy-network-primitives v1.6.3
-   Compiling alloy-rpc-types-eth v1.6.3
-   Compiling alloy-rpc-types-any v1.6.3
-   Compiling alloy-json-abi v1.6.0
-   Compiling alloy-signer v1.6.3
-   Compiling alloy-json-rpc v1.6.3
-   Compiling alloy-network v1.6.3
-   Compiling alloy-dyn-abi v1.6.0
-   Compiling alloy-core v1.6.0
-   Compiling alloy-signer-local v1.6.3
-   Compiling alloy v1.6.3
-   Compiling polymarket_client_sdk_v2 v0.6.0-canary.1
-   Compiling anyhow v1.0.102
-   Compiling pmx-official-sdk-adapter v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 43.97s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.21s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-adapter/target/debug/deps/pmx_official_sdk_adapter-8ac6aef6d29037e5)
 
 running 1 test
 test tests::authenticated_non_trading_smoke_executes_when_enabled ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 32 filtered out; finished in 4.12s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 32 filtered out; finished in 3.84s
 
