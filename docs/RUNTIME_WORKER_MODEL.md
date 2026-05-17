@@ -83,6 +83,13 @@ count maps through `pmx-service::record_reconcile_backlog_worker_tick()` into
 the same provider snapshot bridge and blocks submit as a degraded reconcile
 state.
 
+`pmx-runtime::evaluate_websocket_liveness()` models market/user WebSocket
+liveness without opening sockets. It treats disconnected, stale, degraded, or
+missing submit-critical channels as fail-closed inputs. `pmx-service::
+record_websocket_liveness_worker_tick()` persists the resulting market/user
+state through the provider snapshot bridge, keeping submit blocked until both
+channels are fresh and healthy.
+
 Remaining work:
 
 ```text
