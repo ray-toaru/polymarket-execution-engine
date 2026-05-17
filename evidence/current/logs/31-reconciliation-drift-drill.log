@@ -1,22 +1,59 @@
 {
-  "captured_at": "2026-05-17T19:52:59.401514+00:00",
+  "captured_at": "2026-05-17T20:27:58.930683+00:00",
   "drill": "reconciliation_drift",
-  "local_state": {
-    "lifecycle_state": "POST_REQUESTED",
-    "order_id": "shadow-local-order",
-    "remote_order_id": "remote-shadow-order"
-  },
-  "reconcile_decision": {
-    "drift_detected": true,
-    "reason": "remote missing after local post-request must fail closed",
-    "resulting_lifecycle_state": "REMOTE_UNKNOWN",
-    "submit_allowed": false
-  },
-  "remote_observation": {
-    "observed_state": "MISSING",
-    "remote_order_id": "remote-shadow-order"
-  },
+  "failed_scenarios": [],
+  "reconcile_decision": "fail_closed_operator_escalation_on_missing_or_unknown_remote_truth",
   "remote_side_effects": false,
+  "scenarios": [
+    {
+      "expected_lifecycle_state": "PARTIAL_REMOTE_UNKNOWN",
+      "local_state": "REMOTE_UNKNOWN",
+      "name": "remote_missing_first_observation",
+      "operator_required": false,
+      "passed": true,
+      "remote_observation": "MISSING",
+      "remote_side_effects": false,
+      "resulting_lifecycle_state": "PARTIAL_REMOTE_UNKNOWN",
+      "submit_allowed": false,
+      "trace_id": "reconcile-d8d1a0c222dfb66d70068896"
+    },
+    {
+      "expected_lifecycle_state": "FAILED",
+      "local_state": "PARTIAL_REMOTE_UNKNOWN",
+      "name": "remote_missing_second_observation",
+      "operator_required": true,
+      "passed": true,
+      "remote_observation": "MISSING",
+      "remote_side_effects": false,
+      "resulting_lifecycle_state": "FAILED",
+      "submit_allowed": false,
+      "trace_id": "reconcile-db52bbca86d11d9a6fff532a"
+    },
+    {
+      "expected_lifecycle_state": "REMOTE_POSTED",
+      "local_state": "REMOTE_UNKNOWN",
+      "name": "remote_open_restores_posted",
+      "operator_required": false,
+      "passed": true,
+      "remote_observation": "OPEN",
+      "remote_side_effects": false,
+      "resulting_lifecycle_state": "REMOTE_POSTED",
+      "submit_allowed": false,
+      "trace_id": "reconcile-4d7136ed72a8a1368fe37204"
+    },
+    {
+      "expected_lifecycle_state": "REMOTE_UNKNOWN",
+      "local_state": "REMOTE_UNKNOWN",
+      "name": "remote_unknown_operator_review",
+      "operator_required": true,
+      "passed": true,
+      "remote_observation": "UNKNOWN",
+      "remote_side_effects": false,
+      "resulting_lifecycle_state": "REMOTE_UNKNOWN",
+      "submit_allowed": false,
+      "trace_id": "reconcile-e0d28161946a85f311a00999"
+    }
+  ],
   "schema_version": 1,
   "status": "pass"
 }

@@ -1,0 +1,14 @@
+{
+  "checks": [
+    "correlation_id",
+    "redacted_payload_envelope",
+    "order_event_trace",
+    "admin_audit_query",
+    "shadow_trace_id",
+    "reconcile_trace_id",
+    "rollback_fallback_mode"
+  ],
+  "failures": [],
+  "remote_side_effects": false,
+  "status": "pass"
+}

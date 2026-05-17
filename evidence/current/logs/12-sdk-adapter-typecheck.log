@@ -1,12 +1,10 @@
-   Compiling pmx-gateway v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
-   Compiling pmx-official-sdk-adapter v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.34s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.02s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-adapter/target/debug/deps/pmx_official_sdk_adapter-e65649b9aef0c7a2)
 
 running 33 tests
 test tests::authenticated_non_trading_is_explicit_opt_in ... ok
-test tests::gateway_error_conversion_preserves_remote_unknown ... ok
 test tests::default_config_cannot_live_submit ... ok
+test tests::gateway_error_conversion_preserves_remote_unknown ... ok
 test tests::gateway_error_conversion_redacts_sensitive_message ... ok
 test tests::geoblock_status_maps_to_core_status ... ok
 test tests::live_canary_default_preconditions_are_blocked_without_side_effects ... ok

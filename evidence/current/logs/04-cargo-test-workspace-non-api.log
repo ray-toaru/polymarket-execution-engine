@@ -1,6 +1,4 @@
-   Compiling pmx-service v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
-   Compiling pmx-gateway v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.77s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.33s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-a8b87e591d442027)
 
 running 2 tests
@@ -158,7 +156,7 @@ test tests::maps_plan_status_for_db ... ok
 test tests::runtime_worker_observations_degrade_loaded_runtime_state ... ok
 test tests::stale_runtime_worker_observations_are_ignored ... ok
 
-test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.78s
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.53s
 
    Doc-tests pmx_authz
 

@@ -1,14 +1,16 @@
 {
   "cancelled": false,
-  "captured_at": "2026-05-17T19:52:59.457303+00:00",
+  "captured_at": "2026-05-17T20:27:58.991364+00:00",
   "drill": "rollback_kill_switch",
   "failed_scenarios": [],
   "posted": false,
   "remote_side_effects": false,
   "scenarios": [
     {
+      "fallback_mode": "read-only",
       "kill_switch_open": false,
       "name": "config_kill_switch_closed",
+      "operator_required": true,
       "postgres_status": "READY",
       "rollback_action": "BLOCK_SUBMIT_AND_KEEP_PREVIOUS_SAFE_STATE",
       "runtime_status": "READY",
@@ -16,8 +18,10 @@
       "submit_allowed": false
     },
     {
+      "fallback_mode": "read-only",
       "kill_switch_open": true,
       "name": "runtime_degraded",
+      "operator_required": true,
       "postgres_status": "READY",
       "rollback_action": "BLOCK_SUBMIT_AND_KEEP_PREVIOUS_SAFE_STATE",
       "runtime_status": "DEGRADED",
@@ -25,8 +29,10 @@
       "submit_allowed": false
     },
     {
+      "fallback_mode": "sign-only",
       "kill_switch_open": true,
       "name": "sdk_failure",
+      "operator_required": true,
       "postgres_status": "READY",
       "rollback_action": "BLOCK_SUBMIT_AND_KEEP_PREVIOUS_SAFE_STATE",
       "runtime_status": "READY",
@@ -34,11 +40,46 @@
       "submit_allowed": false
     },
     {
+      "fallback_mode": "read-only",
       "kill_switch_open": true,
       "name": "postgres_unavailable",
+      "operator_required": true,
       "postgres_status": "UNAVAILABLE",
       "rollback_action": "BLOCK_SUBMIT_AND_KEEP_PREVIOUS_SAFE_STATE",
       "runtime_status": "READY",
+      "sdk_status": "READY",
+      "submit_allowed": false
+    },
+    {
+      "fallback_mode": "read-only",
+      "kill_switch_open": true,
+      "name": "geoblock_blocked",
+      "operator_required": true,
+      "postgres_status": "READY",
+      "rollback_action": "BLOCK_SUBMIT_AND_KEEP_PREVIOUS_SAFE_STATE",
+      "runtime_status": "GEOBLOCKED",
+      "sdk_status": "READY",
+      "submit_allowed": false
+    },
+    {
+      "fallback_mode": "read-only",
+      "kill_switch_open": true,
+      "name": "low_resource",
+      "operator_required": true,
+      "postgres_status": "READY",
+      "rollback_action": "BLOCK_SUBMIT_AND_KEEP_PREVIOUS_SAFE_STATE",
+      "runtime_status": "LOW_RESOURCE",
+      "sdk_status": "READY",
+      "submit_allowed": false
+    },
+    {
+      "fallback_mode": "read-only",
+      "kill_switch_open": true,
+      "name": "remote_unknown_freeze",
+      "operator_required": true,
+      "postgres_status": "READY",
+      "rollback_action": "BLOCK_SUBMIT_AND_KEEP_PREVIOUS_SAFE_STATE",
+      "runtime_status": "REMOTE_UNKNOWN_FREEZE",
       "sdk_status": "READY",
       "submit_allowed": false
     }

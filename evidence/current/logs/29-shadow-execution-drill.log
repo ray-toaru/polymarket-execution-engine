@@ -1,1 +1,41 @@
-{"skipped_reason": "PMX_RUN_SHADOW_EXECUTION_DRILL not set to 1", "status": "skipped"}
+{
+  "cancelled": false,
+  "captured_at": "2026-05-17T20:27:58.843549+00:00",
+  "drill": "shadow_execution_would_submit",
+  "live_submit_enabled": false,
+  "market": {
+    "accepting_orders": true,
+    "active": true,
+    "archived": false,
+    "closed": true,
+    "condition_id_hash": "3d542f41f1c5cd359426049c441748ee141340c429d4f0562f4d7b8a4f6013f5"
+  },
+  "posted": false,
+  "remote_methods": [
+    "GET /simplified-markets"
+  ],
+  "remote_side_effects": false,
+  "safety": {
+    "credentials_logged": false,
+    "raw_signature_logged": false,
+    "raw_signed_payload_logged": false,
+    "sensitive_env_present": true
+  },
+  "schema_version": 1,
+  "signed": false,
+  "status": "pass",
+  "trace_id": "shadow-0efefe25942fbfe4284551e2",
+  "would_submit": {
+    "decision": "WOULD_SUBMIT_BLOCKED_NON_POSTING_SHADOW",
+    "order": {
+      "limit_price": "0.01",
+      "order_kind": "LIMIT",
+      "post_only": false,
+      "side": "BUY",
+      "size": "5",
+      "time_in_force": "GTC",
+      "token_id_hash": "94ad20b2bfd7e426f84263884c944d9325518142a88be8b37508f3bb269e8d42"
+    },
+    "reason": "shadow drill constructs a candidate order but does not sign or submit"
+  }
+}

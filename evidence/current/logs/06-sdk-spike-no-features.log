@@ -1,6 +1,4 @@
-   Compiling pmx-gateway v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
-   Compiling pmx-official-sdk-spike v0.0.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-spike)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.60s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.44s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-spike/target/debug/deps/pmx_official_sdk_spike-253a3d46f84d0c4e)
 
 running 1 test
