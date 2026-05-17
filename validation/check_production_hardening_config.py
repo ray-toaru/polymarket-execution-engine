@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 HARDENING_SPEC = ROOT / "docs" / "PRODUCTION_HARDENING_SPEC.md"
 CONTROLS_MATRIX = ROOT / "docs" / "PRODUCTION_CONTROLS_MATRIX.md"
+EVIDENCE_CONTROLS = ROOT / "docs" / "PRODUCTION_EVIDENCE_CONTROLS.md"
 GATES = ROOT / "validation" / "run_v0_23_gates.sh"
 MANIFEST = ROOT / "validation" / "write_v0_23_evidence_manifest.py"
 
@@ -33,6 +34,15 @@ REQUIRED_CONTROL_TOKENS = [
     "Audit export / retention policy",
 ]
 
+REQUIRED_EVIDENCE_CONTROL_TOKENS = [
+    "Exact artifact binding",
+    "Full gate replay",
+    "Runtime safety proof",
+    "Redaction proof",
+    "Rollback proof",
+    "Operations proof",
+]
+
 
 def main() -> int:
     failures: list[str] = []
@@ -50,6 +60,11 @@ def main() -> int:
     for token in REQUIRED_CONTROL_TOKENS:
         if token not in controls:
             failures.append(f"production controls matrix missing token: {token}")
+
+    evidence_controls = EVIDENCE_CONTROLS.read_text()
+    for token in REQUIRED_EVIDENCE_CONTROL_TOKENS:
+        if token not in evidence_controls:
+            failures.append(f"production evidence controls missing token: {token}")
 
     gates = GATES.read_text()
     manifest = MANIFEST.read_text()
@@ -73,6 +88,7 @@ def main() -> int:
             "audit_export_and_retention",
             "risk_limits",
             "dependency_and_sdk_breakage",
+            "production_evidence_controls",
         ],
         "failures": failures,
     }

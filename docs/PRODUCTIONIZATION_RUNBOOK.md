@@ -4,6 +4,8 @@ Status: v0.27 governance scaffold. This is not a production-readiness claim.
 
 ## Required controls before production
 
+- Production evidence controls: apply `PRODUCTION_EVIDENCE_CONTROLS.md` before
+  any production promotion decision.
 - Secret manager: private keys, CLOB credentials, API tokens, and database
   credentials must move to a reviewed secret manager, KMS, or HSM-backed flow.
 - Production config profile: live submit and live cancel must remain disabled by

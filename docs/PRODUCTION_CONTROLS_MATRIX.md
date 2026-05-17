@@ -5,6 +5,7 @@ readiness.
 
 | Control | Required evidence before production |
 | --- | --- |
+| Production evidence controls | Exact artifact binding, full gate replay, runtime safety proof, redaction proof, rollback proof, and explicit release decision review. |
 | Secret manager / KMS / HSM | Key custody design review, no plaintext private keys in process logs, credential rotation drill, and break-glass access review. |
 | Production config profile | Live submit and live cancel disabled by default, per-account enablement, per-market enablement, amount caps, and operator approval. |
 | Deployment runbook | Artifact SHA-256 verification, migration evidence, config diff review, preflight gate summary, and named operator approval. |

@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNBOOK = ROOT / "docs" / "PRODUCTIONIZATION_RUNBOOK.md"
 CONTROLS_MATRIX = ROOT / "docs" / "PRODUCTION_CONTROLS_MATRIX.md"
 HARDENING_SPEC = ROOT / "docs" / "PRODUCTION_HARDENING_SPEC.md"
+EVIDENCE_CONTROLS = ROOT / "docs" / "PRODUCTION_EVIDENCE_CONTROLS.md"
 RELEASE_MANIFEST = ROOT / "release" / "manifest.json"
 EVIDENCE_GUARD = ROOT / "validation" / "check_v0_23_evidence_manifest.py"
 GATE = ROOT / "validation" / "run_v0_23_gates.sh"
@@ -69,6 +70,19 @@ HARDENING_TOKENS = [
     "sign-only regression evidence",
 ]
 
+EVIDENCE_CONTROL_TOKENS = [
+    "Exact artifact binding",
+    "Full gate replay",
+    "Credentialed non-trading proof",
+    "Runtime safety proof",
+    "Canary proof",
+    "Redaction proof",
+    "Rollback proof",
+    "Operations proof",
+    "exact artifact SHA-256",
+    "Production promotion is forbidden",
+]
+
 
 def main() -> int:
     failures: list[str] = []
@@ -86,6 +100,11 @@ def main() -> int:
     for token in HARDENING_TOKENS:
         if token not in hardening:
             failures.append(f"production hardening spec missing {token}")
+
+    evidence_controls = EVIDENCE_CONTROLS.read_text()
+    for token in EVIDENCE_CONTROL_TOKENS:
+        if token not in evidence_controls:
+            failures.append(f"production evidence controls missing {token}")
 
     release = json.loads(RELEASE_MANIFEST.read_text())
     status = str(release.get("status", "")).lower()
