@@ -1,0 +1,75 @@
+# Promotion risk evidence
+
+This document indexes the current v0.23.1 validation-promotion evidence. It is an
+evidence map, not a production-readiness claim.
+
+## Current conclusion
+
+Status: `shadow-ready candidate`
+
+The current source and package evidence supports non-live shadow readiness only.
+Live submit, live cancel, and production deployment remain blocked.
+
+## Evidence sources
+
+- Canonical manifest: `polymarket-execution-engine/evidence/current/manifest.json`
+- Environment: `polymarket-execution-engine/evidence/current/environment.json`
+- Logs: `polymarket-execution-engine/evidence/current/logs/`
+- Release manifest: `polymarket-execution-engine/release/manifest.json`
+- External artifact hash sidecars: `polymarket-dual-project-v0.23.0.zip.sha256` and `polymarket-dual-project-v0.23.0.zip.evidence.json`
+
+## P1 risk closure
+
+### Audit payload redaction E2E
+
+Status: covered for the current non-live lifecycle/API paths.
+
+Evidence:
+
+- `11-sdk-adapter-test.log` and `12-sdk-adapter-typecheck.log` include adapter redaction tests.
+- `05-http-fake-e2e.log` covers fake API lifecycle behavior.
+- `15-http-postgres-e2e.log` covers PostgreSQL-backed lifecycle API behavior.
+- `22-v0-23-lifecycle-api-guard.log` and `25-contract-validation.log` guard OpenAPI/Hermes/Rust parity for `RedactedPayloadEnvelope`.
+
+Boundary:
+
+- This does not prove a production logging pipeline or external observability backend.
+- Raw private keys, CLOB secrets, raw signed payloads, raw signatures, and signed order envelopes must remain absent from public API responses, audit queries, lifecycle records, and release artifacts.
+
+### Runtime degraded policy
+
+Status: covered for current fail-closed policy.
+
+Evidence:
+
+- `04-cargo-test-workspace-non-api.log` includes runtime/policy tests for degraded worker behavior.
+- `15-http-postgres-e2e.log` includes degraded snapshot and blocked decision behavior.
+- `21-runtime-worker-model-guard.log` checks runtime worker model invariants.
+- `25-contract-validation.log` checks cross-repository contract consistency.
+
+Boundary:
+
+- Current proof covers modeled runtime states. Real worker outage, market data outage, and reconciliation drift drills remain next-stage work.
+
+### PostgreSQL sign-only lifecycle concurrency
+
+Status: covered for current repository/API invariants.
+
+Evidence:
+
+- `13-pg-migration.log` applies the sign-only lifecycle schema, including `client_event_id` and partial unique index DDL.
+- `14-pg-store-tests.log` covers PostgreSQL repository tests.
+- `15-http-postgres-e2e.log` covers PostgreSQL-backed API lifecycle paths.
+- `20-sign-only-lifecycle-guard.log` and `22-v0-23-lifecycle-api-guard.log` statically guard lifecycle/idempotency/API invariants.
+
+Boundary:
+
+- Current proof is enough for shadow-readiness, not live submit readiness.
+- Future shadow drills should add explicit replay, duplicate submit, terminal-state, and advisory-lock contention evidence under a real PostgreSQL process.
+
+## Required next drills
+
+- Shadow execution would-submit drill: real market read and order construction, no submit.
+- Reconciliation drift drill: simulated remote/local mismatch and fail-closed reconcile behavior.
+- Kill-switch and rollback drill: config kill switch, degraded runtime, SDK failure, and PostgreSQL unavailable paths.
+- Observability drill: per-order trace id, redacted lifecycle query, and automatic evidence manifest generation.

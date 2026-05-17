@@ -2,12 +2,12 @@
   "project": "polymarket-execution-engine",
   "version": "0.23.0",
   "contract_version": "1.0.0-draft",
-  "status": "v0.23-source-candidate-not-production",
+  "status": "v0.23-shadow-ready-candidate-not-production-not-live",
   "official_sdk_strategy": "sdk-first",
   "official_sdk_crate": "polymarket_client_sdk_v2",
   "official_sdk_version": "=0.6.0-canary.1",
   "rust_msrv": "1.88.0",
-  "evidence_status": "v0.23 source candidate: Python/static/release checks expected locally; Rust/SDK/PostgreSQL gates require external Rust 1.88 + PostgreSQL environment",
+  "evidence_status": "v0.23.1 validation-promotion: Rust, SDK, PostgreSQL, credentialed non-trading smoke, sign-only dry-run, local static, contract, artifact, and governance gates passed in the recorded local environment; live submit/cancel remain blocked.",
   "validated_gates_landed": [
     "cargo-fmt-v0.10",
     "cargo-check-v0.10",
@@ -30,15 +30,13 @@
     "low-resource-validation-defaults"
   ],
   "remaining_blockers": [
-    "v0.23-rust-sdk-postgresql-gates-not-run-in-packaging-environment",
-    "cargo-lock-must-be-verified-with-cargo-check---locked-in-rust-environment",
-    "sign-only-lifecycle-concurrency-and-replay-hardening",
-    "runtime-worker-ttl-heartbeat-lease-and-real-websocket-workers",
-    "cancel-reconcile-persistent-order-lifecycle-and-remote-unknown-drills",
-    "audit-lifecycle-pagination-correlation-and-typed-redaction",
+    "production-readiness-not-claimed",
     "live-submit-live-cancel-production-deployment-remain-blocked",
-    "external-final-artifact-sidecar-hash-must-be-preserved-with-zip",
-    "historical-imported-gates-are-archived-and-not-current-proof"
+    "shadow-execution-would-submit-drill-not-yet-implemented",
+    "rollback-kill-switch-drill-not-yet-executed",
+    "real-market-reconciliation-drift-drill-not-yet-executed",
+    "observability-per-order-trace-evidence-not-yet-complete",
+    "external-final-artifact-sidecar-hash-must-be-preserved-with-zip"
   ],
   "v011_source_changes": [
     "api-server-authoritative-in-memory-store-scaffold",
@@ -50,10 +48,11 @@
     "zip-aware-release-hygiene"
   ],
   "required_next_gates": [
-    "polymarket-execution-engine/validation/run_current_gates.sh",
-    "postgres-backed-service-http-e2e-with-PMX_TEST_DATABASE_URL",
-    "credentialed-authenticated-smoke-with-explicit-env-gates",
-    "sign-only-dry-run-with-explicit-env-gates"
+    "shadow-execution-would-submit-non-posting-drill",
+    "reconciliation-drift-drill",
+    "rollback-kill-switch-drill",
+    "observability-trace-evidence-generation",
+    "polymarket-execution-engine/validation/run_current_gates.sh-after-any-behavior-change"
   ],
   "v023_source_changes": [
     "version-unification-to-0.23.0-source-candidate",
