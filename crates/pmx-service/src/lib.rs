@@ -123,6 +123,21 @@ pub struct RuntimeWorkerProviderTickReceipt {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct RuntimeWorkerContinuousTick {
+    pub snapshots: Vec<RuntimeWorkerProviderSnapshot>,
+    pub no_trading_side_effect: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RuntimeWorkerContinuousTickReceipt {
+    pub ticks_recorded: Vec<RuntimeWorkerProviderTickReceipt>,
+    pub all_submit_allowed_by_runtime: bool,
+    pub no_trading_side_effect: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct HeartbeatLeaseElectionTick {
     pub account_id: String,
     pub provider_name: String,
@@ -399,6 +414,44 @@ where
         submit_allowed_by_runtime: tick.submit_allowed_by_runtime,
         heartbeat_recorded: receipt.heartbeat_recorded,
         observations_recorded: receipt.observations_recorded,
+    })
+}
+
+pub async fn record_runtime_worker_continuous_tick<S>(
+    store: &S,
+    tick: RuntimeWorkerContinuousTick,
+) -> Result<RuntimeWorkerContinuousTickReceipt, ServiceError>
+where
+    S: RuntimeWorkerHealthStore + RuntimeWorkerObservationStore + Send + Sync,
+{
+    if !tick.no_trading_side_effect {
+        return Err(ServiceError::BadRequest(
+            "runtime worker continuous ticks must not contain trading side effects".into(),
+        ));
+    }
+    if tick.snapshots.is_empty() {
+        return Err(ServiceError::BadRequest(
+            "runtime worker continuous ticks require at least one snapshot".into(),
+        ));
+    }
+
+    let mut ticks_recorded = Vec::with_capacity(tick.snapshots.len());
+    for snapshot in tick.snapshots {
+        if !snapshot.no_trading_side_effect {
+            return Err(ServiceError::BadRequest(
+                "runtime worker provider snapshots must not contain trading side effects".into(),
+            ));
+        }
+        ticks_recorded.push(record_runtime_worker_provider_snapshot(store, snapshot).await?);
+    }
+    let all_submit_allowed_by_runtime = ticks_recorded
+        .iter()
+        .all(|receipt| receipt.submit_allowed_by_runtime);
+
+    Ok(RuntimeWorkerContinuousTickReceipt {
+        ticks_recorded,
+        all_submit_allowed_by_runtime,
+        no_trading_side_effect: true,
     })
 }
 
@@ -2181,6 +2234,66 @@ mod tests {
             .expect("decision");
         assert_eq!(decision.status, DecisionStatus::Block);
         assert!(decision.reasons.contains(&BlockReason::WorkerStale));
+    }
+
+    #[tokio::test]
+    async fn service_records_continuous_runtime_worker_ticks_fail_closed_on_any_bad_snapshot() {
+        let store = InMemoryStore::default();
+        let observed_at = Utc::now();
+        let healthy_snapshot = pmx_runtime::RuntimeWorkerProviderSnapshot {
+            account_id: "acct-1".into(),
+            lease_owner_id: "worker-runtime-1".into(),
+            instance_id: "worker-runtime-1".into(),
+            market_websocket_connected: true,
+            market_websocket_stale: false,
+            user_websocket_connected: true,
+            user_websocket_stale: false,
+            geoblock_status: GeoblockStatus::Allowed,
+            resource_refresh_fresh: true,
+            remote_unknown_orders: 0,
+            observed_at,
+            provider_name: "runtime-provider-test".into(),
+            no_trading_side_effect: true,
+        };
+        let stale_snapshot = pmx_runtime::RuntimeWorkerProviderSnapshot {
+            instance_id: "worker-runtime-2".into(),
+            market_websocket_stale: true,
+            observed_at: observed_at + chrono::Duration::seconds(1),
+            ..healthy_snapshot.clone()
+        };
+
+        let receipt = record_runtime_worker_continuous_tick(
+            &store,
+            RuntimeWorkerContinuousTick {
+                snapshots: vec![healthy_snapshot, stale_snapshot],
+                no_trading_side_effect: true,
+            },
+        )
+        .await
+        .expect("record continuous runtime ticks");
+
+        assert_eq!(receipt.ticks_recorded.len(), 2);
+        assert!(receipt.ticks_recorded[0].submit_allowed_by_runtime);
+        assert!(!receipt.ticks_recorded[1].submit_allowed_by_runtime);
+        assert!(!receipt.all_submit_allowed_by_runtime);
+        assert!(receipt.no_trading_side_effect);
+
+        let report = store
+            .list_runtime_worker_status(&RuntimeWorkerStatusQuery {
+                account_id: "acct-1".into(),
+                limit: 100,
+                before_observed_at: None,
+            })
+            .await
+            .expect("list runtime worker status");
+        assert_eq!(report.heartbeats.len(), 2);
+        assert!(
+            report
+                .observations
+                .iter()
+                .any(|observation| observation.capability == "websocket:market"
+                    && observation.should_fail_closed)
+        );
     }
 
     #[tokio::test]
