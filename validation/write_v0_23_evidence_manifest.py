@@ -99,8 +99,12 @@ def sha256(path: Path) -> str:
 
 def log_entry(path: Path) -> dict[str, str | int]:
     path = path.resolve()
+    try:
+        display_path = path.relative_to(ROOT.resolve())
+    except ValueError:
+        display_path = path
     return {
-        "path": str(path.relative_to(ROOT.resolve())),
+        "path": str(display_path),
         "sha256": sha256(path),
         "bytes": path.stat().st_size,
     }
