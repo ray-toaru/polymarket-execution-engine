@@ -14,7 +14,19 @@ ROOT = SCRIPT.parents[2]
 EXECUTOR = ROOT / "polymarket-execution-engine"
 if not EXECUTOR.exists():
     EXECUTOR = SCRIPT.parents[1]
-VERSION_PATH = ROOT / "VERSION" if (ROOT / "VERSION").exists() else EXECUTOR / "VERSION"
+
+VERSION_CANDIDATES = [
+    Path(os.environ["PMX_INTEGRATION_ROOT"]) / "VERSION"
+    if os.environ.get("PMX_INTEGRATION_ROOT")
+    else None,
+    ROOT / "VERSION",
+    EXECUTOR / "VERSION",
+    ROOT / "polymarket_dual_project" / "VERSION",
+    EXECUTOR.parent / "polymarket_dual_project" / "VERSION",
+]
+VERSION_PATH = next((path for path in VERSION_CANDIDATES if path and path.exists()), None)
+if VERSION_PATH is None:
+    raise FileNotFoundError("VERSION not found in integration or execution repository paths")
 VERSION = VERSION_PATH.read_text().strip()
 CURRENT_DIR = EXECUTOR / "evidence" / "current"
 DEFAULT_LOG_DIR = CURRENT_DIR / "logs"

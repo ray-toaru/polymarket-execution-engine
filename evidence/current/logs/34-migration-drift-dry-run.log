@@ -1,18 +1,20 @@
 {
   "checksums": {
     "0001_initial": "543b02a2c91e150ce96332b33f5ff19310044583cfdf23ec24b48a3f2905cc0f",
-    "0002_migration_framework": "19f1cb732190ff3ce8292128b3a6959ec2748818265cd90073f7d79e538e6fbf"
+    "0002_migration_framework": "19f1cb732190ff3ce8292128b3a6959ec2748818265cd90073f7d79e538e6fbf",
+    "0003_order_event_trace": "c051dc6820acf727b85b77a411aa9f2c11426e6cc65abbc29206f83e0d95e51b"
   },
   "migration_order": [
     "0001_initial",
-    "0002_migration_framework"
+    "0002_migration_framework",
+    "0003_order_event_trace"
   ],
   "postgres_dry_run": {
     "drift_detection": "bad checksum fixture created; production runner must fail closed on mismatch",
-    "drift_schema": "pmx_migration_drift_1779031460061_22095",
-    "fresh_schema": "pmx_migration_fresh_1779031460061_22095",
+    "drift_schema": "pmx_migration_drift_1779041975668_621981",
+    "fresh_schema": "pmx_migration_fresh_1779041975668_621981",
     "status": "pass",
-    "upgraded_schema": "pmx_migration_upgraded_1779031460061_22095"
+    "upgraded_schema": "pmx_migration_upgraded_1779041975668_621981"
   },
   "status": "pass"
 }
