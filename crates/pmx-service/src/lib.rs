@@ -7,9 +7,11 @@ use pmx_runtime::{
     HeartbeatLeaseElectionInput, ReconcileBacklogEvaluation, ReconcileBacklogEvaluationInput,
     ResourceRefreshEvaluation, ResourceRefreshEvaluationInput, ResourceRefreshObservation,
     RuntimeSignal, RuntimeWorkerProviderSnapshot, WebSocketLivenessEvaluation,
-    WebSocketLivenessEvaluationInput, WebSocketLivenessObservation, elect_heartbeat_lease_owner,
-    evaluate_geoblock_status, evaluate_reconcile_backlog, evaluate_resource_refresh_freshness,
-    evaluate_websocket_liveness, runtime_worker_loop_tick, runtime_worker_store_writes,
+    WebSocketLivenessEvaluationInput, WebSocketLivenessObservation, WorkerCrashRecoveryEvaluation,
+    WorkerCrashRecoveryEvaluationInput, WorkerCrashRecoveryObservation,
+    elect_heartbeat_lease_owner, evaluate_geoblock_status, evaluate_reconcile_backlog,
+    evaluate_resource_refresh_freshness, evaluate_websocket_liveness,
+    evaluate_worker_crash_recovery, runtime_worker_loop_tick, runtime_worker_store_writes,
 };
 use pmx_store::{
     AdminAuditEvent, AdminAuditQuery, AdminAuditStore, ExecutionLifecycleEvent,
@@ -235,6 +237,26 @@ pub struct GeoblockWorkerTick {
 pub struct GeoblockWorkerTickReceipt {
     pub evaluation: GeoblockEvaluation,
     pub provider_tick: RuntimeWorkerProviderTickReceipt,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkerCrashRecoveryTick {
+    pub account_id: String,
+    pub worker_id: String,
+    pub required_capabilities: Vec<String>,
+    pub observations: Vec<WorkerCrashRecoveryObservation>,
+    pub observed_at: chrono::DateTime<Utc>,
+    pub stale_after_seconds: i64,
+    pub no_trading_side_effect: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkerCrashRecoveryTickReceipt {
+    pub evaluation: WorkerCrashRecoveryEvaluation,
+    pub heartbeat_recorded: bool,
+    pub observation_recorded: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -626,6 +648,65 @@ where
     Ok(GeoblockWorkerTickReceipt {
         evaluation,
         provider_tick,
+    })
+}
+
+pub async fn record_worker_crash_recovery_tick<S>(
+    store: &S,
+    tick: WorkerCrashRecoveryTick,
+) -> Result<WorkerCrashRecoveryTickReceipt, ServiceError>
+where
+    S: RuntimeWorkerHealthStore + RuntimeWorkerObservationStore + Send + Sync,
+{
+    if tick.account_id.trim().is_empty() || tick.worker_id.trim().is_empty() {
+        return Err(ServiceError::BadRequest(
+            "account_id and worker_id must be non-empty".into(),
+        ));
+    }
+    if !tick.no_trading_side_effect {
+        return Err(ServiceError::BadRequest(
+            "worker crash recovery ticks must not contain trading side effects".into(),
+        ));
+    }
+    let evaluation = evaluate_worker_crash_recovery(WorkerCrashRecoveryEvaluationInput {
+        observations: tick.observations,
+        required_capabilities: tick.required_capabilities,
+        observed_at: tick.observed_at,
+        stale_after_seconds: tick.stale_after_seconds,
+    });
+    store
+        .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
+            worker_id: tick.worker_id,
+            role: "WorkerCrashRecovery".into(),
+            capability: "worker-crash-recovery".into(),
+            status: if evaluation.recovered {
+                "HEALTHY".into()
+            } else {
+                "STALE".into()
+            },
+            last_heartbeat_at: tick.observed_at,
+            last_error: (!evaluation.recovered).then(|| evaluation.reason.clone()),
+        })
+        .await?;
+    store
+        .record_runtime_worker_observation(&RuntimeWorkerObservation {
+            account_id: tick.account_id,
+            capability: "worker-crash-recovery".into(),
+            worker_kind: "WorkerCrashRecovery".into(),
+            status: if evaluation.recovered {
+                "Healthy".into()
+            } else {
+                "Stale".into()
+            },
+            should_fail_closed: !evaluation.recovered,
+            reason: evaluation.reason.clone(),
+            observed_at: Some(tick.observed_at),
+        })
+        .await?;
+    Ok(WorkerCrashRecoveryTickReceipt {
+        evaluation,
+        heartbeat_recorded: true,
+        observation_recorded: true,
     })
 }
 
@@ -2394,6 +2475,96 @@ mod tests {
             .expect("decision");
         assert_eq!(decision.status, DecisionStatus::Block);
         assert!(decision.reasons.contains(&BlockReason::WorkerUnknown));
+    }
+
+    #[tokio::test]
+    async fn service_records_worker_crash_recovery_tick_for_decision_gate() {
+        let store = InMemoryStore::default();
+        store.set_runtime_state_for_test("acct-1", "cond-1", None, allow_runtime_state());
+        for capability in ["heartbeat", "reconcile", "resource-refresh"] {
+            store
+                .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
+                    worker_id: format!("worker-{capability}"),
+                    role: "service-test".into(),
+                    capability: capability.into(),
+                    status: "HEALTHY".into(),
+                    last_heartbeat_at: Utc::now(),
+                    last_error: None,
+                })
+                .await
+                .expect("record worker heartbeat");
+        }
+
+        let observed_at = Utc::now();
+        let receipt = record_worker_crash_recovery_tick(
+            &store,
+            WorkerCrashRecoveryTick {
+                account_id: "acct-1".into(),
+                worker_id: "worker-crash-recovery".into(),
+                required_capabilities: vec![
+                    "heartbeat".into(),
+                    "reconcile".into(),
+                    "resource-refresh".into(),
+                ],
+                observed_at,
+                stale_after_seconds: 30,
+                no_trading_side_effect: true,
+                observations: vec![
+                    pmx_runtime::WorkerCrashRecoveryObservation {
+                        worker_id: "worker-heartbeat".into(),
+                        capability: "heartbeat".into(),
+                        status: pmx_runtime::HealthLevel::Healthy,
+                        last_heartbeat_at: Some(observed_at - chrono::Duration::seconds(5)),
+                        last_error: None,
+                    },
+                    pmx_runtime::WorkerCrashRecoveryObservation {
+                        worker_id: "worker-reconcile".into(),
+                        capability: "reconcile".into(),
+                        status: pmx_runtime::HealthLevel::Healthy,
+                        last_heartbeat_at: Some(observed_at - chrono::Duration::seconds(60)),
+                        last_error: Some("stale after crash".into()),
+                    },
+                ],
+            },
+        )
+        .await
+        .expect("record worker crash recovery tick");
+        assert!(receipt.heartbeat_recorded);
+        assert!(receipt.observation_recorded);
+        assert!(!receipt.evaluation.recovered);
+        assert_eq!(receipt.evaluation.stale_workers, vec!["worker-reconcile"]);
+        assert_eq!(
+            receipt.evaluation.missing_capabilities,
+            vec!["resource-refresh"]
+        );
+
+        let service = ExecutorService::with_runtime_provider(
+            store.clone(),
+            StoreBackedRuntimeStateProvider::new(store.clone()),
+            "test-executor".into(),
+            DEFAULT_CONTRACT_VERSION.into(),
+        );
+        let normalized = service.normalize(intent()).await.expect("normalize");
+        let snapshot = service
+            .capture_snapshot(normalized.clone())
+            .await
+            .expect("snapshot");
+        assert_eq!(snapshot.runtime_state.worker_status, WorkerStatus::Stale);
+        assert!(
+            snapshot
+                .runtime_state
+                .required_capabilities
+                .contains(&"worker-crash-recovery".to_string())
+        );
+        let decision = service
+            .evaluate_decision_by_id(DecisionByIdRequest {
+                normalized_intent_id: normalized.normalized_intent_id.clone(),
+                snapshot_id: snapshot.snapshot_id.clone(),
+            })
+            .await
+            .expect("decision");
+        assert_eq!(decision.status, DecisionStatus::Block);
+        assert!(decision.reasons.contains(&BlockReason::WorkerStale));
     }
 
     #[tokio::test]

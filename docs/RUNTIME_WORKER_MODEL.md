@@ -96,6 +96,14 @@ without making a provider call. Only explicit `Allowed` status is submit-safe;
 record_geoblock_worker_tick()` records that status through the provider snapshot
 bridge so geoblock uncertainty blocks decision gates.
 
+`pmx-runtime::evaluate_worker_crash_recovery()` models worker crash recovery
+without process supervision side effects. It checks required worker
+capabilities for fresh healthy heartbeats and fails closed when a required
+worker is missing, stale, degraded, or failed. `pmx-service::
+record_worker_crash_recovery_tick()` records both the crash-recovery worker
+heartbeat and a normalized runtime observation, so recovery gaps become submit
+blockers until all required workers are healthy again.
+
 Remaining work:
 
 ```text

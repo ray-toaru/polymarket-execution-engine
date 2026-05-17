@@ -507,6 +507,32 @@ pub struct GeoblockEvaluation {
     pub reason: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct WorkerCrashRecoveryObservation {
+    pub worker_id: String,
+    pub capability: String,
+    pub status: HealthLevel,
+    pub last_heartbeat_at: Option<DateTime<Utc>>,
+    pub last_error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct WorkerCrashRecoveryEvaluationInput {
+    pub observations: Vec<WorkerCrashRecoveryObservation>,
+    pub required_capabilities: Vec<String>,
+    pub observed_at: DateTime<Utc>,
+    pub stale_after_seconds: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct WorkerCrashRecoveryEvaluation {
+    pub recovered: bool,
+    pub missing_capabilities: Vec<String>,
+    pub stale_workers: Vec<String>,
+    pub failed_workers: Vec<String>,
+    pub reason: String,
+}
+
 /// Evaluate resource-refresh freshness without doing network or store I/O.
 ///
 /// Every observed resource must be fresh and healthy. Missing observations are
@@ -654,6 +680,54 @@ pub fn evaluate_geoblock_status(input: GeoblockEvaluationInput) -> GeoblockEvalu
             input
                 .last_error
                 .unwrap_or_else(|| "geoblock provider did not allow submit".into())
+        },
+    }
+}
+
+/// Evaluate whether required runtime workers have recovered after crash/restart.
+pub fn evaluate_worker_crash_recovery(
+    input: WorkerCrashRecoveryEvaluationInput,
+) -> WorkerCrashRecoveryEvaluation {
+    let stale_after_seconds = input.stale_after_seconds.max(0);
+    let cutoff = input.observed_at - chrono::Duration::seconds(stale_after_seconds);
+    let mut missing_capabilities = Vec::new();
+    let mut stale_workers = Vec::new();
+    let mut failed_workers = Vec::new();
+
+    for capability in &input.required_capabilities {
+        let Some(observation) = input
+            .observations
+            .iter()
+            .filter(|observation| &observation.capability == capability)
+            .max_by_key(|observation| observation.last_heartbeat_at)
+        else {
+            missing_capabilities.push(capability.clone());
+            continue;
+        };
+        if observation.status != HealthLevel::Healthy {
+            failed_workers.push(observation.worker_id.clone());
+            continue;
+        }
+        if observation
+            .last_heartbeat_at
+            .map(|last_heartbeat_at| last_heartbeat_at < cutoff)
+            .unwrap_or(true)
+        {
+            stale_workers.push(observation.worker_id.clone());
+        }
+    }
+
+    let recovered =
+        missing_capabilities.is_empty() && stale_workers.is_empty() && failed_workers.is_empty();
+    WorkerCrashRecoveryEvaluation {
+        recovered,
+        missing_capabilities,
+        stale_workers,
+        failed_workers,
+        reason: if recovered {
+            "all required workers have fresh healthy heartbeats".into()
+        } else {
+            "required worker missing, stale, or failed after crash recovery".into()
         },
     }
 }
@@ -1327,5 +1401,59 @@ mod capability_tests_v07 {
         });
         assert!(!blocked.submit_allowed);
         assert_eq!(blocked.reason, "provider timeout");
+    }
+
+    #[test]
+    fn worker_crash_recovery_evaluation_requires_fresh_healthy_required_workers() {
+        let observed_at = Utc::now();
+        let evaluation = evaluate_worker_crash_recovery(WorkerCrashRecoveryEvaluationInput {
+            observed_at,
+            stale_after_seconds: 30,
+            required_capabilities: vec![
+                "heartbeat".into(),
+                "reconcile".into(),
+                "resource-refresh".into(),
+            ],
+            observations: vec![
+                WorkerCrashRecoveryObservation {
+                    worker_id: "worker-heartbeat".into(),
+                    capability: "heartbeat".into(),
+                    status: HealthLevel::Healthy,
+                    last_heartbeat_at: Some(observed_at - chrono::Duration::seconds(5)),
+                    last_error: None,
+                },
+                WorkerCrashRecoveryObservation {
+                    worker_id: "worker-reconcile".into(),
+                    capability: "reconcile".into(),
+                    status: HealthLevel::Stale,
+                    last_heartbeat_at: Some(observed_at - chrono::Duration::seconds(5)),
+                    last_error: Some("restart loop".into()),
+                },
+            ],
+        });
+        assert!(!evaluation.recovered);
+        assert_eq!(evaluation.failed_workers, vec!["worker-reconcile"]);
+        assert_eq!(evaluation.missing_capabilities, vec!["resource-refresh"]);
+    }
+
+    #[test]
+    fn worker_crash_recovery_evaluation_recovers_after_all_required_workers_are_fresh() {
+        let observed_at = Utc::now();
+        let evaluation = evaluate_worker_crash_recovery(WorkerCrashRecoveryEvaluationInput {
+            observed_at,
+            stale_after_seconds: 30,
+            required_capabilities: vec!["heartbeat".into()],
+            observations: vec![WorkerCrashRecoveryObservation {
+                worker_id: "worker-heartbeat".into(),
+                capability: "heartbeat".into(),
+                status: HealthLevel::Healthy,
+                last_heartbeat_at: Some(observed_at - chrono::Duration::seconds(1)),
+                last_error: None,
+            }],
+        });
+        assert!(evaluation.recovered);
+        assert!(evaluation.missing_capabilities.is_empty());
+        assert!(evaluation.stale_workers.is_empty());
+        assert!(evaluation.failed_workers.is_empty());
     }
 }
