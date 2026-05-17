@@ -17,6 +17,8 @@ The project is still pre-live. The official SDK adapter may contain explicit saf
   geoblock, repository reservation, idempotency key, reconcile worker,
   account/market whitelist, size cap, daily cap, operator approval, and
   cancel-only fallback.
+- `default_blocked_live_canary_preconditions()` keeps every future live canary
+  integration point blocked until all gates are explicitly populated.
 
 The fake gateway crate is intentionally outside the static guard because its in-memory `post_order` is a deterministic test double, not a Polymarket remote side effect.
 

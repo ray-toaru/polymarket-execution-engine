@@ -29,6 +29,7 @@ FORBIDDEN_PUBLIC_TERMS = [
 ]
 REQUIRED_CANARY_TOKENS = [
     "LiveCanaryPreconditions",
+    "default_blocked_live_canary_preconditions",
     "validate_live_submit_canary_preconditions",
     "compile_feature_live_submit",
     "env_allow_live_submit",
@@ -46,6 +47,7 @@ REQUIRED_CANARY_TOKENS = [
     "operator_approved",
     "cancel_only_fallback_ready",
     "live_submit_canary_requires_every_gate",
+    "live_canary_default_preconditions_are_blocked_without_side_effects",
     "live_submit_canary_requires_cancel_only_fallback",
 ]
 

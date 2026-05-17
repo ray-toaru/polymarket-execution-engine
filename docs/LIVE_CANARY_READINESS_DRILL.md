@@ -26,6 +26,11 @@ account whitelist, market whitelist, per-order cap, per-day cap, operator
 approval, cancel-only fallback, and remote-unknown backlog inputs. The prep
 decision never enables submit by itself and records `live_side_effects=false`.
 
+`default_blocked_live_canary_preconditions()` is the required default for any
+new canary integration point. It starts with every live gate disabled, including
+operator approval and cancel-only fallback, so an empty or partially populated
+config cannot be interpreted as canary-ready.
+
 Validation entrypoint:
 
 ```bash

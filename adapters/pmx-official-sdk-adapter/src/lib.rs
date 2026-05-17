@@ -420,6 +420,26 @@ pub struct LiveCanaryPrepDecision {
     pub live_side_effects: bool,
 }
 
+pub fn default_blocked_live_canary_preconditions() -> LiveCanaryPreconditions {
+    LiveCanaryPreconditions {
+        compile_feature_live_submit: false,
+        env_allow_live_submit: false,
+        config_allow_live_submit: false,
+        kill_switch_open: false,
+        runtime_worker_healthy: false,
+        geoblock_allowed: false,
+        repository_reservation_exists: false,
+        idempotency_key_written: false,
+        reconcile_worker_healthy: false,
+        account_whitelisted: false,
+        market_whitelisted: false,
+        size_cap_ok: false,
+        daily_cap_ok: false,
+        operator_approved: false,
+        cancel_only_fallback_ready: false,
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OfficialSdkReconcileDisposition {
@@ -1461,6 +1481,25 @@ mod tests {
         let err = validate_live_submit_canary_preconditions(&preconditions)
             .expect_err("operator approval is mandatory");
         assert!(err.to_string().contains("operator approval is missing"));
+    }
+
+    #[test]
+    fn live_canary_default_preconditions_are_blocked_without_side_effects() {
+        let preconditions = default_blocked_live_canary_preconditions();
+        let err = validate_live_submit_canary_preconditions(&preconditions)
+            .expect_err("default live canary preconditions must be blocked");
+        assert!(
+            err.to_string()
+                .contains("live-submit compile feature disabled")
+        );
+        assert!(
+            err.to_string()
+                .contains("PMX_ALLOW_LIVE_SUBMIT is not enabled")
+        );
+        assert!(
+            err.to_string()
+                .contains("cancel-only fallback is not ready")
+        );
     }
 
     #[test]
