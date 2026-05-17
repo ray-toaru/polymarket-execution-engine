@@ -90,6 +90,7 @@ python validation/check_sign_only_lifecycle.py 2>&1 | tee "${EVIDENCE_DIR}/20-si
 python validation/check_runtime_worker_models.py 2>&1 | tee "${EVIDENCE_DIR}/21-runtime-worker-model-guard.log"
 python validation/check_v0_23_evidence_manifest.py 2>&1 | tee "${EVIDENCE_DIR}/23-v0-23-evidence-manifest-guard.log"
 python validation/check_migration_framework.py 2>&1 | tee "${EVIDENCE_DIR}/33-migration-framework-guard.log"
+python validation/run_migration_drift_dry_run.py 2>&1 | tee "${EVIDENCE_DIR}/34-migration-drift-dry-run.log"
 python scripts/check_release_hygiene.py "${HYGIENE_ROOT}" 2>&1 | tee "${EVIDENCE_DIR}/26-release-hygiene-clean-snapshot.log"
 python validation/write_v0_23_evidence_manifest.py "${EVIDENCE_DIR}" >/dev/null
 

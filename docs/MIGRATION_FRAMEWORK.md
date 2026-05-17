@@ -25,8 +25,13 @@ initial migration.
   `0001_initial` and `0002_migration_framework`.
 - `validation/check_migration_framework.py` guards the migration list, checksum
   failure path, PG test coverage, and evidence-manifest wiring.
+- `validation/run_migration_drift_dry_run.py` validates local migration ordering
+  and, when `PMX_TEST_DATABASE_URL` is set, applies fresh/upgraded temporary
+  schemas and creates a checksum-drift fixture.
 - `validation/run_current_gates.sh` writes
   `evidence/current/logs/33-migration-framework-guard.log`.
+- `validation/run_current_gates.sh` also writes
+  `evidence/current/logs/34-migration-drift-dry-run.log`.
 - `validation/write_v0_23_evidence_manifest.py` records the
   `migration_framework_validation` evidence section.
 
@@ -36,4 +41,3 @@ This is not a production migration runner. It is the minimum durable framework
 needed for v0.24 schema evolution and local promotion evidence. Backward
 compatibility, dry-run, drift checks, and upgraded-DB/fresh-DB split evidence are
 still required before any production-readiness claim.
-

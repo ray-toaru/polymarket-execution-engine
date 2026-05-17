@@ -58,6 +58,7 @@ SECTIONS: dict[str, list[str]] = {
     ],
     "migration_framework_validation": [
         "33-migration-framework-guard.log",
+        "34-migration-drift-dry-run.log",
     ],
     "local_static_validation": [
         "18-plan-storage-guard.log",

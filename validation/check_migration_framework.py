@@ -10,6 +10,7 @@ MIGRATIONS = ROOT / "migrations"
 POSTGRES = ROOT / "crates" / "pmx-store" / "src" / "postgres.rs"
 RUN_GATES = ROOT / "validation" / "run_v0_23_gates.sh"
 MANIFEST_WRITER = ROOT / "validation" / "write_v0_23_evidence_manifest.py"
+DRIFT_DRY_RUN = ROOT / "validation" / "run_migration_drift_dry_run.py"
 
 
 def require(condition: bool, message: str, failures: list[str]) -> None:
@@ -23,6 +24,7 @@ def main() -> int:
     postgres = POSTGRES.read_text()
     gates = RUN_GATES.read_text()
     manifest = MANIFEST_WRITER.read_text()
+    drift_dry_run = DRIFT_DRY_RUN.read_text()
 
     require(migration_0002.exists(), "missing migrations/0002_migration_framework.sql", failures)
     if migration_0002.exists():
@@ -38,10 +40,15 @@ def main() -> int:
     require("schema migration checksum mismatch" in postgres, "migration checksum drift must fail closed", failures)
     require("applied_schema_migrations" in postgres, "store must expose applied migration evidence for PG tests", failures)
     require("postgres_records_schema_migrations" in postgres, "PG tests must assert schema_migrations rows", failures)
+    require("PMX_TEST_DATABASE_URL" in drift_dry_run, "migration dry-run must support PG validation env", failures)
+    require("fresh_schema" in drift_dry_run and "upgraded_schema" in drift_dry_run, "migration dry-run must cover fresh and upgraded schemas", failures)
+    require("bad checksum fixture" in drift_dry_run, "migration dry-run must include checksum drift fixture", failures)
 
     require("33-migration-framework-guard.log" in gates, "run_v0_23_gates.sh must emit migration framework guard log", failures)
+    require("34-migration-drift-dry-run.log" in gates, "run_v0_23_gates.sh must emit migration drift dry-run log", failures)
     require('"migration_framework_validation"' in manifest, "evidence manifest must include migration_framework_validation", failures)
     require("33-migration-framework-guard.log" in manifest, "evidence manifest must capture migration framework guard log", failures)
+    require("34-migration-drift-dry-run.log" in manifest, "evidence manifest must capture migration drift dry-run log", failures)
 
     if failures:
         for failure in failures:

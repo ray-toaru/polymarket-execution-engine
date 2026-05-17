@@ -43,6 +43,7 @@
     "store-ordered-migration-application-with-sha256-checksum-recording",
     "schema-migration-checksum-drift-fail-closed",
     "migration-framework-static-guard-and-evidence-manifest-section",
+    "migration-fresh-upgraded-drift-dry-run-validation",
     "service-runtime-worker-signal-to-observation-bridge",
     "non-live-cancel-order-lifecycle-service-write",
     "non-live-reconcile-order-lifecycle-observation-helper"
