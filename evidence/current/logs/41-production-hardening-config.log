@@ -1,0 +1,16 @@
+{
+  "checks": [
+    "secret_custody",
+    "deployment_and_rollback",
+    "observability",
+    "slo_and_error_budget",
+    "audit_export_and_retention",
+    "risk_limits",
+    "dependency_and_sdk_breakage"
+  ],
+  "failures": [],
+  "live_cancel_enabled": false,
+  "live_submit_enabled": false,
+  "production_ready_claimed": false,
+  "status": "pass"
+}

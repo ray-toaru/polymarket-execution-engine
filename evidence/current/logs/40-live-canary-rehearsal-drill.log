@@ -1,0 +1,17 @@
+{
+  "cancelled": false,
+  "failures": [],
+  "posted": false,
+  "rehearsal_status": "blocked_dry_run",
+  "remote_side_effects": false,
+  "stages": [
+    "whitelist_check",
+    "caps_check",
+    "operator_approval_check",
+    "reservation_check",
+    "idempotency_check",
+    "reconcile_check",
+    "cancel_only_fallback_check"
+  ],
+  "status": "pass"
+}
