@@ -81,6 +81,13 @@
       "38-live-canary-readiness-drill.log"
     ]
   },
+  "live_canary_blocked_validation": {
+    "status": "pending",
+    "logs": [],
+    "required_logs": [
+      "39-live-canary-blocked-drill.log"
+    ]
+  },
   "release_decision": {
     "validated_release": false,
     "reason": "Template only. Do not mark validated_release=true until all required evidence sections pass with attached logs and the final artifact hash is recorded."
