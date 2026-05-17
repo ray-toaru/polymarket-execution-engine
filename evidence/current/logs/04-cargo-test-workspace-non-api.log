@@ -1,4 +1,83 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.35s
+   Compiling libc v0.2.186
+   Compiling typenum v1.20.0
+   Compiling serde_core v1.0.228
+   Compiling cfg-if v1.0.4
+   Compiling serde v1.0.228
+   Compiling memchr v2.8.0
+   Compiling serde_json v1.0.149
+   Compiling rand_core v0.10.1
+   Compiling zmij v1.0.21
+   Compiling itoa v1.0.18
+   Compiling getrandom v0.4.2
+   Compiling generic-array v0.14.7
+   Compiling thiserror v1.0.69
+   Compiling num-traits v0.2.19
+   Compiling iana-time-zone v0.1.65
+   Compiling chrono v0.4.44
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling cpufeatures v0.2.17
+   Compiling sha2 v0.10.9
+   Compiling uuid v1.23.1
+   Compiling pmx-core v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
+   Compiling bytes v1.11.1
+   Compiling hybrid-array v0.4.12
+   Compiling errno v0.3.14
+   Compiling pin-project-lite v0.2.17
+   Compiling signal-hook-registry v1.4.8
+   Compiling socket2 v0.6.3
+   Compiling mio v1.2.0
+   Compiling cmov v0.5.3
+   Compiling ctutils v0.4.2
+   Compiling tokio v1.52.3
+   Compiling block-buffer v0.12.0
+   Compiling crypto-common v0.2.1
+   Compiling const-oid v0.10.2
+   Compiling digest v0.11.3
+   Compiling tinyvec_macros v0.1.1
+   Compiling cpufeatures v0.3.0
+   Compiling tinyvec v1.11.0
+   Compiling unicode-normalization v0.1.25
+   Compiling chacha20 v0.10.0
+   Compiling unicode-bidi v0.3.18
+   Compiling futures-sink v0.3.32
+   Compiling unicode-properties v0.1.4
+   Compiling futures-core v0.3.32
+   Compiling stringprep v0.1.5
+   Compiling rand v0.10.1
+   Compiling sha2 v0.11.0
+   Compiling hmac v0.13.0
+   Compiling md-5 v0.11.0
+   Compiling scopeguard v1.2.0
+   Compiling byteorder v1.5.0
+   Compiling base64 v0.22.1
+   Compiling fallible-iterator v0.2.0
+   Compiling smallvec v1.15.1
+   Compiling siphasher v1.0.3
+   Compiling phf_shared v0.13.1
+   Compiling parking_lot_core v0.9.12
+   Compiling postgres-protocol v0.6.11
+   Compiling lock_api v0.4.14
+   Compiling futures-task v0.3.32
+   Compiling futures-util v0.3.32
+   Compiling parking_lot v0.12.5
+   Compiling postgres-types v0.2.13
+   Compiling phf v0.13.1
+   Compiling tokio-util v0.7.18
+   Compiling futures-channel v0.3.32
+   Compiling whoami v2.1.2
+   Compiling percent-encoding v2.3.2
+   Compiling log v0.4.29
+   Compiling tokio-postgres v0.7.17
+   Compiling pmx-store v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
+   Compiling pmx-runtime v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
+   Compiling pmx-policy v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
+   Compiling pmx-service v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
+   Compiling pmx-gateway v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
+   Compiling pmx-authz v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-authz)
+   Compiling pmx-release v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-release)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 09s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-a8b87e591d442027)
 
 running 2 tests
@@ -88,10 +167,11 @@ test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fin
 
      Running unittests src/lib.rs (target/debug/deps/pmx_service-66b940741d1a3ea4)
 
-running 19 tests
+running 20 tests
 test tests::service_classifies_and_records_order_lifecycle_divergence_without_remote_side_effect ... ok
 test tests::service_flow_persists_and_blocks_submit ... ok
 test tests::service_id_bound_flow_persists_and_blocks_submit ... ok
+test tests::service_lists_runtime_worker_status ... ok
 test tests::service_records_geoblock_worker_tick_for_decision_gate ... ok
 test tests::service_records_heartbeat_lease_election_tick_fail_closed_for_non_owner ... ok
 test tests::service_records_non_live_cancel_and_reconcile_order_lifecycle ... ok
@@ -109,11 +189,11 @@ test tests::service_validates_and_persists_sign_only_lifecycle_sequence ... ok
 test tests::static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks ... ok
 test tests::store_backed_runtime_provider_uses_store_state ... ok
 
-test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-0d1bb31d4413cde9)
 
-running 31 tests
+running 33 tests
 test admin_audit_tests::in_memory_admin_audit_records_without_exposing_secrets ... ok
 test admin_audit_tests::in_memory_persists_sign_only_lifecycle_records ... ok
 test admin_audit_tests::in_memory_rejects_sign_only_for_unknown_execution ... ok
@@ -123,6 +203,7 @@ test admin_audit_tests::in_memory_sign_only_replay_is_idempotent ... ok
 test order_lifecycle_store_tests_v23::in_memory_order_lifecycle_records_cancel_requested ... ok
 test order_lifecycle_store_tests_v23::in_memory_order_lifecycle_rejects_invalid_transition ... ok
 test postgres::order_lifecycle_pg_tests_v23::postgres_records_order_lifecycle_event ... ok
+test postgres::runtime_worker_health_pg_tests_v23::postgres_lists_runtime_worker_status ... ok
 test postgres::runtime_worker_health_pg_tests_v23::postgres_records_worker_heartbeat ... ok
 test postgres::tests::fingerprint_mismatch_is_conflict ... ok
 test postgres::tests::in_progress_replay_does_not_return_proceed ... ok
@@ -137,6 +218,7 @@ test postgres::tests::postgres_runtime_worker_observations_degrade_runtime_state
 test postgres::tests::remote_unknown_is_persisted_conservatively ... ok
 test postgres::tests::reservation_double_spend_is_prevented_concurrently ... ok
 test postgres::tests::same_request_replay_is_persisted ... ok
+test runtime_worker_health_tests_v23::in_memory_lists_runtime_worker_status ... ok
 test runtime_worker_health_tests_v23::in_memory_worker_heartbeat_informs_runtime_state ... ok
 test runtime_worker_health_tests_v23::stale_in_memory_worker_heartbeat_fails_closed ... ok
 test tests::advisory_lock_key_is_deterministic_and_scoped ... ok
@@ -146,7 +228,7 @@ test tests::maps_plan_status_for_db ... ok
 test tests::runtime_worker_observations_degrade_loaded_runtime_state ... ok
 test tests::stale_runtime_worker_observations_are_ignored ... ok
 
-test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.17s
+test result: ok. 33 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.82s
 
    Doc-tests pmx_authz
 

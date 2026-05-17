@@ -98,6 +98,7 @@ python validation/run_live_canary_readiness_drill.py 2>&1 | tee "${EVIDENCE_DIR}
 python validation/run_live_canary_blocked_drill.py 2>&1 | tee "${EVIDENCE_DIR}/39-live-canary-blocked-drill.log"
 python validation/run_live_canary_rehearsal_drill.py 2>&1 | tee "${EVIDENCE_DIR}/40-live-canary-rehearsal-drill.log"
 python validation/check_production_hardening_config.py 2>&1 | tee "${EVIDENCE_DIR}/41-production-hardening-config.log"
+python validation/check_runtime_worker_status_query.py 2>&1 | tee "${EVIDENCE_DIR}/42-runtime-worker-status-query.log"
 python scripts/check_release_hygiene.py "${HYGIENE_ROOT}" 2>&1 | tee "${EVIDENCE_DIR}/26-release-hygiene-clean-snapshot.log"
 python validation/write_v0_23_evidence_manifest.py "${EVIDENCE_DIR}" >/dev/null
 

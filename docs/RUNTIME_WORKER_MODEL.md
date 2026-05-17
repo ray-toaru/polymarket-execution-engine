@@ -104,6 +104,12 @@ record_worker_crash_recovery_tick()` records both the crash-recovery worker
 heartbeat and a normalized runtime observation, so recovery gaps become submit
 blockers until all required workers are healthy again.
 
+`RuntimeWorkerStatusStore` and the read-only HTTP route `/v1/runtime/workers`
+expose the persisted worker heartbeats and account-scoped fail-closed
+observations for shadow runtime inspection. This query path uses read-report
+authorization, returns only local runtime status metadata, and has no trading
+side effect.
+
 Remaining work:
 
 ```text

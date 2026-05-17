@@ -102,6 +102,13 @@
       "41-production-hardening-config.log"
     ]
   },
+  "runtime_worker_status_validation": {
+    "status": "pending",
+    "logs": [],
+    "required_logs": [
+      "42-runtime-worker-status-query.log"
+    ]
+  },
   "release_decision": {
     "validated_release": false,
     "reason": "Template only. Do not mark validated_release=true until all required evidence sections pass with attached logs and the final artifact hash is recorded."

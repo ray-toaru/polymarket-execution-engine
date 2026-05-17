@@ -1,11 +1,36 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.53s
-     Running unittests src/lib.rs (adapters/pmx-official-sdk-adapter/target/debug/deps/pmx_official_sdk_adapter-06feaf8f1652bdc6)
+   Compiling typenum v1.20.0
+   Compiling generic-array v0.14.7
+   Compiling serde_core v1.0.228
+   Compiling cfg-if v1.0.4
+   Compiling libc v0.2.186
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling serde v1.0.228
+   Compiling digest v0.10.7
+   Compiling getrandom v0.4.2
+   Compiling num-traits v0.2.19
+   Compiling zmij v1.0.21
+   Compiling itoa v1.0.18
+   Compiling cpufeatures v0.2.17
+   Compiling memchr v2.8.0
+   Compiling iana-time-zone v0.1.65
+   Compiling chrono v0.4.44
+   Compiling serde_json v1.0.149
+   Compiling sha2 v0.10.9
+   Compiling thiserror v1.0.69
+   Compiling uuid v1.23.1
+   Compiling pmx-core v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
+   Compiling thiserror v2.0.18
+   Compiling pmx-gateway v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
+   Compiling pmx-official-sdk-adapter v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 19.98s
+     Running unittests src/lib.rs (adapters/pmx-official-sdk-adapter/target/debug/deps/pmx_official_sdk_adapter-cdaaf4b744519e8f)
 
 running 28 tests
 test tests::authenticated_non_trading_is_explicit_opt_in ... ok
 test tests::default_config_cannot_live_submit ... ok
-test tests::gateway_error_conversion_redacts_sensitive_message ... ok
 test tests::live_canary_prep_freezes_on_remote_unknown_and_never_submits ... ok
+test tests::gateway_error_conversion_redacts_sensitive_message ... ok
 test tests::live_canary_prep_requires_whitelist_caps_approval_and_cancel_fallback ... ok
 test tests::live_submit_canary_requires_cancel_only_fallback ... ok
 test tests::live_submit_canary_requires_every_gate ... ok
@@ -14,22 +39,22 @@ test tests::liveness_geoblock_blocks_first ... ok
 test tests::liveness_requires_reconcile_when_remote_unknown_exists ... ok
 test tests::normalized_error_redaction_covers_remote_unknown_messages ... ok
 test tests::plan_mapping_maps_ioc_to_sdk_fak ... ok
-test tests::plan_mapping_preserves_metadata_without_exposing_signed_payload ... ok
 test tests::plan_mapping_normalizes_limit_orders ... ok
+test tests::plan_mapping_preserves_metadata_without_exposing_signed_payload ... ok
+test tests::plan_mapping_rejects_invalid_limit_price_and_zero_size ... ok
 test tests::plan_mapping_rejects_placeholder_token_id ... ok
 test tests::plan_mapping_requires_market_amount ... ok
-test tests::plan_mapping_rejects_invalid_limit_price_and_zero_size ... ok
-test tests::redacts_named_secret_assignments ... ok
 test tests::plan_mapping_supports_market_amount ... ok
-test tests::sign_only_is_not_live_submit ... ok
-test tests::redacts_private_key_like_hex_tokens ... ok
-test tests::sign_only_lifecycle_rejects_posted_receipt ... ok
-test tests::sign_only_lifecycle_records_are_persistable_and_non_mutating ... ok
 test tests::read_only_smoke_ignores_ambient_credentials_but_must_remain_unauthenticated ... ok
-test tests::standard_sign_only_plan_rejects_profile_that_can_post_or_expose_raw_order ... ok
+test tests::redacts_named_secret_assignments ... ok
+test tests::redacts_private_key_like_hex_tokens ... ok
+test tests::sign_only_is_not_live_submit ... ok
+test tests::sign_only_lifecycle_records_are_persistable_and_non_mutating ... ok
+test tests::sign_only_lifecycle_rejects_posted_receipt ... ok
 test tests::sign_only_request_converts_to_limit_plan ... ok
-test tests::standard_sign_only_profile_is_non_posting_v2_pusd ... ok
 test tests::standard_sign_only_plan_is_default_sdk_construct_path_without_raw_payload ... ok
+test tests::standard_sign_only_plan_rejects_profile_that_can_post_or_expose_raw_order ... ok
+test tests::standard_sign_only_profile_is_non_posting_v2_pusd ... ok
 
 test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 

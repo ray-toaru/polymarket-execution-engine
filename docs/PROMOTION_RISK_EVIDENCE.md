@@ -73,7 +73,8 @@ Boundary:
 - Reconciliation drift drill: `31-reconciliation-drift-drill.log`.
 - Kill-switch and rollback drill: `32-kill-switch-rollback-drill.log`.
 - Migration framework guard: `33-migration-framework-guard.log`.
-- Automatic evidence manifest sections: `shadow_execution_validation`, `reconciliation_drift_validation`, and `rollback_kill_switch_validation`.
+- Runtime worker status query guard: `42-runtime-worker-status-query.log`.
+- Automatic evidence manifest sections: `shadow_execution_validation`, `reconciliation_drift_validation`, `rollback_kill_switch_validation`, and `runtime_worker_status_validation`.
 
 Boundary:
 
@@ -81,4 +82,6 @@ Boundary:
 - The reconciliation and rollback drills are local simulations. They are not a substitute for production runbooks or live remote reconciliation.
 - Per-order lifecycle trace propagation now has a durable `order_events.correlation_id`
   field and order-event query API; broader trace export/dashboarding remains future work.
+- Runtime worker status inspection now has a read-only `/v1/runtime/workers`
+  API and manifest-bound guard; external dashboarding remains future work.
 - The migration framework records version/checksum evidence for local validation. It does not yet prove production migration rollback, dry-run, or drift handling.

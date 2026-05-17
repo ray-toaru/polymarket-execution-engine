@@ -1,0 +1,8 @@
+{
+  "failures": [],
+  "live_cancel_env_enabled": false,
+  "live_submit_env_enabled": false,
+  "remote_trading_side_effect": "not_executed",
+  "route": "/v1/runtime/workers",
+  "status": "pass"
+}
