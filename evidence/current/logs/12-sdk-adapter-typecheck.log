@@ -1,42 +1,44 @@
+   Compiling pmx-gateway v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
    Compiling pmx-official-sdk-adapter v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.16s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.34s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-adapter/target/debug/deps/pmx_official_sdk_adapter-e65649b9aef0c7a2)
 
-running 32 tests
-test tests::gateway_error_conversion_redacts_sensitive_message ... ok
+running 33 tests
 test tests::authenticated_non_trading_is_explicit_opt_in ... ok
+test tests::gateway_error_conversion_preserves_remote_unknown ... ok
 test tests::default_config_cannot_live_submit ... ok
+test tests::gateway_error_conversion_redacts_sensitive_message ... ok
+test tests::geoblock_status_maps_to_core_status ... ok
+test tests::live_canary_default_preconditions_are_blocked_without_side_effects ... ok
 test tests::live_canary_prep_freezes_on_remote_unknown_and_never_submits ... ok
 test tests::live_canary_prep_requires_whitelist_caps_approval_and_cancel_fallback ... ok
-test tests::live_submit_canary_requires_every_gate ... ok
-test tests::gateway_error_conversion_preserves_remote_unknown ... ok
-test tests::geoblock_status_maps_to_core_status ... ok
 test tests::live_submit_canary_requires_cancel_only_fallback ... ok
-test tests::liveness_geoblock_blocks_first ... ok
+test tests::live_submit_canary_requires_every_gate ... ok
 test tests::live_submit_preconditions_are_closed_by_default ... ok
-test tests::normalized_error_redaction_covers_remote_unknown_messages ... ok
+test tests::liveness_geoblock_blocks_first ... ok
 test tests::liveness_requires_reconcile_when_remote_unknown_exists ... ok
+test tests::normalized_error_redaction_covers_remote_unknown_messages ... ok
 test tests::plan_mapping_maps_ioc_to_sdk_fak ... ok
 test tests::plan_mapping_normalizes_limit_orders ... ok
 test tests::plan_mapping_preserves_metadata_without_exposing_signed_payload ... ok
+test tests::plan_mapping_rejects_invalid_limit_price_and_zero_size ... ok
+test tests::plan_mapping_rejects_placeholder_token_id ... ok
 test tests::plan_mapping_requires_market_amount ... ok
 test tests::plan_mapping_supports_market_amount ... ok
+test tests::read_only_smoke_ignores_ambient_credentials_but_must_remain_unauthenticated ... ok
+test tests::redacts_named_secret_assignments ... ok
+test tests::redacts_private_key_like_hex_tokens ... ok
+test tests::sdk_error_normalization_covers_status_codes ... ok
 test tests::sdk_error_normalization_covers_validation ... ok
-test tests::plan_mapping_rejects_invalid_limit_price_and_zero_size ... ok
+test tests::sign_only_is_not_live_submit ... ok
+test tests::sign_only_lifecycle_records_are_persistable_and_non_mutating ... ok
+test tests::sign_only_lifecycle_rejects_posted_receipt ... ok
 test tests::sign_only_request_converts_to_limit_plan ... ok
 test tests::standard_sign_only_plan_is_default_sdk_construct_path_without_raw_payload ... ok
 test tests::standard_sign_only_plan_rejects_profile_that_can_post_or_expose_raw_order ... ok
-test tests::read_only_smoke_ignores_ambient_credentials_but_must_remain_unauthenticated ... ok
 test tests::standard_sign_only_profile_is_non_posting_v2_pusd ... ok
-test tests::redacts_named_secret_assignments ... ok
-test tests::sign_only_is_not_live_submit ... ok
-test tests::sdk_error_normalization_covers_status_codes ... ok
-test tests::sign_only_lifecycle_rejects_posted_receipt ... ok
-test tests::sign_only_lifecycle_records_are_persistable_and_non_mutating ... ok
-test tests::redacts_private_key_like_hex_tokens ... ok
-test tests::plan_mapping_rejects_placeholder_token_id ... ok
 
-test result: ok. 32 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 33 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
    Doc-tests pmx_official_sdk_adapter
 

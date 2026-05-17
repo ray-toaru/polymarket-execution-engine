@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-05-17T19:33:16.387747+00:00",
+  "captured_at": "2026-05-17T19:51:47.230321+00:00",
   "dependency_locks": {
     "polymarket-execution-engine/Cargo.lock": {
       "exists": true,
@@ -24,7 +24,7 @@
   "git": {
     "execution": {
       "branch": "",
-      "head": "cf37e89c54f69c6792ce4ee867467518d12061a5",
+      "head": "71c18edf86a127efc5e214b6fcefc4a5dacd7cfa",
       "path": "polymarket-execution-engine",
       "status_short": "M evidence/current/environment.json\n D evidence/current/logs/01-cargo-fmt.log\n D evidence/current/logs/02-cargo-check.log\n D evidence/current/logs/03-cargo-clippy.log\n D evidence/current/logs/04-cargo-test-workspace-non-api.log\n D evidence/current/logs/05-http-fake-e2e.log\n D evidence/current/logs/06-sdk-spike-no-features.log\n D evidence/current/logs/07-sdk-spike-typecheck.log\n D evidence/current/logs/08-sdk-adapter-fmt.log\n D evidence/current/logs/09-sdk-adapter-check.log\n D evidence/current/logs/10-sdk-adapter-clippy.log\n D evidence/current/logs/11-sdk-adapter-test.log\n D evidence/current/logs/12-sdk-adapter-typecheck.log\n D evidence/current/logs/13-pg-migration.log\n D evidence/current/logs/14-pg-store-tests.log\n D evidence/current/logs/15-http-postgres-e2e.log\n D evidence/current/logs/16-authenticated-smoke.log\n D evidence/current/logs/17-sign-only-dry-run.log\n D evidence/current/logs/18-plan-storage-guard.log\n D evidence/current/logs/19-live-submit-static-guard.log\n D evidence/current/logs/20-sign-only-lifecycle-guard.log\n D evidence/current/logs/21-runtime-worker-model-guard.log\n D evidence/current/logs/22-v0-23-lifecycle-api-guard.log\n D evidence/current/logs/23-v0-23-evidence-manifest-guard.log\n D evidence/current/logs/24-version-consistency-guard.log\n D evidence/current/logs/25-contract-validation.log\n D evidence/current/logs/26-release-hygiene-clean-snapshot.log\n D evidence/current/logs/27-package-release.log\n D evidence/current/logs/28-release-artifact-check.log\n D evidence/current/logs/29-shadow-execution-drill.log\n D evidence/current/logs/30-docs-evidence-governance.log\n D evidence/current/logs/31-reconciliation-drift-drill.log\n D evidence/current/logs/32-kill-switch-rollback-drill.log\n D evidence/current/logs/33-migration-framework-guard.log\n D evidence/current/logs/34-migration-drift-dry-run.log\n D evidence/current/logs/35-sdk-standard-sign-only-guard.log\n D evidence/current/logs/36-production-readiness-guard.log\n D evidence/current/logs/37-sdk-regression-suite-guard.log\n D evidence/current/logs/38-live-canary-readiness-drill.log\n D evidence/current/logs/39-live-canary-blocked-drill.log\n D evidence/current/logs/40-live-canary-rehearsal-drill.log\n D evidence/current/logs/41-production-hardening-config.log\n D evidence/current/logs/42-runtime-worker-status-query.log"
     },
@@ -36,11 +36,11 @@
     },
     "integration": {
       "branch": "v0.23.1-validation-promotion",
-      "head": "01cea9caabf2393630feae58210b9f6468c53805",
+      "head": "aed22e684669d46e745a71b830f12bd8e3cdd027",
       "path": ".",
       "status_short": "m polymarket-execution-engine"
     },
-    "submodules": "0c9e3011252c5ffa2be41cdad6ae4cf6af54bf36 hermes-polymarket-control (remotes/origin/v0.23.1-validation-promotion)\n cf37e89c54f69c6792ce4ee867467518d12061a5 polymarket-execution-engine (remotes/origin/v0.23.1-validation-promotion-3-gcf37e89)"
+    "submodules": "0c9e3011252c5ffa2be41cdad6ae4cf6af54bf36 hermes-polymarket-control (remotes/origin/v0.23.1-validation-promotion)\n 71c18edf86a127efc5e214b6fcefc4a5dacd7cfa polymarket-execution-engine (remotes/origin/v0.23.1-validation-promotion-10-g71c18ed)"
   },
   "integration_root": "/workspaces/universal/rust/polymarket_dual_project",
   "platform": {

@@ -1,7 +1,6 @@
-   Compiling pmx-store v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
    Compiling pmx-service v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
    Compiling pmx-api v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 12.62s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.46s
      Running tests/http_and_fake_e2e.rs (target/debug/deps/http_and_fake_e2e-cf9f3c7648326664)
 
 running 4 tests
@@ -10,5 +9,5 @@ test full_scaffold_path_compile_submit_cancel_and_reconcile ... ok
 test http_auth_and_fake_e2e_smoke ... ok
 test mismatched_object_graph_is_rejected ... ok
 
-test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 

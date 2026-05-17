@@ -6,7 +6,8 @@
     "slo_and_error_budget",
     "audit_export_and_retention",
     "risk_limits",
-    "dependency_and_sdk_breakage"
+    "dependency_and_sdk_breakage",
+    "production_evidence_controls"
   ],
   "failures": [],
   "live_cancel_enabled": false,

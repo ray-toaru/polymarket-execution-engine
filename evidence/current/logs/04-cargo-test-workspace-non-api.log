@@ -1,6 +1,6 @@
-   Compiling pmx-store v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
    Compiling pmx-service v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 15.47s
+   Compiling pmx-gateway v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.77s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-a8b87e591d442027)
 
 running 2 tests
@@ -35,15 +35,18 @@ test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fin
 
      Running unittests src/lib.rs (target/debug/deps/pmx_gateway-9ac8ed762dd54c26)
 
-running 6 tests
+running 9 tests
 test tests::deterministic_signer_provider_posts_reads_and_cancels ... ok
+test tests::disabled_gateway_reconcile_reader_is_disabled ... ok
 test tests::disabled_signer_provider_refuses_to_materialize_signer ... ok
 test tests::fake_gateway_cancel_maps_to_order_lifecycle_state_machine ... ok
 test tests::fake_gateway_is_account_scoped ... ok
 test tests::fake_gateway_surfaces_remote_unknown_without_local_success ... ok
+test tests::fake_remote_reconcile_reader_is_read_only_and_account_scoped ... ok
+test tests::remote_reconcile_reader_rejects_side_effect_requests ... ok
 test tests::signer_provider_defaults_are_production_conservative ... ok
 
-test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_policy-ab9cf5ea4c3fabab)
 
@@ -90,11 +93,12 @@ test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fin
 
      Running unittests src/lib.rs (target/debug/deps/pmx_service-66b940741d1a3ea4)
 
-running 21 tests
+running 22 tests
 test tests::service_classifies_and_records_order_lifecycle_divergence_without_remote_side_effect ... ok
 test tests::service_flow_persists_and_blocks_submit ... ok
 test tests::service_id_bound_flow_persists_and_blocks_submit ... ok
 test tests::service_lists_runtime_worker_status ... ok
+test tests::service_records_continuous_runtime_worker_ticks_fail_closed_on_any_bad_snapshot ... ok
 test tests::service_records_geoblock_worker_tick_for_decision_gate ... ok
 test tests::service_records_heartbeat_lease_election_tick_fail_closed_for_non_owner ... ok
 test tests::service_records_non_live_cancel_and_reconcile_order_lifecycle ... ok
@@ -113,7 +117,7 @@ test tests::service_validates_and_persists_sign_only_lifecycle_sequence ... ok
 test tests::static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks ... ok
 test tests::store_backed_runtime_provider_uses_store_state ... ok
 
-test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-0d1bb31d4413cde9)
 
@@ -154,7 +158,7 @@ test tests::maps_plan_status_for_db ... ok
 test tests::runtime_worker_observations_degrade_loaded_runtime_state ... ok
 test tests::stale_runtime_worker_observations_are_ignored ... ok
 
-test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.83s
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.78s
 
    Doc-tests pmx_authz
 
