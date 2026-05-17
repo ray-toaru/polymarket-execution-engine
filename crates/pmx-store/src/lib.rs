@@ -57,6 +57,8 @@ pub struct OrderLifecycleEventRecord {
     pub order_id: String,
     pub event: OrderEventKind,
     pub event_source: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub correlation_id: Option<String>,
     #[serde(default)]
     pub payload: serde_json::Value,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1839,6 +1841,7 @@ mod order_lifecycle_store_tests_v23 {
                 order_id: "order-life-1".into(),
                 event: OrderEventKind::CancelRequested,
                 event_source: "pmx-store-test".into(),
+                correlation_id: Some("corr-order-life-1".into()),
                 payload: serde_json::json!({"no_remote_side_effect": true}),
                 created_at: None,
             })
@@ -1858,6 +1861,10 @@ mod order_lifecycle_store_tests_v23 {
             .expect("list events");
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].event, OrderEventKind::CancelRequested);
+        assert_eq!(
+            events[0].correlation_id.as_deref(),
+            Some("corr-order-life-1")
+        );
         assert!(events[0].event_id.is_some());
     }
 
@@ -1874,6 +1881,7 @@ mod order_lifecycle_store_tests_v23 {
                 order_id: "order-life-invalid".into(),
                 event: OrderEventKind::CancelConfirmed,
                 event_source: "pmx-store-test".into(),
+                correlation_id: None,
                 payload: serde_json::json!({}),
                 created_at: None,
             })

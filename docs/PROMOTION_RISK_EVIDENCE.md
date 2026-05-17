@@ -79,5 +79,6 @@ Boundary:
 
 - The shadow drill performs a public market read and local candidate-order construction only.
 - The reconciliation and rollback drills are local simulations. They are not a substitute for production runbooks or live remote reconciliation.
-- Service-level observability still needs durable per-order trace propagation through API, store, audit, and lifecycle query paths.
+- Per-order lifecycle trace propagation now has a durable `order_events.correlation_id`
+  field and order-event query API; broader trace export/dashboarding remains future work.
 - The migration framework records version/checksum evidence for local validation. It does not yet prove production migration rollback, dry-run, or drift handling.

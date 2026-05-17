@@ -71,6 +71,7 @@ REQUIRED = {
         "record_non_live_reconcile_observation",
         "reconcile_order_lifecycle_divergence",
         "list_order_lifecycle_events",
+        "correlation_id: correlation_id.clone()",
         "account_id does not match request",
         "record_standard_sign_only_construction",
         "service_classifies_and_records_order_lifecycle_divergence_without_remote_side_effect",
@@ -162,6 +163,10 @@ REQUIRED = {
         "ADD COLUMN IF NOT EXISTS observed_at",
         "ADD COLUMN IF NOT EXISTS correlation_id",
     ],
+    ROOT / "migrations" / "0003_order_event_trace.sql": [
+        "ADD COLUMN IF NOT EXISTS correlation_id",
+        "idx_order_events_order_correlation",
+    ],
     OPENAPI: [
         "/v1/sign-only/lifecycle-events",
         "/v1/sign-only/lifecycle-events/{execution_id}",
@@ -181,6 +186,7 @@ REQUIRED = {
         "payload: { $ref: '#/components/schemas/RedactedPayloadEnvelope' }",
         "ExecutionLifecycleEvent",
         "OrderLifecycleEventRecord",
+        "correlation_id",
         "AdminAuditEvent",
         "ReconcileOrderLocalRequest",
         "ReconcileOrderLocalResponse",

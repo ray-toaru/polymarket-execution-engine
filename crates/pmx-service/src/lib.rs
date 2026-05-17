@@ -923,6 +923,7 @@ where
                 order_id: order_id.to_owned(),
                 event: OrderEventKind::CancelRequested,
                 event_source: "pmx-service".into(),
+                correlation_id: correlation_id.clone(),
                 payload: serde_json::json!({
                     "kind": "cancel_requested_non_live",
                     "correlation_id": correlation_id,
@@ -965,6 +966,7 @@ where
                 order_id: order_id.to_owned(),
                 event,
                 event_source: "pmx-service".into(),
+                correlation_id: correlation_id.clone(),
                 payload: serde_json::json!({
                     "kind": "reconcile_observed_non_live",
                     "correlation_id": correlation_id,
@@ -1011,6 +1013,7 @@ where
                         order_id: order_id.to_owned(),
                         event,
                         event_source: "pmx-service".into(),
+                        correlation_id: correlation_id.clone(),
                         payload: serde_json::json!({
                             "kind": "order_lifecycle_divergence_non_live",
                             "correlation_id": correlation_id,
@@ -2691,6 +2694,11 @@ mod tests {
             events
                 .iter()
                 .all(|event| event.payload["no_remote_side_effect"] == true)
+        );
+        assert!(
+            events
+                .iter()
+                .all(|event| event.correlation_id.as_deref().is_some())
         );
 
         let queried = service

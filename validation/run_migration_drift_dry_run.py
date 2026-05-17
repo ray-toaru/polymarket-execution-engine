@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MIGRATIONS = [
     ("0001_initial", ROOT / "migrations" / "0001_initial.sql"),
     ("0002_migration_framework", ROOT / "migrations" / "0002_migration_framework.sql"),
+    ("0003_order_event_trace", ROOT / "migrations" / "0003_order_event_trace.sql"),
 ]
 
 
@@ -78,16 +79,24 @@ def main() -> int:
     try:
         run_psql(
             database_url,
-            schema_sql(fresh, migration_body(["0001_initial", "0002_migration_framework"]))
+            schema_sql(
+                fresh,
+                migration_body(
+                    ["0001_initial", "0002_migration_framework", "0003_order_event_trace"]
+                ),
+            )
             + record_sql("0001_initial", checksums["0001_initial"])
-            + record_sql("0002_migration_framework", checksums["0002_migration_framework"]),
+            + record_sql("0002_migration_framework", checksums["0002_migration_framework"])
+            + record_sql("0003_order_event_trace", checksums["0003_order_event_trace"]),
         )
         run_psql(
             database_url,
             schema_sql(upgraded, migration_body(["0001_initial"]))
             + migration_body(["0002_migration_framework"])
+            + migration_body(["0003_order_event_trace"])
             + record_sql("0001_initial", checksums["0001_initial"])
-            + record_sql("0002_migration_framework", checksums["0002_migration_framework"]),
+            + record_sql("0002_migration_framework", checksums["0002_migration_framework"])
+            + record_sql("0003_order_event_trace", checksums["0003_order_event_trace"]),
         )
         run_psql(
             database_url,

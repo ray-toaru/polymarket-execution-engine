@@ -21,6 +21,7 @@ def require(condition: bool, message: str, failures: list[str]) -> None:
 def main() -> int:
     failures: list[str] = []
     migration_0002 = MIGRATIONS / "0002_migration_framework.sql"
+    migration_0003 = MIGRATIONS / "0003_order_event_trace.sql"
     postgres = POSTGRES.read_text()
     gates = RUN_GATES.read_text()
     manifest = MANIFEST_WRITER.read_text()
@@ -36,6 +37,12 @@ def main() -> int:
     require("SCHEMA_MIGRATIONS" in postgres, "PostgresStore must define ordered SCHEMA_MIGRATIONS", failures)
     require("0001_initial" in postgres, "SCHEMA_MIGRATIONS must include 0001_initial", failures)
     require("0002_migration_framework" in postgres, "SCHEMA_MIGRATIONS must include 0002_migration_framework", failures)
+    require("0003_order_event_trace" in postgres, "SCHEMA_MIGRATIONS must include 0003_order_event_trace", failures)
+    require(migration_0003.exists(), "missing migrations/0003_order_event_trace.sql", failures)
+    if migration_0003.exists():
+        migration_sql = migration_0003.read_text()
+        require("ADD COLUMN IF NOT EXISTS correlation_id" in migration_sql, "0003 must add order_events.correlation_id", failures)
+        require("idx_order_events_order_correlation" in migration_sql, "0003 must index order event correlation lookup", failures)
     require("record_applied_migration" in postgres, "apply_schema must record applied migrations", failures)
     require("schema migration checksum mismatch" in postgres, "migration checksum drift must fail closed", failures)
     require("applied_schema_migrations" in postgres, "store must expose applied migration evidence for PG tests", failures)
@@ -43,6 +50,7 @@ def main() -> int:
     require("PMX_TEST_DATABASE_URL" in drift_dry_run, "migration dry-run must support PG validation env", failures)
     require("fresh_schema" in drift_dry_run and "upgraded_schema" in drift_dry_run, "migration dry-run must cover fresh and upgraded schemas", failures)
     require("bad checksum fixture" in drift_dry_run, "migration dry-run must include checksum drift fixture", failures)
+    require("0003_order_event_trace" in drift_dry_run, "migration dry-run must include 0003_order_event_trace", failures)
 
     require("33-migration-framework-guard.log" in gates, "run_v0_23_gates.sh must emit migration framework guard log", failures)
     require("34-migration-drift-dry-run.log" in gates, "run_v0_23_gates.sh must emit migration drift dry-run log", failures)

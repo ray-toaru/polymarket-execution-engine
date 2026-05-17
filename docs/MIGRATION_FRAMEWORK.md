@@ -14,6 +14,8 @@ initial migration.
 - `migrations/0001_initial.sql` remains the idempotent baseline for fresh and
   reused local validation databases.
 - `migrations/0002_migration_framework.sql` creates `schema_migrations`.
+- `migrations/0003_order_event_trace.sql` adds `order_events.correlation_id`
+  and an order/correlation lookup index for per-order trace propagation.
 - `PostgresStore::apply_schema()` applies the ordered embedded migration list
   and records each migration version with its SHA-256 checksum.
 - If a recorded migration version has a different checksum, schema application
@@ -22,7 +24,8 @@ initial migration.
 ## Validation
 
 - PostgreSQL repository tests assert that `schema_migrations` records
-  `0001_initial` and `0002_migration_framework`.
+  `0001_initial`, `0002_migration_framework`, and
+  `0003_order_event_trace`.
 - `validation/check_migration_framework.py` guards the migration list, checksum
   failure path, PG test coverage, and evidence-manifest wiring.
 - `validation/run_migration_drift_dry_run.py` validates local migration ordering

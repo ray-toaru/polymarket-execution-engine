@@ -557,6 +557,7 @@ components:
         order_id: { type: string }
         event: { $ref: '#/components/schemas/OrderEventKind' }
         event_source: { type: string }
+        correlation_id: { type: [string, 'null'] }
         payload:
           type: object
           additionalProperties: true

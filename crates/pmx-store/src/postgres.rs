@@ -37,6 +37,10 @@ const SCHEMA_MIGRATIONS: &[SchemaMigration] = &[
         version: "0002_migration_framework",
         sql: include_str!("../../../migrations/0002_migration_framework.sql"),
     },
+    SchemaMigration {
+        version: "0003_order_event_trace",
+        sql: include_str!("../../../migrations/0003_order_event_trace.sql"),
+    },
 ];
 
 /// PostgreSQL-backed execution store.
@@ -712,8 +716,8 @@ impl OrderLifecycleStore for PostgresStore {
         let payload = event.payload.clone();
         if let Err(err) = client
             .execute(
-                "INSERT INTO order_events (order_id, event_type, event_source, payload) VALUES ($1, $2, $3, $4)",
-                &[&event.order_id, &order_event_kind_to_str(&event.event), &event.event_source, &payload],
+                "INSERT INTO order_events (order_id, event_type, event_source, correlation_id, payload) VALUES ($1, $2, $3, $4, $5)",
+                &[&event.order_id, &order_event_kind_to_str(&event.event), &event.event_source, &event.correlation_id, &payload],
             )
             .await
         {
@@ -787,7 +791,7 @@ impl OrderLifecycleStore for PostgresStore {
         let bounded_limit = i64::try_from(query.bounded_limit()).unwrap_or(500);
         let rows = client
             .query(
-                "SELECT event_id, order_id, event_type, event_source, payload, created_at
+                "SELECT event_id, order_id, event_type, event_source, correlation_id, payload, created_at
                  FROM order_events
                  WHERE order_id = $1
                    AND ($2::bigint IS NULL OR event_id < $2)
@@ -806,8 +810,9 @@ impl OrderLifecycleStore for PostgresStore {
                     order_id: row.get(1),
                     event: order_event_kind_from_str(&event_type)?,
                     event_source: row.get(3),
-                    payload: row.get(4),
-                    created_at: Some(row.get(5)),
+                    correlation_id: row.get(4),
+                    payload: row.get(5),
+                    created_at: Some(row.get(6)),
                 })
             })
             .collect::<Result<Vec<_>, StoreError>>()?;
@@ -1370,6 +1375,12 @@ mod tests {
         assert!(migrations.iter().any(|(version, checksum)| {
             version == "0002_migration_framework" && checksum.len() == 64
         }));
+        assert!(
+            migrations
+                .iter()
+                .any(|(version, checksum)| version == "0003_order_event_trace"
+                    && checksum.len() == 64)
+        );
     }
 
     pub(super) async fn seed_execution_plan(
@@ -1995,6 +2006,7 @@ mod order_lifecycle_pg_tests_v23 {
                 order_id: order_id.clone(),
                 event: OrderEventKind::CancelRequested,
                 event_source: "pmx-store-test".into(),
+                correlation_id: Some("corr-pg-order-life".into()),
                 payload: serde_json::json!({"no_remote_side_effect": true}),
                 created_at: None,
             })
@@ -2014,5 +2026,9 @@ mod order_lifecycle_pg_tests_v23 {
             .expect("list order events");
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].event, OrderEventKind::CancelRequested);
+        assert_eq!(
+            events[0].correlation_id.as_deref(),
+            Some("corr-pg-order-life")
+        );
     }
 }
