@@ -31,10 +31,18 @@ Current v0.24 progress:
 - The admin cancel API now attempts the local order-lifecycle write while still
   returning a reconcile-required non-live receipt and preserving the execution
   lifecycle audit event.
+- `pmx-core::classify_order_lifecycle_divergence()` classifies local-vs-remote
+  divergence for `OPEN`, `MISSING`, and `UNKNOWN` remote observations.
+- `ExecutorService::reconcile_order_lifecycle_divergence()` applies that
+  classification to existing local orders and persists only local
+  `order_events`; it does not call any remote cancel or submit endpoint.
+- Repeated `MISSING` observations escalate `RemoteUnknown ->
+  PartialRemoteUnknown -> Failed` so operator-required paths are explicit.
 
 Boundary:
 
 - Unknown local orders are not treated as confirmed cancelled.
-- The reconcile API schema does not yet carry an order id or remote observation,
-  so it still records execution-level non-live reconcile audit only.
+- The public reconcile API schema does not yet carry an order id or remote
+  observation, so it still records execution-level non-live reconcile audit
+  only.
 - No live cancel or remote reconcile call is enabled.

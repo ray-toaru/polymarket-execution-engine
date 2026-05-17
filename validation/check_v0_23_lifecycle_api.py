@@ -53,12 +53,6 @@ REQUIRED = {
         "Operation::ReadAudit",
         "Operation::RecordSignOnlyLifecycle",
     ],
-    ROOT / "crates" / "pmx-core" / "src" / "lib.rs": [
-        "RedactedPayloadEnvelope",
-        "redacted_fields",
-        "redacted_payload_envelope",
-        "signed_payload",
-    ],
     SERVICE: [
         "validate_sign_only_lifecycle_append",
         "sign_only_lifecycle_records_equivalent",
@@ -69,8 +63,20 @@ REQUIRED = {
         "list_execution_lifecycle_events",
         "record_non_live_cancel_request",
         "record_non_live_reconcile_observation",
+        "reconcile_order_lifecycle_divergence",
+        "service_classifies_and_records_order_lifecycle_divergence_without_remote_side_effect",
         "service_records_non_live_cancel_and_reconcile_order_lifecycle",
         "service_validates_and_persists_sign_only_lifecycle_sequence",
+    ],
+    ROOT / "crates" / "pmx-core" / "src" / "lib.rs": [
+        "RedactedPayloadEnvelope",
+        "redacted_fields",
+        "redacted_payload_envelope",
+        "signed_payload",
+        "RemoteOrderObservation",
+        "OrderLifecycleDivergence",
+        "classify_order_lifecycle_divergence",
+        "order_lifecycle_divergence_maps_remote_unknown_open_and_missing",
     ],
     STORE: [
         "OrderLifecycleRecord",

@@ -618,12 +618,106 @@ pub enum ReconcileAction {
     OperatorRequired,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum RemoteOrderObservation {
+    Open,
+    Missing,
+    Unknown,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum OrderLifecycleDivergenceKind {
+    None,
+    LocalRemoteUnknownRemoteOpen,
+    LocalRemoteUnknownRemoteMissing,
+    LocalRemoteUnknownStillUnknown,
+    TerminalLocalRemoteMismatch,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct OrderLifecycleDivergence {
+    pub kind: OrderLifecycleDivergenceKind,
+    pub event: Option<OrderEventKind>,
+    pub operator_required: bool,
+    pub no_remote_side_effect: bool,
+    pub reason: String,
+}
+
 pub fn reconcile_action_for_lifecycle(state: &OrderLifecycleState) -> ReconcileAction {
     match state {
         OrderLifecycleState::RemoteUnknown => ReconcileAction::QueryRemoteOpenOrder,
         OrderLifecycleState::PartialRemoteUnknown => ReconcileAction::ConfirmMissingOrEscalate,
         OrderLifecycleState::Failed => ReconcileAction::OperatorRequired,
         _ => ReconcileAction::Noop,
+    }
+}
+
+pub fn classify_order_lifecycle_divergence(
+    local: &OrderLifecycleState,
+    remote: RemoteOrderObservation,
+) -> OrderLifecycleDivergence {
+    match (local, remote) {
+        (OrderLifecycleState::RemoteUnknown, RemoteOrderObservation::Open)
+        | (OrderLifecycleState::PartialRemoteUnknown, RemoteOrderObservation::Open) => {
+            OrderLifecycleDivergence {
+                kind: OrderLifecycleDivergenceKind::LocalRemoteUnknownRemoteOpen,
+                event: Some(OrderEventKind::ReconcileOpen),
+                operator_required: false,
+                no_remote_side_effect: true,
+                reason: "remote order is open; restore local lifecycle to posted".into(),
+            }
+        }
+        (OrderLifecycleState::RemoteUnknown, RemoteOrderObservation::Missing) => {
+            OrderLifecycleDivergence {
+                kind: OrderLifecycleDivergenceKind::LocalRemoteUnknownRemoteMissing,
+                event: Some(OrderEventKind::ReconcileMissing),
+                operator_required: false,
+                no_remote_side_effect: true,
+                reason: "first missing observation escalates to partial remote unknown".into(),
+            }
+        }
+        (OrderLifecycleState::PartialRemoteUnknown, RemoteOrderObservation::Missing) => {
+            OrderLifecycleDivergence {
+                kind: OrderLifecycleDivergenceKind::LocalRemoteUnknownRemoteMissing,
+                event: Some(OrderEventKind::ReconcileMissing),
+                operator_required: true,
+                no_remote_side_effect: true,
+                reason: "second missing observation escalates to operator-required failed state"
+                    .into(),
+            }
+        }
+        (
+            OrderLifecycleState::RemoteUnknown | OrderLifecycleState::PartialRemoteUnknown,
+            RemoteOrderObservation::Unknown,
+        ) => OrderLifecycleDivergence {
+            kind: OrderLifecycleDivergenceKind::LocalRemoteUnknownStillUnknown,
+            event: None,
+            operator_required: true,
+            no_remote_side_effect: true,
+            reason: "remote truth remains unknown; operator review required".into(),
+        },
+        (
+            OrderLifecycleState::Filled
+            | OrderLifecycleState::CancelConfirmed
+            | OrderLifecycleState::Failed,
+            RemoteOrderObservation::Open,
+        ) => OrderLifecycleDivergence {
+            kind: OrderLifecycleDivergenceKind::TerminalLocalRemoteMismatch,
+            event: None,
+            operator_required: true,
+            no_remote_side_effect: true,
+            reason: "terminal local state conflicts with open remote observation".into(),
+        },
+        _ => OrderLifecycleDivergence {
+            kind: OrderLifecycleDivergenceKind::None,
+            event: None,
+            operator_required: false,
+            no_remote_side_effect: true,
+            reason: "no lifecycle divergence requiring a local transition".into(),
+        },
     }
 }
 
@@ -1013,5 +1107,49 @@ mod tests {
             reconcile_action_for_lifecycle(&OrderLifecycleState::Posted),
             ReconcileAction::Noop
         );
+    }
+
+    #[test]
+    fn order_lifecycle_divergence_maps_remote_unknown_open_and_missing() {
+        let open = classify_order_lifecycle_divergence(
+            &OrderLifecycleState::RemoteUnknown,
+            RemoteOrderObservation::Open,
+        );
+        assert_eq!(
+            open.kind,
+            OrderLifecycleDivergenceKind::LocalRemoteUnknownRemoteOpen
+        );
+        assert_eq!(open.event, Some(OrderEventKind::ReconcileOpen));
+        assert!(!open.operator_required);
+        assert!(open.no_remote_side_effect);
+
+        let first_missing = classify_order_lifecycle_divergence(
+            &OrderLifecycleState::RemoteUnknown,
+            RemoteOrderObservation::Missing,
+        );
+        assert_eq!(first_missing.event, Some(OrderEventKind::ReconcileMissing));
+        assert!(!first_missing.operator_required);
+
+        let second_missing = classify_order_lifecycle_divergence(
+            &OrderLifecycleState::PartialRemoteUnknown,
+            RemoteOrderObservation::Missing,
+        );
+        assert_eq!(second_missing.event, Some(OrderEventKind::ReconcileMissing));
+        assert!(second_missing.operator_required);
+    }
+
+    #[test]
+    fn order_lifecycle_divergence_escalates_terminal_remote_mismatch() {
+        let divergence = classify_order_lifecycle_divergence(
+            &OrderLifecycleState::Filled,
+            RemoteOrderObservation::Open,
+        );
+        assert_eq!(
+            divergence.kind,
+            OrderLifecycleDivergenceKind::TerminalLocalRemoteMismatch
+        );
+        assert!(divergence.event.is_none());
+        assert!(divergence.operator_required);
+        assert!(divergence.no_remote_side_effect);
     }
 }

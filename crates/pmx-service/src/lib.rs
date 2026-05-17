@@ -429,6 +429,50 @@ where
         Ok(Some(updated))
     }
 
+    pub async fn reconcile_order_lifecycle_divergence(
+        &self,
+        order_id: &str,
+        remote_observation: RemoteOrderObservation,
+        reason: &str,
+        correlation_id: Option<String>,
+    ) -> Result<Option<(OrderLifecycleDivergence, Option<OrderLifecycleRecord>)>, ServiceError>
+    {
+        if order_id.trim().is_empty() || reason.trim().is_empty() {
+            return Err(ServiceError::BadRequest(
+                "order_id and reason must be non-empty".into(),
+            ));
+        }
+        let Some(order) = self.store.load_order_lifecycle(order_id).await? else {
+            return Ok(None);
+        };
+        let divergence =
+            classify_order_lifecycle_divergence(&order.lifecycle_state, remote_observation);
+        let updated = if let Some(event) = divergence.event.clone() {
+            Some(
+                self.store
+                    .record_order_lifecycle_event(&OrderLifecycleEventRecord {
+                        event_id: None,
+                        order_id: order_id.to_owned(),
+                        event,
+                        event_source: "pmx-service".into(),
+                        payload: serde_json::json!({
+                            "kind": "order_lifecycle_divergence_non_live",
+                            "correlation_id": correlation_id,
+                            "operator_required": divergence.operator_required,
+                            "reason_len": reason.len(),
+                            "classification": format!("{:?}", divergence.kind),
+                            "no_remote_side_effect": true,
+                        }),
+                        created_at: None,
+                    })
+                    .await?,
+            )
+        } else {
+            None
+        };
+        Ok(Some((divergence, updated)))
+    }
+
     pub async fn record_sign_only_lifecycle_event(
         &self,
         mut record: SignOnlyLifecycleRecord,
@@ -1359,5 +1403,71 @@ mod tests {
             .await
             .expect("missing order is non-fatal");
         assert!(missing.is_none());
+    }
+
+    #[tokio::test]
+    async fn service_classifies_and_records_order_lifecycle_divergence_without_remote_side_effect()
+    {
+        let store = InMemoryStore::default();
+        store
+            .upsert_order_lifecycle(&order(
+                "order-divergence",
+                OrderLifecycleState::RemoteUnknown,
+            ))
+            .await
+            .expect("upsert order");
+        let service = ExecutorService::new(store.clone());
+
+        let (first_divergence, first_update) = service
+            .reconcile_order_lifecycle_divergence(
+                "order-divergence",
+                RemoteOrderObservation::Missing,
+                "remote read observed missing",
+                Some("corr-divergence-1".into()),
+            )
+            .await
+            .expect("first divergence")
+            .expect("order exists");
+        assert_eq!(
+            first_divergence.kind,
+            OrderLifecycleDivergenceKind::LocalRemoteUnknownRemoteMissing
+        );
+        assert!(!first_divergence.operator_required);
+        assert!(first_divergence.no_remote_side_effect);
+        assert_eq!(
+            first_update.expect("first update").lifecycle_state,
+            OrderLifecycleState::PartialRemoteUnknown
+        );
+
+        let (second_divergence, second_update) = service
+            .reconcile_order_lifecycle_divergence(
+                "order-divergence",
+                RemoteOrderObservation::Missing,
+                "remote read still missing",
+                Some("corr-divergence-2".into()),
+            )
+            .await
+            .expect("second divergence")
+            .expect("order exists");
+        assert!(second_divergence.operator_required);
+        assert_eq!(
+            second_update.expect("second update").lifecycle_state,
+            OrderLifecycleState::Failed
+        );
+
+        let events = store
+            .list_order_lifecycle_events(&pmx_store::OrderLifecycleEventQuery {
+                order_id: "order-divergence".into(),
+                limit: 10,
+                before_event_id: None,
+            })
+            .await
+            .expect("order lifecycle events");
+        assert_eq!(events.len(), 2);
+        assert!(
+            events
+                .iter()
+                .all(|event| event.payload["no_remote_side_effect"] == true)
+        );
     }
 }
