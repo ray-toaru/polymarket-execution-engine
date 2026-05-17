@@ -2,11 +2,12 @@ use async_trait::async_trait;
 use chrono::Utc;
 use pmx_core::*;
 use pmx_policy::evaluate_constraints;
+use pmx_runtime::{RuntimeSignal, runtime_worker_store_writes};
 use pmx_store::{
     AdminAuditEvent, AdminAuditQuery, AdminAuditStore, ExecutionLifecycleEvent,
     ExecutionLifecycleQuery, ExecutionLifecycleStore, ExecutionStore, IdempotencyAction,
-    IdempotencyStore, RuntimeStateQuery, RuntimeStateStore, SignOnlyLifecycleQuery,
-    SignOnlyLifecycleStore, StoreError,
+    IdempotencyStore, RuntimeStateQuery, RuntimeStateStore, RuntimeWorkerObservation,
+    RuntimeWorkerObservationStore, SignOnlyLifecycleQuery, SignOnlyLifecycleStore, StoreError,
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -80,6 +81,31 @@ pub trait RuntimeStateProvider: Clone + Send + Sync + 'static {
         &self,
         normalized_intent: &NormalizedIntent,
     ) -> RuntimeStateSummary;
+}
+
+pub async fn record_runtime_worker_signals<S>(
+    store: &S,
+    account_id: impl Into<String>,
+    signals: &[RuntimeSignal],
+) -> Result<usize, ServiceError>
+where
+    S: RuntimeWorkerObservationStore + Send + Sync,
+{
+    let writes = runtime_worker_store_writes(account_id, signals);
+    for write in &writes {
+        store
+            .record_runtime_worker_observation(&RuntimeWorkerObservation {
+                account_id: write.account_id.clone(),
+                capability: write.capability.clone(),
+                worker_kind: format!("{:?}", write.worker_kind),
+                status: format!("{:?}", write.status),
+                should_fail_closed: write.should_fail_closed,
+                reason: write.reason.clone(),
+                observed_at: None,
+            })
+            .await?;
+    }
+    Ok(writes.len())
 }
 
 fn fail_closed_runtime_state(required_capabilities: Vec<String>) -> RuntimeStateSummary {
@@ -1010,5 +1036,64 @@ mod tests {
             .await
             .expect("decision");
         assert_eq!(decision.status, DecisionStatus::Allow);
+    }
+
+    #[tokio::test]
+    async fn service_records_runtime_worker_signals_for_decision_gate() {
+        let store = InMemoryStore::default();
+        store.set_runtime_state_for_test("acct-1", "cond-1", None, allow_runtime_state());
+        for capability in ["heartbeat", "reconcile", "resource-refresh"] {
+            store
+                .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
+                    worker_id: format!("worker-{capability}"),
+                    role: "service-test".into(),
+                    capability: capability.into(),
+                    status: "HEALTHY".into(),
+                    last_heartbeat_at: Utc::now(),
+                    last_error: None,
+                })
+                .await
+                .expect("record worker heartbeat");
+        }
+        let recorded = record_runtime_worker_signals(
+            &store,
+            "acct-1",
+            &[RuntimeSignal::HeartbeatLease {
+                active: false,
+                last_observed_at: Some(Utc::now()),
+                last_error: Some("lease expired".into()),
+            }],
+        )
+        .await
+        .expect("record runtime worker signal");
+        assert_eq!(recorded, 1);
+
+        let service = ExecutorService::with_runtime_provider(
+            store.clone(),
+            StoreBackedRuntimeStateProvider::new(store.clone()),
+            "test-executor".into(),
+            DEFAULT_CONTRACT_VERSION.into(),
+        );
+        let normalized = service.normalize(intent()).await.expect("normalize");
+        let snapshot = service
+            .capture_snapshot(normalized.clone())
+            .await
+            .expect("snapshot");
+        assert_eq!(snapshot.runtime_state.worker_status, WorkerStatus::Stale);
+        assert!(
+            snapshot
+                .runtime_state
+                .required_capabilities
+                .contains(&"heartbeat-lease".to_string())
+        );
+        let decision = service
+            .evaluate_decision_by_id(DecisionByIdRequest {
+                normalized_intent_id: normalized.normalized_intent_id.clone(),
+                snapshot_id: snapshot.snapshot_id.clone(),
+            })
+            .await
+            .expect("decision");
+        assert_eq!(decision.status, DecisionStatus::Block);
+        assert!(decision.reasons.contains(&BlockReason::WorkerStale));
     }
 }

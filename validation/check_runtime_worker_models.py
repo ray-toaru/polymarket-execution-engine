@@ -23,6 +23,12 @@ REQUIRED = {
         "worker_actions_mark_stale_runtime_inputs_as_fail_closed_updates",
         "runtime_worker_store_writes_are_fail_closed_for_bad_signals",
     ],
+    ROOT / "crates" / "pmx-service" / "src" / "lib.rs": [
+        "record_runtime_worker_signals",
+        "runtime_worker_store_writes",
+        "RuntimeWorkerObservationStore",
+        "service_records_runtime_worker_signals_for_decision_gate",
+    ],
     STORE: [
         "pub struct RuntimeWorkerObservation",
         "pub trait RuntimeWorkerObservationStore",

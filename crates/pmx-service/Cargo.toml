@@ -10,6 +10,7 @@ async-trait.workspace = true
 chrono.workspace = true
 pmx-core = { path = "../pmx-core" }
 pmx-policy = { path = "../pmx-policy" }
+pmx-runtime = { path = "../pmx-runtime" }
 pmx-store = { path = "../pmx-store" }
 serde.workspace = true
 serde_json.workspace = true

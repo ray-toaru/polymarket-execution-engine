@@ -27,10 +27,15 @@ reason
 
 The purpose is to make future WebSocket / heartbeat / geoblock / reconcile workers update the same runtime truth model while preserving fail-closed behavior before live submit exists.
 
+`pmx-service::record_runtime_worker_signals()` now bridges deterministic runtime
+signals into `RuntimeWorkerObservationStore`. This is still non-network
+scaffolding: workers can persist observations and the existing store-backed
+runtime provider can make decision gates fail closed, but no WebSocket,
+geoblock, submit, or cancel side effect is started by this helper.
+
 Remaining work:
 
 ```text
-- Persist worker actions to runtime tables.
 - Add real market/user/sports WebSocket workers.
 - Add heartbeat lease writer.
 - Add geoblock provider integration.
