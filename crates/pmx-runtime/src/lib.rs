@@ -454,6 +454,19 @@ pub struct ResourceRefreshEvaluation {
     pub reason: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ReconcileBacklogEvaluationInput {
+    pub remote_unknown_order_ids: Vec<String>,
+    pub observed_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ReconcileBacklogEvaluation {
+    pub remote_unknown_orders: u32,
+    pub submit_blocked: bool,
+    pub reason: String,
+}
+
 /// Evaluate resource-refresh freshness without doing network or store I/O.
 ///
 /// Every observed resource must be fresh and healthy. Missing observations are
@@ -527,6 +540,22 @@ pub fn evaluate_resource_refresh_freshness(
         failed_components,
         missing_components,
         reason,
+    }
+}
+
+/// Evaluate reconcile backlog without reading or mutating remote order state.
+pub fn evaluate_reconcile_backlog(
+    input: ReconcileBacklogEvaluationInput,
+) -> ReconcileBacklogEvaluation {
+    let remote_unknown_orders = input.remote_unknown_order_ids.len() as u32;
+    ReconcileBacklogEvaluation {
+        remote_unknown_orders,
+        submit_blocked: remote_unknown_orders > 0,
+        reason: if remote_unknown_orders == 0 {
+            "no remote unknown reconcile backlog".into()
+        } else {
+            format!("remote_unknown_orders={remote_unknown_orders}")
+        },
     }
 }
 
@@ -1092,5 +1121,27 @@ mod capability_tests_v07 {
             vec!["collateral:collateral-1"]
         );
         assert_eq!(evaluation.missing_components, vec!["market"]);
+    }
+
+    #[test]
+    fn reconcile_backlog_evaluation_blocks_submit_for_remote_unknown_orders() {
+        let evaluation = evaluate_reconcile_backlog(ReconcileBacklogEvaluationInput {
+            remote_unknown_order_ids: vec!["order-1".into(), "order-2".into()],
+            observed_at: Utc::now(),
+        });
+        assert_eq!(evaluation.remote_unknown_orders, 2);
+        assert!(evaluation.submit_blocked);
+        assert_eq!(evaluation.reason, "remote_unknown_orders=2");
+    }
+
+    #[test]
+    fn reconcile_backlog_evaluation_allows_submit_when_backlog_empty() {
+        let evaluation = evaluate_reconcile_backlog(ReconcileBacklogEvaluationInput {
+            remote_unknown_order_ids: vec![],
+            observed_at: Utc::now(),
+        });
+        assert_eq!(evaluation.remote_unknown_orders, 0);
+        assert!(!evaluation.submit_blocked);
+        assert_eq!(evaluation.reason, "no remote unknown reconcile backlog");
     }
 }

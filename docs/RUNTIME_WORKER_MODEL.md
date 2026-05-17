@@ -76,9 +76,16 @@ record_resource_refresh_worker_tick()` turns that evaluation into the provider
 snapshot bridge, so stale resource truth becomes a persisted runtime blocker
 without any remote submit or cancel side effect.
 
+`pmx-runtime::evaluate_reconcile_backlog()` models the reconcile backlog worker
+without remote reads or lifecycle mutation. It accepts the caller's current
+remote-unknown order ids and produces a normalized backlog count; any non-zero
+count maps through `pmx-service::record_reconcile_backlog_worker_tick()` into
+the same provider snapshot bridge and blocks submit as a degraded reconcile
+state.
+
 Remaining work:
 
 ```text
 - Connect concrete network providers to the deterministic worker-loop boundary.
-- Connect reconcile backlog worker to remote order observations.
+- Connect concrete reconcile readers to remote order observations.
 ```

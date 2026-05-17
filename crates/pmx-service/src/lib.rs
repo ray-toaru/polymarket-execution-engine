@@ -4,8 +4,9 @@ use pmx_core::*;
 use pmx_policy::evaluate_constraints;
 use pmx_runtime::{
     HeartbeatLeaseCandidate, HeartbeatLeaseElection, HeartbeatLeaseElectionInput,
-    ResourceRefreshEvaluation, ResourceRefreshEvaluationInput, ResourceRefreshObservation,
-    RuntimeSignal, RuntimeWorkerProviderSnapshot, elect_heartbeat_lease_owner,
+    ReconcileBacklogEvaluation, ReconcileBacklogEvaluationInput, ResourceRefreshEvaluation,
+    ResourceRefreshEvaluationInput, ResourceRefreshObservation, RuntimeSignal,
+    RuntimeWorkerProviderSnapshot, elect_heartbeat_lease_owner, evaluate_reconcile_backlog,
     evaluate_resource_refresh_freshness, runtime_worker_loop_tick, runtime_worker_store_writes,
 };
 use pmx_store::{
@@ -157,6 +158,31 @@ pub struct ResourceRefreshWorkerTick {
 #[serde(deny_unknown_fields)]
 pub struct ResourceRefreshWorkerTickReceipt {
     pub evaluation: ResourceRefreshEvaluation,
+    pub provider_tick: RuntimeWorkerProviderTickReceipt,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReconcileBacklogWorkerTick {
+    pub account_id: String,
+    pub provider_name: String,
+    pub instance_id: String,
+    pub lease_owner_id: String,
+    pub market_websocket_connected: bool,
+    pub market_websocket_stale: bool,
+    pub user_websocket_connected: bool,
+    pub user_websocket_stale: bool,
+    pub geoblock_status: GeoblockStatus,
+    pub resource_refresh_fresh: bool,
+    pub remote_unknown_order_ids: Vec<String>,
+    pub observed_at: chrono::DateTime<Utc>,
+    pub no_trading_side_effect: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReconcileBacklogWorkerTickReceipt {
+    pub evaluation: ReconcileBacklogEvaluation,
     pub provider_tick: RuntimeWorkerProviderTickReceipt,
 }
 
@@ -398,6 +424,55 @@ where
     )
     .await?;
     Ok(ResourceRefreshWorkerTickReceipt {
+        evaluation,
+        provider_tick,
+    })
+}
+
+pub async fn record_reconcile_backlog_worker_tick<S>(
+    store: &S,
+    tick: ReconcileBacklogWorkerTick,
+) -> Result<ReconcileBacklogWorkerTickReceipt, ServiceError>
+where
+    S: RuntimeWorkerHealthStore + RuntimeWorkerObservationStore + Send + Sync,
+{
+    if tick.account_id.trim().is_empty()
+        || tick.provider_name.trim().is_empty()
+        || tick.instance_id.trim().is_empty()
+    {
+        return Err(ServiceError::BadRequest(
+            "account_id, provider_name and instance_id must be non-empty".into(),
+        ));
+    }
+    if !tick.no_trading_side_effect {
+        return Err(ServiceError::BadRequest(
+            "reconcile backlog worker ticks must not contain trading side effects".into(),
+        ));
+    }
+    let evaluation = evaluate_reconcile_backlog(ReconcileBacklogEvaluationInput {
+        remote_unknown_order_ids: tick.remote_unknown_order_ids,
+        observed_at: tick.observed_at,
+    });
+    let provider_tick = record_runtime_worker_provider_snapshot(
+        store,
+        RuntimeWorkerProviderSnapshot {
+            account_id: tick.account_id,
+            lease_owner_id: tick.lease_owner_id,
+            instance_id: tick.instance_id,
+            market_websocket_connected: tick.market_websocket_connected,
+            market_websocket_stale: tick.market_websocket_stale,
+            user_websocket_connected: tick.user_websocket_connected,
+            user_websocket_stale: tick.user_websocket_stale,
+            geoblock_status: tick.geoblock_status,
+            resource_refresh_fresh: tick.resource_refresh_fresh,
+            remote_unknown_orders: evaluation.remote_unknown_orders,
+            observed_at: tick.observed_at,
+            provider_name: tick.provider_name,
+            no_trading_side_effect: true,
+        },
+    )
+    .await?;
+    Ok(ReconcileBacklogWorkerTickReceipt {
         evaluation,
         provider_tick,
     })
@@ -1941,6 +2016,79 @@ mod tests {
             .expect("decision");
         assert_eq!(decision.status, DecisionStatus::Block);
         assert!(decision.reasons.contains(&BlockReason::WorkerStale));
+    }
+
+    #[tokio::test]
+    async fn service_records_reconcile_backlog_worker_tick_for_decision_gate() {
+        let store = InMemoryStore::default();
+        store.set_runtime_state_for_test("acct-1", "cond-1", None, allow_runtime_state());
+        for capability in ["heartbeat", "reconcile", "resource-refresh"] {
+            store
+                .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
+                    worker_id: format!("worker-{capability}"),
+                    role: "service-test".into(),
+                    capability: capability.into(),
+                    status: "HEALTHY".into(),
+                    last_heartbeat_at: Utc::now(),
+                    last_error: None,
+                })
+                .await
+                .expect("record worker heartbeat");
+        }
+
+        let observed_at = Utc::now();
+        let receipt = record_reconcile_backlog_worker_tick(
+            &store,
+            ReconcileBacklogWorkerTick {
+                account_id: "acct-1".into(),
+                provider_name: "reconcile-backlog-worker-test".into(),
+                instance_id: "worker-reconcile-backlog".into(),
+                lease_owner_id: "worker-reconcile-backlog".into(),
+                market_websocket_connected: true,
+                market_websocket_stale: false,
+                user_websocket_connected: true,
+                user_websocket_stale: false,
+                geoblock_status: GeoblockStatus::Allowed,
+                resource_refresh_fresh: true,
+                remote_unknown_order_ids: vec!["order-remote-unknown".into()],
+                observed_at,
+                no_trading_side_effect: true,
+            },
+        )
+        .await
+        .expect("record reconcile backlog worker tick");
+        assert_eq!(receipt.evaluation.remote_unknown_orders, 1);
+        assert!(receipt.evaluation.submit_blocked);
+        assert!(receipt.provider_tick.lease_owner_active);
+        assert!(!receipt.provider_tick.submit_allowed_by_runtime);
+
+        let service = ExecutorService::with_runtime_provider(
+            store.clone(),
+            StoreBackedRuntimeStateProvider::new(store.clone()),
+            "test-executor".into(),
+            DEFAULT_CONTRACT_VERSION.into(),
+        );
+        let normalized = service.normalize(intent()).await.expect("normalize");
+        let snapshot = service
+            .capture_snapshot(normalized.clone())
+            .await
+            .expect("snapshot");
+        assert_eq!(snapshot.runtime_state.worker_status, WorkerStatus::Degraded);
+        assert!(
+            snapshot
+                .runtime_state
+                .required_capabilities
+                .contains(&"reconcile-backlog".to_string())
+        );
+        let decision = service
+            .evaluate_decision_by_id(DecisionByIdRequest {
+                normalized_intent_id: normalized.normalized_intent_id.clone(),
+                snapshot_id: snapshot.snapshot_id.clone(),
+            })
+            .await
+            .expect("decision");
+        assert_eq!(decision.status, DecisionStatus::Block);
+        assert!(decision.reasons.contains(&BlockReason::WorkerDegraded));
     }
 
     #[tokio::test]
