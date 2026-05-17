@@ -58,6 +58,7 @@ pub const ENV_RUN_AUTHENTICATED_SMOKE: &str = "PMX_RUN_AUTHENTICATED_NON_TRADING
 pub const ENV_RUN_SIGN_ONLY_DRY_RUN: &str = "PMX_RUN_SIGN_ONLY_DRY_RUN";
 pub const ENV_ALLOW_SIGN_ONLY_DRY_RUN: &str = "PMX_ALLOW_SIGN_ONLY_DRY_RUN";
 pub const ENV_ALLOW_LIVE_SUBMIT: &str = "PMX_ALLOW_LIVE_SUBMIT";
+pub const ENV_ALLOW_LIVE_CANCEL: &str = "PMX_ALLOW_LIVE_CANCEL";
 pub const ENV_SDK_CALL_TIMEOUT_SECS: &str = "PMX_SDK_CALL_TIMEOUT_SECS";
 pub const REDACTED: &str = "[REDACTED]";
 pub const CLOB_V2_COLLATERAL_SYMBOL: &str = "pUSD";
@@ -363,6 +364,26 @@ pub struct OfficialSdkLivenessSnapshot {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LiveCanaryPreconditions {
+    pub compile_feature_live_submit: bool,
+    pub env_allow_live_submit: bool,
+    pub config_allow_live_submit: bool,
+    pub kill_switch_open: bool,
+    pub runtime_worker_healthy: bool,
+    pub geoblock_allowed: bool,
+    pub repository_reservation_exists: bool,
+    pub idempotency_key_written: bool,
+    pub reconcile_worker_healthy: bool,
+    pub account_whitelisted: bool,
+    pub market_whitelisted: bool,
+    pub size_cap_ok: bool,
+    pub daily_cap_ok: bool,
+    pub operator_approved: bool,
+    pub cancel_only_fallback_ready: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OfficialSdkReconcileDisposition {
     Healthy,
@@ -452,6 +473,72 @@ pub fn validate_live_submit_preconditions(
         return Err(OfficialSdkAdapterError::SafetyGate(
             "reconcile worker is not healthy".into(),
         ));
+    }
+    Ok(())
+}
+
+pub fn validate_live_submit_canary_preconditions(
+    preconditions: &LiveCanaryPreconditions,
+) -> Result<(), OfficialSdkAdapterError> {
+    let required = [
+        (
+            preconditions.compile_feature_live_submit,
+            "live-submit compile feature disabled",
+        ),
+        (
+            preconditions.env_allow_live_submit,
+            "PMX_ALLOW_LIVE_SUBMIT is not enabled",
+        ),
+        (
+            preconditions.config_allow_live_submit,
+            "config.allow_live_submit is not enabled",
+        ),
+        (preconditions.kill_switch_open, "kill switch is not open"),
+        (
+            preconditions.runtime_worker_healthy,
+            "runtime worker is not healthy",
+        ),
+        (preconditions.geoblock_allowed, "geoblock is not allowed"),
+        (
+            preconditions.repository_reservation_exists,
+            "repository reservation is missing",
+        ),
+        (
+            preconditions.idempotency_key_written,
+            "idempotency key is not written",
+        ),
+        (
+            preconditions.reconcile_worker_healthy,
+            "reconcile worker is not healthy",
+        ),
+        (
+            preconditions.account_whitelisted,
+            "account is not whitelisted",
+        ),
+        (
+            preconditions.market_whitelisted,
+            "market is not whitelisted",
+        ),
+        (preconditions.size_cap_ok, "size cap is exceeded"),
+        (preconditions.daily_cap_ok, "daily cap is exceeded"),
+        (
+            preconditions.operator_approved,
+            "operator approval is missing",
+        ),
+        (
+            preconditions.cancel_only_fallback_ready,
+            "cancel-only fallback is not ready",
+        ),
+    ];
+    let missing: Vec<_> = required
+        .into_iter()
+        .filter_map(|(ok, reason)| (!ok).then_some(reason))
+        .collect();
+    if !missing.is_empty() {
+        return Err(OfficialSdkAdapterError::SafetyGate(format!(
+            "live submit canary blocked: {}",
+            missing.join("; ")
+        )));
     }
     Ok(())
 }
@@ -1185,6 +1272,48 @@ mod tests {
     fn live_submit_preconditions_are_closed_by_default() {
         let config = OfficialSdkAdapterConfig::default();
         assert!(validate_live_submit_preconditions(&config, true, true, true).is_err());
+    }
+
+    fn all_live_canary_preconditions() -> LiveCanaryPreconditions {
+        LiveCanaryPreconditions {
+            compile_feature_live_submit: true,
+            env_allow_live_submit: true,
+            config_allow_live_submit: true,
+            kill_switch_open: true,
+            runtime_worker_healthy: true,
+            geoblock_allowed: true,
+            repository_reservation_exists: true,
+            idempotency_key_written: true,
+            reconcile_worker_healthy: true,
+            account_whitelisted: true,
+            market_whitelisted: true,
+            size_cap_ok: true,
+            daily_cap_ok: true,
+            operator_approved: true,
+            cancel_only_fallback_ready: true,
+        }
+    }
+
+    #[test]
+    fn live_submit_canary_requires_every_gate() {
+        let mut preconditions = all_live_canary_preconditions();
+        validate_live_submit_canary_preconditions(&preconditions).expect("all gates set");
+        preconditions.operator_approved = false;
+        let err = validate_live_submit_canary_preconditions(&preconditions)
+            .expect_err("operator approval is mandatory");
+        assert!(err.to_string().contains("operator approval is missing"));
+    }
+
+    #[test]
+    fn live_submit_canary_requires_cancel_only_fallback() {
+        let mut preconditions = all_live_canary_preconditions();
+        preconditions.cancel_only_fallback_ready = false;
+        let err = validate_live_submit_canary_preconditions(&preconditions)
+            .expect_err("cancel-only fallback is mandatory");
+        assert!(
+            err.to_string()
+                .contains("cancel-only fallback is not ready")
+        );
     }
 
     #[test]

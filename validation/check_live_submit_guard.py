@@ -27,6 +27,27 @@ FORBIDDEN_PUBLIC_TERMS = [
     "clob_secret",
     "post_order",
 ]
+REQUIRED_CANARY_TOKENS = [
+    "LiveCanaryPreconditions",
+    "validate_live_submit_canary_preconditions",
+    "compile_feature_live_submit",
+    "env_allow_live_submit",
+    "config_allow_live_submit",
+    "kill_switch_open",
+    "runtime_worker_healthy",
+    "geoblock_allowed",
+    "repository_reservation_exists",
+    "idempotency_key_written",
+    "reconcile_worker_healthy",
+    "account_whitelisted",
+    "market_whitelisted",
+    "size_cap_ok",
+    "daily_cap_ok",
+    "operator_approved",
+    "cancel_only_fallback_ready",
+    "live_submit_canary_requires_every_gate",
+    "live_submit_canary_requires_cancel_only_fallback",
+]
 
 
 def strip_rust_comments(text: str) -> str:
@@ -43,6 +64,10 @@ def main() -> int:
     for pattern in FORBIDDEN_ADAPTER_PATTERNS:
         if pattern.search(adapter_text):
             failures.append(f"official SDK adapter contains forbidden call pattern: {pattern.pattern}")
+    raw_adapter_text = ADAPTER.read_text()
+    for token in REQUIRED_CANARY_TOKENS:
+        if token not in raw_adapter_text:
+            failures.append(f"official SDK adapter missing live canary guard token: {token}")
 
     public_text = PUBLIC_CONTRACT.read_text()
     for term in FORBIDDEN_PUBLIC_TERMS:

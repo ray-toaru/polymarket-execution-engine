@@ -49,7 +49,9 @@
     "non-live-reconcile-order-lifecycle-observation-helper",
     "official-sdk-standard-sign-only-v2-pusd-profile",
     "official-sdk-sign-only-metadata-redaction-boundary",
-    "official-sdk-ioc-to-fak-builder-mapping"
+    "official-sdk-ioc-to-fak-builder-mapping",
+    "live-submit-canary-preconditions-model",
+    "live-submit-canary-deny-path-tests"
   ],
   "v011_source_changes": [
     "api-server-authoritative-in-memory-store-scaffold",

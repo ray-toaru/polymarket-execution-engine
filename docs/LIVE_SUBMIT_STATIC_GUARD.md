@@ -12,6 +12,11 @@ The project is still pre-live. The official SDK adapter may contain explicit saf
 
 - the official SDK adapter source has no `.post_order(` or `.post_orders(` call after comments are stripped;
 - the public OpenAPI contract does not expose signed/live-submit terms such as `SignedOrderEnvelope`, `signed_payload`, `private_key`, `clob_secret`, or `post_order`.
+- any future live-submit canary must satisfy `LiveCanaryPreconditions`,
+  including compile feature, env gate, config gate, kill switch, runtime worker,
+  geoblock, repository reservation, idempotency key, reconcile worker,
+  account/market whitelist, size cap, daily cap, operator approval, and
+  cancel-only fallback.
 
 The fake gateway crate is intentionally outside the static guard because its in-memory `post_order` is a deterministic test double, not a Polymarket remote side effect.
 
