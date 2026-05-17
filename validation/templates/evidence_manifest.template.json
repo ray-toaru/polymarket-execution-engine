@@ -1,0 +1,74 @@
+{
+  "version": "0.23.0",
+  "artifact_kind": "source_candidate",
+  "generated_at": null,
+  "canonical_evidence_dir": "polymarket-execution-engine/evidence/current",
+  "provenance": {
+    "kind": "template",
+    "note": "Template only. Current evidence must be written to polymarket-execution-engine/evidence/current/manifest.json."
+  },
+  "artifact": {
+    "path": null,
+    "sha256": null
+  },
+  "local_static_validation": {
+    "status": "pending",
+    "logs": [],
+    "required_logs": [
+      "18-plan-storage-guard.log",
+      "19-live-submit-static-guard.log",
+      "20-sign-only-lifecycle-guard.log",
+      "21-runtime-worker-model-guard.log",
+      "22-v0-23-lifecycle-api-guard.log",
+      "23-v0-23-evidence-manifest-guard.log",
+      "24-version-consistency-guard.log",
+      "25-contract-validation.log",
+      "26-release-hygiene-clean-snapshot.log"
+    ]
+  },
+  "rust_workspace_validation": {
+    "status": "pending",
+    "logs": [],
+    "required_logs": [
+      "01-cargo-fmt.log",
+      "02-cargo-check.log",
+      "03-cargo-clippy.log",
+      "04-cargo-test-workspace-non-api.log",
+      "05-http-fake-e2e.log"
+    ]
+  },
+  "postgres_validation": {
+    "status": "pending",
+    "logs": [],
+    "required_logs": [
+      "13-pg-migration.log",
+      "14-pg-store-tests.log",
+      "15-http-postgres-e2e.log"
+    ]
+  },
+  "sdk_adapter_validation": {
+    "status": "pending",
+    "logs": [],
+    "required_logs": [
+      "06-sdk-spike-no-features.log",
+      "07-sdk-spike-typecheck.log",
+      "08-sdk-adapter-fmt.log",
+      "09-sdk-adapter-check.log",
+      "10-sdk-adapter-clippy.log",
+      "11-sdk-adapter-test.log",
+      "12-sdk-adapter-typecheck.log"
+    ]
+  },
+  "credentialed_non_trading_validation": {
+    "status": "pending",
+    "logs": [],
+    "required_logs": [
+      "16-authenticated-smoke.log",
+      "17-sign-only-dry-run.log"
+    ]
+  },
+  "release_decision": {
+    "validated_release": false,
+    "reason": "Template only. Do not mark validated_release=true until all required evidence sections pass with attached logs and the final artifact hash is recorded."
+  }
+}

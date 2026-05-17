@@ -1,0 +1,581 @@
+openapi: 3.1.0
+info:
+  title: Polymarket Execution Engine API
+  version: 1.0.0-draft
+  description: >
+    Public control-plane API for a standalone deterministic Polymarket execution engine.
+    This API intentionally does not expose private keys, CLOB API secrets, raw signed payloads,
+    internal signed-order envelopes, or direct database writes.
+servers:
+  - url: http://localhost:8080
+security:
+  - ServiceToken: []
+paths:
+  /v1/health:
+    get:
+      operationId: getHealth
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      responses:
+        '200':
+          description: Health report
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HealthReport' }
+  /v1/intents/normalize:
+    post:
+      operationId: normalizeIntent
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TradeIntent' }
+      responses:
+        '200':
+          description: Normalized intent
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NormalizedIntent' }
+  /v1/snapshots/capture:
+    post:
+      operationId: captureSnapshot
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NormalizedIntent' }
+      responses:
+        '200':
+          description: Feasibility snapshot
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FeasibilitySnapshot' }
+  /v1/decisions/evaluate:
+    post:
+      operationId: evaluateDecision
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DecisionRequest' }
+      responses:
+        '200':
+          description: Constraint decision
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConstraintDecision' }
+  /v1/plans/compile:
+    post:
+      operationId: compilePlan
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CompilePlanRequest' }
+      responses:
+        '200':
+          description: Execution plan summary
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExecutionPlanSummary' }
+  /v1/submissions:
+    post:
+      operationId: submitPlan
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubmitRequest' }
+      responses:
+        '202':
+          description: Submit accepted into executor-owned state machine; scaffold remains blocked
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubmitReceipt' }
+  /v1/submissions/{execution_id}:
+    get:
+      operationId: getSubmission
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      parameters:
+        - in: path
+          name: execution_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Submit receipt/status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubmitReceipt' }
+  /v1/sign-only/lifecycle-events:
+    post:
+      operationId: recordSignOnlyLifecycleEvent
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SignOnlyLifecycleRecord' }
+      responses:
+        '202':
+          description: Sign-only lifecycle event accepted after local state-machine validation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SignOnlyLifecycleRecord' }
+  /v1/sign-only/lifecycle-events/{execution_id}:
+    get:
+      operationId: listSignOnlyLifecycleEvents
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      parameters:
+        - in: path
+          name: execution_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: limit
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+        - in: query
+          name: before_event_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Sign-only lifecycle records for one execution
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SignOnlyLifecycleRecord' }
+  /v1/lifecycle/executions/{execution_id}/events:
+    get:
+      operationId: listExecutionLifecycleEvents
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      parameters:
+        - in: path
+          name: execution_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: limit
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+        - in: query
+          name: before_event_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Execution lifecycle audit events for one execution
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ExecutionLifecycleEvent' }
+  /v1/admin/audit-events:
+    get:
+      operationId: listAdminAuditEvents
+      security:
+        - AdminToken: []
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+        - in: query
+          name: before_audit_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: operation
+          required: false
+          schema: { type: string }
+        - in: query
+          name: principal_subject
+          required: false
+          schema: { type: string }
+        - in: query
+          name: result
+          required: false
+          schema: { type: string }
+        - in: query
+          name: correlation_id
+          required: false
+          schema: { type: string }
+      responses:
+        '200':
+          description: Recent admin audit events
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AdminAuditEvent' }
+  /v1/admin/kill-switch:
+    post:
+      operationId: setKillSwitch
+      security:
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/KillSwitchRequest' }
+      responses:
+        '202':
+          description: Kill switch update accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KillSwitchReceipt' }
+  /v1/admin/cancel-order:
+    post:
+      operationId: cancelOrder
+      security:
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CancelOrderRequest' }
+      responses:
+        '202':
+          description: Cancel request accepted into pending/reconcile-required state machine
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CancelReceipt' }
+  /v1/admin/reconcile:
+    post:
+      operationId: reconcile
+      security:
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReconcileRequest' }
+      responses:
+        '202':
+          description: Reconcile request accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReconcileReport' }
+components:
+  securitySchemes:
+    ServiceToken:
+      type: http
+      scheme: bearer
+      description: Service-scope token for control-plane operations.
+    AdminToken:
+      type: http
+      scheme: bearer
+      description: Admin-scope token for cancel/reconcile/kill-switch operations.
+  schemas:
+    CanonicalDecimal:
+      type: string
+      pattern: '^(0|[1-9][0-9]*)(\.[0-9]+)?$'
+      description: Canonical non-negative decimal string; no padding, sign, scientific notation, leading zeros, NaN, Inf, empty string, .5, or 1.
+    PositiveCanonicalDecimal:
+      allOf:
+        - $ref: '#/components/schemas/CanonicalDecimal'
+      description: Canonical decimal string that must be greater than zero; enforced by executor.
+    LimitPrice:
+      allOf:
+        - $ref: '#/components/schemas/CanonicalDecimal'
+      description: Canonical decimal string in (0, 1]; enforced by executor.
+    Side:
+      type: string
+      enum: [BUY, SELL]
+    TimeInForce:
+      type: string
+      enum: [GTC, FOK, GTD, FAK]
+    MarketRef:
+      type: object
+      additionalProperties: false
+      required: [condition_id, slug, is_sports]
+      properties:
+        condition_id: { type: string }
+        slug: { type: [string, 'null'] }
+        is_sports: { type: boolean }
+    QuantityIntent:
+      type: object
+      additionalProperties: false
+      required: [max_notional, max_shares]
+      properties:
+        max_notional: { anyOf: [ { $ref: '#/components/schemas/PositiveCanonicalDecimal' }, { type: 'null' } ] }
+        max_shares: { anyOf: [ { $ref: '#/components/schemas/PositiveCanonicalDecimal' }, { type: 'null' } ] }
+      description: Exactly one of max_notional or max_shares must be non-null; enforced by executor.
+    TradeIntent:
+      type: object
+      additionalProperties: false
+      required: [client_intent_id, account_id, market, token_id, side, quantity, limit_price, time_in_force, collateral_profile_id]
+      properties:
+        client_intent_id: { type: string }
+        account_id: { type: string }
+        market: { $ref: '#/components/schemas/MarketRef' }
+        token_id: { type: string }
+        side: { $ref: '#/components/schemas/Side' }
+        quantity: { $ref: '#/components/schemas/QuantityIntent' }
+        limit_price: { $ref: '#/components/schemas/LimitPrice' }
+        time_in_force: { $ref: '#/components/schemas/TimeInForce' }
+        collateral_profile_id: { type: [string, 'null'] }
+    QuantityBound:
+      type: object
+      additionalProperties: false
+      required: [kind, amount]
+      properties:
+        kind:
+          type: string
+          enum: [WORST_CASE_QUOTE_NOTIONAL, WORST_CASE_BASE_SHARES, UNSUPPORTED]
+        amount: { type: string }
+    NormalizedIntent:
+      type: object
+      additionalProperties: false
+      required: [normalized_intent_id, intent_hash, account_id, market, token_id, side, quantity_bound, limit_price, time_in_force, collateral_profile_id]
+      properties:
+        normalized_intent_id: { type: string }
+        intent_hash: { type: string }
+        account_id: { type: string }
+        market: { $ref: '#/components/schemas/MarketRef' }
+        token_id: { type: string }
+        side: { $ref: '#/components/schemas/Side' }
+        quantity_bound: { $ref: '#/components/schemas/QuantityBound' }
+        limit_price: { $ref: '#/components/schemas/LimitPrice' }
+        time_in_force: { $ref: '#/components/schemas/TimeInForce' }
+        collateral_profile_id: { type: [string, 'null'] }
+    RuntimeStateSummary:
+      type: object
+      additionalProperties: false
+      required: [geoblock_status, worker_status, collateral_profile_status, kill_switch_enabled, required_capabilities]
+      properties:
+        geoblock_status: { type: string, enum: [ALLOWED, BLOCKED, UNKNOWN, ERROR] }
+        worker_status: { type: string, enum: [HEALTHY, DEGRADED, STALE, UNKNOWN] }
+        collateral_profile_status: { type: string, enum: [RESOLVED, DEFAULT_RESOLVED, EXPLICIT_MISSING, UNKNOWN] }
+        kill_switch_enabled: { type: boolean }
+        required_capabilities:
+          type: array
+          items: { type: string }
+    FeasibilitySnapshot:
+      type: object
+      additionalProperties: false
+      required: [snapshot_id, snapshot_hash, normalized_intent_id, runtime_state, captured_at]
+      properties:
+        snapshot_id: { type: string }
+        snapshot_hash: { type: string }
+        normalized_intent_id: { type: string }
+        runtime_state: { $ref: '#/components/schemas/RuntimeStateSummary' }
+        captured_at: { type: string, format: date-time }
+    DecisionRequest:
+      type: object
+      additionalProperties: false
+      required: [normalized_intent_id, snapshot_id]
+      properties:
+        normalized_intent_id: { type: string }
+        snapshot_id: { type: string }
+      description: Server-authoritative v0.14 request; executor loads both objects from store and verifies binding.
+    ConstraintDecision:
+      type: object
+      additionalProperties: false
+      required: [decision_id, decision_hash, status, reasons]
+      properties:
+        decision_id: { type: string }
+        decision_hash: { type: string }
+        status: { type: string, enum: [ALLOW, BLOCK, CLOSE_ONLY, DEGRADED] }
+        reasons:
+          type: array
+          items: { type: string }
+    ApprovalReceipt:
+      type: object
+      additionalProperties: false
+      required: [approval_id, approved_by, approved_at, approval_hash]
+      properties:
+        approval_id: { type: string }
+        approved_by: { type: string }
+        approved_at: { type: string, format: date-time }
+        approval_hash: { type: string }
+    CompilePlanRequest:
+      type: object
+      additionalProperties: false
+      required: [normalized_intent_id, snapshot_id, decision_id, approval]
+      properties:
+        normalized_intent_id: { type: string }
+        snapshot_id: { type: string }
+        decision_id: { type: string }
+        approval: { $ref: '#/components/schemas/ApprovalReceipt' }
+      description: Server-authoritative v0.14 request; executor loads normalized intent, snapshot, and decision from store before compiling a plan.
+    ExecutionPlanSummary:
+      type: object
+      additionalProperties: false
+      required: [execution_id, account_id, normalized_intent_id, snapshot_id, decision_id, plan_hash, status, max_exposure, explanation]
+      properties:
+        execution_id: { type: string }
+        account_id: { type: string }
+        normalized_intent_id: { type: string }
+        snapshot_id: { type: string }
+        decision_id: { type: string }
+        plan_hash: { type: string }
+        status: { type: string, enum: [READY, BLOCKED] }
+        max_exposure: { $ref: '#/components/schemas/CanonicalDecimal' }
+        explanation:
+          type: array
+          items: { type: string }
+    SubmitRequest:
+      type: object
+      additionalProperties: false
+      required: [execution_id, plan_hash, idempotency_key]
+      properties:
+        execution_id: { type: string }
+        plan_hash: { type: string }
+        idempotency_key: { type: string }
+      description: Idempotency identity is executor-resolved as account_id + execution_id + idempotency_key; submit_attempt is generated internally.
+    SubmitReceipt:
+      type: object
+      additionalProperties: false
+      required: [execution_id, receipt_id, status, executor_version, contract_version]
+      properties:
+        execution_id: { type: string }
+        receipt_id: { type: string }
+        status: { type: string, enum: [ACCEPTED, POSTED, PARTIAL_REMOTE_UNKNOWN, REMOTE_UNKNOWN, REJECTED, BLOCKED] }
+        executor_version: { type: string }
+        contract_version: { type: string }
+    SignOnlyLifecycleRecord:
+      type: object
+      additionalProperties: false
+      required: [execution_id, account_id, state, event, signed_order_ref, no_remote_side_effect]
+      properties:
+        event_id: { type: integer, readOnly: true }
+        created_at: { type: string, format: date-time, readOnly: true }
+        execution_id: { type: string }
+        account_id: { type: string }
+        state:
+          type: string
+          enum: [PLANNED, RESERVATION_PREPARED, SIGNING_REQUESTED, SIGNED_DRY_RUN, FAILED, ABANDONED]
+        event:
+          type: string
+          enum: [PREPARE_RESERVATION, REQUEST_SIGNING, SIGNED_WITHOUT_POST, SIGNING_FAILED, ABANDON]
+        client_event_id: { type: [string, 'null'], description: Optional execution-scoped idempotency key for append/replay }
+        signed_order_ref: { type: [string, 'null'] }
+        no_remote_side_effect: { type: boolean }
+    RedactedPayloadEnvelope:
+      type: object
+      additionalProperties: false
+      required: [schema_version, kind, correlation_id, redacted_fields, body]
+      properties:
+        schema_version: { type: integer, minimum: 1 }
+        kind: { type: string }
+        correlation_id: { type: [string, 'null'] }
+        redacted_fields:
+          type: array
+          items: { type: string }
+        body:
+          type: object
+          additionalProperties: true
+      description: Public lifecycle payload wrapper. Body is intentionally redacted before persistence/query exposure.
+    ExecutionLifecycleEvent:
+      type: object
+      additionalProperties: false
+      required: [execution_id, account_id, event_type, event_source, payload]
+      properties:
+        event_id: { type: integer, readOnly: true }
+        created_at: { type: string, format: date-time, readOnly: true }
+        execution_id: { type: string }
+        account_id: { type: string }
+        event_type: { type: string }
+        event_source: { type: string }
+        payload: { $ref: '#/components/schemas/RedactedPayloadEnvelope' }
+    AdminAuditEvent:
+      type: object
+      additionalProperties: false
+      required: [principal_subject, operation, request_fingerprint, result]
+      properties:
+        audit_id: { type: integer, readOnly: true }
+        created_at: { type: string, format: date-time, readOnly: true }
+        principal_subject: { type: string }
+        operation: { type: string }
+        request_fingerprint: { type: [string, 'null'] }
+        correlation_id: { type: [string, 'null'] }
+        result: { type: string }
+    CancelOrderRequest:
+      type: object
+      additionalProperties: false
+      required: [account_id, order_id, reason]
+      properties:
+        account_id: { type: string }
+        order_id: { type: string }
+        execution_id: { type: [string, 'null'] }
+        reason: { type: string }
+    CancelReceipt:
+      type: object
+      additionalProperties: false
+      required: [cancel_id, order_id, state]
+      properties:
+        cancel_id: { type: string }
+        order_id: { type: string }
+        state: { type: string, enum: [REQUESTED, REMOTE_ACCEPTED, CONFIRMED_CANCELED, NOT_CANCELED, REMOTE_UNKNOWN, RECONCILE_REQUIRED] }
+    KillSwitchRequest:
+      type: object
+      additionalProperties: false
+      required: [enabled, reason]
+      properties:
+        enabled: { type: boolean }
+        reason: { type: string }
+    KillSwitchReceipt:
+      type: object
+      additionalProperties: false
+      required: [enabled, changed_at, reason]
+      properties:
+        enabled: { type: boolean }
+        changed_at: { type: string, format: date-time }
+        reason: { type: string }
+    ReconcileRequest:
+      type: object
+      additionalProperties: false
+      required: [account_id, execution_id, reason]
+      properties:
+        account_id: { type: string }
+        execution_id: { type: [string, 'null'] }
+        reason: { type: string }
+    ReconcileReport:
+      type: object
+      additionalProperties: false
+      required: [reconcile_id, status, checked_orders, findings]
+      properties:
+        reconcile_id: { type: string }
+        status: { type: string }
+        checked_orders: { type: integer, minimum: 0 }
+        findings:
+          type: array
+          items: { type: string }
+    HealthReport:
+      type: object
+      additionalProperties: false
+      required: [status, executor_version, contract_version, checks]
+      properties:
+        status: { type: string }
+        executor_version: { type: string }
+        contract_version: { type: string }
+        checks:
+          type: object
+          additionalProperties: true

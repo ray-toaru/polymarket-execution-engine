@@ -1,0 +1,24 @@
+[package]
+name = "pmx-official-sdk-spike"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+license = "Apache-2.0"
+publish = false
+
+[features]
+default = []
+sdk-typecheck = ["dep:polymarket_client_sdk_v2"]
+live-submit = ["sdk-typecheck"]
+
+[dependencies]
+pmx-core = { path = "../../crates/pmx-core" }
+pmx-gateway = { path = "../../crates/pmx-gateway" }
+polymarket_client_sdk_v2 = { version = "=0.6.0-canary.1", features = ["clob", "tracing", "ws", "heartbeats"], optional = true }
+serde = { version = "1.0.228", features = ["derive"] }
+
+[dev-dependencies]
+anyhow = "1.0.102"
+tokio = { version = "1.52.3", default-features = false, features = ["macros", "rt"] }
+
+[workspace]

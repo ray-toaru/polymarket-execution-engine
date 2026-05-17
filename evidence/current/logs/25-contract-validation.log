@@ -1,0 +1,6 @@
+command: python scripts/validate_contracts.py
+cwd: /mnt/data/agents_fix/polymarket_dual_project_v0_23_0
+timestamp: 2026-05-17T03:27:31Z
+--- output ---
+{"status": "ok", "paths": 14, "schemas": 30}
+--- exit_code: 0 ---

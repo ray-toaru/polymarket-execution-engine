@@ -1,0 +1,17 @@
+-- v0.23 PostgreSQL concurrency validation fixture.
+-- Requires PMX_TEST_DATABASE_URL and must be run in the external PostgreSQL gate environment.
+-- This file is not a local proof; it is a deterministic fixture for advisory-lock/idempotency checks.
+
+-- Repository-level concurrency proof template.
+-- Status: External PostgreSQL validation fixture / not executed in v0.4 packaging environment.
+-- Purpose: prove actual application transaction boundaries, not just advisory-lock primitive behavior.
+--
+-- Required assertions for the future repository implementation:
+-- 1. Two concurrent submit requests for the same (account_id, execution_id, idempotency_key)
+--    and same request_fingerprint replay the same stored response.
+-- 2. Same idempotency identity with a different request_fingerprint returns conflict.
+-- 3. Two concurrent requests cannot double-create an ACTIVE reservation for the same resource.
+-- 4. submit_attempt is executor-generated and monotonically scoped to (account_id, execution_id).
+-- 5. A transaction that observes remote-unknown records a conservative state before returning.
+--
+-- This file is intentionally declarative until the PostgreSQL repository code exists.

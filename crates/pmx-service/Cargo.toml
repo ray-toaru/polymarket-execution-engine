@@ -1,0 +1,19 @@
+[package]
+name = "pmx-service"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+chrono.workspace = true
+pmx-core = { path = "../pmx-core" }
+pmx-policy = { path = "../pmx-policy" }
+pmx-store = { path = "../pmx-store" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+
+tokio = { workspace = true }

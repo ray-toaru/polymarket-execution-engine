@@ -1,0 +1,14 @@
+command: python polymarket-execution-engine/validation/check_docs_evidence_governance.py
+cwd: /mnt/data/agents_fix/polymarket_dual_project_v0_23_0
+timestamp: 2026-05-17T03:27:33Z
+--- output ---
+FAIL: manifest log hash mismatch: polymarket-execution-engine/evidence/current/logs/18-plan-storage-guard.log
+FAIL: manifest log hash mismatch: polymarket-execution-engine/evidence/current/logs/19-live-submit-static-guard.log
+FAIL: manifest log hash mismatch: polymarket-execution-engine/evidence/current/logs/20-sign-only-lifecycle-guard.log
+FAIL: manifest log hash mismatch: polymarket-execution-engine/evidence/current/logs/21-runtime-worker-model-guard.log
+FAIL: manifest log hash mismatch: polymarket-execution-engine/evidence/current/logs/22-v0-23-lifecycle-api-guard.log
+FAIL: manifest log hash mismatch: polymarket-execution-engine/evidence/current/logs/23-v0-23-evidence-manifest-guard.log
+FAIL: manifest log hash mismatch: polymarket-execution-engine/evidence/current/logs/24-version-consistency-guard.log
+FAIL: manifest log hash mismatch: polymarket-execution-engine/evidence/current/logs/25-contract-validation.log
+FAIL: manifest log hash mismatch: polymarket-execution-engine/evidence/current/logs/30-docs-evidence-governance.log
+--- exit_code: 1 ---

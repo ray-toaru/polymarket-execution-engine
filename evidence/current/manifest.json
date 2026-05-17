@@ -1,0 +1,115 @@
+{
+  "additional_logs": [
+    {
+      "bytes": 1258,
+      "path": "polymarket-execution-engine/evidence/current/logs/30-docs-evidence-governance.log",
+      "sha256": "82fb165524c8e78dd238d4055eadf5f2e93130e1f65a437f33cfad9e7c2a8d94"
+    },
+    {
+      "bytes": 342,
+      "path": "polymarket-execution-engine/evidence/current/logs/31-shell-syntax.log",
+      "sha256": "c97c0110357df8af2b1acdf80237b447f7fdb84da3bc47024bfdac2917817c89"
+    },
+    {
+      "bytes": 236,
+      "path": "polymarket-execution-engine/evidence/current/logs/python-compileall.log",
+      "sha256": "766aed9d857686427752fab180860df9704b9b2adf065e9eb1510e42737d5945"
+    },
+    {
+      "bytes": 331,
+      "path": "polymarket-execution-engine/evidence/current/logs/python-hermes-tests.log",
+      "sha256": "ff09a96357ce268c51b9cb7ab48ba59bc9f80a28f4b04a6a7767d4e9b199137d"
+    }
+  ],
+  "artifact": {
+    "binding_note": "External sidecar manifest binds the final zip hash; the in-archive manifest remains source-candidate evidence and cannot self-bind its containing zip.",
+    "name": null,
+    "path": null,
+    "sha256": null
+  },
+  "artifact_kind": "source_candidate",
+  "canonical_evidence_dir": "polymarket-execution-engine/evidence/current",
+  "credentialed_non_trading_validation": {
+    "logs": [],
+    "status": "skipped"
+  },
+  "generated_at": "2026-05-17T03:27:45.558047+00:00",
+  "local_static_validation": {
+    "logs": [
+      {
+        "bytes": 259,
+        "path": "polymarket-execution-engine/evidence/current/logs/18-plan-storage-guard.log",
+        "sha256": "c882408df2bcdeee565a839a0ed8c7408f34f5096b69607c6c9d867f26fbce9e"
+      },
+      {
+        "bytes": 240,
+        "path": "polymarket-execution-engine/evidence/current/logs/19-live-submit-static-guard.log",
+        "sha256": "c1ed59fafa67550fdda92e030cd5479500949440a31b9c611d3d4624c00aacdd"
+      },
+      {
+        "bytes": 250,
+        "path": "polymarket-execution-engine/evidence/current/logs/20-sign-only-lifecycle-guard.log",
+        "sha256": "c024f56fe6bc088cbdeeaea2cec215a56de0d4e1f04d8bfe6731774474c1fa65"
+      },
+      {
+        "bytes": 253,
+        "path": "polymarket-execution-engine/evidence/current/logs/21-runtime-worker-model-guard.log",
+        "sha256": "cd724d409212c8f850334f8ad58f63353a57bae2498feffaffcfc7dc65d1f018"
+      },
+      {
+        "bytes": 252,
+        "path": "polymarket-execution-engine/evidence/current/logs/22-v0-23-lifecycle-api-guard.log",
+        "sha256": "dbf2acfbfba1f53b86982e318d0154c2d843befb03de518de52c6b908abd5887"
+      },
+      {
+        "bytes": 251,
+        "path": "polymarket-execution-engine/evidence/current/logs/23-v0-23-evidence-manifest-guard.log",
+        "sha256": "db33d7e447e14af4900b4261a77e86ae13995e494ce152782cc80b4be7d95de7"
+      },
+      {
+        "bytes": 221,
+        "path": "polymarket-execution-engine/evidence/current/logs/24-version-consistency-guard.log",
+        "sha256": "d04aac7ce6ea20fee94330a1237a5c93a34eb3fc9ab40a87cde95c6c0b2bbdc8"
+      },
+      {
+        "bytes": 217,
+        "path": "polymarket-execution-engine/evidence/current/logs/25-contract-validation.log",
+        "sha256": "104f74ece10077b25b1eb3c62439412376e2eb66d96e38a543aa71b8df06632a"
+      },
+      {
+        "bytes": 243,
+        "path": "polymarket-execution-engine/evidence/current/logs/26-release-hygiene-clean-snapshot.log",
+        "sha256": "b096b2f13e6f1ee2b4b918949abba1056299febb48fbc2d818bdb57403cf3c78"
+      }
+    ],
+    "status": "pass"
+  },
+  "postgres_validation": {
+    "logs": [],
+    "status": "not_run"
+  },
+  "provenance": {
+    "kind": "generated_from_gate_logs",
+    "log_dir": "polymarket-execution-engine/evidence/current/logs",
+    "note": "External Rust/SDK/PostgreSQL logs must be regenerated for the exact final artifact before release promotion."
+  },
+  "release_decision": {
+    "reason": "Source candidate. Do not mark validated_release=true until all required evidence sections pass and artifact.sha256 matches the final package.",
+    "required_non_optional_sections": [
+      "local_static_validation",
+      "rust_workspace_validation",
+      "postgres_validation",
+      "sdk_adapter_validation"
+    ],
+    "validated_release": false
+  },
+  "rust_workspace_validation": {
+    "logs": [],
+    "status": "not_run"
+  },
+  "sdk_adapter_validation": {
+    "logs": [],
+    "status": "not_run"
+  },
+  "version": "0.23.0"
+}

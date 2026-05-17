@@ -1,0 +1,6 @@
+[toolchain]
+# Official Polymarket SDK uses Rust 1.88 / edition 2024.
+# Keep this as the project MSRV. CI also runs against stable.
+channel = "1.88.0"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

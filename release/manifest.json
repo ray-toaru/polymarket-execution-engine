@@ -1,0 +1,81 @@
+{
+  "project": "polymarket-execution-engine",
+  "version": "0.23.0",
+  "contract_version": "1.0.0-draft",
+  "status": "v0.23-source-candidate-not-production",
+  "official_sdk_strategy": "sdk-first",
+  "official_sdk_crate": "polymarket_client_sdk_v2",
+  "official_sdk_version": "=0.6.0-canary.1",
+  "rust_msrv": "1.88.0",
+  "evidence_status": "v0.23 source candidate: Python/static/release checks expected locally; Rust/SDK/PostgreSQL gates require external Rust 1.88 + PostgreSQL environment",
+  "validated_gates_landed": [
+    "cargo-fmt-v0.10",
+    "cargo-check-v0.10",
+    "cargo-clippy-v0.10",
+    "cargo-test-v0.10",
+    "official-sdk-spike-no-features-v0.10",
+    "official-sdk-spike-typecheck-v0.10",
+    "official-sdk-adapter-fmt-check-clippy-test-typecheck-v0.10",
+    "postgresql-migration-v0.10",
+    "postgresql-repository-proof-v0.10",
+    "authenticated-non-trading-smoke-v0.10",
+    "sign-only-dry-run-v0.10"
+  ],
+  "v010_source_changes": [
+    "postgres-reservation-amount-text-numeric-cast",
+    "store-error-database-unavailable-carries-root-error",
+    "rust-2024-env-set-var-unsafe-test-fix",
+    "official-sdk-adapter-clippy-field-reassign-fix",
+    "standalone-adapter-manifest-workspace",
+    "low-resource-validation-defaults"
+  ],
+  "remaining_blockers": [
+    "v0.23-rust-sdk-postgresql-gates-not-run-in-packaging-environment",
+    "cargo-lock-must-be-verified-with-cargo-check---locked-in-rust-environment",
+    "sign-only-lifecycle-concurrency-and-replay-hardening",
+    "runtime-worker-ttl-heartbeat-lease-and-real-websocket-workers",
+    "cancel-reconcile-persistent-order-lifecycle-and-remote-unknown-drills",
+    "audit-lifecycle-pagination-correlation-and-typed-redaction",
+    "live-submit-live-cancel-production-deployment-remain-blocked",
+    "external-final-artifact-sidecar-hash-must-be-preserved-with-zip",
+    "historical-imported-gates-are-archived-and-not-current-proof"
+  ],
+  "v011_source_changes": [
+    "api-server-authoritative-in-memory-store-scaffold",
+    "object-graph-binding-checks",
+    "plan-hash-server-side-verification",
+    "idempotency-in-progress-action",
+    "auth-token-missing-or-equal-fail-closed",
+    "fake-gateway-account-scoping",
+    "zip-aware-release-hygiene"
+  ],
+  "required_next_gates": [
+    "polymarket-execution-engine/validation/run_current_gates.sh",
+    "postgres-backed-service-http-e2e-with-PMX_TEST_DATABASE_URL",
+    "credentialed-authenticated-smoke-with-explicit-env-gates",
+    "sign-only-dry-run-with-explicit-env-gates"
+  ],
+  "v023_source_changes": [
+    "version-unification-to-0.23.0-source-candidate",
+    "sign-only-lifecycle-api-and-query-closure",
+    "runtime-worker-observation-to-runtime-state-aggregation",
+    "cancel-reconcile-non-live-lifecycle-test-coverage",
+    "lifecycle-and-admin-audit-query-api",
+    "v0.23-gate-script-and-static-guards",
+    "docs-evidence-governance-cleanup",
+    "canonical-current-evidence-manifest",
+    "release-package-archive-exclusions",
+    "typed-redacted-lifecycle-payload-schema",
+    "pre-live-worker-degraded-fail-closed-policy",
+    "agents-md-root-and-plane-specific-instructions"
+  ],
+  "canonical_evidence": {
+    "manifest_path": "polymarket-execution-engine/evidence/current/manifest.json",
+    "logs_path": "polymarket-execution-engine/evidence/current/logs/",
+    "historical_evidence_policy": "archive-excluded-from-release-package",
+    "artifact_hash_policy": "external .sha256 and .evidence.json sidecars bind the final zip hash; in-archive manifest must not claim validated release by self-reference",
+    "current_gate_entrypoint": "polymarket-execution-engine/validation/run_current_gates.sh",
+    "version_pinned_gate": "polymarket-execution-engine/validation/run_v0_23_gates.sh",
+    "template_path": "polymarket-execution-engine/validation/templates/evidence_manifest.template.json"
+  }
+}
