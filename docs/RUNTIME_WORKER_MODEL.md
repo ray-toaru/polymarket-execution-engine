@@ -2,7 +2,7 @@
 
 > Status: current v0.23.0 source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
-Status: source landed; Rust gates pending external run.
+Status: source landed and covered by current validation evidence.
 
 v0.21 adds a small worker-action model around runtime signals. It does not start real network workers yet.
 
@@ -40,11 +40,18 @@ and reconcile backlog workers should call this per tick after collecting their
 own signal. The helper deliberately has no trading side effect and only updates
 local runtime truth.
 
+`pmx-runtime::runtime_worker_loop_tick()` is the pure worker-loop closure model.
+It takes observed worker inputs for heartbeat lease owner election, market/user
+WebSocket liveness, geoblock status, resource refresh freshness, and reconcile
+backlog, then emits normalized `RuntimeSignal` values and fail-closed
+`RuntimeWorkerAction` values. Down, stale, geoblocked, stale-resource, and
+remote-unknown states block submit; recovery is allow-like only after all
+required inputs are healthy.
+
 Remaining work:
 
 ```text
-- Add real market/user/sports WebSocket workers.
-- Add heartbeat lease writer.
-- Add geoblock provider integration.
-- Connect reconcile backlog worker to order lifecycle events.
+- Connect concrete network providers to the deterministic worker-loop boundary.
+- Persist real heartbeat lease owner election from deployment runtime.
+- Connect reconcile backlog worker to remote order observations.
 ```
