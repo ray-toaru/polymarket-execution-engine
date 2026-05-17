@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,6 +33,7 @@ CURRENT_DIR = EXECUTOR / "evidence" / "current"
 DEFAULT_LOG_DIR = CURRENT_DIR / "logs"
 OUT = CURRENT_DIR / "manifest.json"
 ENVIRONMENT = CURRENT_DIR / "environment.json"
+GATE_RUNNER = EXECUTOR / "validation" / "run_v0_23_gates.sh"
 
 SECTIONS: dict[str, list[str]] = {
     "rust_workspace_validation": [
@@ -143,11 +145,36 @@ def log_entry(path: Path) -> dict[str, str | int]:
         display_path = path.relative_to(ROOT.resolve())
     except ValueError:
         display_path = path
-    return {
+    entry = {
         "path": str(display_path),
         "sha256": sha256(path),
         "bytes": path.stat().st_size,
     }
+    command = LOG_COMMANDS.get(path.name)
+    if command:
+        entry["command"] = command
+    return entry
+
+
+def load_log_commands() -> dict[str, str]:
+    if not GATE_RUNNER.exists():
+        return {}
+    commands: dict[str, str] = {}
+    for raw_line in GATE_RUNNER.read_text().splitlines():
+        if 'tee "${EVIDENCE_DIR}/' not in raw_line:
+            continue
+        match = re.search(r'tee "\$\{EVIDENCE_DIR\}/([^"]+)"', raw_line)
+        if not match:
+            continue
+        command = raw_line[: match.start()].strip()
+        command = re.sub(r"\s*2>&1\s*\|\s*$", "", command).strip()
+        command = re.sub(r"\s*\|\s*$", "", command).strip()
+        command = command.removeprefix('ARTIFACT_PATH="$(').strip()
+        commands[match.group(1)] = command
+    return commands
+
+
+LOG_COMMANDS = load_log_commands()
 
 
 def log_passed(path: Path) -> bool:
