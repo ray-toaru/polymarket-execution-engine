@@ -10,7 +10,7 @@ use pmx_core::*;
 use pmx_service::{ExecutorService, ServiceError, StoreBackedRuntimeStateProvider, SubmitOutcome};
 use pmx_store::{
     AdminAuditEvent, AdminAuditQuery, ExecutionLifecycleEvent, ExecutionLifecycleQuery,
-    InMemoryStore, PostgresStore, SignOnlyLifecycleQuery, StoreError,
+    InMemoryStore, OrderLifecycleRecord, PostgresStore, SignOnlyLifecycleQuery, StoreError,
 };
 use uuid::Uuid;
 
@@ -101,6 +101,26 @@ impl ServiceBackend {
         match self {
             Self::InMemory(service) => service.record_execution_lifecycle_event(event).await,
             Self::Postgres(service) => service.record_execution_lifecycle_event(event).await,
+        }
+    }
+
+    async fn record_non_live_cancel_request(
+        &self,
+        order_id: &str,
+        reason: &str,
+        correlation_id: Option<String>,
+    ) -> Result<Option<OrderLifecycleRecord>, ServiceError> {
+        match self {
+            Self::InMemory(service) => {
+                service
+                    .record_non_live_cancel_request(order_id, reason, correlation_id)
+                    .await
+            }
+            Self::Postgres(service) => {
+                service
+                    .record_non_live_cancel_request(order_id, reason, correlation_id)
+                    .await
+            }
         }
     }
 
@@ -701,6 +721,11 @@ async fn cancel_order_placeholder(
         order_id: req.order_id,
         state: CancelState::ReconcileRequired,
     };
+    let order_lifecycle = state
+        .service
+        .record_non_live_cancel_request(&order_id, &req.reason, Some(correlation_id.clone()))
+        .await
+        .map_err(service_error)?;
     if let Some(execution_id) = execution_id {
         state
             .service
@@ -717,6 +742,9 @@ async fn cancel_order_placeholder(
                         "cancel_id": receipt.cancel_id.clone(),
                         "order_id": order_id,
                         "cancel_state": format!("{:?}", receipt.state),
+                        "order_lifecycle_state": order_lifecycle
+                            .as_ref()
+                            .map(|order| format!("{:?}", order.lifecycle_state)),
                         "no_remote_side_effect": true,
                     }),
                 ),

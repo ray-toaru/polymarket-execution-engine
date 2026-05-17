@@ -42,7 +42,10 @@
     "postgres-forward-only-schema-migrations-table",
     "store-ordered-migration-application-with-sha256-checksum-recording",
     "schema-migration-checksum-drift-fail-closed",
-    "migration-framework-static-guard-and-evidence-manifest-section"
+    "migration-framework-static-guard-and-evidence-manifest-section",
+    "service-runtime-worker-signal-to-observation-bridge",
+    "non-live-cancel-order-lifecycle-service-write",
+    "non-live-reconcile-order-lifecycle-observation-helper"
   ],
   "v011_source_changes": [
     "api-server-authoritative-in-memory-store-scaffold",

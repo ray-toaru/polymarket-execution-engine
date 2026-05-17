@@ -6,8 +6,9 @@ use pmx_runtime::{RuntimeSignal, runtime_worker_store_writes};
 use pmx_store::{
     AdminAuditEvent, AdminAuditQuery, AdminAuditStore, ExecutionLifecycleEvent,
     ExecutionLifecycleQuery, ExecutionLifecycleStore, ExecutionStore, IdempotencyAction,
-    IdempotencyStore, RuntimeStateQuery, RuntimeStateStore, RuntimeWorkerObservation,
-    RuntimeWorkerObservationStore, SignOnlyLifecycleQuery, SignOnlyLifecycleStore, StoreError,
+    IdempotencyStore, OrderLifecycleEventRecord, OrderLifecycleRecord, OrderLifecycleStore,
+    RuntimeStateQuery, RuntimeStateStore, RuntimeWorkerObservation, RuntimeWorkerObservationStore,
+    SignOnlyLifecycleQuery, SignOnlyLifecycleStore, StoreError,
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -214,6 +215,7 @@ where
         + IdempotencyStore
         + AdminAuditStore
         + ExecutionLifecycleStore
+        + OrderLifecycleStore
         + SignOnlyLifecycleStore
         + Clone
         + Send
@@ -236,6 +238,7 @@ where
         + IdempotencyStore
         + AdminAuditStore
         + ExecutionLifecycleStore
+        + OrderLifecycleStore
         + SignOnlyLifecycleStore
         + Clone
         + Send
@@ -289,6 +292,81 @@ where
         query: ExecutionLifecycleQuery,
     ) -> Result<Vec<ExecutionLifecycleEvent>, ServiceError> {
         Ok(self.store.list_execution_lifecycle_events(&query).await?)
+    }
+
+    pub async fn record_non_live_cancel_request(
+        &self,
+        order_id: &str,
+        reason: &str,
+        correlation_id: Option<String>,
+    ) -> Result<Option<OrderLifecycleRecord>, ServiceError> {
+        if order_id.trim().is_empty() || reason.trim().is_empty() {
+            return Err(ServiceError::BadRequest(
+                "order_id and reason must be non-empty".into(),
+            ));
+        }
+        if self.store.load_order_lifecycle(order_id).await?.is_none() {
+            return Ok(None);
+        }
+        let updated = self
+            .store
+            .record_order_lifecycle_event(&OrderLifecycleEventRecord {
+                event_id: None,
+                order_id: order_id.to_owned(),
+                event: OrderEventKind::CancelRequested,
+                event_source: "pmx-service".into(),
+                payload: serde_json::json!({
+                    "kind": "cancel_requested_non_live",
+                    "correlation_id": correlation_id,
+                    "reason_len": reason.len(),
+                    "no_remote_side_effect": true,
+                }),
+                created_at: None,
+            })
+            .await?;
+        Ok(Some(updated))
+    }
+
+    pub async fn record_non_live_reconcile_observation(
+        &self,
+        order_id: &str,
+        event: OrderEventKind,
+        reason: &str,
+        correlation_id: Option<String>,
+    ) -> Result<Option<OrderLifecycleRecord>, ServiceError> {
+        if order_id.trim().is_empty() || reason.trim().is_empty() {
+            return Err(ServiceError::BadRequest(
+                "order_id and reason must be non-empty".into(),
+            ));
+        }
+        if !matches!(
+            event,
+            OrderEventKind::ReconcileOpen | OrderEventKind::ReconcileMissing
+        ) {
+            return Err(ServiceError::BadRequest(
+                "reconcile observation must be ReconcileOpen or ReconcileMissing".into(),
+            ));
+        }
+        if self.store.load_order_lifecycle(order_id).await?.is_none() {
+            return Ok(None);
+        }
+        let updated = self
+            .store
+            .record_order_lifecycle_event(&OrderLifecycleEventRecord {
+                event_id: None,
+                order_id: order_id.to_owned(),
+                event,
+                event_source: "pmx-service".into(),
+                payload: serde_json::json!({
+                    "kind": "reconcile_observed_non_live",
+                    "correlation_id": correlation_id,
+                    "reason_len": reason.len(),
+                    "no_remote_side_effect": true,
+                }),
+                created_at: None,
+            })
+            .await?;
+        Ok(Some(updated))
     }
 
     pub async fn record_sign_only_lifecycle_event(
@@ -712,7 +790,9 @@ pub fn verify_decision_binding(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pmx_store::{InMemoryStore, RuntimeWorkerHealthStore, RuntimeWorkerHeartbeat};
+    use pmx_store::{
+        InMemoryStore, OrderLifecycleStore, RuntimeWorkerHealthStore, RuntimeWorkerHeartbeat,
+    };
 
     fn intent() -> TradeIntent {
         TradeIntent {
@@ -751,6 +831,22 @@ mod tests {
             approved_by: "operator".into(),
             approved_at: Utc::now(),
             approval_hash: HashValue("approval-hash".into()),
+        }
+    }
+
+    fn order(order_id: &str, lifecycle_state: OrderLifecycleState) -> OrderLifecycleRecord {
+        OrderLifecycleRecord {
+            order_id: order_id.into(),
+            execution_id: "exec-order-life".into(),
+            account_id: "acct-1".into(),
+            condition_id: "cond-1".into(),
+            token_id: "token-1".into(),
+            side: "BUY".into(),
+            lifecycle_state,
+            remote_order_id: Some(format!("remote-{order_id}")),
+            remote_state: Some("OPEN".into()),
+            created_at: None,
+            updated_at: None,
         }
     }
 
@@ -1095,5 +1191,57 @@ mod tests {
             .expect("decision");
         assert_eq!(decision.status, DecisionStatus::Block);
         assert!(decision.reasons.contains(&BlockReason::WorkerStale));
+    }
+
+    #[tokio::test]
+    async fn service_records_non_live_cancel_and_reconcile_order_lifecycle() {
+        let store = InMemoryStore::default();
+        store
+            .upsert_order_lifecycle(&order("order-non-live-cancel", OrderLifecycleState::Posted))
+            .await
+            .expect("upsert order");
+        let service = ExecutorService::new(store.clone());
+
+        let canceled = service
+            .record_non_live_cancel_request(
+                "order-non-live-cancel",
+                "operator requested cancel",
+                Some("corr-cancel".into()),
+            )
+            .await
+            .expect("record cancel")
+            .expect("existing order");
+        assert_eq!(
+            canceled.lifecycle_state,
+            OrderLifecycleState::CancelRequested
+        );
+
+        store
+            .upsert_order_lifecycle(&order(
+                "order-non-live-reconcile",
+                OrderLifecycleState::RemoteUnknown,
+            ))
+            .await
+            .expect("upsert remote unknown order");
+        let reconciled = service
+            .record_non_live_reconcile_observation(
+                "order-non-live-reconcile",
+                OrderEventKind::ReconcileMissing,
+                "remote missing in drill",
+                Some("corr-reconcile".into()),
+            )
+            .await
+            .expect("record reconcile")
+            .expect("existing order");
+        assert_eq!(
+            reconciled.lifecycle_state,
+            OrderLifecycleState::PartialRemoteUnknown
+        );
+
+        let missing = service
+            .record_non_live_cancel_request("missing-order", "operator requested cancel", None)
+            .await
+            .expect("missing order is non-fatal");
+        assert!(missing.is_none());
     }
 }

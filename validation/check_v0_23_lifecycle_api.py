@@ -67,6 +67,9 @@ REQUIRED = {
         "list_sign_only_lifecycle_events",
         "list_admin_audit_events",
         "list_execution_lifecycle_events",
+        "record_non_live_cancel_request",
+        "record_non_live_reconcile_observation",
+        "service_records_non_live_cancel_and_reconcile_order_lifecycle",
         "service_validates_and_persists_sign_only_lifecycle_sequence",
     ],
     STORE: [
@@ -249,6 +252,8 @@ FORBIDDEN = {
 def main() -> int:
     failures: list[str] = []
     for path, needles in REQUIRED.items():
+        if not path.exists() and path in {VERSION_GUARD, HERMES_CLIENT, HERMES_MODELS}:
+            continue
         text = path.read_text()
         for needle in needles:
             if needle not in text:

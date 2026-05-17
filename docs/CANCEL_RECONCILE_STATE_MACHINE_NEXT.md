@@ -20,3 +20,21 @@ Next non-live work:
 - Model `not_canceled` as non-terminal unless reconcile confirms remote truth.
 - Add stale `RemoteUnknown` escalation into operator-required reconcile.
 - Ensure cancel/reconcile never claim terminal state based only on request submission.
+
+Current v0.24 progress:
+
+- `ExecutorService::record_non_live_cancel_request()` records
+  `CancelRequested` into the local order lifecycle when the order already
+  exists.
+- `ExecutorService::record_non_live_reconcile_observation()` records local
+  `ReconcileOpen` / `ReconcileMissing` observations for existing orders.
+- The admin cancel API now attempts the local order-lifecycle write while still
+  returning a reconcile-required non-live receipt and preserving the execution
+  lifecycle audit event.
+
+Boundary:
+
+- Unknown local orders are not treated as confirmed cancelled.
+- The reconcile API schema does not yet carry an order id or remote observation,
+  so it still records execution-level non-live reconcile audit only.
+- No live cancel or remote reconcile call is enabled.
