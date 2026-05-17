@@ -1,0 +1,36 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.80s
+     Running unittests src/lib.rs (adapters/pmx-official-sdk-adapter/target/debug/deps/pmx_official_sdk_adapter-51524219746890d5)
+
+running 23 tests
+test tests::default_config_cannot_live_submit ... ok
+test tests::authenticated_non_trading_is_explicit_opt_in ... ok
+test tests::gateway_error_conversion_redacts_sensitive_message ... ok
+test tests::gateway_error_conversion_preserves_remote_unknown ... ok
+test tests::geoblock_status_maps_to_core_status ... ok
+test tests::live_submit_preconditions_are_closed_by_default ... ok
+test tests::liveness_geoblock_blocks_first ... ok
+test tests::liveness_requires_reconcile_when_remote_unknown_exists ... ok
+test tests::normalized_error_redaction_covers_remote_unknown_messages ... ok
+test tests::plan_mapping_normalizes_limit_orders ... ok
+test tests::plan_mapping_rejects_invalid_limit_price_and_zero_size ... ok
+test tests::plan_mapping_rejects_placeholder_token_id ... ok
+test tests::plan_mapping_requires_market_amount ... ok
+test tests::plan_mapping_supports_market_amount ... ok
+test tests::read_only_smoke_ignores_ambient_credentials_but_must_remain_unauthenticated ... ok
+test tests::redacts_named_secret_assignments ... ok
+test tests::redacts_private_key_like_hex_tokens ... ok
+test tests::sdk_error_normalization_covers_status_codes ... ok
+test tests::sdk_error_normalization_covers_validation ... ok
+test tests::sign_only_is_not_live_submit ... ok
+test tests::sign_only_lifecycle_records_are_persistable_and_non_mutating ... ok
+test tests::sign_only_lifecycle_rejects_posted_receipt ... ok
+test tests::sign_only_request_converts_to_limit_plan ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests pmx_official_sdk_adapter
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

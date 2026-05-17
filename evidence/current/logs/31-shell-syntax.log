@@ -1,6 +1,0 @@
-timestamp_start=2026-05-17T03:13:03.551175+00:00
-timestamp_end=2026-05-17T03:13:03.626166+00:00
-cwd=/mnt/data/v023_agents_work/polymarket_dual_project_v0_23_0
-command=bash -lc 'bash -n polymarket-execution-engine/validation/run_current_gates.sh && bash -n polymarket-execution-engine/validation/run_v0_23_gates.sh'
-exit_code=0
---- output ---

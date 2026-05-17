@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
+     Running tests/http_and_fake_e2e.rs (target/debug/deps/http_and_fake_e2e-1c89ff7bf2aa15b9)
+
+running 4 tests
+test equal_service_and_admin_tokens_fail_closed_at_app_construction ... ok
+test full_scaffold_path_compile_submit_cancel_and_reconcile ... ok
+test http_auth_and_fake_e2e_smoke ... ok
+test mismatched_object_graph_is_rejected ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

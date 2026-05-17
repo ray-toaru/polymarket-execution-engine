@@ -15,6 +15,7 @@ VERSION = (ROOT / "VERSION").read_text().strip()
 CURRENT_DIR = EXECUTOR / "evidence" / "current"
 DEFAULT_LOG_DIR = CURRENT_DIR / "logs"
 OUT = CURRENT_DIR / "manifest.json"
+ENVIRONMENT = CURRENT_DIR / "environment.json"
 
 SECTIONS: dict[str, list[str]] = {
     "rust_workspace_validation": [
@@ -54,6 +55,13 @@ SECTIONS: dict[str, list[str]] = {
         "26-release-hygiene-clean-snapshot.log",
     ],
 }
+SKIPPED_LOGS: dict[str, list[str]] = {
+    "postgres_validation": ["13-pg-skipped.log"],
+    "credentialed_non_trading_validation": [
+        "16-authenticated-smoke-skipped.log",
+        "17-sign-only-dry-run-skipped.log",
+    ],
+}
 PASS_MARKERS = (
     "passed",
     '"status": "ok"',
@@ -63,6 +71,7 @@ PASS_MARKERS = (
     "CREATE TABLE",
 )
 FAIL_MARKERS = ("FAIL:", "error:", "test result: FAILED", "could not compile", "panicked at")
+SKIP_MARKERS = ("skipped", "not set")
 
 
 def sha256(path: Path) -> str:
@@ -94,10 +103,30 @@ def log_passed(path: Path) -> bool:
 
 def build_section(log_dir: Path, names: list[str], *, optional: bool = False) -> dict:
     present = [log_dir / name for name in names if (log_dir / name).exists()]
+    skipped = [log_dir / name for name in SKIPPED_LOGS.get("", []) if (log_dir / name).exists()]
     if not present:
+        skipped = [
+            log_dir / name
+            for section_name, skip_names in SKIPPED_LOGS.items()
+            if names == SECTIONS[section_name]
+            for name in skip_names
+            if (log_dir / name).exists()
+        ]
+        if skipped:
+            return {
+                "status": "skipped",
+                "logs": [log_entry(path) for path in skipped],
+                "skipped_reason": " | ".join(path.read_text(errors="replace").strip() for path in skipped),
+            }
         return {"status": "skipped" if optional else "not_run", "logs": []}
     if len(present) != len(names):
         return {"status": "fail", "logs": [log_entry(path) for path in present], "missing_logs": [name for name in names if not (log_dir / name).exists()]}
+    if all(any(marker in path.read_text(errors="replace").lower() for marker in SKIP_MARKERS) for path in present):
+        return {
+            "status": "skipped",
+            "logs": [log_entry(path) for path in present],
+            "skipped_reason": " | ".join(path.read_text(errors="replace").strip() for path in present),
+        }
     status = "pass" if all(log_passed(path) for path in present) else "fail"
     return {"status": status, "logs": [log_entry(path) for path in present]}
 
@@ -122,6 +151,7 @@ def main(argv: list[str]) -> int:
             "sha256": sha256(artifact_path) if artifact_path and artifact_path.exists() else None,
             "binding_note": "External sidecar manifest binds the final zip hash; the in-archive manifest remains source-candidate evidence and cannot self-bind its containing zip.",
         },
+        "environment": log_entry(ENVIRONMENT) if ENVIRONMENT.exists() else None,
     }
     captured_names = set()
     for section, names in SECTIONS.items():

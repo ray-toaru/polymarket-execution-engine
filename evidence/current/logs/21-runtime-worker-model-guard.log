@@ -1,6 +1,1 @@
-command: python polymarket-execution-engine/validation/check_runtime_worker_models.py
-cwd: /mnt/data/agents_fix/polymarket_dual_project_v0_23_0
-timestamp: 2026-05-17T03:27:25Z
---- output ---
 runtime worker model static guard passed
---- exit_code: 0 ---

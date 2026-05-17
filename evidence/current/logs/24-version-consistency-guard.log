@@ -1,6 +1,1 @@
-command: python scripts/check_version_consistency.py
-cwd: /mnt/data/agents_fix/polymarket_dual_project_v0_23_0
-timestamp: 2026-05-17T03:27:30Z
---- output ---
 version consistency passed version=0.23.0
---- exit_code: 0 ---

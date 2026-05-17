@@ -1,7 +1,0 @@
-command: env PYTHONPATH=hermes-polymarket-control/src python -m pytest -q hermes-polymarket-control/tests
-cwd: /mnt/data/agents_fix/polymarket_dual_project_v0_23_0
-timestamp: 2026-05-17T03:27:35Z
---- output ---
-.............                                                            [100%]
-13 passed in 0.66s
---- exit_code: 0 ---

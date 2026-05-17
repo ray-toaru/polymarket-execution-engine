@@ -10,6 +10,10 @@ EVIDENCE_DIR="${EVIDENCE_ROOT}/logs"
 rm -rf "${EVIDENCE_DIR}"
 mkdir -p "${EVIDENCE_DIR}"
 
+if [[ -f "${INTEGRATION_ROOT}/scripts/collect_validation_environment.py" ]]; then
+  python "${INTEGRATION_ROOT}/scripts/collect_validation_environment.py" > "${EVIDENCE_ROOT}/environment.json"
+fi
+
 # Official SDK feature checks pull alloy/aws-lc/rustls/icu. Keep low-resource defaults stable.
 export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
 export RUSTFLAGS="${RUSTFLAGS:--C debuginfo=0}"
@@ -46,10 +50,14 @@ fi
 
 if [[ "${PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE:-}" == "1" ]]; then
   cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --features authenticated-smoke --locked authenticated_non_trading_smoke -- --nocapture --test-threads=1 2>&1 | tee "${EVIDENCE_DIR}/16-authenticated-smoke.log"
+else
+  echo "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE not set to 1; credentialed non-trading smoke skipped" | tee "${EVIDENCE_DIR}/16-authenticated-smoke-skipped.log"
 fi
 
 if [[ "${PMX_RUN_SIGN_ONLY_DRY_RUN:-}" == "1" ]]; then
   cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --features sign-only-dry-run --locked sign_only_dry_run -- --nocapture --test-threads=1 2>&1 | tee "${EVIDENCE_DIR}/17-sign-only-dry-run.log"
+else
+  echo "PMX_RUN_SIGN_ONLY_DRY_RUN not set to 1; sign-only dry-run skipped" | tee "${EVIDENCE_DIR}/17-sign-only-dry-run-skipped.log"
 fi
 
 # Release hygiene should be evaluated on a clean release snapshot, not on a dirty developer
@@ -86,12 +94,12 @@ if [[ -f "${INTEGRATION_ROOT}/scripts/check_version_consistency.py" && -f "${INT
   python "${INTEGRATION_ROOT}/scripts/validate_contracts.py" 2>&1 | tee "${EVIDENCE_DIR}/25-contract-validation.log"
   ARTIFACT_PATH="$(python "${INTEGRATION_ROOT}/scripts/package_release.py" | tee "${EVIDENCE_DIR}/27-package-release.log" | tail -n 1)"
   python "${INTEGRATION_ROOT}/scripts/check_release_artifact.py" "${ARTIFACT_PATH}" "$(cat "${INTEGRATION_ROOT}/VERSION")" 2>&1 | tee "${EVIDENCE_DIR}/28-release-artifact-check.log"
-  python validation/write_v0_23_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" 2>&1 | tee "${EVIDENCE_DIR}/29-write-evidence-manifest.log"
+  python validation/write_v0_23_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
   python validation/check_docs_evidence_governance.py 2>&1 | tee "${EVIDENCE_DIR}/30-docs-evidence-governance.log"
-  python validation/write_v0_23_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" 2>&1 | tee -a "${EVIDENCE_DIR}/29-write-evidence-manifest.log"
+  python validation/write_v0_23_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
 else
   echo "integration repository not found; lifecycle parity, contract validation, and release packaging skipped" | tee "${EVIDENCE_DIR}/22-integration-skipped.log"
-  python validation/write_v0_23_evidence_manifest.py "${EVIDENCE_DIR}" 2>&1 | tee "${EVIDENCE_DIR}/29-write-evidence-manifest.log"
+  python validation/write_v0_23_evidence_manifest.py "${EVIDENCE_DIR}" >/dev/null
 fi
 
 echo "v0.23 gates completed; evidence in ${EVIDENCE_ROOT}"

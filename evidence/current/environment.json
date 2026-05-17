@@ -1,0 +1,96 @@
+{
+  "captured_at": "2026-05-17T10:03:59.405414+00:00",
+  "dependency_locks": {
+    "polymarket-execution-engine/Cargo.lock": {
+      "exists": true,
+      "sha256": "f02535658c8cdfbc3cead3d76720da648052182467e1764e0c086001f0a3db5a"
+    },
+    "polymarket-execution-engine/adapters/pmx-official-sdk-adapter/Cargo.lock": {
+      "exists": true,
+      "sha256": "518e9ed0800c91c6da4450c1ea7f3299fe2c2f0515a2bdecace50605ab997182"
+    },
+    "polymarket-execution-engine/adapters/pmx-official-sdk-spike/Cargo.lock": {
+      "exists": true,
+      "sha256": "41eb2fb25b9c9e384c97a00e11d0b6b5c3e54eedd13c3d97aa145d2b8c1ccf49"
+    }
+  },
+  "environment": {
+    "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE": null,
+    "PMX_RUN_SIGN_ONLY_DRY_RUN": null,
+    "PMX_TEST_DATABASE_URL_set": true,
+    "python_executable": "/tmp/polymarket-gates-kVJ7Jh/bin/python",
+    "python_version": "3.14.2 (main, Jan 20 2026, 13:54:38) [GCC 13.3.0]"
+  },
+  "git": {
+    "execution": {
+      "branch": "",
+      "head": "a9d9ed6b468febf1da21c433b64db0d1a09d0095",
+      "path": "polymarket-execution-engine",
+      "status_short": "M .gitignore\n D evidence/current/logs/18-plan-storage-guard.log\n D evidence/current/logs/19-live-submit-static-guard.log\n D evidence/current/logs/20-sign-only-lifecycle-guard.log\n D evidence/current/logs/21-runtime-worker-model-guard.log\n D evidence/current/logs/22-v0-23-lifecycle-api-guard.log\n D evidence/current/logs/23-v0-23-evidence-manifest-guard.log\n D evidence/current/logs/24-version-consistency-guard.log\n D evidence/current/logs/25-contract-validation.log\n D evidence/current/logs/26-release-hygiene-clean-snapshot.log\n D evidence/current/logs/30-docs-evidence-governance.log\n D evidence/current/logs/31-shell-syntax.log\n D evidence/current/logs/python-compileall.log\n D evidence/current/logs/python-hermes-tests.log\n M evidence/current/manifest.json\n M validation/run_v0_23_gates.sh\n M validation/write_v0_23_evidence_manifest.py\n?? evidence/current/environment.json"
+    },
+    "hermes": {
+      "branch": "dev",
+      "head": "f668365fa9246ed150713d19734b04fd5453ce9f",
+      "path": "hermes-polymarket-control",
+      "status_short": ""
+    },
+    "integration": {
+      "branch": "v0.23.1-validation-promotion",
+      "head": "0ab5e5c8934a93aca4d454fcf6acb2781623398c",
+      "path": ".",
+      "status_short": "M polymarket-execution-engine\n?? RELEASE_DECISION.md\n?? VALIDATION_PROMOTION.md\n?? scripts/collect_validation_environment.py"
+    },
+    "submodules": "f668365fa9246ed150713d19734b04fd5453ce9f hermes-polymarket-control (heads/dev)\n+a9d9ed6b468febf1da21c433b64db0d1a09d0095 polymarket-execution-engine (remotes/origin/v0.23.1-validation-promotion)"
+  },
+  "integration_root": "/workspaces/universal/rust/polymarket_dual_project",
+  "platform": {
+    "machine": "x86_64",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "release": "6.6.87.2-microsoft-standard-WSL2",
+    "system": "Linux",
+    "version": "#1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025"
+  },
+  "schema_version": 1,
+  "tools": {
+    "cargo": {
+      "available": true,
+      "command": [
+        "cargo",
+        "--version"
+      ],
+      "exit_status": 0,
+      "stderr": "",
+      "stdout": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)"
+    },
+    "psql": {
+      "available": true,
+      "command": [
+        "psql",
+        "--version"
+      ],
+      "exit_status": 0,
+      "stderr": "",
+      "stdout": "psql (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)"
+    },
+    "python": {
+      "available": true,
+      "command": [
+        "/tmp/polymarket-gates-kVJ7Jh/bin/python",
+        "--version"
+      ],
+      "exit_status": 0,
+      "stderr": "",
+      "stdout": "Python 3.14.2"
+    },
+    "rustc": {
+      "available": true,
+      "command": [
+        "rustc",
+        "--version"
+      ],
+      "exit_status": 0,
+      "stderr": "",
+      "stdout": "rustc 1.95.0 (59807616e 2026-04-14)"
+    }
+  }
+}
