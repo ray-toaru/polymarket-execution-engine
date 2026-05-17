@@ -1,14 +1,14 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.80s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.79s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-adapter/target/debug/deps/pmx_official_sdk_adapter-51524219746890d5)
 
 running 23 tests
-test tests::default_config_cannot_live_submit ... ok
 test tests::authenticated_non_trading_is_explicit_opt_in ... ok
+test tests::default_config_cannot_live_submit ... ok
 test tests::gateway_error_conversion_redacts_sensitive_message ... ok
 test tests::gateway_error_conversion_preserves_remote_unknown ... ok
 test tests::geoblock_status_maps_to_core_status ... ok
-test tests::live_submit_preconditions_are_closed_by_default ... ok
 test tests::liveness_geoblock_blocks_first ... ok
+test tests::live_submit_preconditions_are_closed_by_default ... ok
 test tests::liveness_requires_reconcile_when_remote_unknown_exists ... ok
 test tests::normalized_error_redaction_covers_remote_unknown_messages ... ok
 test tests::plan_mapping_normalizes_limit_orders ... ok

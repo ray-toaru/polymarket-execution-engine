@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-05-17T10:03:59.405414+00:00",
+  "captured_at": "2026-05-17T10:07:29.126667+00:00",
   "dependency_locks": {
     "polymarket-execution-engine/Cargo.lock": {
       "exists": true,
@@ -15,18 +15,18 @@
     }
   },
   "environment": {
-    "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE": null,
-    "PMX_RUN_SIGN_ONLY_DRY_RUN": null,
+    "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE": "1",
+    "PMX_RUN_SIGN_ONLY_DRY_RUN": "1",
     "PMX_TEST_DATABASE_URL_set": true,
-    "python_executable": "/tmp/polymarket-gates-kVJ7Jh/bin/python",
+    "python_executable": "/tmp/polymarket-gates-iJKkga/bin/python",
     "python_version": "3.14.2 (main, Jan 20 2026, 13:54:38) [GCC 13.3.0]"
   },
   "git": {
     "execution": {
       "branch": "",
-      "head": "a9d9ed6b468febf1da21c433b64db0d1a09d0095",
+      "head": "328a6d8b2076523365357cde5a8b3b9ab0c4ec47",
       "path": "polymarket-execution-engine",
-      "status_short": "M .gitignore\n D evidence/current/logs/18-plan-storage-guard.log\n D evidence/current/logs/19-live-submit-static-guard.log\n D evidence/current/logs/20-sign-only-lifecycle-guard.log\n D evidence/current/logs/21-runtime-worker-model-guard.log\n D evidence/current/logs/22-v0-23-lifecycle-api-guard.log\n D evidence/current/logs/23-v0-23-evidence-manifest-guard.log\n D evidence/current/logs/24-version-consistency-guard.log\n D evidence/current/logs/25-contract-validation.log\n D evidence/current/logs/26-release-hygiene-clean-snapshot.log\n D evidence/current/logs/30-docs-evidence-governance.log\n D evidence/current/logs/31-shell-syntax.log\n D evidence/current/logs/python-compileall.log\n D evidence/current/logs/python-hermes-tests.log\n M evidence/current/manifest.json\n M validation/run_v0_23_gates.sh\n M validation/write_v0_23_evidence_manifest.py\n?? evidence/current/environment.json"
+      "status_short": "M evidence/current/environment.json\n D evidence/current/logs/01-cargo-fmt.log\n D evidence/current/logs/02-cargo-check.log\n D evidence/current/logs/03-cargo-clippy.log\n D evidence/current/logs/04-cargo-test-workspace-non-api.log\n D evidence/current/logs/05-http-fake-e2e.log\n D evidence/current/logs/06-sdk-spike-no-features.log\n D evidence/current/logs/07-sdk-spike-typecheck.log\n D evidence/current/logs/08-sdk-adapter-fmt.log\n D evidence/current/logs/09-sdk-adapter-check.log\n D evidence/current/logs/10-sdk-adapter-clippy.log\n D evidence/current/logs/11-sdk-adapter-test.log\n D evidence/current/logs/12-sdk-adapter-typecheck.log\n D evidence/current/logs/13-pg-migration.log\n D evidence/current/logs/14-pg-store-tests.log\n D evidence/current/logs/15-http-postgres-e2e.log\n D evidence/current/logs/16-authenticated-smoke-skipped.log\n D evidence/current/logs/17-sign-only-dry-run-skipped.log\n D evidence/current/logs/18-plan-storage-guard.log\n D evidence/current/logs/19-live-submit-static-guard.log\n D evidence/current/logs/20-sign-only-lifecycle-guard.log\n D evidence/current/logs/21-runtime-worker-model-guard.log\n D evidence/current/logs/22-v0-23-lifecycle-api-guard.log\n D evidence/current/logs/23-v0-23-evidence-manifest-guard.log\n D evidence/current/logs/24-version-consistency-guard.log\n D evidence/current/logs/25-contract-validation.log\n D evidence/current/logs/26-release-hygiene-clean-snapshot.log\n D evidence/current/logs/27-package-release.log\n D evidence/current/logs/28-release-artifact-check.log\n D evidence/current/logs/30-docs-evidence-governance.log"
     },
     "hermes": {
       "branch": "dev",
@@ -40,7 +40,7 @@
       "path": ".",
       "status_short": "M polymarket-execution-engine\n?? RELEASE_DECISION.md\n?? VALIDATION_PROMOTION.md\n?? scripts/collect_validation_environment.py"
     },
-    "submodules": "f668365fa9246ed150713d19734b04fd5453ce9f hermes-polymarket-control (heads/dev)\n+a9d9ed6b468febf1da21c433b64db0d1a09d0095 polymarket-execution-engine (remotes/origin/v0.23.1-validation-promotion)"
+    "submodules": "f668365fa9246ed150713d19734b04fd5453ce9f hermes-polymarket-control (heads/dev)\n+328a6d8b2076523365357cde5a8b3b9ab0c4ec47 polymarket-execution-engine (remotes/origin/v0.23.1-validation-promotion)"
   },
   "integration_root": "/workspaces/universal/rust/polymarket_dual_project",
   "platform": {
@@ -75,7 +75,7 @@
     "python": {
       "available": true,
       "command": [
-        "/tmp/polymarket-gates-kVJ7Jh/bin/python",
+        "/tmp/polymarket-gates-iJKkga/bin/python",
         "--version"
       ],
       "exit_status": 0,

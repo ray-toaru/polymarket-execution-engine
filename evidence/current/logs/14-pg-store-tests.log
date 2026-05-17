@@ -15,5 +15,5 @@ test postgres::tests::remote_unknown_is_persisted_conservatively ... ok
 test postgres::tests::reservation_double_spend_is_prevented_concurrently ... ok
 test postgres::tests::same_request_replay_is_persisted ... ok
 
-test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 18 filtered out; finished in 0.76s
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 18 filtered out; finished in 0.75s
 

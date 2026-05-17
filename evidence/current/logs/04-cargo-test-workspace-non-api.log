@@ -1,4 +1,4 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.24s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.25s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-a6ad02cd996eb4f7)
 
 running 2 tests
@@ -117,7 +117,7 @@ test tests::maps_plan_status_for_db ... ok
 test tests::runtime_worker_observations_degrade_loaded_runtime_state ... ok
 test tests::stale_runtime_worker_observations_are_ignored ... ok
 
-test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.16s
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.25s
 
    Doc-tests pmx_authz
 
