@@ -493,6 +493,20 @@ pub struct WebSocketLivenessEvaluation {
     pub reason: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct GeoblockEvaluationInput {
+    pub status: GeoblockStatus,
+    pub observed_at: DateTime<Utc>,
+    pub last_error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct GeoblockEvaluation {
+    pub status: GeoblockStatus,
+    pub submit_allowed: bool,
+    pub reason: String,
+}
+
 /// Evaluate resource-refresh freshness without doing network or store I/O.
 ///
 /// Every observed resource must be fresh and healthy. Missing observations are
@@ -626,6 +640,22 @@ fn websocket_observation_state(
         .map(|last_message_at| last_message_at < cutoff)
         .unwrap_or(true);
     (connected, stale)
+}
+
+/// Evaluate geoblock provider status without remote I/O.
+pub fn evaluate_geoblock_status(input: GeoblockEvaluationInput) -> GeoblockEvaluation {
+    let submit_allowed = matches!(input.status, GeoblockStatus::Allowed);
+    GeoblockEvaluation {
+        status: input.status,
+        submit_allowed,
+        reason: if submit_allowed {
+            "geoblock provider allowed".into()
+        } else {
+            input
+                .last_error
+                .unwrap_or_else(|| "geoblock provider did not allow submit".into())
+        },
+    }
 }
 
 /// Evaluate reconcile backlog without reading or mutating remote order state.
@@ -1279,5 +1309,23 @@ mod capability_tests_v07 {
         assert!(!evaluation.user_connected);
         assert!(evaluation.user_stale);
         assert_eq!(evaluation.missing_channels, vec!["user"]);
+    }
+
+    #[test]
+    fn geoblock_evaluation_only_allows_explicit_allowed_status() {
+        let allowed = evaluate_geoblock_status(GeoblockEvaluationInput {
+            status: GeoblockStatus::Allowed,
+            observed_at: Utc::now(),
+            last_error: None,
+        });
+        assert!(allowed.submit_allowed);
+
+        let blocked = evaluate_geoblock_status(GeoblockEvaluationInput {
+            status: GeoblockStatus::Unknown,
+            observed_at: Utc::now(),
+            last_error: Some("provider timeout".into()),
+        });
+        assert!(!blocked.submit_allowed);
+        assert_eq!(blocked.reason, "provider timeout");
     }
 }

@@ -90,6 +90,12 @@ record_websocket_liveness_worker_tick()` persists the resulting market/user
 state through the provider snapshot bridge, keeping submit blocked until both
 channels are fresh and healthy.
 
+`pmx-runtime::evaluate_geoblock_status()` models the geoblock provider boundary
+without making a provider call. Only explicit `Allowed` status is submit-safe;
+`Blocked`, `Unknown`, and `Error` remain fail-closed. `pmx-service::
+record_geoblock_worker_tick()` records that status through the provider snapshot
+bridge so geoblock uncertainty blocks decision gates.
+
 Remaining work:
 
 ```text
