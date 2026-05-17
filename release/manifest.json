@@ -32,10 +32,10 @@
   "remaining_blockers": [
     "production-readiness-not-claimed",
     "live-submit-live-cancel-production-deployment-remain-blocked",
-    "shadow-execution-would-submit-drill-not-yet-implemented",
-    "rollback-kill-switch-drill-not-yet-executed",
-    "real-market-reconciliation-drift-drill-not-yet-executed",
-    "observability-per-order-trace-evidence-not-yet-complete",
+    "shadow-execution-drill-must-remain-non-posting",
+    "reconciliation-drift-drill-is-local-simulation-not-live-remote-reconcile",
+    "rollback-kill-switch-drill-is-local-simulation-not-production-runbook",
+    "observability-per-order-trace-evidence-needs-service-level-integration",
     "external-final-artifact-sidecar-hash-must-be-preserved-with-zip"
   ],
   "v011_source_changes": [
@@ -48,10 +48,10 @@
     "zip-aware-release-hygiene"
   ],
   "required_next_gates": [
-    "shadow-execution-would-submit-non-posting-drill",
-    "reconciliation-drift-drill",
-    "rollback-kill-switch-drill",
-    "observability-trace-evidence-generation",
+    "shadow-execution-would-submit-non-posting-drill-current-gate",
+    "reconciliation-drift-drill-current-gate",
+    "rollback-kill-switch-drill-current-gate",
+    "service-level-observability-trace-evidence-generation",
     "polymarket-execution-engine/validation/run_current_gates.sh-after-any-behavior-change"
   ],
   "v023_source_changes": [
@@ -66,7 +66,11 @@
     "release-package-archive-exclusions",
     "typed-redacted-lifecycle-payload-schema",
     "pre-live-worker-degraded-fail-closed-policy",
-    "agents-md-root-and-plane-specific-instructions"
+    "agents-md-root-and-plane-specific-instructions",
+    "shadow-execution-non-posting-drill",
+    "reconciliation-drift-local-drill",
+    "rollback-kill-switch-local-drill",
+    "automatic-evidence-manifest-sections-for-shadow-readiness"
   ],
   "canonical_evidence": {
     "manifest_path": "polymarket-execution-engine/evidence/current/manifest.json",

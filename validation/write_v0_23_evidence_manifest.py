@@ -9,9 +9,13 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = Path(__file__).resolve()
+ROOT = SCRIPT.parents[2]
 EXECUTOR = ROOT / "polymarket-execution-engine"
-VERSION = (ROOT / "VERSION").read_text().strip()
+if not EXECUTOR.exists():
+    EXECUTOR = SCRIPT.parents[1]
+VERSION_PATH = ROOT / "VERSION" if (ROOT / "VERSION").exists() else EXECUTOR / "VERSION"
+VERSION = VERSION_PATH.read_text().strip()
 CURRENT_DIR = EXECUTOR / "evidence" / "current"
 DEFAULT_LOG_DIR = CURRENT_DIR / "logs"
 OUT = CURRENT_DIR / "manifest.json"
@@ -43,6 +47,15 @@ SECTIONS: dict[str, list[str]] = {
         "16-authenticated-smoke.log",
         "17-sign-only-dry-run.log",
     ],
+    "shadow_execution_validation": [
+        "29-shadow-execution-drill.log",
+    ],
+    "reconciliation_drift_validation": [
+        "31-reconciliation-drift-drill.log",
+    ],
+    "rollback_kill_switch_validation": [
+        "32-kill-switch-rollback-drill.log",
+    ],
     "local_static_validation": [
         "18-plan-storage-guard.log",
         "19-live-submit-static-guard.log",
@@ -61,9 +74,11 @@ SKIPPED_LOGS: dict[str, list[str]] = {
         "16-authenticated-smoke-skipped.log",
         "17-sign-only-dry-run-skipped.log",
     ],
+    "shadow_execution_validation": ["29-shadow-execution-drill.log"],
 }
 PASS_MARKERS = (
     "passed",
+    '"status": "pass"',
     '"status": "ok"',
     "Finished `dev` profile",
     "test result: ok",

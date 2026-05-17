@@ -60,6 +60,10 @@ else
   echo "PMX_RUN_SIGN_ONLY_DRY_RUN not set to 1; sign-only dry-run skipped" | tee "${EVIDENCE_DIR}/17-sign-only-dry-run-skipped.log"
 fi
 
+python validation/run_shadow_execution_drill.py 2>&1 | tee "${EVIDENCE_DIR}/29-shadow-execution-drill.log"
+python validation/run_reconciliation_drift_drill.py 2>&1 | tee "${EVIDENCE_DIR}/31-reconciliation-drift-drill.log"
+python validation/run_kill_switch_rollback_drill.py 2>&1 | tee "${EVIDENCE_DIR}/32-kill-switch-rollback-drill.log"
+
 # Release hygiene should be evaluated on a clean release snapshot, not on a dirty developer
 # working tree with .env, target/, temporary PostgreSQL data, or evidence logs.
 SNAPSHOT_DIR="$(mktemp -d)"

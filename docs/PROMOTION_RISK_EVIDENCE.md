@@ -67,9 +67,15 @@ Boundary:
 - Current proof is enough for shadow-readiness, not live submit readiness.
 - Future shadow drills should add explicit replay, duplicate submit, terminal-state, and advisory-lock contention evidence under a real PostgreSQL process.
 
-## Required next drills
+## Shadow-readiness drill evidence
 
-- Shadow execution would-submit drill: real market read and order construction, no submit.
-- Reconciliation drift drill: simulated remote/local mismatch and fail-closed reconcile behavior.
-- Kill-switch and rollback drill: config kill switch, degraded runtime, SDK failure, and PostgreSQL unavailable paths.
-- Observability drill: per-order trace id, redacted lifecycle query, and automatic evidence manifest generation.
+- Shadow execution would-submit drill: `29-shadow-execution-drill.log`.
+- Reconciliation drift drill: `31-reconciliation-drift-drill.log`.
+- Kill-switch and rollback drill: `32-kill-switch-rollback-drill.log`.
+- Automatic evidence manifest sections: `shadow_execution_validation`, `reconciliation_drift_validation`, and `rollback_kill_switch_validation`.
+
+Boundary:
+
+- The shadow drill performs a public market read and local candidate-order construction only.
+- The reconciliation and rollback drills are local simulations. They are not a substitute for production runbooks or live remote reconciliation.
+- Service-level observability still needs durable per-order trace propagation through API, store, audit, and lifecycle query paths.
