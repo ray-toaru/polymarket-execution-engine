@@ -17,10 +17,10 @@ use pmx_store::{
     AdminAuditEvent, AdminAuditQuery, AdminAuditStore, ExecutionLifecycleEvent,
     ExecutionLifecycleQuery, ExecutionLifecycleStore, ExecutionStore, IdempotencyAction,
     IdempotencyStore, OrderLifecycleEventRecord, OrderLifecycleRecord, OrderLifecycleStore,
-    RuntimeStateQuery, RuntimeStateStore, RuntimeWorkerHealthStore, RuntimeWorkerHeartbeat,
-    RuntimeWorkerObservation, RuntimeWorkerObservationStore, RuntimeWorkerStatusQuery,
-    RuntimeWorkerStatusReport, RuntimeWorkerStatusStore, SignOnlyLifecycleQuery,
-    SignOnlyLifecycleStore, StoreError,
+    OrderReconcileBacklogQuery, OrderReconcileBacklogStore, RuntimeStateQuery, RuntimeStateStore,
+    RuntimeWorkerHealthStore, RuntimeWorkerHeartbeat, RuntimeWorkerObservation,
+    RuntimeWorkerObservationStore, RuntimeWorkerStatusQuery, RuntimeWorkerStatusReport,
+    RuntimeWorkerStatusStore, SignOnlyLifecycleQuery, SignOnlyLifecycleStore, StoreError,
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -550,6 +550,37 @@ where
         evaluation,
         provider_tick,
     })
+}
+
+pub async fn record_reconcile_backlog_from_order_lifecycle<S>(
+    store: &S,
+    mut tick: ReconcileBacklogWorkerTick,
+) -> Result<ReconcileBacklogWorkerTickReceipt, ServiceError>
+where
+    S: OrderReconcileBacklogStore
+        + RuntimeWorkerHealthStore
+        + RuntimeWorkerObservationStore
+        + Send
+        + Sync,
+{
+    if tick.account_id.trim().is_empty() {
+        return Err(ServiceError::BadRequest(
+            "account_id must be non-empty".into(),
+        ));
+    }
+    if !tick.no_trading_side_effect {
+        return Err(ServiceError::BadRequest(
+            "reconcile backlog lifecycle reader must not contain trading side effects".into(),
+        ));
+    }
+    let backlog = store
+        .list_reconcile_backlog_orders(&OrderReconcileBacklogQuery {
+            account_id: tick.account_id.clone(),
+            limit: 500,
+        })
+        .await?;
+    tick.remote_unknown_order_ids = backlog.into_iter().map(|order| order.order_id).collect();
+    record_reconcile_backlog_worker_tick(store, tick).await
 }
 
 pub async fn record_websocket_liveness_worker_tick<S>(
@@ -2384,6 +2415,83 @@ mod tests {
             .expect("decision");
         assert_eq!(decision.status, DecisionStatus::Block);
         assert!(decision.reasons.contains(&BlockReason::WorkerDegraded));
+    }
+
+    #[tokio::test]
+    async fn service_records_reconcile_backlog_from_order_lifecycle() {
+        let store = InMemoryStore::default();
+        store.set_runtime_state_for_test("acct-1", "cond-1", None, allow_runtime_state());
+        for capability in ["heartbeat", "reconcile", "resource-refresh"] {
+            store
+                .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
+                    worker_id: format!("worker-{capability}"),
+                    role: "service-test".into(),
+                    capability: capability.into(),
+                    status: "HEALTHY".into(),
+                    last_heartbeat_at: Utc::now(),
+                    last_error: None,
+                })
+                .await
+                .expect("record worker heartbeat");
+        }
+        store
+            .upsert_order_lifecycle(&order(
+                "order-lifecycle-backlog",
+                OrderLifecycleState::RemoteUnknown,
+            ))
+            .await
+            .expect("upsert remote unknown order");
+        store
+            .upsert_order_lifecycle(&order(
+                "order-lifecycle-posted",
+                OrderLifecycleState::Posted,
+            ))
+            .await
+            .expect("upsert posted order");
+
+        let observed_at = Utc::now();
+        let receipt = record_reconcile_backlog_from_order_lifecycle(
+            &store,
+            ReconcileBacklogWorkerTick {
+                account_id: "acct-1".into(),
+                provider_name: "reconcile-lifecycle-reader-test".into(),
+                instance_id: "worker-reconcile-lifecycle-reader".into(),
+                lease_owner_id: "worker-reconcile-lifecycle-reader".into(),
+                market_websocket_connected: true,
+                market_websocket_stale: false,
+                user_websocket_connected: true,
+                user_websocket_stale: false,
+                geoblock_status: GeoblockStatus::Allowed,
+                resource_refresh_fresh: true,
+                remote_unknown_order_ids: vec![],
+                observed_at,
+                no_trading_side_effect: true,
+            },
+        )
+        .await
+        .expect("record reconcile backlog from order lifecycle");
+        assert_eq!(receipt.evaluation.remote_unknown_orders, 1);
+        assert!(receipt.evaluation.submit_blocked);
+        assert!(!receipt.provider_tick.submit_allowed_by_runtime);
+
+        let service = ExecutorService::with_runtime_provider(
+            store.clone(),
+            StoreBackedRuntimeStateProvider::new(store.clone()),
+            "test-executor".into(),
+            DEFAULT_CONTRACT_VERSION.into(),
+        );
+        let normalized = service.normalize(intent()).await.expect("normalize");
+        let snapshot = service
+            .capture_snapshot(normalized)
+            .await
+            .expect("snapshot");
+        assert_eq!(snapshot.runtime_state.worker_status, WorkerStatus::Degraded);
+        assert!(
+            snapshot
+                .runtime_state
+                .required_capabilities
+                .contains(&"reconcile-backlog".to_string())
+        );
     }
 
     #[tokio::test]

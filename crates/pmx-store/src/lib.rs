@@ -5,7 +5,8 @@ use pmx_core::{
     GeoblockStatus, NormalizedIntent, OrderEventKind, OrderLifecycleState, OrderReservation,
     QuantityBound, ReservationState, RuntimeStateSummary, SignOnlyLifecycleRecord,
     SignOnlyLifecycleState, SubmitReceipt, SubmitStatus, WorkerStatus,
-    sign_only_lifecycle_records_equivalent, transition_order_state, transition_sign_only_lifecycle,
+    lifecycle_requires_reconcile, sign_only_lifecycle_records_equivalent, transition_order_state,
+    transition_sign_only_lifecycle,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -96,6 +97,26 @@ pub trait OrderLifecycleStore: Send + Sync {
         &self,
         query: &OrderLifecycleEventQuery,
     ) -> Result<Vec<OrderLifecycleEventRecord>, StoreError>;
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OrderReconcileBacklogQuery {
+    pub account_id: String,
+    pub limit: usize,
+}
+
+impl OrderReconcileBacklogQuery {
+    pub fn bounded_limit(&self) -> usize {
+        self.limit.clamp(1, 500)
+    }
+}
+
+#[async_trait]
+pub trait OrderReconcileBacklogStore: Send + Sync {
+    async fn list_reconcile_backlog_orders(
+        &self,
+        query: &OrderReconcileBacklogQuery,
+    ) -> Result<Vec<OrderLifecycleRecord>, StoreError>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -1169,6 +1190,33 @@ impl OrderLifecycleStore for InMemoryStore {
 }
 
 #[async_trait]
+impl OrderReconcileBacklogStore for InMemoryStore {
+    async fn list_reconcile_backlog_orders(
+        &self,
+        query: &OrderReconcileBacklogQuery,
+    ) -> Result<Vec<OrderLifecycleRecord>, StoreError> {
+        let mut orders: Vec<_> = self
+            .inner
+            .lock()
+            .expect("in-memory store mutex poisoned")
+            .orders
+            .values()
+            .filter(|order| order.account_id == query.account_id)
+            .filter(|order| lifecycle_requires_reconcile(&order.lifecycle_state))
+            .cloned()
+            .collect();
+        orders.sort_by(|left, right| {
+            right
+                .updated_at
+                .cmp(&left.updated_at)
+                .then_with(|| left.order_id.cmp(&right.order_id))
+        });
+        orders.truncate(query.bounded_limit());
+        Ok(orders)
+    }
+}
+
+#[async_trait]
 impl AdminAuditStore for InMemoryStore {
     async fn record_admin_audit_event(&self, event: &AdminAuditEvent) -> Result<(), StoreError> {
         let mut state = self.inner.lock().expect("in-memory store mutex poisoned");
@@ -2003,5 +2051,35 @@ mod order_lifecycle_store_tests_v23 {
             .await
             .expect_err("invalid transition");
         assert!(matches!(err, StoreError::Conflict(_)));
+    }
+
+    #[tokio::test]
+    async fn in_memory_lists_reconcile_backlog_orders() {
+        let store = InMemoryStore::default();
+        let mut remote_unknown = test_order("order-reconcile-backlog-1");
+        remote_unknown.lifecycle_state = OrderLifecycleState::RemoteUnknown;
+        let mut partial_remote_unknown = test_order("order-reconcile-backlog-2");
+        partial_remote_unknown.lifecycle_state = OrderLifecycleState::PartialRemoteUnknown;
+        let posted = test_order("order-reconcile-backlog-posted");
+        for order in [&remote_unknown, &partial_remote_unknown, &posted] {
+            store
+                .upsert_order_lifecycle(order)
+                .await
+                .expect("upsert order");
+        }
+        let backlog = store
+            .list_reconcile_backlog_orders(&OrderReconcileBacklogQuery {
+                account_id: "acct-order-life".into(),
+                limit: 100,
+            })
+            .await
+            .expect("list reconcile backlog");
+        let order_ids: Vec<_> = backlog
+            .iter()
+            .map(|order| order.order_id.as_str())
+            .collect();
+        assert_eq!(order_ids.len(), 2);
+        assert!(order_ids.contains(&"order-reconcile-backlog-1"));
+        assert!(order_ids.contains(&"order-reconcile-backlog-2"));
     }
 }

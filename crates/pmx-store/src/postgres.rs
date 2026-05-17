@@ -2,12 +2,12 @@ use crate::{
     AdminAuditEvent, AdminAuditQuery, AdminAuditStore, ExecutionLifecycleEvent,
     ExecutionLifecycleQuery, ExecutionLifecycleStore, ExecutionStore, IdempotencyAction,
     IdempotencyStore, OrderLifecycleEventQuery, OrderLifecycleEventRecord, OrderLifecycleRecord,
-    OrderLifecycleStore, RuntimeStateQuery, RuntimeStateStore, RuntimeWorkerHealthStore,
-    RuntimeWorkerHeartbeat, RuntimeWorkerObservation, RuntimeWorkerObservationStore,
-    RuntimeWorkerStatusQuery, RuntimeWorkerStatusReport, RuntimeWorkerStatusStore,
-    SignOnlyLifecycleQuery, SignOnlyLifecycleStore, StoreError, advisory_lock_key,
-    apply_runtime_worker_observations, order_event_kind_from_str, order_event_kind_to_str,
-    order_lifecycle_state_from_str, order_lifecycle_state_to_str,
+    OrderLifecycleStore, OrderReconcileBacklogQuery, OrderReconcileBacklogStore, RuntimeStateQuery,
+    RuntimeStateStore, RuntimeWorkerHealthStore, RuntimeWorkerHeartbeat, RuntimeWorkerObservation,
+    RuntimeWorkerObservationStore, RuntimeWorkerStatusQuery, RuntimeWorkerStatusReport,
+    RuntimeWorkerStatusStore, SignOnlyLifecycleQuery, SignOnlyLifecycleStore, StoreError,
+    advisory_lock_key, apply_runtime_worker_observations, order_event_kind_from_str,
+    order_event_kind_to_str, order_lifecycle_state_from_str, order_lifecycle_state_to_str,
     quantity_bound_to_resource_and_amount, reservation_state_to_str,
     runtime_observation_ttl_seconds, sign_only_lifecycle_record_is_replay, submit_status_str,
     validate_sign_only_lifecycle_append_for_store,
@@ -819,6 +819,47 @@ impl OrderLifecycleStore for PostgresStore {
             .collect::<Result<Vec<_>, StoreError>>()?;
         events.reverse();
         Ok(events)
+    }
+}
+
+#[async_trait]
+impl OrderReconcileBacklogStore for PostgresStore {
+    async fn list_reconcile_backlog_orders(
+        &self,
+        query: &OrderReconcileBacklogQuery,
+    ) -> Result<Vec<OrderLifecycleRecord>, StoreError> {
+        let client = self.client().await?;
+        let bounded_limit = i64::try_from(query.bounded_limit()).unwrap_or(500);
+        let rows = client
+            .query(
+                "SELECT order_id, execution_id, account_id, condition_id, token_id, side, lifecycle_state, remote_order_id, remote_state, created_at, updated_at
+                 FROM orders
+                 WHERE account_id = $1
+                   AND lifecycle_state IN ('REMOTE_UNKNOWN', 'PARTIAL_REMOTE_UNKNOWN')
+                 ORDER BY updated_at DESC, order_id ASC
+                 LIMIT $2",
+                &[&query.account_id, &bounded_limit],
+            )
+            .await
+            .map_err(map_db_error)?;
+        rows.into_iter()
+            .map(|row| {
+                let state: String = row.get(6);
+                Ok(OrderLifecycleRecord {
+                    order_id: row.get(0),
+                    execution_id: row.get(1),
+                    account_id: row.get(2),
+                    condition_id: row.get(3),
+                    token_id: row.get(4),
+                    side: row.get(5),
+                    lifecycle_state: order_lifecycle_state_from_str(&state)?,
+                    remote_order_id: row.get(7),
+                    remote_state: row.get(8),
+                    created_at: Some(row.get(9)),
+                    updated_at: Some(row.get(10)),
+                })
+            })
+            .collect()
     }
 }
 
@@ -2143,5 +2184,59 @@ mod order_lifecycle_pg_tests_v23 {
             events[0].correlation_id.as_deref(),
             Some("corr-pg-order-life")
         );
+    }
+
+    #[tokio::test]
+    async fn postgres_lists_reconcile_backlog_orders() {
+        let Some(store) = test_store().await else {
+            return;
+        };
+        let suffix = Utc::now().timestamp_nanos_opt().unwrap_or_default();
+        let account = format!("acct-reconcile-backlog-{suffix}");
+        let execution = format!("exec-reconcile-backlog-{suffix}");
+        seed_execution_plan(&store, &account, &execution).await;
+        for (order_id, lifecycle_state) in [
+            (
+                format!("order-reconcile-backlog-remote-{suffix}"),
+                OrderLifecycleState::RemoteUnknown,
+            ),
+            (
+                format!("order-reconcile-backlog-partial-{suffix}"),
+                OrderLifecycleState::PartialRemoteUnknown,
+            ),
+            (
+                format!("order-reconcile-backlog-posted-{suffix}"),
+                OrderLifecycleState::Posted,
+            ),
+        ] {
+            store
+                .upsert_order_lifecycle(&OrderLifecycleRecord {
+                    order_id: order_id.clone(),
+                    execution_id: execution.clone(),
+                    account_id: account.clone(),
+                    condition_id: "cond-reconcile-backlog".into(),
+                    token_id: "token-reconcile-backlog".into(),
+                    side: "BUY".into(),
+                    lifecycle_state,
+                    remote_order_id: Some(format!("remote-{order_id}")),
+                    remote_state: Some("OPEN".into()),
+                    created_at: None,
+                    updated_at: None,
+                })
+                .await
+                .expect("upsert order");
+        }
+        let backlog = store
+            .list_reconcile_backlog_orders(&OrderReconcileBacklogQuery {
+                account_id: account,
+                limit: 100,
+            })
+            .await
+            .expect("list reconcile backlog");
+        assert_eq!(backlog.len(), 2);
+        assert!(backlog.iter().all(|order| matches!(
+            order.lifecycle_state,
+            OrderLifecycleState::RemoteUnknown | OrderLifecycleState::PartialRemoteUnknown
+        )));
     }
 }

@@ -83,6 +83,13 @@ count maps through `pmx-service::record_reconcile_backlog_worker_tick()` into
 the same provider snapshot bridge and blocks submit as a degraded reconcile
 state.
 
+`OrderReconcileBacklogStore` and `pmx-service::
+record_reconcile_backlog_from_order_lifecycle()` add the local reader side of
+that worker. The reader lists account-scoped orders already in
+`REMOTE_UNKNOWN` or `PARTIAL_REMOTE_UNKNOWN`, feeds their ids into the same
+reconcile backlog tick, and performs no remote reads, submit, cancel, or
+lifecycle mutation.
+
 `pmx-runtime::evaluate_websocket_liveness()` models market/user WebSocket
 liveness without opening sockets. It treats disconnected, stale, degraded, or
 missing submit-critical channels as fail-closed inputs. `pmx-service::
@@ -114,5 +121,5 @@ Remaining work:
 
 ```text
 - Connect concrete network providers to the deterministic worker-loop boundary.
-- Connect concrete reconcile readers to remote order observations.
+- Connect remote reconcile readers to external order observations.
 ```
