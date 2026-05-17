@@ -17,6 +17,9 @@ evidence for the exact artifact SHA-256 under review.
 - Runtime safety proof: runtime worker health, geoblock, resource refresh,
   reconcile backlog, heartbeat lease, and crash recovery evidence must be bound
   in the manifest.
+- Observability proof: per-order trace identifiers must connect shadow,
+  reconcile, rollback, redacted audit, and lifecycle evidence without exposing
+  secrets.
 - Canary proof: live submit and live cancel canary evidence must exist, be
   explicitly reviewed, and remain scoped to whitelisted accounts, whitelisted
   markets, size caps, daily caps, operator approval, and cancel-only fallback.

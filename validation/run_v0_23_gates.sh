@@ -60,6 +60,7 @@ else
   echo "PMX_RUN_SIGN_ONLY_DRY_RUN not set to 1; sign-only dry-run skipped" | tee "${EVIDENCE_DIR}/17-sign-only-dry-run-skipped.log"
 fi
 
+export PMX_RUN_SHADOW_EXECUTION_DRILL="${PMX_RUN_SHADOW_EXECUTION_DRILL:-1}"
 python validation/run_shadow_execution_drill.py 2>&1 | tee "${EVIDENCE_DIR}/29-shadow-execution-drill.log"
 python validation/run_reconciliation_drift_drill.py 2>&1 | tee "${EVIDENCE_DIR}/31-reconciliation-drift-drill.log"
 python validation/run_kill_switch_rollback_drill.py 2>&1 | tee "${EVIDENCE_DIR}/32-kill-switch-rollback-drill.log"
@@ -99,6 +100,7 @@ python validation/run_live_canary_blocked_drill.py 2>&1 | tee "${EVIDENCE_DIR}/3
 python validation/run_live_canary_rehearsal_drill.py 2>&1 | tee "${EVIDENCE_DIR}/40-live-canary-rehearsal-drill.log"
 python validation/check_production_hardening_config.py 2>&1 | tee "${EVIDENCE_DIR}/41-production-hardening-config.log"
 python validation/check_runtime_worker_status_query.py 2>&1 | tee "${EVIDENCE_DIR}/42-runtime-worker-status-query.log"
+python validation/check_observability_evidence.py 2>&1 | tee "${EVIDENCE_DIR}/43-observability-evidence.log"
 python scripts/check_release_hygiene.py "${HYGIENE_ROOT}" 2>&1 | tee "${EVIDENCE_DIR}/26-release-hygiene-clean-snapshot.log"
 python validation/write_v0_23_evidence_manifest.py "${EVIDENCE_DIR}" >/dev/null
 

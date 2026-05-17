@@ -98,6 +98,9 @@ SECTIONS: dict[str, list[str]] = {
     "runtime_worker_status_validation": [
         "42-runtime-worker-status-query.log",
     ],
+    "observability_evidence_validation": [
+        "43-observability-evidence.log",
+    ],
     "local_static_validation": [
         "18-plan-storage-guard.log",
         "19-live-submit-static-guard.log",

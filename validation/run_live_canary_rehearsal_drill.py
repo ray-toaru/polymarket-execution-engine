@@ -20,6 +20,9 @@ REHEARSAL_STAGES = [
     "reservation_check",
     "idempotency_check",
     "reconcile_check",
+    "remote_unknown_freeze_check",
+    "post_submit_reconcile_check",
+    "cancel_unknown_escalation_check",
     "cancel_only_fallback_check",
 ]
 

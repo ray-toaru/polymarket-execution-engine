@@ -35,6 +35,27 @@ SCENARIOS = [
         "sdk_status": "READY",
         "postgres_status": "UNAVAILABLE",
     },
+    {
+        "name": "geoblock_blocked",
+        "kill_switch_open": True,
+        "runtime_status": "GEOBLOCKED",
+        "sdk_status": "READY",
+        "postgres_status": "READY",
+    },
+    {
+        "name": "low_resource",
+        "kill_switch_open": True,
+        "runtime_status": "LOW_RESOURCE",
+        "sdk_status": "READY",
+        "postgres_status": "READY",
+    },
+    {
+        "name": "remote_unknown_freeze",
+        "kill_switch_open": True,
+        "runtime_status": "REMOTE_UNKNOWN_FREEZE",
+        "sdk_status": "READY",
+        "postgres_status": "READY",
+    },
 ]
 
 
@@ -56,6 +77,8 @@ def main() -> int:
                 **scenario,
                 "submit_allowed": allowed,
                 "rollback_action": "BLOCK_SUBMIT_AND_KEEP_PREVIOUS_SAFE_STATE",
+                "fallback_mode": "sign-only" if scenario["sdk_status"] == "FAILED" else "read-only",
+                "operator_required": True,
             }
         )
     failures = [result["name"] for result in results if result["submit_allowed"]]
