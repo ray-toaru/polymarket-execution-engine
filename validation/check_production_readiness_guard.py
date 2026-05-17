@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RUNBOOK = ROOT / "docs" / "PRODUCTIONIZATION_RUNBOOK.md"
 CONTROLS_MATRIX = ROOT / "docs" / "PRODUCTION_CONTROLS_MATRIX.md"
+HARDENING_SPEC = ROOT / "docs" / "PRODUCTION_HARDENING_SPEC.md"
 RELEASE_MANIFEST = ROOT / "release" / "manifest.json"
 EVIDENCE_GUARD = ROOT / "validation" / "check_v0_23_evidence_manifest.py"
 GATE = ROOT / "validation" / "run_v0_23_gates.sh"
@@ -48,6 +49,26 @@ CONTROLS_TOKENS = [
     "non-production",
 ]
 
+HARDENING_TOKENS = [
+    "Secret Custody",
+    "secret manager",
+    "KMS",
+    "HSM",
+    "Deployment And Rollback",
+    "artifact SHA-256",
+    "config kill switch",
+    "Observability",
+    "runtime worker health",
+    "remote unknown freeze",
+    "SLO And Error Budget",
+    "Audit Export And Retention",
+    "Risk Limits",
+    "Account whitelist",
+    "Market whitelist",
+    "Dependency And SDK Breakage",
+    "sign-only regression evidence",
+]
+
 
 def main() -> int:
     failures: list[str] = []
@@ -60,6 +81,11 @@ def main() -> int:
     for token in CONTROLS_TOKENS:
         if token not in controls:
             failures.append(f"production controls matrix missing {token}")
+
+    hardening = HARDENING_SPEC.read_text()
+    for token in HARDENING_TOKENS:
+        if token not in hardening:
+            failures.append(f"production hardening spec missing {token}")
 
     release = json.loads(RELEASE_MANIFEST.read_text())
     status = str(release.get("status", "")).lower()
