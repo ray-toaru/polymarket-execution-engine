@@ -56,6 +56,9 @@ SECTIONS: dict[str, list[str]] = {
     "rollback_kill_switch_validation": [
         "32-kill-switch-rollback-drill.log",
     ],
+    "migration_framework_validation": [
+        "33-migration-framework-guard.log",
+    ],
     "local_static_validation": [
         "18-plan-storage-guard.log",
         "19-live-submit-static-guard.log",

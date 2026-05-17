@@ -8,8 +8,16 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-EXECUTOR = ROOT / "polymarket-execution-engine"
+SCRIPT = Path(__file__).resolve()
+EXECUTOR = SCRIPT.parents[1]
+INTEGRATION_ROOT = SCRIPT.parents[2]
+if (INTEGRATION_ROOT / "VERSION").exists() and (INTEGRATION_ROOT / "polymarket-execution-engine").exists():
+    ROOT = INTEGRATION_ROOT
+    EXECUTOR = ROOT / "polymarket-execution-engine"
+    INTEGRATION_MODE = True
+else:
+    ROOT = EXECUTOR
+    INTEGRATION_MODE = False
 EVIDENCE = EXECUTOR / "evidence"
 CURRENT_MANIFEST = EVIDENCE / "current" / "manifest.json"
 RELEASE_MANIFEST = EXECUTOR / "release" / "manifest.json"
@@ -96,7 +104,12 @@ def validate_current_manifest(failures: list[str]) -> None:
     if not CURRENT_MANIFEST.exists():
         return
     data = json.loads(CURRENT_MANIFEST.read_text())
-    if data.get("version") != (ROOT / "VERSION").read_text().strip():
+    expected_version = None
+    if (ROOT / "VERSION").exists():
+        expected_version = (ROOT / "VERSION").read_text().strip()
+    elif RELEASE_MANIFEST.exists():
+        expected_version = json.loads(RELEASE_MANIFEST.read_text()).get("version")
+    if expected_version and data.get("version") != expected_version:
         failures.append("current evidence manifest version must match VERSION")
     if data.get("canonical_evidence_dir") != "polymarket-execution-engine/evidence/current":
         failures.append("current evidence manifest must name canonical evidence dir")
@@ -120,6 +133,10 @@ def validate_current_manifest(failures: list[str]) -> None:
                 failures.append(f"{label} entry missing path")
                 continue
             path = ROOT / rel
+            if not path.exists() and not INTEGRATION_MODE and rel.startswith(
+                "polymarket-execution-engine/"
+            ):
+                path = EXECUTOR / rel.removeprefix("polymarket-execution-engine/")
             if not path.exists():
                 failures.append(f"manifest log missing: {rel}")
                 continue
@@ -173,9 +190,15 @@ def validate_execution_docs_and_gates(failures: list[str]) -> None:
 
 
 def validate_agents_guidance(failures: list[str]) -> None:
-    required = [
-        ROOT / "AGENTS.md",
-        ROOT / "hermes-polymarket-control" / "AGENTS.md",
+    required = []
+    if INTEGRATION_MODE:
+        required.extend(
+            [
+                ROOT / "AGENTS.md",
+                ROOT / "hermes-polymarket-control" / "AGENTS.md",
+            ]
+        )
+    required.extend([
         EXECUTOR / "AGENTS.md",
         EXECUTOR / "crates" / "AGENTS.md",
         EXECUTOR / "crates" / "pmx-api" / "AGENTS.md",
@@ -191,7 +214,7 @@ def validate_agents_guidance(failures: list[str]) -> None:
         EXECUTOR / "openapi" / "AGENTS.md",
         EXECUTOR / "migrations" / "AGENTS.md",
         EXECUTOR / "validation" / "AGENTS.md",
-    ]
+    ])
     for path in required:
         if not path.exists():
             failures.append(f"AGENTS.md missing: {path.relative_to(ROOT)}")
@@ -211,13 +234,13 @@ def validate_agents_guidance(failures: list[str]) -> None:
             failures.append(f"AGENTS.md must not contain version-specific release markers: {agents_path.relative_to(ROOT)}")
 
     root_agents = ROOT / "AGENTS.md"
-    if root_agents.exists():
+    if INTEGRATION_MODE and root_agents.exists():
         text = root_agents.read_text()
         for token in ["live submit", "evidence/current", "check_version_consistency.py", "Do not encode the current version"]:
             if token not in text:
                 failures.append(f"root AGENTS.md missing required guidance token: {token}")
     hermes_agents = ROOT / "hermes-polymarket-control" / "AGENTS.md"
-    if hermes_agents.exists():
+    if INTEGRATION_MODE and hermes_agents.exists():
         text = hermes_agents.read_text()
         for token in ["must not hold private keys", "must not sign orders", "pytest"]:
             if token not in text:
@@ -254,6 +277,8 @@ def validate_agents_guidance(failures: list[str]) -> None:
 
 
 def validate_packaging_scripts(failures: list[str]) -> None:
+    if not INTEGRATION_MODE:
+        return
     package_text = PACKAGE_SCRIPT.read_text()
     for token in ["docs/archive", "evidence/archive", "validation/archive", "polymarket-execution-engine/validation/archive", "external_reviews"]:
         if token not in package_text:
@@ -266,7 +291,8 @@ def validate_packaging_scripts(failures: list[str]) -> None:
 
 def main() -> int:
     failures: list[str] = []
-    validate_root_docs(failures)
+    if INTEGRATION_MODE:
+        validate_root_docs(failures)
     validate_evidence_layout(failures)
     validate_release_binding(failures)
     validate_current_manifest(failures)

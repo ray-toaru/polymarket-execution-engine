@@ -38,6 +38,12 @@
     "observability-per-order-trace-evidence-needs-service-level-integration",
     "external-final-artifact-sidecar-hash-must-be-preserved-with-zip"
   ],
+  "v024_source_changes": [
+    "postgres-forward-only-schema-migrations-table",
+    "store-ordered-migration-application-with-sha256-checksum-recording",
+    "schema-migration-checksum-drift-fail-closed",
+    "migration-framework-static-guard-and-evidence-manifest-section"
+  ],
   "v011_source_changes": [
     "api-server-authoritative-in-memory-store-scaffold",
     "object-graph-binding-checks",
