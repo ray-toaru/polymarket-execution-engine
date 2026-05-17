@@ -395,6 +395,32 @@ pub struct LiveCanaryPreconditions {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LiveCanaryPrepInput {
+    pub account_id: String,
+    pub market_id: String,
+    pub order_size_units: u64,
+    pub daily_used_units: u64,
+    pub per_order_cap_units: u64,
+    pub per_day_cap_units: u64,
+    pub account_whitelist: Vec<String>,
+    pub market_whitelist: Vec<String>,
+    pub operator_approval_id: Option<String>,
+    pub cancel_only_fallback_ready: bool,
+    pub remote_unknown_orders: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LiveCanaryPrepDecision {
+    pub preconditions: LiveCanaryPreconditions,
+    pub frozen: bool,
+    pub submit_allowed: bool,
+    pub reasons: Vec<String>,
+    pub live_side_effects: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OfficialSdkReconcileDisposition {
     Healthy,
@@ -552,6 +578,69 @@ pub fn validate_live_submit_canary_preconditions(
         )));
     }
     Ok(())
+}
+
+pub fn prepare_live_canary_decision(input: &LiveCanaryPrepInput) -> LiveCanaryPrepDecision {
+    let account_whitelisted = input.account_whitelist.contains(&input.account_id);
+    let market_whitelisted = input.market_whitelist.contains(&input.market_id);
+    let size_cap_ok =
+        input.order_size_units > 0 && input.order_size_units <= input.per_order_cap_units;
+    let daily_cap_ok = input.order_size_units > 0
+        && input
+            .daily_used_units
+            .saturating_add(input.order_size_units)
+            <= input.per_day_cap_units;
+    let operator_approved = input
+        .operator_approval_id
+        .as_ref()
+        .is_some_and(|approval| !approval.trim().is_empty());
+    let frozen = input.remote_unknown_orders > 0;
+    let preconditions = LiveCanaryPreconditions {
+        compile_feature_live_submit: cfg!(feature = "live-submit"),
+        env_allow_live_submit: env_flag(ENV_ALLOW_LIVE_SUBMIT),
+        config_allow_live_submit: false,
+        kill_switch_open: false,
+        runtime_worker_healthy: false,
+        geoblock_allowed: false,
+        repository_reservation_exists: false,
+        idempotency_key_written: false,
+        reconcile_worker_healthy: false,
+        account_whitelisted,
+        market_whitelisted,
+        size_cap_ok,
+        daily_cap_ok,
+        operator_approved,
+        cancel_only_fallback_ready: input.cancel_only_fallback_ready,
+    };
+    let mut reasons = Vec::new();
+    if !account_whitelisted {
+        reasons.push("account not whitelisted".into());
+    }
+    if !market_whitelisted {
+        reasons.push("market not whitelisted".into());
+    }
+    if !size_cap_ok {
+        reasons.push("per-order cap exceeded".into());
+    }
+    if !daily_cap_ok {
+        reasons.push("per-day cap exceeded".into());
+    }
+    if !operator_approved {
+        reasons.push("operator approval missing".into());
+    }
+    if !input.cancel_only_fallback_ready {
+        reasons.push("cancel-only fallback missing".into());
+    }
+    if frozen {
+        reasons.push("remote unknown freeze active".into());
+    }
+    LiveCanaryPrepDecision {
+        preconditions,
+        frozen,
+        submit_allowed: false,
+        reasons,
+        live_side_effects: false,
+    }
 }
 
 pub fn validate_standard_sign_only_profile(
@@ -1374,6 +1463,56 @@ mod tests {
             err.to_string()
                 .contains("cancel-only fallback is not ready")
         );
+    }
+
+    #[test]
+    fn live_canary_prep_freezes_on_remote_unknown_and_never_submits() {
+        let decision = prepare_live_canary_decision(&LiveCanaryPrepInput {
+            account_id: "acct-canary".into(),
+            market_id: "market-canary".into(),
+            order_size_units: 1,
+            daily_used_units: 0,
+            per_order_cap_units: 10,
+            per_day_cap_units: 10,
+            account_whitelist: vec!["acct-canary".into()],
+            market_whitelist: vec!["market-canary".into()],
+            operator_approval_id: Some("approval-1".into()),
+            cancel_only_fallback_ready: true,
+            remote_unknown_orders: 1,
+        });
+        assert!(decision.frozen);
+        assert!(!decision.submit_allowed);
+        assert!(!decision.live_side_effects);
+        assert!(
+            decision
+                .reasons
+                .contains(&"remote unknown freeze active".into())
+        );
+    }
+
+    #[test]
+    fn live_canary_prep_requires_whitelist_caps_approval_and_cancel_fallback() {
+        let decision = prepare_live_canary_decision(&LiveCanaryPrepInput {
+            account_id: "acct-not-allowed".into(),
+            market_id: "market-not-allowed".into(),
+            order_size_units: 11,
+            daily_used_units: 9,
+            per_order_cap_units: 10,
+            per_day_cap_units: 10,
+            account_whitelist: vec!["acct-canary".into()],
+            market_whitelist: vec!["market-canary".into()],
+            operator_approval_id: None,
+            cancel_only_fallback_ready: false,
+            remote_unknown_orders: 0,
+        });
+        assert!(!decision.preconditions.account_whitelisted);
+        assert!(!decision.preconditions.market_whitelisted);
+        assert!(!decision.preconditions.size_cap_ok);
+        assert!(!decision.preconditions.daily_cap_ok);
+        assert!(!decision.preconditions.operator_approved);
+        assert!(!decision.preconditions.cancel_only_fallback_ready);
+        assert!(!decision.submit_allowed);
+        assert!(!decision.live_side_effects);
     }
 
     #[test]

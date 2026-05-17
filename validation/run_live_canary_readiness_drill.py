@@ -34,7 +34,12 @@ REQUIRED_CANARY_GATES = [
 
 REQUIRED_ADAPTER_TOKENS = [
     "LiveCanaryPreconditions",
+    "LiveCanaryPrepInput",
+    "LiveCanaryPrepDecision",
+    "prepare_live_canary_decision",
     "validate_live_submit_canary_preconditions",
+    "live_canary_prep_freezes_on_remote_unknown_and_never_submits",
+    "live_canary_prep_requires_whitelist_caps_approval_and_cancel_fallback",
     "live_submit_canary_requires_every_gate",
     "live_submit_canary_requires_cancel_only_fallback",
     "ENV_ALLOW_LIVE_SUBMIT",

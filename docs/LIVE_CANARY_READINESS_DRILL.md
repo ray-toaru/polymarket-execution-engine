@@ -19,6 +19,12 @@ Required gates before a future canary:
 - size cap and daily cap;
 - operator approval;
 - cancel-only fallback ready.
+- remote unknown freeze before any canary attempt.
+
+`prepare_live_canary_decision()` builds the local canary-prep decision from
+account whitelist, market whitelist, per-order cap, per-day cap, operator
+approval, cancel-only fallback, and remote-unknown backlog inputs. The prep
+decision never enables submit by itself and records `live_side_effects=false`.
 
 Validation entrypoint:
 
