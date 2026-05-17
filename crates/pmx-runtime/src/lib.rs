@@ -412,6 +412,124 @@ pub struct HeartbeatLeaseElection {
     pub reason: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum ResourceRefreshComponent {
+    Account,
+    Market,
+    Collateral,
+}
+
+impl ResourceRefreshComponent {
+    fn as_str(&self) -> &'static str {
+        match self {
+            ResourceRefreshComponent::Account => "account",
+            ResourceRefreshComponent::Market => "market",
+            ResourceRefreshComponent::Collateral => "collateral",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ResourceRefreshObservation {
+    pub component: ResourceRefreshComponent,
+    pub resource_id: String,
+    pub refreshed_at: DateTime<Utc>,
+    pub status: HealthLevel,
+    pub last_error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ResourceRefreshEvaluationInput {
+    pub observations: Vec<ResourceRefreshObservation>,
+    pub observed_at: DateTime<Utc>,
+    pub stale_after_seconds: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ResourceRefreshEvaluation {
+    pub fresh: bool,
+    pub stale_components: Vec<String>,
+    pub failed_components: Vec<String>,
+    pub missing_components: Vec<String>,
+    pub reason: String,
+}
+
+/// Evaluate resource-refresh freshness without doing network or store I/O.
+///
+/// Every observed resource must be fresh and healthy. Missing observations are
+/// fail-closed because a submit decision cannot prove account, market, and
+/// collateral resources are current.
+pub fn evaluate_resource_refresh_freshness(
+    input: ResourceRefreshEvaluationInput,
+) -> ResourceRefreshEvaluation {
+    if input.observations.is_empty() {
+        return ResourceRefreshEvaluation {
+            fresh: false,
+            stale_components: vec![],
+            failed_components: vec![],
+            missing_components: vec!["account".into(), "market".into(), "collateral".into()],
+            reason: "no resource refresh observations".into(),
+        };
+    }
+
+    let stale_after_seconds = input.stale_after_seconds.max(0);
+    let cutoff = input.observed_at - chrono::Duration::seconds(stale_after_seconds);
+    let mut stale_components = Vec::new();
+    let mut failed_components = Vec::new();
+    let mut has_account = false;
+    let mut has_market = false;
+    let mut has_collateral = false;
+    for observation in input.observations {
+        match observation.component {
+            ResourceRefreshComponent::Account => has_account = true,
+            ResourceRefreshComponent::Market => has_market = true,
+            ResourceRefreshComponent::Collateral => has_collateral = true,
+        }
+        let component = format!(
+            "{}:{}",
+            observation.component.as_str(),
+            observation.resource_id
+        );
+        if observation.status != HealthLevel::Healthy {
+            failed_components.push(component);
+        } else if observation.refreshed_at < cutoff {
+            stale_components.push(component);
+        }
+    }
+
+    let mut missing_components = Vec::new();
+    if !has_account {
+        missing_components.push("account".into());
+    }
+    if !has_market {
+        missing_components.push("market".into());
+    }
+    if !has_collateral {
+        missing_components.push("collateral".into());
+    }
+
+    let fresh = stale_components.is_empty()
+        && failed_components.is_empty()
+        && missing_components.is_empty();
+    let reason = if fresh {
+        "all resource refresh observations are fresh".into()
+    } else {
+        format!(
+            "stale_components={} failed_components={} missing_components={}",
+            stale_components.len(),
+            failed_components.len(),
+            missing_components.len()
+        )
+    };
+    ResourceRefreshEvaluation {
+        fresh,
+        stale_components,
+        failed_components,
+        missing_components,
+        reason,
+    }
+}
+
 /// Elect a single heartbeat lease owner from local worker health observations.
 ///
 /// Election is deterministic: only fresh `Healthy` candidates are eligible, the
@@ -894,5 +1012,85 @@ mod capability_tests_v07 {
         assert!(election.lease_owner_id.is_empty());
         assert!(election.fail_closed);
         assert_eq!(election.healthy_candidate_count, 0);
+    }
+
+    #[test]
+    fn resource_refresh_evaluation_accepts_fresh_healthy_observations() {
+        let observed_at = Utc::now();
+        let evaluation = evaluate_resource_refresh_freshness(ResourceRefreshEvaluationInput {
+            observed_at,
+            stale_after_seconds: 30,
+            observations: vec![
+                ResourceRefreshObservation {
+                    component: ResourceRefreshComponent::Account,
+                    resource_id: "acct-1".into(),
+                    refreshed_at: observed_at - chrono::Duration::seconds(5),
+                    status: HealthLevel::Healthy,
+                    last_error: None,
+                },
+                ResourceRefreshObservation {
+                    component: ResourceRefreshComponent::Market,
+                    resource_id: "cond-1".into(),
+                    refreshed_at: observed_at - chrono::Duration::seconds(10),
+                    status: HealthLevel::Healthy,
+                    last_error: None,
+                },
+                ResourceRefreshObservation {
+                    component: ResourceRefreshComponent::Collateral,
+                    resource_id: "collateral-1".into(),
+                    refreshed_at: observed_at - chrono::Duration::seconds(15),
+                    status: HealthLevel::Healthy,
+                    last_error: None,
+                },
+            ],
+        });
+        assert!(evaluation.fresh);
+        assert!(evaluation.stale_components.is_empty());
+        assert!(evaluation.failed_components.is_empty());
+        assert!(evaluation.missing_components.is_empty());
+    }
+
+    #[test]
+    fn resource_refresh_evaluation_fails_closed_for_stale_failed_or_missing_inputs() {
+        let observed_at = Utc::now();
+        let missing = evaluate_resource_refresh_freshness(ResourceRefreshEvaluationInput {
+            observed_at,
+            stale_after_seconds: 30,
+            observations: vec![],
+        });
+        assert!(!missing.fresh);
+        assert_eq!(missing.reason, "no resource refresh observations");
+        assert_eq!(
+            missing.missing_components,
+            vec!["account", "market", "collateral"]
+        );
+
+        let evaluation = evaluate_resource_refresh_freshness(ResourceRefreshEvaluationInput {
+            observed_at,
+            stale_after_seconds: 30,
+            observations: vec![
+                ResourceRefreshObservation {
+                    component: ResourceRefreshComponent::Account,
+                    resource_id: "acct-1".into(),
+                    refreshed_at: observed_at - chrono::Duration::seconds(31),
+                    status: HealthLevel::Healthy,
+                    last_error: None,
+                },
+                ResourceRefreshObservation {
+                    component: ResourceRefreshComponent::Collateral,
+                    resource_id: "collateral-1".into(),
+                    refreshed_at: observed_at - chrono::Duration::seconds(1),
+                    status: HealthLevel::Degraded,
+                    last_error: Some("balance refresh failed".into()),
+                },
+            ],
+        });
+        assert!(!evaluation.fresh);
+        assert_eq!(evaluation.stale_components, vec!["account:acct-1"]);
+        assert_eq!(
+            evaluation.failed_components,
+            vec!["collateral:collateral-1"]
+        );
+        assert_eq!(evaluation.missing_components, vec!["market"]);
     }
 }

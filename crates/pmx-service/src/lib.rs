@@ -3,9 +3,10 @@ use chrono::Utc;
 use pmx_core::*;
 use pmx_policy::evaluate_constraints;
 use pmx_runtime::{
-    HeartbeatLeaseCandidate, HeartbeatLeaseElection, HeartbeatLeaseElectionInput, RuntimeSignal,
-    RuntimeWorkerProviderSnapshot, elect_heartbeat_lease_owner, runtime_worker_loop_tick,
-    runtime_worker_store_writes,
+    HeartbeatLeaseCandidate, HeartbeatLeaseElection, HeartbeatLeaseElectionInput,
+    ResourceRefreshEvaluation, ResourceRefreshEvaluationInput, ResourceRefreshObservation,
+    RuntimeSignal, RuntimeWorkerProviderSnapshot, elect_heartbeat_lease_owner,
+    evaluate_resource_refresh_freshness, runtime_worker_loop_tick, runtime_worker_store_writes,
 };
 use pmx_store::{
     AdminAuditEvent, AdminAuditQuery, AdminAuditStore, ExecutionLifecycleEvent,
@@ -130,6 +131,32 @@ pub struct HeartbeatLeaseElectionTick {
 #[serde(deny_unknown_fields)]
 pub struct HeartbeatLeaseElectionTickReceipt {
     pub election: HeartbeatLeaseElection,
+    pub provider_tick: RuntimeWorkerProviderTickReceipt,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ResourceRefreshWorkerTick {
+    pub account_id: String,
+    pub provider_name: String,
+    pub instance_id: String,
+    pub lease_owner_id: String,
+    pub market_websocket_connected: bool,
+    pub market_websocket_stale: bool,
+    pub user_websocket_connected: bool,
+    pub user_websocket_stale: bool,
+    pub geoblock_status: GeoblockStatus,
+    pub remote_unknown_orders: u32,
+    pub observations: Vec<ResourceRefreshObservation>,
+    pub observed_at: chrono::DateTime<Utc>,
+    pub stale_after_seconds: i64,
+    pub no_trading_side_effect: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ResourceRefreshWorkerTickReceipt {
+    pub evaluation: ResourceRefreshEvaluation,
     pub provider_tick: RuntimeWorkerProviderTickReceipt,
 }
 
@@ -322,6 +349,56 @@ where
     .await?;
     Ok(HeartbeatLeaseElectionTickReceipt {
         election,
+        provider_tick,
+    })
+}
+
+pub async fn record_resource_refresh_worker_tick<S>(
+    store: &S,
+    tick: ResourceRefreshWorkerTick,
+) -> Result<ResourceRefreshWorkerTickReceipt, ServiceError>
+where
+    S: RuntimeWorkerHealthStore + RuntimeWorkerObservationStore + Send + Sync,
+{
+    if tick.account_id.trim().is_empty()
+        || tick.provider_name.trim().is_empty()
+        || tick.instance_id.trim().is_empty()
+    {
+        return Err(ServiceError::BadRequest(
+            "account_id, provider_name and instance_id must be non-empty".into(),
+        ));
+    }
+    if !tick.no_trading_side_effect {
+        return Err(ServiceError::BadRequest(
+            "resource refresh worker ticks must not contain trading side effects".into(),
+        ));
+    }
+    let evaluation = evaluate_resource_refresh_freshness(ResourceRefreshEvaluationInput {
+        observations: tick.observations,
+        observed_at: tick.observed_at,
+        stale_after_seconds: tick.stale_after_seconds,
+    });
+    let provider_tick = record_runtime_worker_provider_snapshot(
+        store,
+        RuntimeWorkerProviderSnapshot {
+            account_id: tick.account_id,
+            lease_owner_id: tick.lease_owner_id,
+            instance_id: tick.instance_id,
+            market_websocket_connected: tick.market_websocket_connected,
+            market_websocket_stale: tick.market_websocket_stale,
+            user_websocket_connected: tick.user_websocket_connected,
+            user_websocket_stale: tick.user_websocket_stale,
+            geoblock_status: tick.geoblock_status,
+            resource_refresh_fresh: evaluation.fresh,
+            remote_unknown_orders: tick.remote_unknown_orders,
+            observed_at: tick.observed_at,
+            provider_name: tick.provider_name,
+            no_trading_side_effect: true,
+        },
+    )
+    .await?;
+    Ok(ResourceRefreshWorkerTickReceipt {
+        evaluation,
         provider_tick,
     })
 }
@@ -1775,6 +1852,95 @@ mod tests {
             .await
             .expect("decision");
         assert_eq!(decision.status, DecisionStatus::Block);
+    }
+
+    #[tokio::test]
+    async fn service_records_resource_refresh_worker_tick_for_decision_gate() {
+        let store = InMemoryStore::default();
+        store.set_runtime_state_for_test("acct-1", "cond-1", None, allow_runtime_state());
+        for capability in ["heartbeat", "reconcile", "resource-refresh"] {
+            store
+                .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
+                    worker_id: format!("worker-{capability}"),
+                    role: "service-test".into(),
+                    capability: capability.into(),
+                    status: "HEALTHY".into(),
+                    last_heartbeat_at: Utc::now(),
+                    last_error: None,
+                })
+                .await
+                .expect("record worker heartbeat");
+        }
+
+        let observed_at = Utc::now();
+        let receipt = record_resource_refresh_worker_tick(
+            &store,
+            ResourceRefreshWorkerTick {
+                account_id: "acct-1".into(),
+                provider_name: "resource-refresh-worker-test".into(),
+                instance_id: "worker-resource-refresh".into(),
+                lease_owner_id: "worker-resource-refresh".into(),
+                market_websocket_connected: true,
+                market_websocket_stale: false,
+                user_websocket_connected: true,
+                user_websocket_stale: false,
+                geoblock_status: GeoblockStatus::Allowed,
+                remote_unknown_orders: 0,
+                observed_at,
+                stale_after_seconds: 30,
+                no_trading_side_effect: true,
+                observations: vec![
+                    pmx_runtime::ResourceRefreshObservation {
+                        component: pmx_runtime::ResourceRefreshComponent::Account,
+                        resource_id: "acct-1".into(),
+                        refreshed_at: observed_at - chrono::Duration::seconds(60),
+                        status: pmx_runtime::HealthLevel::Healthy,
+                        last_error: None,
+                    },
+                    pmx_runtime::ResourceRefreshObservation {
+                        component: pmx_runtime::ResourceRefreshComponent::Market,
+                        resource_id: "cond-1".into(),
+                        refreshed_at: observed_at - chrono::Duration::seconds(5),
+                        status: pmx_runtime::HealthLevel::Healthy,
+                        last_error: None,
+                    },
+                ],
+            },
+        )
+        .await
+        .expect("record resource refresh worker tick");
+        assert!(!receipt.evaluation.fresh);
+        assert_eq!(receipt.evaluation.stale_components, vec!["account:acct-1"]);
+        assert!(receipt.provider_tick.lease_owner_active);
+        assert!(!receipt.provider_tick.submit_allowed_by_runtime);
+
+        let service = ExecutorService::with_runtime_provider(
+            store.clone(),
+            StoreBackedRuntimeStateProvider::new(store.clone()),
+            "test-executor".into(),
+            DEFAULT_CONTRACT_VERSION.into(),
+        );
+        let normalized = service.normalize(intent()).await.expect("normalize");
+        let snapshot = service
+            .capture_snapshot(normalized.clone())
+            .await
+            .expect("snapshot");
+        assert_eq!(snapshot.runtime_state.worker_status, WorkerStatus::Stale);
+        assert!(
+            snapshot
+                .runtime_state
+                .required_capabilities
+                .contains(&"resource-refresh".to_string())
+        );
+        let decision = service
+            .evaluate_decision_by_id(DecisionByIdRequest {
+                normalized_intent_id: normalized.normalized_intent_id.clone(),
+                snapshot_id: snapshot.snapshot_id.clone(),
+            })
+            .await
+            .expect("decision");
+        assert_eq!(decision.status, DecisionStatus::Block);
+        assert!(decision.reasons.contains(&BlockReason::WorkerStale));
     }
 
     #[tokio::test]

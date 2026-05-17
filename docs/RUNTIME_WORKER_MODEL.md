@@ -68,6 +68,14 @@ record_heartbeat_lease_election_tick()` persists that result through the same
 provider snapshot bridge, so stale lease ownership becomes a runtime blocker
 before submit decisions.
 
+`pmx-runtime::evaluate_resource_refresh_freshness()` models the resource
+refresh worker without I/O. It requires every account, market, and collateral
+observation supplied by the caller to be both fresh and healthy; missing, stale,
+failed, or degraded observations evaluate to `fresh=false`. `pmx-service::
+record_resource_refresh_worker_tick()` turns that evaluation into the provider
+snapshot bridge, so stale resource truth becomes a persisted runtime blocker
+without any remote submit or cancel side effect.
+
 Remaining work:
 
 ```text
