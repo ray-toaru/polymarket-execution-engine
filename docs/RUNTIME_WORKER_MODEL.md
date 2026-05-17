@@ -33,6 +33,13 @@ scaffolding: workers can persist observations and the existing store-backed
 runtime provider can make decision gates fail closed, but no WebSocket,
 geoblock, submit, or cancel side effect is started by this helper.
 
+`pmx-service::record_runtime_worker_tick()` adds the runnable tick boundary for
+worker loops: one call records `worker_health` heartbeat plus any normalized
+runtime observations. WebSocket, heartbeat lease, geoblock, resource refresh,
+and reconcile backlog workers should call this per tick after collecting their
+own signal. The helper deliberately has no trading side effect and only updates
+local runtime truth.
+
 Remaining work:
 
 ```text

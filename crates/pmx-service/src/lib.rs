@@ -7,8 +7,9 @@ use pmx_store::{
     AdminAuditEvent, AdminAuditQuery, AdminAuditStore, ExecutionLifecycleEvent,
     ExecutionLifecycleQuery, ExecutionLifecycleStore, ExecutionStore, IdempotencyAction,
     IdempotencyStore, OrderLifecycleEventRecord, OrderLifecycleRecord, OrderLifecycleStore,
-    RuntimeStateQuery, RuntimeStateStore, RuntimeWorkerObservation, RuntimeWorkerObservationStore,
-    SignOnlyLifecycleQuery, SignOnlyLifecycleStore, StoreError,
+    RuntimeStateQuery, RuntimeStateStore, RuntimeWorkerHealthStore, RuntimeWorkerHeartbeat,
+    RuntimeWorkerObservation, RuntimeWorkerObservationStore, SignOnlyLifecycleQuery,
+    SignOnlyLifecycleStore, StoreError,
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -76,6 +77,28 @@ pub enum SubmitOutcome {
     Replayed(SubmitReceipt),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RuntimeWorkerTick {
+    pub worker_id: String,
+    pub role: String,
+    pub capability: String,
+    pub status: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_error: Option<String>,
+    #[serde(default)]
+    pub signals: Vec<RuntimeSignal>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RuntimeWorkerTickReceipt {
+    pub worker_id: String,
+    pub capability: String,
+    pub heartbeat_recorded: bool,
+    pub observations_recorded: usize,
+}
+
 #[async_trait]
 pub trait RuntimeStateProvider: Clone + Send + Sync + 'static {
     async fn capture_runtime_state(
@@ -107,6 +130,43 @@ where
             .await?;
     }
     Ok(writes.len())
+}
+
+pub async fn record_runtime_worker_tick<S>(
+    store: &S,
+    account_id: impl Into<String>,
+    tick: RuntimeWorkerTick,
+) -> Result<RuntimeWorkerTickReceipt, ServiceError>
+where
+    S: RuntimeWorkerHealthStore + RuntimeWorkerObservationStore + Send + Sync,
+{
+    if tick.worker_id.trim().is_empty()
+        || tick.role.trim().is_empty()
+        || tick.capability.trim().is_empty()
+        || tick.status.trim().is_empty()
+    {
+        return Err(ServiceError::BadRequest(
+            "worker_id, role, capability and status must be non-empty".into(),
+        ));
+    }
+    store
+        .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
+            worker_id: tick.worker_id.clone(),
+            role: tick.role.clone(),
+            capability: tick.capability.clone(),
+            status: tick.status.clone(),
+            last_heartbeat_at: Utc::now(),
+            last_error: tick.last_error.clone(),
+        })
+        .await?;
+    let observations_recorded =
+        record_runtime_worker_signals(store, account_id, &tick.signals).await?;
+    Ok(RuntimeWorkerTickReceipt {
+        worker_id: tick.worker_id,
+        capability: tick.capability,
+        heartbeat_recorded: true,
+        observations_recorded,
+    })
 }
 
 fn fail_closed_runtime_state(required_capabilities: Vec<String>) -> RuntimeStateSummary {
@@ -1191,6 +1251,62 @@ mod tests {
             .expect("decision");
         assert_eq!(decision.status, DecisionStatus::Block);
         assert!(decision.reasons.contains(&BlockReason::WorkerStale));
+    }
+
+    #[tokio::test]
+    async fn service_records_runtime_worker_tick_heartbeat_and_observations() {
+        let store = InMemoryStore::default();
+        store.set_runtime_state_for_test("acct-1", "cond-1", None, allow_runtime_state());
+        let receipt = record_runtime_worker_tick(
+            &store,
+            "acct-1",
+            RuntimeWorkerTick {
+                worker_id: "worker-websocket-market".into(),
+                role: "WebSocketLiveness".into(),
+                capability: "websocket:market".into(),
+                status: "HEALTHY".into(),
+                last_error: None,
+                signals: vec![RuntimeSignal::WebSocket {
+                    channel: pmx_runtime::WebSocketChannel::Market,
+                    connected: false,
+                    stale: true,
+                    last_observed_at: Some(Utc::now()),
+                    last_error: Some("market websocket disconnected".into()),
+                }],
+            },
+        )
+        .await
+        .expect("record runtime worker tick");
+        assert!(receipt.heartbeat_recorded);
+        assert_eq!(receipt.observations_recorded, 1);
+
+        let state = store
+            .load_runtime_state(&RuntimeStateQuery {
+                account_id: "acct-1".into(),
+                condition_id: "cond-1".into(),
+                collateral_profile_id: None,
+                required_capabilities: vec!["websocket:market".into()],
+            })
+            .await
+            .expect("runtime state");
+        assert_eq!(state.worker_status, WorkerStatus::Degraded);
+
+        let normalized = ExecutorService::new(store.clone())
+            .normalize(intent())
+            .await
+            .expect("normalize");
+        let decision = evaluate_constraints(
+            &normalized,
+            &FeasibilitySnapshot {
+                snapshot_id: "snapshot-worker-tick".into(),
+                snapshot_hash: HashValue("snapshot-hash-worker-tick".into()),
+                normalized_intent_id: normalized.normalized_intent_id.clone(),
+                runtime_state: state,
+                captured_at: Utc::now(),
+            },
+        );
+        assert_eq!(decision.status, DecisionStatus::Block);
+        assert!(decision.reasons.contains(&BlockReason::WorkerDegraded));
     }
 
     #[tokio::test]

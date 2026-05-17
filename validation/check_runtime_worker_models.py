@@ -25,9 +25,13 @@ REQUIRED = {
     ],
     ROOT / "crates" / "pmx-service" / "src" / "lib.rs": [
         "record_runtime_worker_signals",
+        "record_runtime_worker_tick",
+        "RuntimeWorkerTick",
+        "RuntimeWorkerTickReceipt",
         "runtime_worker_store_writes",
         "RuntimeWorkerObservationStore",
         "service_records_runtime_worker_signals_for_decision_gate",
+        "service_records_runtime_worker_tick_heartbeat_and_observations",
     ],
     STORE: [
         "pub struct RuntimeWorkerObservation",
