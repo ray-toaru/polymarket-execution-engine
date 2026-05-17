@@ -1377,8 +1377,10 @@ mod tests {
 
     #[test]
     fn standard_sign_only_plan_rejects_profile_that_can_post_or_expose_raw_order() {
-        let mut profile = OfficialSdkStandardSignOnlyProfile::default();
-        profile.exposes_raw_signed_order = true;
+        let profile = OfficialSdkStandardSignOnlyProfile {
+            exposes_raw_signed_order: true,
+            ..OfficialSdkStandardSignOnlyProfile::default()
+        };
         let err = standard_sign_only_plan_for_order(profile, &sample_plan_limit())
             .expect_err("raw order exposure must be rejected");
         assert!(
@@ -1386,8 +1388,10 @@ mod tests {
                 .contains("must not expose raw signed orders")
         );
 
-        let mut profile = OfficialSdkStandardSignOnlyProfile::default();
-        profile.may_post_order = true;
+        let profile = OfficialSdkStandardSignOnlyProfile {
+            may_post_order: true,
+            ..OfficialSdkStandardSignOnlyProfile::default()
+        };
         let err = standard_sign_only_plan_for_order(profile, &sample_plan_limit())
             .expect_err("posting profile must be rejected");
         assert!(err.to_string().contains("post orders"));
