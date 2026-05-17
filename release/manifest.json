@@ -51,7 +51,9 @@
     "official-sdk-sign-only-metadata-redaction-boundary",
     "official-sdk-ioc-to-fak-builder-mapping",
     "live-submit-canary-preconditions-model",
-    "live-submit-canary-deny-path-tests"
+    "live-submit-canary-deny-path-tests",
+    "productionization-runbook-governance-scaffold",
+    "production-readiness-anti-overclaim-guard"
   ],
   "v011_source_changes": [
     "api-server-authoritative-in-memory-store-scaffold",

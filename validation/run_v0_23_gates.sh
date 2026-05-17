@@ -92,6 +92,7 @@ python validation/check_v0_23_evidence_manifest.py 2>&1 | tee "${EVIDENCE_DIR}/2
 python validation/check_migration_framework.py 2>&1 | tee "${EVIDENCE_DIR}/33-migration-framework-guard.log"
 python validation/run_migration_drift_dry_run.py 2>&1 | tee "${EVIDENCE_DIR}/34-migration-drift-dry-run.log"
 python validation/check_sdk_standard_sign_only.py 2>&1 | tee "${EVIDENCE_DIR}/35-sdk-standard-sign-only-guard.log"
+python validation/check_production_readiness_guard.py 2>&1 | tee "${EVIDENCE_DIR}/36-production-readiness-guard.log"
 python scripts/check_release_hygiene.py "${HYGIENE_ROOT}" 2>&1 | tee "${EVIDENCE_DIR}/26-release-hygiene-clean-snapshot.log"
 python validation/write_v0_23_evidence_manifest.py "${EVIDENCE_DIR}" >/dev/null
 
