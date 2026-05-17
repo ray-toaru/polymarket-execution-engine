@@ -1,0 +1,24 @@
+{
+  "failures": [],
+  "live_cancel_env_enabled": false,
+  "live_side_effects": "not_executed",
+  "live_submit_env_enabled": false,
+  "required_gates": [
+    "compile_feature_live_submit",
+    "env_allow_live_submit",
+    "config_allow_live_submit",
+    "kill_switch_open",
+    "runtime_worker_healthy",
+    "geoblock_allowed",
+    "repository_reservation_exists",
+    "idempotency_key_written",
+    "reconcile_worker_healthy",
+    "account_whitelisted",
+    "market_whitelisted",
+    "size_cap_ok",
+    "daily_cap_ok",
+    "operator_approved",
+    "cancel_only_fallback_ready"
+  ],
+  "status": "pass"
+}
