@@ -1,15 +1,14 @@
-   Compiling rand v0.8.6
+   Compiling alloy-network v1.6.3
    Compiling alloy-signer-local v1.6.3
-   Compiling backoff v0.4.0
    Compiling alloy v1.6.3
    Compiling polymarket_client_sdk_v2 v0.6.0-canary.1
    Compiling anyhow v1.0.102
    Compiling pmx-official-sdk-adapter v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.06s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 17.06s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-adapter/target/debug/deps/pmx_official_sdk_adapter-e38ede78ca151961)
 
 running 1 test
 test tests::authenticated_non_trading_smoke_executes_when_enabled ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 23 filtered out; finished in 12.42s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 28 filtered out; finished in 4.03s
 

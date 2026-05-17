@@ -1,6 +1,6 @@
    Compiling pmx-api v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.53s
-     Running tests/http_postgres_e2e.rs (target/debug/deps/http_postgres_e2e-e0c2149fffb74b87)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.04s
+     Running tests/http_postgres_e2e.rs (target/debug/deps/http_postgres_e2e-8bef5878453e9f06)
 
 running 4 tests
 test http_postgres_admin_routes_record_audit_events ... ok

@@ -1,7 +1,7 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.24s
-     Running unittests src/lib.rs (target/debug/deps/pmx_store-235465b02714f025)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.37s
+     Running unittests src/lib.rs (target/debug/deps/pmx_store-b55045206b1b48d3)
 
-running 12 tests
+running 13 tests
 test postgres::tests::fingerprint_mismatch_is_conflict ... ok
 test postgres::tests::in_progress_replay_does_not_return_proceed ... ok
 test postgres::tests::postgres_loads_runtime_state_from_runtime_tables ... ok
@@ -10,10 +10,11 @@ test postgres::tests::postgres_records_admin_audit_event ... ok
 test postgres::tests::postgres_records_cancel_reconcile_lifecycle_events ... ok
 test postgres::tests::postgres_records_execution_lifecycle_event ... ok
 test postgres::tests::postgres_records_runtime_worker_observation ... ok
+test postgres::tests::postgres_records_schema_migrations ... ok
 test postgres::tests::postgres_runtime_worker_observations_degrade_runtime_state ... ok
 test postgres::tests::remote_unknown_is_persisted_conservatively ... ok
 test postgres::tests::reservation_double_spend_is_prevented_concurrently ... ok
 test postgres::tests::same_request_replay_is_persisted ... ok
 
-test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 18 filtered out; finished in 0.73s
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 18 filtered out; finished in 0.82s
 
