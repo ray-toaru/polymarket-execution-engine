@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNBOOK = ROOT / "docs" / "PRODUCTIONIZATION_RUNBOOK.md"
+CONTROLS_MATRIX = ROOT / "docs" / "PRODUCTION_CONTROLS_MATRIX.md"
 RELEASE_MANIFEST = ROOT / "release" / "manifest.json"
 EVIDENCE_GUARD = ROOT / "validation" / "check_v0_23_evidence_manifest.py"
 GATE = ROOT / "validation" / "run_v0_23_gates.sh"
@@ -30,6 +31,23 @@ RUNBOOK_TOKENS = [
     "production-ready is forbidden",
 ]
 
+CONTROLS_TOKENS = [
+    "Secret manager / KMS / HSM",
+    "Production config profile",
+    "Deployment runbook",
+    "Rollback runbook",
+    "Incident drill",
+    "Alerting and dashboard",
+    "SLO / error budget",
+    "Audit export / retention policy",
+    "Account risk limits",
+    "Market risk limits",
+    "Dependency update policy",
+    "SDK upstream breakage playbook",
+    "artifact",
+    "non-production",
+]
+
 
 def main() -> int:
     failures: list[str] = []
@@ -37,6 +55,11 @@ def main() -> int:
     for token in RUNBOOK_TOKENS:
         if token not in runbook:
             failures.append(f"production runbook missing {token}")
+
+    controls = CONTROLS_MATRIX.read_text()
+    for token in CONTROLS_TOKENS:
+        if token not in controls:
+            failures.append(f"production controls matrix missing {token}")
 
     release = json.loads(RELEASE_MANIFEST.read_text())
     status = str(release.get("status", "")).lower()
