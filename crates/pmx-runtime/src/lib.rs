@@ -294,7 +294,7 @@ pub fn runtime_worker_store_writes(
             let reason = health
                 .last_error
                 .clone()
-                .unwrap_or_else(|| format!("{:?}", status));
+                .unwrap_or_else(|| format!("{status:?}"));
             let should_fail_closed = health.blocks_submit();
             RuntimeWorkerStoreWrite {
                 account_id: account_id.clone(),
