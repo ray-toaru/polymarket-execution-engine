@@ -2,7 +2,10 @@ use async_trait::async_trait;
 use chrono::Utc;
 use pmx_core::*;
 use pmx_policy::evaluate_constraints;
-use pmx_runtime::{RuntimeSignal, runtime_worker_store_writes};
+use pmx_runtime::{
+    RuntimeSignal, RuntimeWorkerProviderSnapshot, runtime_worker_loop_tick,
+    runtime_worker_store_writes,
+};
 use pmx_store::{
     AdminAuditEvent, AdminAuditQuery, AdminAuditStore, ExecutionLifecycleEvent,
     ExecutionLifecycleQuery, ExecutionLifecycleStore, ExecutionStore, IdempotencyAction,
@@ -101,6 +104,17 @@ pub struct RuntimeWorkerTickReceipt {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct RuntimeWorkerProviderTickReceipt {
+    pub worker_id: String,
+    pub provider_name: String,
+    pub lease_owner_active: bool,
+    pub submit_allowed_by_runtime: bool,
+    pub heartbeat_recorded: bool,
+    pub observations_recorded: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct StandardSignOnlyConstructionRequest {
     pub execution_id: String,
     pub account_id: String,
@@ -185,6 +199,59 @@ where
         capability: tick.capability,
         heartbeat_recorded: true,
         observations_recorded,
+    })
+}
+
+pub async fn record_runtime_worker_provider_snapshot<S>(
+    store: &S,
+    snapshot: RuntimeWorkerProviderSnapshot,
+) -> Result<RuntimeWorkerProviderTickReceipt, ServiceError>
+where
+    S: RuntimeWorkerHealthStore + RuntimeWorkerObservationStore + Send + Sync,
+{
+    if snapshot.provider_name.trim().is_empty()
+        || snapshot.instance_id.trim().is_empty()
+        || snapshot.account_id.trim().is_empty()
+    {
+        return Err(ServiceError::BadRequest(
+            "provider_name, instance_id and account_id must be non-empty".into(),
+        ));
+    }
+    if !snapshot.no_trading_side_effect {
+        return Err(ServiceError::BadRequest(
+            "runtime worker provider snapshots must not contain trading side effects".into(),
+        ));
+    }
+    let account_id = snapshot.account_id.clone();
+    let provider_name = snapshot.provider_name.clone();
+    let instance_id = snapshot.instance_id.clone();
+    let tick = runtime_worker_loop_tick(snapshot.into_loop_input());
+    let status = if tick.submit_allowed_by_runtime {
+        "HEALTHY"
+    } else {
+        "DEGRADED"
+    };
+    let receipt = record_runtime_worker_tick(
+        store,
+        account_id,
+        RuntimeWorkerTick {
+            worker_id: instance_id.clone(),
+            role: provider_name.clone(),
+            capability: "runtime-worker-loop".into(),
+            status: status.into(),
+            last_error: (!tick.submit_allowed_by_runtime)
+                .then(|| "runtime worker loop fail-closed".into()),
+            signals: tick.signals,
+        },
+    )
+    .await?;
+    Ok(RuntimeWorkerProviderTickReceipt {
+        worker_id: instance_id,
+        provider_name,
+        lease_owner_active: tick.lease_owner_active,
+        submit_allowed_by_runtime: tick.submit_allowed_by_runtime,
+        heartbeat_recorded: receipt.heartbeat_recorded,
+        observations_recorded: receipt.observations_recorded,
     })
 }
 
@@ -1493,6 +1560,78 @@ mod tests {
         );
         assert_eq!(decision.status, DecisionStatus::Block);
         assert!(decision.reasons.contains(&BlockReason::WorkerDegraded));
+    }
+
+    #[tokio::test]
+    async fn service_records_runtime_worker_provider_snapshot_for_decision_gate() {
+        let store = InMemoryStore::default();
+        store.set_runtime_state_for_test("acct-1", "cond-1", None, allow_runtime_state());
+        for capability in ["heartbeat", "reconcile", "resource-refresh"] {
+            store
+                .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
+                    worker_id: format!("worker-{capability}"),
+                    role: "service-test".into(),
+                    capability: capability.into(),
+                    status: "HEALTHY".into(),
+                    last_heartbeat_at: Utc::now(),
+                    last_error: None,
+                })
+                .await
+                .expect("record worker heartbeat");
+        }
+
+        let receipt = record_runtime_worker_provider_snapshot(
+            &store,
+            pmx_runtime::RuntimeWorkerProviderSnapshot {
+                account_id: "acct-1".into(),
+                lease_owner_id: "worker-runtime-1".into(),
+                instance_id: "worker-runtime-2".into(),
+                market_websocket_connected: true,
+                market_websocket_stale: false,
+                user_websocket_connected: true,
+                user_websocket_stale: false,
+                geoblock_status: GeoblockStatus::Allowed,
+                resource_refresh_fresh: true,
+                remote_unknown_orders: 0,
+                observed_at: Utc::now(),
+                provider_name: "real-runtime-provider-test".into(),
+                no_trading_side_effect: true,
+            },
+        )
+        .await
+        .expect("record provider snapshot");
+        assert!(receipt.heartbeat_recorded);
+        assert!(!receipt.lease_owner_active);
+        assert!(!receipt.submit_allowed_by_runtime);
+        assert_eq!(receipt.observations_recorded, 6);
+
+        let service = ExecutorService::with_runtime_provider(
+            store.clone(),
+            StoreBackedRuntimeStateProvider::new(store.clone()),
+            "test-executor".into(),
+            DEFAULT_CONTRACT_VERSION.into(),
+        );
+        let normalized = service.normalize(intent()).await.expect("normalize");
+        let snapshot = service
+            .capture_snapshot(normalized.clone())
+            .await
+            .expect("snapshot");
+        assert_eq!(snapshot.runtime_state.worker_status, WorkerStatus::Stale);
+        assert!(
+            snapshot
+                .runtime_state
+                .required_capabilities
+                .contains(&"heartbeat-lease".to_string())
+        );
+        let decision = service
+            .evaluate_decision_by_id(DecisionByIdRequest {
+                normalized_intent_id: normalized.normalized_intent_id.clone(),
+                snapshot_id: snapshot.snapshot_id.clone(),
+            })
+            .await
+            .expect("decision");
+        assert_eq!(decision.status, DecisionStatus::Block);
+        assert!(decision.reasons.contains(&BlockReason::WorkerStale));
     }
 
     #[tokio::test]

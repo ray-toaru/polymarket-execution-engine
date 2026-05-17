@@ -40,6 +40,13 @@ and reconcile backlog workers should call this per tick after collecting their
 own signal. The helper deliberately has no trading side effect and only updates
 local runtime truth.
 
+`pmx-service::record_runtime_worker_provider_snapshot()` is the v0.24 bridge
+from a provider snapshot to persisted runtime truth. It evaluates the pure
+runtime loop, records a `runtime-worker-loop` heartbeat, persists all normalized
+observations, and returns whether runtime would allow submit. A stale lease
+owner, disconnected WebSocket, geoblock, stale resource refresh, or reconcile
+backlog still fails closed before any submit path can proceed.
+
 `pmx-runtime::runtime_worker_loop_tick()` is the pure worker-loop closure model.
 It takes observed worker inputs for heartbeat lease owner election, market/user
 WebSocket liveness, geoblock status, resource refresh freshness, and reconcile
