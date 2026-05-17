@@ -60,6 +60,9 @@ SECTIONS: dict[str, list[str]] = {
         "33-migration-framework-guard.log",
         "34-migration-drift-dry-run.log",
     ],
+    "sdk_standard_sign_only_validation": [
+        "35-sdk-standard-sign-only-guard.log",
+    ],
     "local_static_validation": [
         "18-plan-storage-guard.log",
         "19-live-submit-static-guard.log",

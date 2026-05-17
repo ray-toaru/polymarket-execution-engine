@@ -60,6 +60,8 @@ pub const ENV_ALLOW_SIGN_ONLY_DRY_RUN: &str = "PMX_ALLOW_SIGN_ONLY_DRY_RUN";
 pub const ENV_ALLOW_LIVE_SUBMIT: &str = "PMX_ALLOW_LIVE_SUBMIT";
 pub const ENV_SDK_CALL_TIMEOUT_SECS: &str = "PMX_SDK_CALL_TIMEOUT_SECS";
 pub const REDACTED: &str = "[REDACTED]";
+pub const CLOB_V2_COLLATERAL_SYMBOL: &str = "pUSD";
+pub const CLOB_V2_SIGNING_PROTOCOL: &str = "CLOB_V2";
 
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum OfficialSdkAdapterError {
@@ -86,6 +88,36 @@ pub struct OfficialSdkAdapterConfig {
     pub require_kill_switch_open_for_live_submit: bool,
     pub require_repository_reservation_for_live_submit: bool,
     pub require_reconcile_worker_for_live_submit: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct OfficialSdkStandardSignOnlyProfile {
+    pub clob_host: String,
+    pub collateral_symbol: String,
+    pub signing_protocol: String,
+    pub uses_deposit_wallet_order_path: bool,
+    pub supports_builder_attribution: bool,
+    pub supports_fee_metadata: bool,
+    pub exposes_raw_signed_order: bool,
+    pub may_post_order: bool,
+    pub may_cancel_order: bool,
+}
+
+impl Default for OfficialSdkStandardSignOnlyProfile {
+    fn default() -> Self {
+        Self {
+            clob_host: CLOB_V2_HOST.into(),
+            collateral_symbol: CLOB_V2_COLLATERAL_SYMBOL.into(),
+            signing_protocol: CLOB_V2_SIGNING_PROTOCOL.into(),
+            uses_deposit_wallet_order_path: true,
+            supports_builder_attribution: true,
+            supports_fee_metadata: true,
+            exposes_raw_signed_order: false,
+            may_post_order: false,
+            may_cancel_order: false,
+        }
+    }
 }
 
 impl Default for OfficialSdkAdapterConfig {
@@ -148,6 +180,16 @@ pub struct OfficialSdkPlanOrder {
     pub amount: Option<String>,
     pub time_in_force: Option<String>,
     pub post_only: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub builder_attribution: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fee_rate_bps: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub funder: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub signer: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub signature_type: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -163,6 +205,11 @@ pub struct OfficialSdkOrderBuilderMapping {
     pub amount: Option<String>,
     pub time_in_force: Option<String>,
     pub post_only: bool,
+    pub builder_attribution: Option<String>,
+    pub fee_rate_bps: Option<String>,
+    pub funder: Option<String>,
+    pub signer: Option<String>,
+    pub signature_type: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -190,6 +237,11 @@ impl SignOnlyDryRunRequest {
             amount: None,
             time_in_force: Some("GTC".into()),
             post_only: Some(false),
+            builder_attribution: None,
+            fee_rate_bps: None,
+            funder: None,
+            signer: None,
+            signature_type: None,
         }
     }
 }
@@ -404,6 +456,32 @@ pub fn validate_live_submit_preconditions(
     Ok(())
 }
 
+pub fn validate_standard_sign_only_profile(
+    profile: &OfficialSdkStandardSignOnlyProfile,
+) -> Result<(), OfficialSdkAdapterError> {
+    if profile.clob_host != CLOB_V2_HOST {
+        return Err(OfficialSdkAdapterError::SafetyGate(
+            "standard sign-only adapter must use the CLOB V2 production host".into(),
+        ));
+    }
+    if profile.collateral_symbol != CLOB_V2_COLLATERAL_SYMBOL {
+        return Err(OfficialSdkAdapterError::SafetyGate(
+            "standard sign-only adapter must use pUSD collateral metadata".into(),
+        ));
+    }
+    if profile.signing_protocol != CLOB_V2_SIGNING_PROTOCOL {
+        return Err(OfficialSdkAdapterError::SafetyGate(
+            "standard sign-only adapter must use CLOB V2 signing".into(),
+        ));
+    }
+    if profile.exposes_raw_signed_order || profile.may_post_order || profile.may_cancel_order {
+        return Err(OfficialSdkAdapterError::SafetyGate(
+            "standard sign-only adapter must not expose raw signed orders, post orders, or cancel orders".into(),
+        ));
+    }
+    Ok(())
+}
+
 pub fn official_sdk_plan_to_builder_mapping(
     plan: &OfficialSdkPlanOrder,
 ) -> Result<OfficialSdkOrderBuilderMapping, OfficialSdkAdapterError> {
@@ -437,6 +515,11 @@ pub fn official_sdk_plan_to_builder_mapping(
         amount: clone_non_empty(plan.amount.as_deref()),
         time_in_force: normalized_tif,
         post_only: plan.post_only.unwrap_or(false),
+        builder_attribution: clone_non_empty(plan.builder_attribution.as_deref()),
+        fee_rate_bps: clone_non_empty(plan.fee_rate_bps.as_deref()),
+        funder: clone_non_empty(plan.funder.as_deref()),
+        signer: clone_non_empty(plan.signer.as_deref()),
+        signature_type: clone_non_empty(plan.signature_type.as_deref()),
     })
 }
 
@@ -960,6 +1043,7 @@ fn normalize_time_in_force(
     let normalized = raw.unwrap_or("GTC").trim().to_ascii_uppercase();
     match normalized.as_str() {
         "GTC" | "FOK" | "FAK" => Ok(Some(normalized)),
+        "IOC" => Ok(Some("FAK".into())),
         "GTD" => Err(OfficialSdkAdapterError::InvalidInput(
             "GTD mapping requires an explicit expiration path that is not wired in v0.20".into(),
         )),
@@ -1041,6 +1125,11 @@ mod tests {
             amount: None,
             time_in_force: Some("gtc".into()),
             post_only: Some(false),
+            builder_attribution: None,
+            fee_rate_bps: None,
+            funder: None,
+            signer: None,
+            signature_type: None,
         }
     }
 
@@ -1053,6 +1142,19 @@ mod tests {
         assert!(config.require_kill_switch_open_for_live_submit);
         assert!(config.require_repository_reservation_for_live_submit);
         assert!(config.require_reconcile_worker_for_live_submit);
+    }
+
+    #[test]
+    fn standard_sign_only_profile_is_non_posting_v2_pusd() {
+        let profile = OfficialSdkStandardSignOnlyProfile::default();
+        validate_standard_sign_only_profile(&profile).expect("standard sign-only profile");
+        assert_eq!(profile.clob_host, CLOB_V2_HOST);
+        assert_eq!(profile.collateral_symbol, "pUSD");
+        assert_eq!(profile.signing_protocol, "CLOB_V2");
+        assert!(profile.uses_deposit_wallet_order_path);
+        assert!(!profile.exposes_raw_signed_order);
+        assert!(!profile.may_post_order);
+        assert!(!profile.may_cancel_order);
     }
 
     #[test]
@@ -1093,6 +1195,28 @@ mod tests {
         assert_eq!(mapping.order_kind, "LIMIT");
         assert_eq!(mapping.time_in_force.as_deref(), Some("GTC"));
         assert_eq!(mapping.limit_price.as_deref(), Some("0.55"));
+    }
+
+    #[test]
+    fn plan_mapping_preserves_metadata_without_exposing_signed_payload() {
+        let mut plan = sample_plan_limit();
+        plan.builder_attribution = Some("builder-code".into());
+        plan.fee_rate_bps = Some("0".into());
+        plan.funder = Some("deposit-wallet".into());
+        plan.signer = Some("operator-signer".into());
+        plan.signature_type = Some("EOA".into());
+        let mapping = official_sdk_plan_to_builder_mapping(&plan).expect("metadata mapping");
+        assert_eq!(mapping.builder_attribution.as_deref(), Some("builder-code"));
+        assert_eq!(mapping.funder.as_deref(), Some("deposit-wallet"));
+        assert_eq!(mapping.signature_type.as_deref(), Some("EOA"));
+    }
+
+    #[test]
+    fn plan_mapping_maps_ioc_to_sdk_fak() {
+        let mut plan = sample_plan_limit();
+        plan.time_in_force = Some("ioc".into());
+        let mapping = official_sdk_plan_to_builder_mapping(&plan).expect("ioc mapping");
+        assert_eq!(mapping.time_in_force.as_deref(), Some("FAK"));
     }
 
     #[test]

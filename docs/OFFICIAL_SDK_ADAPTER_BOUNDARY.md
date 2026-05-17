@@ -19,6 +19,22 @@ The adapter remains outside the default workspace until the following are proven
 6. live-submit safety gates are reviewed and manually enabled
 ```
 
+v0.25 standard sign-only boundary:
+
+```text
+CLOB host: https://clob-v2.polymarket.com
+collateral metadata: pUSD
+signing protocol marker: CLOB_V2
+deposit wallet order path: required by profile
+builder attribution / fee metadata / funder / signer / signature_type: metadata only
+raw signed order exposure: forbidden
+post_order / cancel_order: forbidden
+```
+
+`OfficialSdkStandardSignOnlyProfile` documents these defaults and
+`validation/check_sdk_standard_sign_only.py` guards the source against exposing a
+remote side-effect path.
+
 ## Dependency boundary
 
 Allowed dependency direction:

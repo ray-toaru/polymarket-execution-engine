@@ -20,8 +20,9 @@ plan -> builder mapping, SDK error normalization, and liveness/reconcile classif
 4. sign-only dry-run: done
 5. plan -> SDK order builder mapping: done for LIMIT and MARKET validation boundary
 6. SDK error normalization: done
-7. live-submit denied-path tests
-8. manual live-submit readiness review
+7. standard sign-only profile: CLOB V2 / pUSD / deposit-wallet semantics / redacted metadata only
+8. live-submit denied-path tests
+9. manual live-submit readiness review
 ```
 
 ## Non-negotiable constraints
