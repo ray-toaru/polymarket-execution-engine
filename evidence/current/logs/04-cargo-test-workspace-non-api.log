@@ -1,5 +1,4 @@
-   Compiling pmx-service v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.99s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.28s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-a6ad02cd996eb4f7)
 
 running 2 tests
@@ -10,7 +9,7 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
      Running unittests src/lib.rs (target/debug/deps/pmx_core-03441e794e82d0a4)
 
-running 16 tests
+running 18 tests
 test tests::buy_notional_canonicalizes_to_quote_bound ... ok
 test tests::cancel_confirmation_requires_remote_acceptance ... ok
 test tests::cancel_state_tracks_lifecycle_pending_and_terminal_states ... ok
@@ -19,6 +18,8 @@ test tests::canonical_json_hash_is_key_order_independent ... ok
 test tests::decimal_rejects_scientific_padding_and_trailing_dot ... ok
 test tests::limit_price_is_executor_authoritative ... ok
 test tests::normalized_intent_hash_is_content_derived ... ok
+test tests::order_lifecycle_divergence_escalates_terminal_remote_mismatch ... ok
+test tests::order_lifecycle_divergence_maps_remote_unknown_open_and_missing ... ok
 test tests::quantity_must_be_positive ... ok
 test tests::quantity_requires_exactly_one_bound ... ok
 test tests::reconcile_action_tracks_remote_unknown_and_partial_unknown ... ok
@@ -28,7 +29,7 @@ test tests::sign_only_lifecycle_never_models_remote_post ... ok
 test tests::sign_only_lifecycle_rejects_direct_sign_without_reservation ... ok
 test tests::unsupported_cross_quantity_is_explicit ... ok
 
-test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_gateway-087bdd5a33a46a27)
 
@@ -60,20 +61,23 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
      Running unittests src/lib.rs (target/debug/deps/pmx_runtime-c0359d27a11446bc)
 
-running 7 tests
+running 9 tests
 test capability_tests_v07::all_capabilities_preserves_account_market_asset_worker_groups ... ok
 test capability_tests_v07::degraded_non_required_capability_does_not_block_submit ... ok
+test capability_tests_v07::runtime_worker_loop_tick_blocks_stale_down_and_geoblocked_submit ... ok
+test capability_tests_v07::runtime_worker_loop_tick_recovers_only_after_all_required_inputs_are_healthy ... ok
 test capability_tests_v07::runtime_worker_store_writes_are_fail_closed_for_bad_signals ... ok
 test tests::blocking_capabilities_include_submit_required_stale_worker ... ok
 test tests::geoblock_unknown_and_reconcile_backlog_block_submit ... ok
 test tests::runtime_signals_map_websocket_and_heartbeat_to_submit_blockers ... ok
 test tests::worker_actions_mark_stale_runtime_inputs_as_fail_closed_updates ... ok
 
-test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_service-a223db4034747b7c)
 
-running 10 tests
+running 11 tests
+test tests::service_classifies_and_records_order_lifecycle_divergence_without_remote_side_effect ... ok
 test tests::service_flow_persists_and_blocks_submit ... ok
 test tests::service_id_bound_flow_persists_and_blocks_submit ... ok
 test tests::service_records_non_live_cancel_and_reconcile_order_lifecycle ... ok
@@ -85,7 +89,7 @@ test tests::service_validates_and_persists_sign_only_lifecycle_sequence ... ok
 test tests::static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks ... ok
 test tests::store_backed_runtime_provider_uses_store_state ... ok
 
-test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-b55045206b1b48d3)
 
@@ -122,7 +126,7 @@ test tests::maps_plan_status_for_db ... ok
 test tests::runtime_worker_observations_degrade_loaded_runtime_state ... ok
 test tests::stale_runtime_worker_observations_are_ignored ... ok
 
-test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.83s
+test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.50s
 
    Doc-tests pmx_authz
 

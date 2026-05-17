@@ -1,7 +1,1 @@
-    Checking libc v0.2.186
-    Checking getrandom v0.4.2
-    Checking uuid v1.23.1
-    Checking pmx-core v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
-    Checking pmx-gateway v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
-    Checking pmx-official-sdk-adapter v0.23.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.35s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.34s

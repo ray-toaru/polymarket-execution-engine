@@ -1,0 +1,12 @@
+{
+  "blocked_reason": "live canary requires a future reviewed release decision and explicit side-effect gates",
+  "canary_status": "blocked",
+  "cancelled": false,
+  "failures": [],
+  "live_cancel_env_enabled": false,
+  "live_submit_env_enabled": false,
+  "operator_approved_live_canary": false,
+  "posted": false,
+  "remote_side_effects": false,
+  "status": "pass"
+}
