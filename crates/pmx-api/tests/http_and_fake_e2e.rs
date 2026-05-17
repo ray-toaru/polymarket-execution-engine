@@ -457,6 +457,23 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
     assert_eq!(status, StatusCode::OK, "order events: {order_events}");
     assert!(order_events.as_array().unwrap().is_empty());
 
+    let (status, runtime_workers) = request_json(
+        app.clone(),
+        "GET",
+        "/v1/runtime/workers?account_id=acct-http-e2e-1&limit=20",
+        Some("service-token-test-v07"),
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "runtime workers: {runtime_workers}");
+    assert!(runtime_workers["heartbeats"].as_array().unwrap().is_empty());
+    assert!(
+        runtime_workers["observations"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+
     let (status, _) = request_json(
         app.clone(),
         "GET",

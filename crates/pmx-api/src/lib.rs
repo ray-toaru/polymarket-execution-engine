@@ -11,7 +11,8 @@ use pmx_service::{ExecutorService, ServiceError, StoreBackedRuntimeStateProvider
 use pmx_store::{
     AdminAuditEvent, AdminAuditQuery, ExecutionLifecycleEvent, ExecutionLifecycleQuery,
     InMemoryStore, OrderLifecycleEventQuery, OrderLifecycleEventRecord, OrderLifecycleRecord,
-    PostgresStore, SignOnlyLifecycleQuery, StoreError,
+    PostgresStore, RuntimeWorkerStatusQuery, RuntimeWorkerStatusReport, SignOnlyLifecycleQuery,
+    StoreError,
 };
 use uuid::Uuid;
 
@@ -180,6 +181,16 @@ impl ServiceBackend {
         }
     }
 
+    async fn list_runtime_worker_status(
+        &self,
+        query: RuntimeWorkerStatusQuery,
+    ) -> Result<RuntimeWorkerStatusReport, ServiceError> {
+        match self {
+            Self::InMemory(service) => service.list_runtime_worker_status(query).await,
+            Self::Postgres(service) => service.list_runtime_worker_status(query).await,
+        }
+    }
+
     async fn record_sign_only_lifecycle_event(
         &self,
         record: SignOnlyLifecycleRecord,
@@ -264,6 +275,7 @@ fn router_with_state(state: AppState) -> Router {
             "/v1/lifecycle/orders/:order_id/events",
             get(list_order_lifecycle_events),
         )
+        .route("/v1/runtime/workers", get(list_runtime_worker_status))
         .route("/v1/admin/audit-events", get(list_admin_audit_events))
         .route("/v1/admin/kill-switch", post(set_kill_switch))
         .route("/v1/admin/cancel-order", post(cancel_order_placeholder))
@@ -632,6 +644,14 @@ pub struct EventListQuery {
     pub before_event_id: Option<i64>,
 }
 
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RuntimeWorkerStatusListQuery {
+    pub account_id: String,
+    pub limit: Option<usize>,
+    pub before_observed_at: Option<chrono::DateTime<Utc>>,
+}
+
 async fn list_sign_only_lifecycle_events(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -687,6 +707,24 @@ async fn list_order_lifecycle_events(
         .await
         .map_err(service_error)?;
     Ok((StatusCode::OK, Json(events)))
+}
+
+async fn list_runtime_worker_status(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(query): Query<RuntimeWorkerStatusListQuery>,
+) -> ApiResult<RuntimeWorkerStatusReport> {
+    require(&headers, Operation::ReadReport)?;
+    let report = state
+        .service
+        .list_runtime_worker_status(RuntimeWorkerStatusQuery {
+            account_id: query.account_id,
+            limit: query.limit.unwrap_or(100),
+            before_observed_at: query.before_observed_at,
+        })
+        .await
+        .map_err(service_error)?;
+    Ok((StatusCode::OK, Json(report)))
 }
 
 #[derive(serde::Deserialize)]

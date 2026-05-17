@@ -261,6 +261,34 @@ pub trait RuntimeWorkerHealthStore: Send + Sync {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RuntimeWorkerStatusQuery {
+    pub account_id: String,
+    pub limit: usize,
+    pub before_observed_at: Option<DateTime<Utc>>,
+}
+
+impl RuntimeWorkerStatusQuery {
+    pub fn bounded_limit(&self) -> usize {
+        self.limit.clamp(1, 500)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RuntimeWorkerStatusReport {
+    pub heartbeats: Vec<RuntimeWorkerHeartbeat>,
+    pub observations: Vec<RuntimeWorkerObservation>,
+}
+
+#[async_trait]
+pub trait RuntimeWorkerStatusStore: Send + Sync {
+    async fn list_runtime_worker_status(
+        &self,
+        query: &RuntimeWorkerStatusQuery,
+    ) -> Result<RuntimeWorkerStatusReport, StoreError>;
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RuntimeStateQuery {
     pub account_id: String,
     pub condition_id: String,
@@ -971,6 +999,51 @@ impl RuntimeWorkerHealthStore for InMemoryStore {
             .worker_health
             .insert(heartbeat.worker_id.clone(), heartbeat.clone());
         Ok(())
+    }
+}
+
+#[async_trait]
+impl RuntimeWorkerStatusStore for InMemoryStore {
+    async fn list_runtime_worker_status(
+        &self,
+        query: &RuntimeWorkerStatusQuery,
+    ) -> Result<RuntimeWorkerStatusReport, StoreError> {
+        let state = self.inner.lock().expect("in-memory store mutex poisoned");
+        let mut heartbeats: Vec<_> = state.worker_health.values().cloned().collect();
+        heartbeats.sort_by(|left, right| {
+            right
+                .last_heartbeat_at
+                .cmp(&left.last_heartbeat_at)
+                .then_with(|| left.worker_id.cmp(&right.worker_id))
+        });
+        heartbeats.truncate(query.bounded_limit());
+
+        let mut observations: Vec<_> = state
+            .runtime_worker_observations
+            .iter()
+            .filter(|observation| observation.account_id == query.account_id)
+            .filter(|observation| {
+                query
+                    .before_observed_at
+                    .map(|before| {
+                        observation.observed_at.unwrap_or(DateTime::<Utc>::MAX_UTC) < before
+                    })
+                    .unwrap_or(true)
+            })
+            .cloned()
+            .collect();
+        observations.sort_by(|left, right| {
+            right
+                .observed_at
+                .cmp(&left.observed_at)
+                .then_with(|| left.capability.cmp(&right.capability))
+        });
+        observations.truncate(query.bounded_limit());
+        observations.reverse();
+        Ok(RuntimeWorkerStatusReport {
+            heartbeats,
+            observations,
+        })
     }
 }
 
@@ -1804,6 +1877,48 @@ mod runtime_worker_health_tests_v23 {
             .await
             .expect("runtime state");
         assert_eq!(state.worker_status, WorkerStatus::Stale);
+    }
+
+    #[tokio::test]
+    async fn in_memory_lists_runtime_worker_status() {
+        let store = InMemoryStore::default();
+        let observed_at = Utc::now();
+        store
+            .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
+                worker_id: "worker-status-query".into(),
+                role: "Heartbeat".into(),
+                capability: "heartbeat".into(),
+                status: "HEALTHY".into(),
+                last_heartbeat_at: observed_at,
+                last_error: None,
+            })
+            .await
+            .expect("record heartbeat");
+        store
+            .record_runtime_worker_observation(&RuntimeWorkerObservation {
+                account_id: "acct-status-query".into(),
+                capability: "heartbeat-lease".into(),
+                worker_kind: "HeartbeatLease".into(),
+                status: "STALE".into(),
+                should_fail_closed: true,
+                reason: "lease expired".into(),
+                observed_at: Some(observed_at),
+            })
+            .await
+            .expect("record observation");
+        let report = store
+            .list_runtime_worker_status(&RuntimeWorkerStatusQuery {
+                account_id: "acct-status-query".into(),
+                limit: 100,
+                before_observed_at: None,
+            })
+            .await
+            .expect("list runtime worker status");
+        assert_eq!(report.heartbeats.len(), 1);
+        assert_eq!(report.heartbeats[0].worker_id, "worker-status-query");
+        assert_eq!(report.observations.len(), 1);
+        assert_eq!(report.observations[0].capability, "heartbeat-lease");
+        assert!(report.observations[0].should_fail_closed);
     }
 }
 

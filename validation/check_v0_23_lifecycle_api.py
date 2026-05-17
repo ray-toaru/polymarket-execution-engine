@@ -111,6 +111,9 @@ REQUIRED = {
         "runtime_worker_observations_degrade_loaded_runtime_state",
         "RuntimeWorkerHeartbeat",
         "RuntimeWorkerHealthStore",
+        "RuntimeWorkerStatusReport",
+        "RuntimeWorkerStatusStore",
+        "list_runtime_worker_status",
         "in_memory_worker_heartbeat_informs_runtime_state",
     ],
     POSTGRES: [
@@ -131,7 +134,9 @@ REQUIRED = {
         "postgres_runtime_worker_observations_degrade_runtime_state",
         "postgres_records_cancel_reconcile_lifecycle_events",
         "impl RuntimeWorkerHealthStore for PostgresStore",
+        "impl RuntimeWorkerStatusStore for PostgresStore",
         "postgres_records_worker_heartbeat",
+        "postgres_lists_runtime_worker_status",
     ],
     API_FAKE_E2E: [
         "/v1/sign-only/lifecycle-events",
@@ -143,6 +148,7 @@ REQUIRED = {
         "correlation_id",
         "redacted_fields",
         "event[\"payload\"][\"correlation_id\"].as_str().is_some()",
+        "/v1/runtime/workers?account_id=acct-http-e2e-1&limit=20",
     ],
     API_PG_E2E: [
         "sign-only PG lifecycle response",

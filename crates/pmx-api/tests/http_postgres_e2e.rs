@@ -632,6 +632,34 @@ async fn http_postgres_runtime_rows_can_reach_ready_plan_but_submit_still_blocks
         "heartbeat lease expired",
     )
     .await;
+    let runtime_workers_uri = format!("/v1/runtime/workers?account_id={account_id}&limit=20");
+    let (status, runtime_workers) = request_json(
+        app.clone(),
+        "GET",
+        &runtime_workers_uri,
+        Some("service-token-pg-runtime"),
+        None,
+    )
+    .await;
+    assert_eq!(
+        status,
+        StatusCode::OK,
+        "runtime worker status response: {runtime_workers}"
+    );
+    assert!(
+        runtime_workers["heartbeats"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|heartbeat| heartbeat["capability"] == "heartbeat")
+    );
+    assert!(
+        runtime_workers["observations"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|observation| observation["status"] == "STALE")
+    );
     let (status, degraded_snapshot) = request_json(
         app.clone(),
         "POST",

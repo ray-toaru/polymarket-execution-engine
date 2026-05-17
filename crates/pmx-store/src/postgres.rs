@@ -4,6 +4,7 @@ use crate::{
     IdempotencyStore, OrderLifecycleEventQuery, OrderLifecycleEventRecord, OrderLifecycleRecord,
     OrderLifecycleStore, RuntimeStateQuery, RuntimeStateStore, RuntimeWorkerHealthStore,
     RuntimeWorkerHeartbeat, RuntimeWorkerObservation, RuntimeWorkerObservationStore,
+    RuntimeWorkerStatusQuery, RuntimeWorkerStatusReport, RuntimeWorkerStatusStore,
     SignOnlyLifecycleQuery, SignOnlyLifecycleStore, StoreError, advisory_lock_key,
     apply_runtime_worker_observations, order_event_kind_from_str, order_event_kind_to_str,
     order_lifecycle_state_from_str, order_lifecycle_state_to_str,
@@ -1153,6 +1154,68 @@ impl RuntimeWorkerObservationStore for PostgresStore {
 }
 
 #[async_trait]
+impl RuntimeWorkerStatusStore for PostgresStore {
+    async fn list_runtime_worker_status(
+        &self,
+        query: &RuntimeWorkerStatusQuery,
+    ) -> Result<RuntimeWorkerStatusReport, StoreError> {
+        let client = self.client().await?;
+        let limit = query.bounded_limit() as i64;
+        let heartbeat_rows = client
+            .query(
+                "SELECT worker_id, role, capability, status, last_heartbeat_at, last_error
+                 FROM worker_health
+                 ORDER BY last_heartbeat_at DESC, worker_id ASC
+                 LIMIT $1",
+                &[&limit],
+            )
+            .await
+            .map_err(map_db_error)?;
+        let heartbeats = heartbeat_rows
+            .into_iter()
+            .map(|row| RuntimeWorkerHeartbeat {
+                worker_id: row.get(0),
+                role: row.get(1),
+                capability: row.get(2),
+                status: row.get(3),
+                last_heartbeat_at: row.get(4),
+                last_error: row.get(5),
+            })
+            .collect();
+
+        let observation_rows = client
+            .query(
+                "SELECT account_id, capability, worker_kind, status, should_fail_closed, reason, observed_at
+                 FROM runtime_worker_observations
+                 WHERE account_id = $1
+                   AND ($2::timestamptz IS NULL OR observed_at < $2)
+                 ORDER BY observed_at DESC, observation_id DESC
+                 LIMIT $3",
+                &[&query.account_id, &query.before_observed_at, &limit],
+            )
+            .await
+            .map_err(map_db_error)?;
+        let mut observations: Vec<_> = observation_rows
+            .into_iter()
+            .map(|row| RuntimeWorkerObservation {
+                account_id: row.get(0),
+                capability: row.get(1),
+                worker_kind: row.get(2),
+                status: row.get(3),
+                should_fail_closed: row.get(4),
+                reason: row.get(5),
+                observed_at: Some(row.get(6)),
+            })
+            .collect();
+        observations.reverse();
+        Ok(RuntimeWorkerStatusReport {
+            heartbeats,
+            observations,
+        })
+    }
+}
+
+#[async_trait]
 impl IdempotencyStore for PostgresStore {
     async fn begin_submit_attempt(
         &self,
@@ -1955,6 +2018,56 @@ mod runtime_worker_health_pg_tests_v23 {
             .expect("heartbeat row");
         let status: String = row.get(0);
         assert_eq!(status, "HEALTHY");
+    }
+
+    #[tokio::test]
+    async fn postgres_lists_runtime_worker_status() {
+        let Some(store) = test_store().await else {
+            return;
+        };
+        let suffix = Utc::now().timestamp_nanos_opt().unwrap_or_default();
+        let worker_id = format!("worker-status-query-{suffix}");
+        let account_id = format!("acct-status-query-{suffix}");
+        store
+            .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
+                worker_id: worker_id.clone(),
+                role: "Heartbeat".into(),
+                capability: "heartbeat".into(),
+                status: "HEALTHY".into(),
+                last_heartbeat_at: Utc::now(),
+                last_error: None,
+            })
+            .await
+            .expect("record heartbeat");
+        store
+            .record_runtime_worker_observation(&RuntimeWorkerObservation {
+                account_id: account_id.clone(),
+                capability: "heartbeat-lease".into(),
+                worker_kind: "HeartbeatLease".into(),
+                status: "STALE".into(),
+                should_fail_closed: true,
+                reason: "lease expired".into(),
+                observed_at: None,
+            })
+            .await
+            .expect("record observation");
+        let report = store
+            .list_runtime_worker_status(&RuntimeWorkerStatusQuery {
+                account_id,
+                limit: 100,
+                before_observed_at: None,
+            })
+            .await
+            .expect("list runtime worker status");
+        assert!(
+            report
+                .heartbeats
+                .iter()
+                .any(|heartbeat| heartbeat.worker_id == worker_id)
+        );
+        assert_eq!(report.observations.len(), 1);
+        assert_eq!(report.observations[0].status, "STALE");
+        assert!(report.observations[0].should_fail_closed);
     }
 }
 

@@ -18,7 +18,8 @@ use pmx_store::{
     ExecutionLifecycleQuery, ExecutionLifecycleStore, ExecutionStore, IdempotencyAction,
     IdempotencyStore, OrderLifecycleEventRecord, OrderLifecycleRecord, OrderLifecycleStore,
     RuntimeStateQuery, RuntimeStateStore, RuntimeWorkerHealthStore, RuntimeWorkerHeartbeat,
-    RuntimeWorkerObservation, RuntimeWorkerObservationStore, SignOnlyLifecycleQuery,
+    RuntimeWorkerObservation, RuntimeWorkerObservationStore, RuntimeWorkerStatusQuery,
+    RuntimeWorkerStatusReport, RuntimeWorkerStatusStore, SignOnlyLifecycleQuery,
     SignOnlyLifecycleStore, StoreError,
 };
 use serde::{Deserialize, Serialize};
@@ -817,6 +818,7 @@ where
         + AdminAuditStore
         + ExecutionLifecycleStore
         + OrderLifecycleStore
+        + RuntimeWorkerStatusStore
         + SignOnlyLifecycleStore
         + Clone
         + Send
@@ -840,6 +842,7 @@ where
         + AdminAuditStore
         + ExecutionLifecycleStore
         + OrderLifecycleStore
+        + RuntimeWorkerStatusStore
         + SignOnlyLifecycleStore
         + Clone
         + Send
@@ -900,6 +903,18 @@ where
         query: pmx_store::OrderLifecycleEventQuery,
     ) -> Result<Vec<OrderLifecycleEventRecord>, ServiceError> {
         Ok(self.store.list_order_lifecycle_events(&query).await?)
+    }
+
+    pub async fn list_runtime_worker_status(
+        &self,
+        query: RuntimeWorkerStatusQuery,
+    ) -> Result<RuntimeWorkerStatusReport, ServiceError> {
+        if query.account_id.trim().is_empty() {
+            return Err(ServiceError::BadRequest(
+                "account_id must be non-empty".into(),
+            ));
+        }
+        Ok(self.store.list_runtime_worker_status(&query).await?)
     }
 
     pub async fn record_non_live_cancel_request(
@@ -2025,6 +2040,44 @@ mod tests {
         );
         assert_eq!(decision.status, DecisionStatus::Block);
         assert!(decision.reasons.contains(&BlockReason::WorkerDegraded));
+    }
+
+    #[tokio::test]
+    async fn service_lists_runtime_worker_status() {
+        let store = InMemoryStore::default();
+        let observed_at = Utc::now();
+        record_runtime_worker_tick(
+            &store,
+            "acct-1",
+            RuntimeWorkerTick {
+                worker_id: "worker-status-query".into(),
+                role: "HeartbeatLease".into(),
+                capability: "heartbeat".into(),
+                status: "HEALTHY".into(),
+                last_error: None,
+                signals: vec![RuntimeSignal::HeartbeatLease {
+                    active: false,
+                    last_observed_at: Some(observed_at),
+                    last_error: Some("lease expired".into()),
+                }],
+            },
+        )
+        .await
+        .expect("record worker tick");
+        let service = ExecutorService::new(store);
+        let report = service
+            .list_runtime_worker_status(RuntimeWorkerStatusQuery {
+                account_id: "acct-1".into(),
+                limit: 100,
+                before_observed_at: None,
+            })
+            .await
+            .expect("list runtime worker status");
+        assert_eq!(report.heartbeats.len(), 1);
+        assert_eq!(report.heartbeats[0].worker_id, "worker-status-query");
+        assert_eq!(report.observations.len(), 1);
+        assert_eq!(report.observations[0].capability, "heartbeat-lease");
+        assert!(report.observations[0].should_fail_closed);
     }
 
     #[tokio::test]
