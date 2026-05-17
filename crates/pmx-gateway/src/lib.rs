@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use pmx_core::{
-    AccountId, CancelState, InternalOrderId, RemoteOrderId, SignedOrderEnvelope, TokenId,
+    AccountId, CancelState, InternalOrderId, RemoteOrderId, RemoteOrderObservation,
+    SignedOrderEnvelope, TokenId,
 };
 #[cfg(test)]
 use pmx_core::{OrderEventKind, OrderLifecycleState, transition_order_state};
@@ -40,12 +41,36 @@ pub struct PostOrderAck {
     pub accepted_at_ms: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RemoteOrder {
     pub remote_order_id: RemoteOrderId,
     pub account_id: AccountId,
     pub state: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RemoteReconcileReadRequest {
+    pub account_id: AccountId,
+    pub remote_order_ids: Vec<RemoteOrderId>,
+    pub no_trading_side_effect: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RemoteReconcileObservation {
+    pub remote_order_id: RemoteOrderId,
+    pub observation: RemoteOrderObservation,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub remote_state: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RemoteReconcileReadReport {
+    pub observations: Vec<RemoteReconcileObservation>,
+    pub no_trading_side_effect: bool,
 }
 
 #[async_trait]
@@ -70,6 +95,14 @@ pub trait ClobGateway: Send + Sync {
         &self,
         account_id: &AccountId,
     ) -> Result<Vec<RemoteOrder>, GatewayError>;
+}
+
+#[async_trait]
+pub trait RemoteReconcileReader: Send + Sync {
+    async fn read_remote_order_observations(
+        &self,
+        request: &RemoteReconcileReadRequest,
+    ) -> Result<RemoteReconcileReadReport, GatewayError>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -175,6 +208,16 @@ impl ClobGateway for DisabledGateway {
     }
 }
 
+#[async_trait]
+impl RemoteReconcileReader for DisabledGateway {
+    async fn read_remote_order_observations(
+        &self,
+        _request: &RemoteReconcileReadRequest,
+    ) -> Result<RemoteReconcileReadReport, GatewayError> {
+        Err(GatewayError::Disabled)
+    }
+}
+
 pub struct DeterministicTestSigner;
 
 #[async_trait]
@@ -250,6 +293,14 @@ impl FakeGateway {
             .read_failure = failure;
         self
     }
+
+    pub fn insert_remote_order_for_test(&self, order: RemoteOrder) {
+        self.inner
+            .lock()
+            .expect("fake gateway mutex poisoned")
+            .orders
+            .insert(order.remote_order_id.0.clone(), order);
+    }
 }
 
 #[async_trait]
@@ -312,6 +363,54 @@ impl ClobGateway for FakeGateway {
             .filter(|&o| &o.account_id == account_id && o.state == "OPEN")
             .cloned()
             .collect())
+    }
+}
+
+fn remote_state_to_observation(remote_state: &str) -> RemoteOrderObservation {
+    match remote_state {
+        "MISSING" => RemoteOrderObservation::Missing,
+        "UNKNOWN" => RemoteOrderObservation::Unknown,
+        _ => RemoteOrderObservation::Open,
+    }
+}
+
+#[async_trait]
+impl RemoteReconcileReader for FakeGateway {
+    async fn read_remote_order_observations(
+        &self,
+        request: &RemoteReconcileReadRequest,
+    ) -> Result<RemoteReconcileReadReport, GatewayError> {
+        if !request.no_trading_side_effect {
+            return Err(GatewayError::RemoteRejected(
+                "remote reconcile read must be marked no-trading-side-effect".into(),
+            ));
+        }
+
+        let mut observations = Vec::with_capacity(request.remote_order_ids.len());
+        for remote_order_id in &request.remote_order_ids {
+            let remote = self
+                .get_order(&request.account_id, remote_order_id)
+                .await?
+                .map(|order| {
+                    let observation = remote_state_to_observation(&order.state);
+                    RemoteReconcileObservation {
+                        remote_order_id: order.remote_order_id,
+                        observation,
+                        remote_state: Some(order.state),
+                    }
+                })
+                .unwrap_or_else(|| RemoteReconcileObservation {
+                    remote_order_id: remote_order_id.clone(),
+                    observation: RemoteOrderObservation::Missing,
+                    remote_state: None,
+                });
+            observations.push(remote);
+        }
+
+        Ok(RemoteReconcileReadReport {
+            observations,
+            no_trading_side_effect: true,
+        })
     }
 }
 
@@ -476,5 +575,92 @@ mod tests {
         assert_eq!(cfg.backend, SignerBackendKind::Disabled);
         assert!(!cfg.allow_local_private_key_material);
         assert!(cfg.require_remote_signer_in_production);
+    }
+
+    #[tokio::test]
+    async fn fake_remote_reconcile_reader_is_read_only_and_account_scoped() {
+        let gateway = FakeGateway::new().with_post_failure(FakeGatewayFailure::RemoteRejected(
+            "post path must not be used by reconcile reader".into(),
+        ));
+        let account = AccountId("acct-reconcile-reader".into());
+        let foreign_account = AccountId("acct-foreign".into());
+        let open_id = RemoteOrderId("remote-open".into());
+        let foreign_id = RemoteOrderId("remote-foreign".into());
+        let missing_id = RemoteOrderId("remote-missing".into());
+        gateway.insert_remote_order_for_test(RemoteOrder {
+            remote_order_id: open_id.clone(),
+            account_id: account.clone(),
+            state: "OPEN".into(),
+        });
+        gateway.insert_remote_order_for_test(RemoteOrder {
+            remote_order_id: foreign_id.clone(),
+            account_id: foreign_account,
+            state: "OPEN".into(),
+        });
+
+        let report = gateway
+            .read_remote_order_observations(&RemoteReconcileReadRequest {
+                account_id: account,
+                remote_order_ids: vec![open_id.clone(), foreign_id.clone(), missing_id.clone()],
+                no_trading_side_effect: true,
+            })
+            .await
+            .expect("read-only reconcile report");
+
+        assert!(report.no_trading_side_effect);
+        assert_eq!(
+            report.observations,
+            vec![
+                RemoteReconcileObservation {
+                    remote_order_id: open_id,
+                    observation: RemoteOrderObservation::Open,
+                    remote_state: Some("OPEN".into()),
+                },
+                RemoteReconcileObservation {
+                    remote_order_id: foreign_id,
+                    observation: RemoteOrderObservation::Missing,
+                    remote_state: None,
+                },
+                RemoteReconcileObservation {
+                    remote_order_id: missing_id,
+                    observation: RemoteOrderObservation::Missing,
+                    remote_state: None,
+                },
+            ]
+        );
+    }
+
+    #[tokio::test]
+    async fn remote_reconcile_reader_rejects_side_effect_requests() {
+        let gateway = FakeGateway::new();
+        let err = gateway
+            .read_remote_order_observations(&RemoteReconcileReadRequest {
+                account_id: AccountId("acct-reconcile-reader".into()),
+                remote_order_ids: vec![RemoteOrderId("remote-open".into())],
+                no_trading_side_effect: false,
+            })
+            .await
+            .expect_err("side-effect-capable request must be rejected");
+
+        assert_eq!(
+            err,
+            GatewayError::RemoteRejected(
+                "remote reconcile read must be marked no-trading-side-effect".into()
+            )
+        );
+    }
+
+    #[tokio::test]
+    async fn disabled_gateway_reconcile_reader_is_disabled() {
+        let err = DisabledGateway
+            .read_remote_order_observations(&RemoteReconcileReadRequest {
+                account_id: AccountId("acct-reconcile-reader".into()),
+                remote_order_ids: vec![RemoteOrderId("remote-open".into())],
+                no_trading_side_effect: true,
+            })
+            .await
+            .expect_err("disabled gateway must not read remote state");
+
+        assert_eq!(err, GatewayError::Disabled);
     }
 }
