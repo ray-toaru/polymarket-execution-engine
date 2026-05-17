@@ -366,10 +366,7 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
         StatusCode::NOT_FOUND,
         "local reconcile missing response: {local_reconcile_missing}"
     );
-    assert_eq!(
-        local_reconcile_missing["correlation_id"].as_str().is_some(),
-        true
-    );
+    assert!(local_reconcile_missing["correlation_id"].as_str().is_some());
 
     let lifecycle_uri = format!("/v1/lifecycle/executions/{execution_id}/events");
     let (status, lifecycle_events) = request_json(
