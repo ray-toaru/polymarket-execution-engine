@@ -895,6 +895,13 @@ where
         Ok(self.store.list_execution_lifecycle_events(&query).await?)
     }
 
+    pub async fn list_order_lifecycle_events(
+        &self,
+        query: pmx_store::OrderLifecycleEventQuery,
+    ) -> Result<Vec<OrderLifecycleEventRecord>, ServiceError> {
+        Ok(self.store.list_order_lifecycle_events(&query).await?)
+    }
+
     pub async fn record_non_live_cancel_request(
         &self,
         order_id: &str,
@@ -2685,5 +2692,15 @@ mod tests {
                 .iter()
                 .all(|event| event.payload["no_remote_side_effect"] == true)
         );
+
+        let queried = service
+            .list_order_lifecycle_events(pmx_store::OrderLifecycleEventQuery {
+                order_id: "order-divergence".into(),
+                limit: 10,
+                before_event_id: None,
+            })
+            .await
+            .expect("query order lifecycle events");
+        assert_eq!(queried, events);
     }
 }

@@ -420,6 +420,18 @@ async fn http_postgres_backed_e2e_smoke() {
         }
     }
 
+    let order_events_uri = format!("/v1/lifecycle/orders/order-http-pg-e2e-{suffix}/events");
+    let (status, order_events) = request_json(
+        app.clone(),
+        "GET",
+        &order_events_uri,
+        Some("service-token-pg-e2e"),
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "PG order events: {order_events}");
+    assert!(order_events.as_array().unwrap().is_empty());
+
     let (status, audit_events) = request_json(
         app,
         "GET",

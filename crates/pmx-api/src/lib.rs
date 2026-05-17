@@ -10,7 +10,8 @@ use pmx_core::*;
 use pmx_service::{ExecutorService, ServiceError, StoreBackedRuntimeStateProvider, SubmitOutcome};
 use pmx_store::{
     AdminAuditEvent, AdminAuditQuery, ExecutionLifecycleEvent, ExecutionLifecycleQuery,
-    InMemoryStore, OrderLifecycleRecord, PostgresStore, SignOnlyLifecycleQuery, StoreError,
+    InMemoryStore, OrderLifecycleEventQuery, OrderLifecycleEventRecord, OrderLifecycleRecord,
+    PostgresStore, SignOnlyLifecycleQuery, StoreError,
 };
 use uuid::Uuid;
 
@@ -169,6 +170,16 @@ impl ServiceBackend {
         }
     }
 
+    async fn list_order_lifecycle_events(
+        &self,
+        query: OrderLifecycleEventQuery,
+    ) -> Result<Vec<OrderLifecycleEventRecord>, ServiceError> {
+        match self {
+            Self::InMemory(service) => service.list_order_lifecycle_events(query).await,
+            Self::Postgres(service) => service.list_order_lifecycle_events(query).await,
+        }
+    }
+
     async fn record_sign_only_lifecycle_event(
         &self,
         record: SignOnlyLifecycleRecord,
@@ -248,6 +259,10 @@ fn router_with_state(state: AppState) -> Router {
         .route(
             "/v1/lifecycle/executions/:execution_id/events",
             get(list_execution_lifecycle_events),
+        )
+        .route(
+            "/v1/lifecycle/orders/:order_id/events",
+            get(list_order_lifecycle_events),
         )
         .route("/v1/admin/audit-events", get(list_admin_audit_events))
         .route("/v1/admin/kill-switch", post(set_kill_switch))
@@ -647,6 +662,25 @@ async fn list_execution_lifecycle_events(
         .service
         .list_execution_lifecycle_events(ExecutionLifecycleQuery {
             execution_id,
+            limit: query.limit.unwrap_or(100),
+            before_event_id: query.before_event_id,
+        })
+        .await
+        .map_err(service_error)?;
+    Ok((StatusCode::OK, Json(events)))
+}
+
+async fn list_order_lifecycle_events(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(order_id): Path<String>,
+    Query(query): Query<EventListQuery>,
+) -> ApiResult<Vec<OrderLifecycleEventRecord>> {
+    require(&headers, Operation::ReadReport)?;
+    let events = state
+        .service
+        .list_order_lifecycle_events(OrderLifecycleEventQuery {
+            order_id,
             limit: query.limit.unwrap_or(100),
             before_event_id: query.before_event_id,
         })

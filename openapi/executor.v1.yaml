@@ -196,6 +196,33 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/ExecutionLifecycleEvent' }
+  /v1/lifecycle/orders/{order_id}/events:
+    get:
+      operationId: listOrderLifecycleEvents
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      parameters:
+        - in: path
+          name: order_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: limit
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+        - in: query
+          name: before_event_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Local order lifecycle events for one order
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/OrderLifecycleEventRecord' }
   /v1/admin/audit-events:
     get:
       operationId: listAdminAuditEvents
@@ -521,6 +548,19 @@ components:
         event_type: { type: string }
         event_source: { type: string }
         payload: { $ref: '#/components/schemas/RedactedPayloadEnvelope' }
+    OrderLifecycleEventRecord:
+      type: object
+      additionalProperties: false
+      required: [order_id, event, event_source, payload]
+      properties:
+        event_id: { type: [integer, 'null'], readOnly: true }
+        order_id: { type: string }
+        event: { $ref: '#/components/schemas/OrderEventKind' }
+        event_source: { type: string }
+        payload:
+          type: object
+          additionalProperties: true
+        created_at: { type: [string, 'null'], format: date-time, readOnly: true }
     AdminAuditEvent:
       type: object
       additionalProperties: false
