@@ -675,6 +675,11 @@ components:
       properties:
         account_id: { type: string }
         execution_id: { type: [string, 'null'] }
+        order_id: { type: [string, 'null'] }
+        remote_observation:
+          anyOf:
+            - $ref: '#/components/schemas/RemoteOrderObservation'
+            - type: 'null'
         reason: { type: string }
     ReconcileReport:
       type: object

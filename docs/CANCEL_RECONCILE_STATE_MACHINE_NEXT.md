@@ -36,13 +36,13 @@ Current v0.24 progress:
 - `ExecutorService::reconcile_order_lifecycle_divergence()` applies that
   classification to existing local orders and persists only local
   `order_events`; it does not call any remote cancel or submit endpoint.
+- The public `/v1/admin/reconcile` request can optionally carry `order_id` and
+  `remote_observation` together; when provided, it records the same local
+  order-lifecycle divergence and still performs no remote side effect.
 - Repeated `MISSING` observations escalate `RemoteUnknown ->
   PartialRemoteUnknown -> Failed` so operator-required paths are explicit.
 
 Boundary:
 
 - Unknown local orders are not treated as confirmed cancelled.
-- The public reconcile API schema does not yet carry an order id or remote
-  observation, so it still records execution-level non-live reconcile audit
-  only.
 - No live cancel or remote reconcile call is enabled.

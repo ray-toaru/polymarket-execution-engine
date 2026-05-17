@@ -348,6 +348,45 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
     );
     assert_eq!(reconcile["checked_orders"], 0);
 
+    let (status, reconcile_bad_pair) = request_json(
+        app.clone(),
+        "POST",
+        "/v1/admin/reconcile",
+        Some("admin-token-test-v07"),
+        Some(json!({
+            "account_id": "acct-http-e2e-1",
+            "execution_id": execution_id.clone(),
+            "order_id": "order-v07-1",
+            "reason": "admin reconcile bad pair"
+        })),
+    )
+    .await;
+    assert_eq!(
+        status,
+        StatusCode::BAD_REQUEST,
+        "reconcile bad pair response: {reconcile_bad_pair}"
+    );
+
+    let (status, reconcile_missing_order) = request_json(
+        app.clone(),
+        "POST",
+        "/v1/admin/reconcile",
+        Some("admin-token-test-v07"),
+        Some(json!({
+            "account_id": "acct-http-e2e-1",
+            "execution_id": execution_id.clone(),
+            "order_id": "missing-order-v24-public",
+            "remote_observation": "MISSING",
+            "reason": "admin reconcile public local missing"
+        })),
+    )
+    .await;
+    assert_eq!(
+        status,
+        StatusCode::NOT_FOUND,
+        "reconcile missing order response: {reconcile_missing_order}"
+    );
+
     let (status, local_reconcile_missing) = request_json(
         app.clone(),
         "POST",

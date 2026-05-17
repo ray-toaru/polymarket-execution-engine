@@ -883,9 +883,31 @@ async fn reconcile_placeholder(
             correlation_id,
         ));
     }
+    let local_reconcile = match (&req.order_id, &req.remote_observation) {
+        (Some(order_id), Some(remote_observation)) => {
+            Some((order_id.clone(), remote_observation.clone()))
+        }
+        (None, None) => None,
+        _ => {
+            record_admin_audit(
+                &state,
+                &principal,
+                "Reconcile",
+                fingerprint,
+                Some(correlation_id.clone()),
+                "REJECTED bad_request",
+            )
+            .await?;
+            return Err(api_error_with_correlation(
+                StatusCode::BAD_REQUEST,
+                "order_id and remote_observation must be provided together",
+                correlation_id,
+            ));
+        }
+    };
     let fingerprint = request_fingerprint(&req);
     let execution_id = req.execution_id.clone();
-    let report = ReconcileReport {
+    let mut report = ReconcileReport {
         reconcile_id: format!("reconcile-{}", Uuid::new_v4()),
         status: "SCHEDULED_STATE_MACHINE_REQUIRED".into(),
         checked_orders: 0,
@@ -894,6 +916,50 @@ async fn reconcile_placeholder(
             req.reason.clone(),
         ],
     };
+    if let Some((order_id, remote_observation)) = local_reconcile {
+        let Some((divergence, updated_order)) = state
+            .service
+            .reconcile_order_lifecycle_divergence(
+                &order_id,
+                Some(&req.account_id.0),
+                remote_observation,
+                &req.reason,
+                Some(correlation_id.clone()),
+            )
+            .await
+            .map_err(service_error)?
+        else {
+            record_admin_audit(
+                &state,
+                &principal,
+                "Reconcile",
+                fingerprint,
+                Some(correlation_id.clone()),
+                "REJECTED missing_order",
+            )
+            .await?;
+            return Err(api_error_with_correlation(
+                StatusCode::NOT_FOUND,
+                "order lifecycle not found",
+                correlation_id,
+            ));
+        };
+        report.checked_orders = 1;
+        report.status = if divergence.operator_required {
+            "OPERATOR_REQUIRED_NON_LIVE".into()
+        } else {
+            "LOCAL_RECONCILE_RECORDED_NON_LIVE".into()
+        };
+        report.findings.push(format!("order_id={order_id}"));
+        report
+            .findings
+            .push(format!("divergence={:?}", divergence.kind));
+        if let Some(updated_order) = updated_order {
+            report
+                .findings
+                .push(format!("local_state={:?}", updated_order.lifecycle_state));
+        }
+    }
     if let Some(execution_id) = execution_id {
         state
             .service

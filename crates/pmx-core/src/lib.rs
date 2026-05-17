@@ -577,6 +577,10 @@ pub struct KillSwitchReceipt {
 pub struct ReconcileRequest {
     pub account_id: AccountId,
     pub execution_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub order_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub remote_observation: Option<RemoteOrderObservation>,
     pub reason: String,
 }
 
