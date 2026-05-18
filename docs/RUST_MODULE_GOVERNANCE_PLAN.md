@@ -83,6 +83,12 @@ material exposure, or production-readiness claims.
 - Service non-live order-lifecycle tests now live in focused
   `pmx-service::service_tests::non_live_order_lifecycle` modules for
   cancel/reconcile recording and divergence escalation behavior.
+- Service sign-only tests now also live in finer-grained
+  `pmx-service::service_tests::sign_only` modules for lifecycle sequencing and
+  standard sign-only construction/redaction behavior.
+- Service specialized runtime-worker tests now also separate focused
+  `resource_refresh` and `reconcile_backlog` modules instead of sharing a
+  mixed resource/reconcile parent test file.
 - Runtime model tests now also separate focused `breakdown_loop` and
   `evaluations` submodules by capability group, worker-loop behavior,
   provider-fed loop behavior, lease/resource evaluation, reconcile/websocket/
@@ -93,6 +99,15 @@ material exposure, or production-readiness claims.
 - The HTTP fake scaffold E2E path now uses local helper functions to keep the
   single end-to-end assertion flow readable without changing route coverage or
   assertions.
+- The HTTP fake scaffold E2E path now also keeps compile, submit/sign-only,
+  admin, and public-query phases in focused helper modules while preserving the
+  same single test flow.
+- The HTTP PostgreSQL smoke E2E path now keeps compile/submit, sign-only,
+  admin lifecycle, and public-query phases in focused helper modules while
+  preserving the same single test flow.
+- The HTTP PostgreSQL runtime E2E path now keeps runtime-state/degraded checks
+  and ready-plan/blocked-submit verification in focused helper modules while
+  preserving the same single test flow.
 
 ## Per-step rules
 

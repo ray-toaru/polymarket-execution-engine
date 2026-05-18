@@ -1,5 +1,5 @@
    Compiling pmx-service v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.07s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.87s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-0c3b29e6cdffcd0b)
 
 running 2 tests
@@ -109,18 +109,18 @@ test service::tests::runtime_worker_lease::election::service_records_heartbeat_l
 test service::tests::runtime_worker_lease::persisted::service_records_heartbeat_lease_from_persisted_worker_status ... ok
 test service::tests::runtime_worker_lease::persisted::service_records_heartbeat_lease_from_postgres_worker_status ... ok
 test service::tests::runtime_worker_specialized::crash_recovery::service_records_worker_crash_recovery_tick_for_decision_gate ... ok
-test service::tests::runtime_worker_specialized::resource_reconcile::service_records_reconcile_backlog_from_order_lifecycle ... ok
-test service::tests::runtime_worker_specialized::resource_reconcile::service_records_reconcile_backlog_worker_tick_for_decision_gate ... ok
-test service::tests::runtime_worker_specialized::resource_reconcile::service_records_resource_refresh_worker_tick_for_decision_gate ... ok
+test service::tests::runtime_worker_specialized::reconcile_backlog::service_records_reconcile_backlog_from_order_lifecycle ... ok
+test service::tests::runtime_worker_specialized::reconcile_backlog::service_records_reconcile_backlog_worker_tick_for_decision_gate ... ok
+test service::tests::runtime_worker_specialized::resource_refresh::service_records_resource_refresh_worker_tick_for_decision_gate ... ok
 test service::tests::runtime_worker_specialized::websocket_geoblock::service_records_geoblock_worker_tick_for_decision_gate ... ok
 test service::tests::runtime_worker_specialized::websocket_geoblock::service_records_websocket_liveness_worker_tick_for_decision_gate ... ok
-test service::tests::sign_only::service_derives_standard_sign_only_ref_and_digest_by_default ... ok
-test service::tests::sign_only::service_records_standard_sign_only_construction_without_raw_payload ... ok
-test service::tests::sign_only::service_rejects_malformed_standard_sign_only_digest ... ok
-test service::tests::sign_only::service_rejects_sign_only_sequence_mismatch ... ok
-test service::tests::sign_only::service_validates_and_persists_sign_only_lifecycle_sequence ... ok
+test service::tests::sign_only::lifecycle::service_rejects_sign_only_sequence_mismatch ... ok
+test service::tests::sign_only::lifecycle::service_validates_and_persists_sign_only_lifecycle_sequence ... ok
+test service::tests::sign_only::standard::service_derives_standard_sign_only_ref_and_digest_by_default ... ok
+test service::tests::sign_only::standard::service_records_standard_sign_only_construction_without_raw_payload ... ok
+test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 
-test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-d75ca96a461a9981)
 
@@ -166,7 +166,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::postgres_persists_sign_only_lifecycle_records ... ok
 test postgres::postgres_tests::sign_only::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 
-test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.77s
+test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.18s
 
    Doc-tests pmx_authz
 
