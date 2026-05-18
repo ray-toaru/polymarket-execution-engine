@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "crates" / "pmx-runtime" / "src" / "lib.rs"
 STORE = ROOT / "crates" / "pmx-store" / "src"
-POSTGRES = ROOT / "crates" / "pmx-store" / "src" / "postgres.rs"
+POSTGRES = ROOT / "crates" / "pmx-store" / "src"
 MIGRATION = ROOT / "migrations" / "0001_initial.sql"
 
 REQUIRED = {
