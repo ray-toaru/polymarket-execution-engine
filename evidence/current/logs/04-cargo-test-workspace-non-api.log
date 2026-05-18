@@ -1,4 +1,6 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.29s
+   Compiling pmx-store v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
+   Compiling pmx-service v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.30s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-0c3b29e6cdffcd0b)
 
 running 2 tests
@@ -119,7 +121,7 @@ test service::tests::service_validates_and_persists_sign_only_lifecycle_sequence
 test service::tests::static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks ... ok
 test service::tests::store_backed_runtime_provider_uses_store_state ... ok
 
-test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-d75ca96a461a9981)
 
@@ -165,7 +167,7 @@ test postgres::postgres_tests::tests::remote_unknown_is_persisted_conservatively
 test postgres::postgres_tests::tests::reservation_double_spend_is_prevented_concurrently ... ok
 test postgres::postgres_tests::tests::same_request_replay_is_persisted ... ok
 
-test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.15s
+test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.74s
 
    Doc-tests pmx_authz
 

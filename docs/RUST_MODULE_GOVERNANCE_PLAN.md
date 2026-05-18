@@ -28,6 +28,8 @@ material exposure, or production-readiness claims.
   under `pmx-official-sdk-adapter::mapping` without changing public exports.
 - SDK liveness now keeps SDK error normalization behind a feature-gated
   `liveness::error_normalization` module while preserving the public function.
+- PostgreSQL runtime worker persistence now separates heartbeat writes,
+  observation writes, and status queries under `pmx-store::postgres_worker`.
 
 ## Per-step rules
 
