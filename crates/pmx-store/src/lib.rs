@@ -6,6 +6,7 @@ mod postgres_audit;
 mod postgres_execution;
 mod postgres_order_lifecycle;
 mod postgres_runtime;
+mod postgres_sign_only;
 mod postgres_support;
 
 pub use helpers::*;

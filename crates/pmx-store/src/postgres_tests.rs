@@ -8,8 +8,8 @@ mod tests {
     use super::*;
     use pmx_core::{
         AccountId, CollateralProfileStatus, DecimalString, ExecutionId, GeoblockStatus,
-        OrderReservation, QuantityBound, ReservationState, SubmitReceipt, SubmitStatus,
-        WorkerStatus,
+        OrderReservation, QuantityBound, ReservationState, SignOnlyLifecycleRecord, SubmitReceipt,
+        SubmitStatus, WorkerStatus,
     };
     use std::time::{SystemTime, UNIX_EPOCH};
 
