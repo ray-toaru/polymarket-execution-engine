@@ -1,7 +1,9 @@
 mod memory;
+mod model;
 pub mod postgres;
 
 pub use memory::*;
+pub use model::*;
 pub use postgres::PostgresStore;
 
 pub(crate) use memory::{
