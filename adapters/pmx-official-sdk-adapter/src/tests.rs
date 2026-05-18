@@ -2,6 +2,9 @@ use super::*;
 use pmx_core::{AccountId, ExecutionId, GeoblockStatus, HashValue, SignOnlyLifecycleState};
 use pmx_gateway::GatewayError;
 
+#[cfg(feature = "sdk-typecheck")]
+use polymarket_client_sdk_v2::error::Error as SdkError;
+
 fn empty_credentials() -> AdapterCredentialSnapshot {
     AdapterCredentialSnapshot {
         has_l1_private_key: false,
