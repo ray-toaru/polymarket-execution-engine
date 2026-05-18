@@ -137,32 +137,13 @@ where
         reason: &str,
         correlation_id: Option<String>,
     ) -> Result<Option<OrderLifecycleRecord>, ServiceError> {
-        if order_id.trim().is_empty() || reason.trim().is_empty() {
-            return Err(ServiceError::BadRequest(
-                "order_id and reason must be non-empty".into(),
-            ));
-        }
-        if self.store.load_order_lifecycle(order_id).await?.is_none() {
-            return Ok(None);
-        }
-        let updated = self
-            .store
-            .record_order_lifecycle_event(&OrderLifecycleEventRecord {
-                event_id: None,
-                order_id: order_id.to_owned(),
-                event: OrderEventKind::CancelRequested,
-                event_source: "pmx-service".into(),
-                correlation_id: correlation_id.clone(),
-                payload: serde_json::json!({
-                    "kind": "cancel_requested_non_live",
-                    "correlation_id": correlation_id,
-                    "reason_len": reason.len(),
-                    "no_remote_side_effect": true,
-                }),
-                created_at: None,
-            })
-            .await?;
-        Ok(Some(updated))
+        crate::order_lifecycle::record_non_live_cancel_request(
+            &self.store,
+            order_id,
+            reason,
+            correlation_id,
+        )
+        .await
     }
 
     pub async fn record_non_live_reconcile_observation(
@@ -172,40 +153,14 @@ where
         reason: &str,
         correlation_id: Option<String>,
     ) -> Result<Option<OrderLifecycleRecord>, ServiceError> {
-        if order_id.trim().is_empty() || reason.trim().is_empty() {
-            return Err(ServiceError::BadRequest(
-                "order_id and reason must be non-empty".into(),
-            ));
-        }
-        if !matches!(
+        crate::order_lifecycle::record_non_live_reconcile_observation(
+            &self.store,
+            order_id,
             event,
-            OrderEventKind::ReconcileOpen | OrderEventKind::ReconcileMissing
-        ) {
-            return Err(ServiceError::BadRequest(
-                "reconcile observation must be ReconcileOpen or ReconcileMissing".into(),
-            ));
-        }
-        if self.store.load_order_lifecycle(order_id).await?.is_none() {
-            return Ok(None);
-        }
-        let updated = self
-            .store
-            .record_order_lifecycle_event(&OrderLifecycleEventRecord {
-                event_id: None,
-                order_id: order_id.to_owned(),
-                event,
-                event_source: "pmx-service".into(),
-                correlation_id: correlation_id.clone(),
-                payload: serde_json::json!({
-                    "kind": "reconcile_observed_non_live",
-                    "correlation_id": correlation_id,
-                    "reason_len": reason.len(),
-                    "no_remote_side_effect": true,
-                }),
-                created_at: None,
-            })
-            .await?;
-        Ok(Some(updated))
+            reason,
+            correlation_id,
+        )
+        .await
     }
 
     pub async fn reconcile_order_lifecycle_divergence(
@@ -217,48 +172,15 @@ where
         correlation_id: Option<String>,
     ) -> Result<Option<(OrderLifecycleDivergence, Option<OrderLifecycleRecord>)>, ServiceError>
     {
-        if order_id.trim().is_empty() || reason.trim().is_empty() {
-            return Err(ServiceError::BadRequest(
-                "order_id and reason must be non-empty".into(),
-            ));
-        }
-        let Some(order) = self.store.load_order_lifecycle(order_id).await? else {
-            return Ok(None);
-        };
-        if let Some(account_id) = account_id
-            && order.account_id != account_id
-        {
-            return Err(ServiceError::Conflict(
-                "order lifecycle account_id does not match request".into(),
-            ));
-        }
-        let divergence =
-            classify_order_lifecycle_divergence(&order.lifecycle_state, remote_observation);
-        let updated = if let Some(event) = divergence.event.clone() {
-            Some(
-                self.store
-                    .record_order_lifecycle_event(&OrderLifecycleEventRecord {
-                        event_id: None,
-                        order_id: order_id.to_owned(),
-                        event,
-                        event_source: "pmx-service".into(),
-                        correlation_id: correlation_id.clone(),
-                        payload: serde_json::json!({
-                            "kind": "order_lifecycle_divergence_non_live",
-                            "correlation_id": correlation_id,
-                            "operator_required": divergence.operator_required,
-                            "reason_len": reason.len(),
-                            "classification": format!("{:?}", divergence.kind),
-                            "no_remote_side_effect": true,
-                        }),
-                        created_at: None,
-                    })
-                    .await?,
-            )
-        } else {
-            None
-        };
-        Ok(Some((divergence, updated)))
+        crate::order_lifecycle::reconcile_order_lifecycle_divergence(
+            &self.store,
+            order_id,
+            account_id,
+            remote_observation,
+            reason,
+            correlation_id,
+        )
+        .await
     }
 
     pub async fn record_sign_only_lifecycle_event(
