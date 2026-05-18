@@ -4,6 +4,7 @@ use pmx_core::{
 use pmx_store::{OrderLifecycleEventRecord, OrderLifecycleRecord, OrderLifecycleStore};
 
 use crate::ServiceError;
+use crate::order_lifecycle::payload;
 
 pub async fn reconcile_order_lifecycle_divergence<S>(
     store: &S,
@@ -42,14 +43,12 @@ where
                     event,
                     event_source: "pmx-service".into(),
                     correlation_id: correlation_id.clone(),
-                    payload: serde_json::json!({
-                        "kind": "order_lifecycle_divergence_non_live",
-                        "correlation_id": correlation_id,
-                        "operator_required": divergence.operator_required,
-                        "reason_len": reason.len(),
-                        "classification": format!("{:?}", divergence.kind),
-                        "no_remote_side_effect": true,
-                    }),
+                    payload: payload::order_lifecycle_divergence_non_live(
+                        correlation_id.as_deref(),
+                        divergence.operator_required,
+                        reason.len(),
+                        format!("{:?}", divergence.kind),
+                    ),
                     created_at: None,
                 })
                 .await?,

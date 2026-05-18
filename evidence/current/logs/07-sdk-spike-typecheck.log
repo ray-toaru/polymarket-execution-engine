@@ -1,14 +1,11 @@
-   Compiling pmx-core v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
-   Compiling pmx-gateway v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
-   Compiling pmx-official-sdk-spike v0.0.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-spike)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.57s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.92s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-spike/target/debug/deps/pmx_official_sdk_spike-29e4775b30c9edeb)
 
 running 2 tests
 test tests::live_submit_is_disabled_by_default ... ok
 test tests::read_only_ok_smoke ... ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.65s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.54s
 
    Doc-tests pmx_official_sdk_spike
 

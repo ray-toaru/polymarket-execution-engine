@@ -46,6 +46,11 @@ Current v0.25 progress:
   reusing the same correlation id for a different event is rejected.
 - `UNKNOWN` remote observations are persisted as `ReconcileUnknown` without
   advancing the local state, preserving an audit trail for operator review.
+- Non-live cancel, reconcile, and divergence payloads are produced through
+  typed service-layer payload constructors before serialization. The public
+  JSON remains compatible, while the source shape is restricted to
+  `kind`, optional `correlation_id`, `reason_len`, classification fields where
+  needed, and `no_remote_side_effect`.
 
 Boundary:
 

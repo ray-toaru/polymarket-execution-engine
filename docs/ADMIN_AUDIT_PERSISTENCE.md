@@ -15,7 +15,16 @@ The audit event records:
 - principal subject,
 - operation name,
 - request fingerprint where available,
+- correlation id where available,
 - result string,
 - database timestamp in PostgreSQL.
+
+Query behavior:
+
+- `limit` is bounded to `1..=500`.
+- `before_audit_id` is a stable older-page cursor.
+- returned pages are oldest-to-newest within the selected page.
+- operation, principal, result, and correlation-id filters are applied before
+  cursor pagination.
 
 Current boundary: this is not yet a complete compliance audit subsystem. It does not persist unauthorized requests without a principal, and cancel/reconcile still remain scaffold operations.

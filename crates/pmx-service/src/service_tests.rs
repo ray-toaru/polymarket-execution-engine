@@ -1516,6 +1516,43 @@ async fn service_records_non_live_cancel_and_reconcile_order_lifecycle() {
         .await
         .expect("missing order is non-fatal");
     assert!(missing.is_none());
+
+    let cancel_events = store
+        .list_order_lifecycle_events(&pmx_store::OrderLifecycleEventQuery {
+            order_id: "order-non-live-cancel".into(),
+            limit: 10,
+            before_event_id: None,
+        })
+        .await
+        .expect("list cancel events");
+    assert_eq!(cancel_events.len(), 1);
+    assert_eq!(
+        cancel_events[0].payload["kind"],
+        "cancel_requested_non_live"
+    );
+    assert_eq!(cancel_events[0].payload["correlation_id"], "corr-cancel");
+    assert_eq!(cancel_events[0].payload["no_remote_side_effect"], true);
+    assert!(cancel_events[0].payload.get("raw_signed_payload").is_none());
+    assert!(cancel_events[0].payload.get("raw_signature").is_none());
+
+    let reconcile_events = store
+        .list_order_lifecycle_events(&pmx_store::OrderLifecycleEventQuery {
+            order_id: "order-non-live-reconcile".into(),
+            limit: 10,
+            before_event_id: None,
+        })
+        .await
+        .expect("list reconcile events");
+    assert_eq!(reconcile_events.len(), 1);
+    assert_eq!(
+        reconcile_events[0].payload["kind"],
+        "reconcile_observed_non_live"
+    );
+    assert_eq!(
+        reconcile_events[0].payload["correlation_id"],
+        "corr-reconcile"
+    );
+    assert_eq!(reconcile_events[0].payload["no_remote_side_effect"], true);
 }
 
 #[tokio::test]
@@ -1609,6 +1646,16 @@ async fn service_classifies_and_records_order_lifecycle_divergence_without_remot
         events
             .iter()
             .all(|event| event.payload["no_remote_side_effect"] == true)
+    );
+    assert!(
+        events
+            .iter()
+            .all(|event| event.payload["kind"] == "order_lifecycle_divergence_non_live")
+    );
+    assert!(
+        events
+            .iter()
+            .all(|event| event.payload.get("raw_signed_payload").is_none())
     );
     assert!(
         events

@@ -2,6 +2,7 @@ use pmx_core::OrderEventKind;
 use pmx_store::{OrderLifecycleEventRecord, OrderLifecycleRecord, OrderLifecycleStore};
 
 use crate::ServiceError;
+use crate::order_lifecycle::payload;
 
 pub async fn record_non_live_reconcile_observation<S>(
     store: &S,
@@ -39,12 +40,7 @@ where
             event,
             event_source: "pmx-service".into(),
             correlation_id: correlation_id.clone(),
-            payload: serde_json::json!({
-                "kind": "reconcile_observed_non_live",
-                "correlation_id": correlation_id,
-                "reason_len": reason.len(),
-                "no_remote_side_effect": true,
-            }),
+            payload: payload::reconcile_observed_non_live(correlation_id.as_deref(), reason.len()),
             created_at: None,
         })
         .await?;
