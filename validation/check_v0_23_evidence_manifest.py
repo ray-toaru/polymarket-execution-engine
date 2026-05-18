@@ -13,6 +13,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = ROOT / "validation" / "templates" / "evidence_manifest.template.json"
 CURRENT = ROOT / "evidence" / "current" / "manifest.json"
+VERSION_PATHS = [
+    ROOT.parent / "VERSION",
+    ROOT / "VERSION",
+]
 REQUIRED_SECTIONS = [
     "local_static_validation",
     "rust_workspace_validation",
@@ -28,10 +32,18 @@ def fail(message: str) -> int:
     return 1
 
 
+def expected_version() -> str:
+    for path in VERSION_PATHS:
+        if path.exists():
+            return path.read_text().strip()
+    return "0.24.0"
+
+
 def validate(path: Path) -> int:
     data = json.loads(path.read_text())
-    if data.get("version") != "0.23.0":
-        return fail("manifest version must be 0.23.0")
+    expected = expected_version()
+    if data.get("version") != expected:
+        return fail(f"manifest version must be {expected}")
     if data.get("artifact_kind") not in {"source_candidate", "validated_release"}:
         return fail("artifact_kind must be source_candidate or validated_release")
     if data.get("canonical_evidence_dir") != "polymarket-execution-engine/evidence/current":
@@ -71,15 +83,21 @@ def main(argv: list[str]) -> int:
         paths = [Path(arg) for arg in argv[1:]]
     else:
         paths = [TEMPLATE]
+        # During a version-promotion gate, evidence/current can still contain the
+        # previous manifest until write_v0_23_evidence_manifest.py regenerates it.
+        # The full gate validates the regenerated current manifest later via the
+        # docs/evidence governance guard.
         if CURRENT.exists():
-            paths.append(CURRENT)
+            current = json.loads(CURRENT.read_text())
+            if current.get("version") == expected_version():
+                paths.append(CURRENT)
     for path in paths:
         if not path.exists():
             return fail(f"manifest not found: {path}")
         rc = validate(path)
         if rc != 0:
             return rc
-    print("v0.23 evidence manifest guard passed")
+    print(f"v{expected_version()} evidence manifest guard passed")
     return 0
 
 

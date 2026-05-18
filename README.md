@@ -1,15 +1,15 @@
-# polymarket-execution-engine v0.23.0 source candidate
+# polymarket-execution-engine v0.24.0 shadow-ready baseline source candidate
 
-Standalone Rust execution plane for Polymarket. This package is a **source candidate**, not a validated release: local Python/static/package checks can be run in low-resource environments, but Rust, PostgreSQL, SDK, and credentialed non-trading evidence still require an external environment with `cargo`, `rustc`, `rustfmt`, `psql`, and optional credentials.
+Standalone Rust execution plane for Polymarket. This package is a **shadow-ready baseline source candidate**, not a production or live-trading release.
 
-## v0.23 scope
+## v0.24 scope
 
 - Server-authoritative planning and blocked submit receipt path remain in place.
 - Sign-only lifecycle append/list APIs exist with local state-machine validation, PG advisory-lock scaffolding, server-assigned metadata, and `client_event_id` replay/conflict semantics.
 - Execution lifecycle and admin audit query APIs expose bounded cursor-style reads.
 - Runtime worker observations are aggregated into runtime state with configurable TTL via `PMX_RUNTIME_OBSERVATION_TTL_SECONDS`.
 - Cancel/reconcile endpoints remain non-live and may write local lifecycle events when an `execution_id` is supplied.
-- Evidence manifest scaffolding prevents claiming a validated release before required Rust/PG/SDK/credentialed evidence is present.
+- Evidence manifest scaffolding prevents claiming production or live readiness before required Rust/PG/SDK/credentialed evidence and a later release decision are present.
 
 ## Safety boundary
 

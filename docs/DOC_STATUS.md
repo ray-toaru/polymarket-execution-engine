@@ -1,8 +1,8 @@
 # Execution-engine document status
 
-> Status: current v0.23.0 source-candidate documentation.
+> Status: current v0.24.0 shadow-ready baseline source-candidate documentation.
 
-`../AGENTS.md` contains execution-engine-specific agent rules. Current documents in this directory describe the v0.23.0 source-candidate state. Historical continuation, review, and gate-confirmation notes live under `docs/archive/` and are excluded from normal release packaging.
+`../AGENTS.md` contains execution-engine-specific agent rules. Current documents in this directory describe the v0.24.0 shadow-ready baseline source-candidate state. Historical continuation, review, and gate-confirmation notes live under `docs/archive/` and are excluded from normal release packaging.
 
 Current validation entrypoint:
 
