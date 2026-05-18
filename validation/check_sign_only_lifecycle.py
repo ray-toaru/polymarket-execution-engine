@@ -50,6 +50,8 @@ REQUIRED = {
         "StandardSignOnlyConstructionReceipt",
         "record_standard_sign_only_construction",
         "service_records_standard_sign_only_construction_without_raw_payload",
+        "service_derives_standard_sign_only_ref_and_digest_by_default",
+        "official-sdk-standard-sign-only",
     ],
     API: [
         "/v1/sign-only/standard-constructions",

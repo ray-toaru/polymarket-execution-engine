@@ -233,7 +233,6 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
     .await;
     assert_eq!(status, StatusCode::OK, "submission response: {submission}");
 
-    let digest = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     let (status, standard_sign_only) = request_json(
         app.clone(),
         "POST",
@@ -243,8 +242,6 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
             "execution_id": execution_id.clone(),
             "account_id": "acct-http-e2e-1",
             "plan_hash": plan_hash,
-            "signed_order_ref": format!("sign-only:{execution_id}:digest-ref"),
-            "signed_order_digest": digest,
             "no_remote_side_effect": true
         })),
     )
@@ -255,7 +252,19 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
         "standard sign-only response: {standard_sign_only}"
     );
     assert_eq!(standard_sign_only["no_remote_side_effect"], true);
-    assert_eq!(standard_sign_only["signed_order_digest"], digest);
+    assert!(
+        standard_sign_only["signed_order_ref"]
+            .as_str()
+            .unwrap()
+            .starts_with(&format!("sign-only:{execution_id}:"))
+    );
+    assert_eq!(
+        standard_sign_only["signed_order_digest"]
+            .as_str()
+            .unwrap()
+            .len(),
+        64
+    );
 
     let sign_only_uri = format!("/v1/sign-only/lifecycle-events/{execution_id}");
     let (status, sign_only_records) = request_json(

@@ -566,19 +566,19 @@ components:
     StandardSignOnlyConstructionRequest:
       type: object
       additionalProperties: false
-      required: [execution_id, account_id, plan_hash, signed_order_ref, signed_order_digest, no_remote_side_effect]
+      required: [execution_id, account_id, plan_hash, no_remote_side_effect]
       properties:
         execution_id: { type: string }
         account_id: { type: string }
         plan_hash: { type: string }
         signed_order_ref:
-          type: string
+          type: [string, 'null']
           pattern: '^sign-only:'
-          description: Redacted reference to executor-owned sign-only construction output; never a raw signed order.
+          description: Optional redacted reference to executor-owned sign-only construction output; omitted requests derive an executor-owned sign-only reference and never expose a raw signed order.
         signed_order_digest:
           type: [string, 'null']
           pattern: '^[0-9A-Fa-f]{64}$'
-          description: Optional SHA-256 digest binding for the redacted construction artifact.
+          description: Optional SHA-256 digest binding for the redacted construction artifact; omitted requests derive a deterministic digest from server-authoritative plan metadata.
         no_remote_side_effect: { type: boolean, enum: [true] }
     StandardSignOnlyConstructionReceipt:
       type: object

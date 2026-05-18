@@ -7,7 +7,9 @@ pub struct StandardSignOnlyConstructionRequest {
     pub execution_id: String,
     pub account_id: String,
     pub plan_hash: String,
-    pub signed_order_ref: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub signed_order_ref: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub signed_order_digest: Option<String>,
     pub no_remote_side_effect: bool,
 }

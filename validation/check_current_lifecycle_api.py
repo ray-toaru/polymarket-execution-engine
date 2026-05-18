@@ -77,6 +77,7 @@ REQUIRED = {
         "service_classifies_and_records_order_lifecycle_divergence_without_remote_side_effect",
         "service_records_non_live_cancel_and_reconcile_order_lifecycle",
         "service_records_standard_sign_only_construction_without_raw_payload",
+        "service_derives_standard_sign_only_ref_and_digest_by_default",
         "service_validates_and_persists_sign_only_lifecycle_sequence",
     ],
     ROOT / "crates" / "pmx-core" / "src": [

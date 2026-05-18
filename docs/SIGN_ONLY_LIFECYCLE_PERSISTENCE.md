@@ -19,9 +19,10 @@ Every record carries `no_remote_side_effect = true`. A receipt that claims `post
 
 `ExecutorService::record_standard_sign_only_construction` is the service-level
 seam for the standard SDK sign-only path. It verifies the execution plan binding,
-requires a redacted `sign-only:` reference, and persists only the three local
-lifecycle records above. It does not accept raw signed payloads or model remote
-posting.
+accepts an optional redacted `sign-only:` reference, and derives an
+executor-owned redacted reference plus SHA-256 digest when the caller omits
+them. It persists only the three local lifecycle records above. It does not
+accept raw signed payloads or model remote posting.
 
 This gives later store-backed integration a safe set of records to persist through the existing execution lifecycle mechanism without introducing remote Polymarket side effects.
 

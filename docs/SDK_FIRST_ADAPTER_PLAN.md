@@ -44,6 +44,7 @@ forbidden.
 
 The executor service records the standard sign-only construction through
 record_standard_sign_only_construction. The service verifies execution_id,
-account_id, and plan_hash against the stored plan, requires a redacted
-sign-only: reference, and persists only local sign-only lifecycle events.
+account_id, and plan_hash against the stored plan, derives an executor-owned
+redacted sign-only: reference and digest when omitted, and persists only local
+sign-only lifecycle events.
 ```

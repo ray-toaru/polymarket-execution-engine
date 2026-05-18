@@ -1,9 +1,8 @@
-   Compiling pmx-official-sdk-adapter v0.24.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.43s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.88s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-adapter/target/debug/deps/pmx_official_sdk_adapter-32196e2f378ab622)
 
 running 1 test
 test tests::authenticated_non_trading_smoke_executes_when_enabled ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 39 filtered out; finished in 3.57s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 39 filtered out; finished in 3.62s
 
