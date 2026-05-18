@@ -1,6 +1,15 @@
+mod normalization;
+mod validation;
+
 use crate::{OfficialSdkAdapterError, OfficialSdkOrderBuilderMapping, OfficialSdkPlanOrder};
-use chrono::DateTime;
-use pmx_core::{validate_limit_price_decimal_string, validate_positive_decimal_string};
+use normalization::{
+    clone_non_empty, normalize_expiration, normalize_order_kind, normalize_side,
+    normalize_time_in_force,
+};
+use validation::{
+    require_non_empty, validate_limit_price_for_sdk, validate_positive_quantity_for_sdk,
+    validate_token_id,
+};
 
 pub fn official_sdk_plan_to_builder_mapping(
     plan: &OfficialSdkPlanOrder,
@@ -43,115 +52,4 @@ pub fn official_sdk_plan_to_builder_mapping(
         signer: clone_non_empty(plan.signer.as_deref()),
         signature_type: clone_non_empty(plan.signature_type.as_deref()),
     })
-}
-
-fn require_non_empty<'a>(
-    value: Option<&'a str>,
-    field: &str,
-) -> Result<&'a str, OfficialSdkAdapterError> {
-    let raw = value
-        .ok_or_else(|| OfficialSdkAdapterError::InvalidInput(format!("{field} is required")))?;
-    if raw.trim().is_empty() || raw != raw.trim() {
-        return Err(OfficialSdkAdapterError::InvalidInput(format!(
-            "{field} is required"
-        )));
-    }
-    Ok(raw)
-}
-
-fn validate_token_id(raw: &str) -> Result<(), OfficialSdkAdapterError> {
-    let trimmed = raw.trim();
-    if trimmed.is_empty() || trimmed != raw || !trimmed.chars().all(|c| c.is_ascii_digit()) {
-        return Err(OfficialSdkAdapterError::InvalidInput(format!(
-            "invalid token_id for official SDK order builder: {raw}"
-        )));
-    }
-    Ok(())
-}
-
-fn validate_limit_price_for_sdk(raw: &str) -> Result<(), OfficialSdkAdapterError> {
-    validate_limit_price_decimal_string(raw).map_err(|_| {
-        OfficialSdkAdapterError::InvalidInput(format!(
-            "invalid limit_price for official SDK order builder: {raw}"
-        ))
-    })
-}
-
-fn validate_positive_quantity_for_sdk(
-    raw: &str,
-    field: &str,
-) -> Result<(), OfficialSdkAdapterError> {
-    validate_positive_decimal_string(raw).map_err(|_| {
-        OfficialSdkAdapterError::InvalidInput(format!(
-            "invalid {field} for official SDK order builder: {raw}"
-        ))
-    })
-}
-
-fn clone_non_empty(value: Option<&str>) -> Option<String> {
-    value
-        .map(str::trim)
-        .filter(|candidate| !candidate.is_empty())
-        .map(ToOwned::to_owned)
-}
-
-fn normalize_order_kind(raw: &str) -> Result<String, OfficialSdkAdapterError> {
-    let normalized = raw.trim().to_ascii_uppercase();
-    match normalized.as_str() {
-        "LIMIT" | "MARKET" => Ok(normalized),
-        _ => Err(OfficialSdkAdapterError::InvalidInput(format!(
-            "unsupported order_kind: {raw}"
-        ))),
-    }
-}
-
-fn normalize_side(raw: &str) -> Result<String, OfficialSdkAdapterError> {
-    let normalized = raw.trim().to_ascii_uppercase();
-    match normalized.as_str() {
-        "BUY" | "SELL" => Ok(normalized),
-        _ => Err(OfficialSdkAdapterError::InvalidInput(format!(
-            "unsupported side: {raw}"
-        ))),
-    }
-}
-
-fn normalize_time_in_force(
-    raw: Option<&str>,
-    order_kind: &str,
-) -> Result<Option<String>, OfficialSdkAdapterError> {
-    if order_kind == "MARKET" {
-        return Ok(None);
-    }
-    let normalized = raw.unwrap_or("GTC").trim().to_ascii_uppercase();
-    match normalized.as_str() {
-        "GTC" | "GTD" | "FOK" | "FAK" => Ok(Some(normalized)),
-        "IOC" => Ok(Some("FAK".into())),
-        _ => Err(OfficialSdkAdapterError::InvalidInput(format!(
-            "unsupported time_in_force: {normalized}"
-        ))),
-    }
-}
-
-fn normalize_expiration(
-    raw: Option<&str>,
-    time_in_force: Option<&str>,
-) -> Result<Option<String>, OfficialSdkAdapterError> {
-    let value = clone_non_empty(raw);
-    match (time_in_force, value) {
-        (Some("GTD"), Some(expiration)) => {
-            DateTime::parse_from_rfc3339(&expiration).map_err(|_| {
-                OfficialSdkAdapterError::InvalidInput(
-                    "GTD expiration must be an RFC3339 timestamp".into(),
-                )
-            })?;
-            Ok(Some(expiration))
-        }
-        (Some("GTD"), None) => Err(OfficialSdkAdapterError::InvalidInput(
-            "GTD mapping requires expiration".into(),
-        )),
-        (_, Some(_)) => Err(OfficialSdkAdapterError::InvalidInput(
-            "expiration is only supported for GTD orders".into(),
-        )),
-        (_, None) => Ok(None),
-    }
 }
