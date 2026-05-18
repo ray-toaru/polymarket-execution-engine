@@ -106,6 +106,16 @@ material exposure, or production-readiness claims.
   idempotency, and reject-path modules.
 - Runtime breakdown capability tests now also separate focused blocking,
   capability-group, and store-write fail-closed modules.
+- PostgreSQL order-lifecycle tests now also separate focused persistence,
+  replay, and reconcile-backlog modules.
+- PostgreSQL sign-only tests now also separate focused persistence and
+  concurrent idempotency modules.
+- PostgreSQL runtime-state tests now also separate focused state-loading/
+  degradation and observation-write modules.
+- Service standard sign-only implementation now separates request validation,
+  digest/ref derivation, and lifecycle persistence/replay helpers.
+- PostgreSQL order-lifecycle write implementation now separates upsert,
+  replay lookup/conflict handling, and event-apply SQL paths.
 - The HTTP fake scaffold E2E path now uses local helper functions to keep the
   single end-to-end assertion flow readable without changing route coverage or
   assertions.
