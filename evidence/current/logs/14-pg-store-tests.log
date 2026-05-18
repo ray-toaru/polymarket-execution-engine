@@ -1,4 +1,4 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.21s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.20s
      Running unittests src/lib.rs (target/debug/deps/pmx_store-3bad928257c8dd0c)
 
 running 13 tests
@@ -16,5 +16,5 @@ test postgres::tests::remote_unknown_is_persisted_conservatively ... ok
 test postgres::tests::reservation_double_spend_is_prevented_concurrently ... ok
 test postgres::tests::same_request_replay_is_persisted ... ok
 
-test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 22 filtered out; finished in 0.87s
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 22 filtered out; finished in 0.85s
 
