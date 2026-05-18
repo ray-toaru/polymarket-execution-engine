@@ -69,6 +69,19 @@ material exposure, or production-readiness claims.
 - Gateway tests now live in focused `pmx-gateway::tests` modules for post/cancel
   flows, signer-provider boundaries, and read-only reconcile-reader behavior;
   the parent file only keeps shared helpers and module declarations.
+- Service specialized runtime-worker tests now live in focused
+  `pmx-service::service_tests::runtime_worker_specialized` modules for
+  resource/reconcile, websocket/geoblock, and crash-recovery coverage.
+- Runtime model tests now also separate focused `breakdown_loop` and
+  `evaluations` submodules by capability group, worker-loop behavior,
+  provider-fed loop behavior, lease/resource evaluation, reconcile/websocket/
+  geoblock evaluation, and crash-recovery evaluation.
+- In-memory store admin/sign-only tests now live in focused
+  `pmx-store::memory_tests::admin_sign_only` modules for admin-audit behavior
+  and sign-only lifecycle behavior.
+- The HTTP fake scaffold E2E path now uses local helper functions to keep the
+  single end-to-end assertion flow readable without changing route coverage or
+  assertions.
 
 ## Per-step rules
 

@@ -1,14 +1,6 @@
 use super::*;
 
-#[tokio::test]
-async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
-    unsafe {
-        std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-test-v07");
-        std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-test-v07");
-    }
-
-    let app = pmx_api::app();
-
+async fn compile_blocked_plan(app: axum::Router) -> (String, String) {
     let (status, normalized) = request_json(
         app.clone(),
         "POST",
@@ -39,43 +31,45 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
     .await;
     assert_eq!(status, StatusCode::OK);
 
-    let plan_normalized_id = normalized["normalized_intent_id"].clone();
-    let plan_snapshot_id = snapshot["snapshot_id"].clone();
-    let approval = json!({
-        "approval_id": "approval-v07-1",
-        "approved_by": "operator-v07",
-        "approved_at": "2026-05-14T00:00:00Z",
-        "approval_hash": "approval-hash-v07-1"
-    });
     let (status, plan) = request_json(
-        app.clone(),
+        app,
         "POST",
         "/v1/plans/compile",
         Some("service-token-test-v07"),
         Some(json!({
-            "normalized_intent_id": plan_normalized_id,
-            "snapshot_id": plan_snapshot_id,
+            "normalized_intent_id": normalized["normalized_intent_id"],
+            "snapshot_id": snapshot["snapshot_id"],
             "decision_id": decision["decision_id"],
-            "approval": approval
+            "approval": {
+                "approval_id": "approval-v07-1",
+                "approved_by": "operator-v07",
+                "approved_at": "2026-05-14T00:00:00Z",
+                "approval_hash": "approval-hash-v07-1"
+            }
         })),
     )
     .await;
     assert_eq!(status, StatusCode::OK, "plan response: {plan}");
     assert_eq!(plan["status"], "BLOCKED");
 
-    let execution_id = plan["execution_id"]
-        .as_str()
-        .expect("execution_id")
-        .to_string();
-    let plan_hash = plan["plan_hash"].as_str().expect("plan_hash").to_string();
+    (
+        plan["execution_id"]
+            .as_str()
+            .expect("execution_id")
+            .to_string(),
+        plan["plan_hash"].as_str().expect("plan_hash").to_string(),
+    )
+}
+
+async fn verify_submit_and_sign_only(app: axum::Router, execution_id: &str, plan_hash: &str) {
     let (status, submit) = request_json(
         app.clone(),
         "POST",
         "/v1/submissions",
         Some("service-token-test-v07"),
         Some(json!({
-            "execution_id": execution_id.clone(),
-            "plan_hash": plan_hash.clone(),
+            "execution_id": execution_id,
+            "plan_hash": plan_hash,
             "idempotency_key": "idem-v07-1"
         })),
     )
@@ -103,7 +97,7 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
         "/v1/sign-only/standard-constructions",
         Some("service-token-test-v07"),
         Some(json!({
-            "execution_id": execution_id.clone(),
+            "execution_id": execution_id,
             "account_id": "acct-http-e2e-1",
             "plan_hash": plan_hash,
             "no_remote_side_effect": true
@@ -148,12 +142,12 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
     assert_eq!(sign_only_records[2]["state"], "SIGNED_DRY_RUN");
 
     let (status, invalid_sign_only) = request_json(
-        app.clone(),
+        app,
         "POST",
         "/v1/sign-only/lifecycle-events",
         Some("service-token-test-v07"),
         Some(json!({
-            "execution_id": execution_id.clone(),
+            "execution_id": execution_id,
             "account_id": "acct-http-e2e-1",
             "state": "SIGNED_DRY_RUN",
             "event": "SIGNED_WITHOUT_POST",
@@ -167,13 +161,15 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
         StatusCode::BAD_REQUEST,
         "unsafe sign-only lifecycle response: {invalid_sign_only}"
     );
+}
 
+async fn verify_non_live_admin_paths(app: axum::Router, execution_id: &str) {
     let (status, _) = request_json(
         app.clone(),
         "POST",
         "/v1/admin/cancel-order",
         Some("service-token-test-v07"),
-        Some(json!({"account_id": "acct-http-e2e-1", "order_id": "order-v07-1", "execution_id": execution_id.clone(), "reason": "service must not cancel"})),
+        Some(json!({"account_id": "acct-http-e2e-1", "order_id": "order-v07-1", "execution_id": execution_id, "reason": "service must not cancel"})),
     )
     .await;
     assert_eq!(status, StatusCode::FORBIDDEN);
@@ -183,7 +179,7 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
         "POST",
         "/v1/admin/cancel-order",
         Some("admin-token-test-v07"),
-        Some(json!({"account_id": "acct-http-e2e-1", "order_id": "order-v07-1", "execution_id": execution_id.clone(), "reason": "admin cancel smoke"})),
+        Some(json!({"account_id": "acct-http-e2e-1", "order_id": "order-v07-1", "execution_id": execution_id, "reason": "admin cancel smoke"})),
     )
     .await;
     assert_eq!(status, StatusCode::ACCEPTED, "cancel response: {cancel}");
@@ -194,7 +190,7 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
         "POST",
         "/v1/admin/reconcile",
         Some("admin-token-test-v07"),
-        Some(json!({"account_id": "acct-http-e2e-1", "execution_id": execution_id.clone(), "reason": "admin reconcile smoke"})),
+        Some(json!({"account_id": "acct-http-e2e-1", "execution_id": execution_id, "reason": "admin reconcile smoke"})),
     )
     .await;
     assert_eq!(
@@ -211,7 +207,7 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
         Some("admin-token-test-v07"),
         Some(json!({
             "account_id": "acct-http-e2e-1",
-            "execution_id": execution_id.clone(),
+            "execution_id": execution_id,
             "order_id": "order-v07-1",
             "reason": "admin reconcile bad pair"
         })),
@@ -230,7 +226,7 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
         Some("admin-token-test-v07"),
         Some(json!({
             "account_id": "acct-http-e2e-1",
-            "execution_id": execution_id.clone(),
+            "execution_id": execution_id,
             "order_id": "missing-order-v24-public",
             "remote_observation": "MISSING",
             "reason": "admin reconcile public local missing"
@@ -244,7 +240,7 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
     );
 
     let (status, local_reconcile_missing) = request_json(
-        app.clone(),
+        app,
         "POST",
         "/v1/admin/reconcile-order-local",
         Some("admin-token-test-v07"),
@@ -262,7 +258,9 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
         "local reconcile missing response: {local_reconcile_missing}"
     );
     assert!(local_reconcile_missing["correlation_id"].as_str().is_some());
+}
 
+async fn verify_public_queries(app: axum::Router, execution_id: &str) {
     let lifecycle_uri = format!("/v1/lifecycle/executions/{execution_id}/events");
     let (status, lifecycle_events) = request_json(
         app.clone(),
@@ -350,4 +348,18 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
     .await;
     assert_eq!(status, StatusCode::OK, "audit events: {audit_events}");
     assert!(audit_events.as_array().unwrap().len() >= 2);
+}
+
+#[tokio::test]
+async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
+    unsafe {
+        std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-test-v07");
+        std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-test-v07");
+    }
+
+    let app = pmx_api::app();
+    let (execution_id, plan_hash) = compile_blocked_plan(app.clone()).await;
+    verify_submit_and_sign_only(app.clone(), &execution_id, &plan_hash).await;
+    verify_non_live_admin_paths(app.clone(), &execution_id).await;
+    verify_public_queries(app, &execution_id).await;
 }
