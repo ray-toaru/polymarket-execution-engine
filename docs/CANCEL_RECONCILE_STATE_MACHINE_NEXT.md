@@ -1,6 +1,6 @@
 # Cancel / Reconcile State-machine Next Work
 
-> Status: current v0.24.0 shadow-ready baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+> Status: current v0.25.0 shadow-ready SDK sign-only baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
 v0.22 keeps live cancel disabled and adds clearer reconcile classification in `pmx-core`.
 
@@ -21,7 +21,7 @@ Next non-live work:
 - Add stale `RemoteUnknown` escalation into operator-required reconcile.
 - Ensure cancel/reconcile never claim terminal state based only on request submission.
 
-Current v0.24 progress:
+Current v0.25 progress:
 
 - `ExecutorService::record_non_live_cancel_request()` records
   `CancelRequested` into the local order lifecycle when the order already

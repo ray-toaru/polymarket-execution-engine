@@ -1,8 +1,8 @@
-# polymarket-execution-engine v0.24.0 shadow-ready baseline source candidate
+# polymarket-execution-engine v0.25.0 shadow-ready SDK sign-only candidate
 
-Standalone Rust execution plane for Polymarket. This package is a **shadow-ready baseline source candidate**, not a production or live-trading release.
+Standalone Rust execution plane for Polymarket. This package is a **shadow-ready SDK sign-only candidate**, not a production or live-trading release.
 
-## v0.24 scope
+## v0.25 scope
 
 - Server-authoritative planning and blocked submit receipt path remain in place.
 - Sign-only lifecycle append/list APIs exist with local state-machine validation, PG advisory-lock scaffolding, server-assigned metadata, and `client_event_id` replay/conflict semantics.

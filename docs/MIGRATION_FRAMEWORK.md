@@ -1,6 +1,6 @@
 # PostgreSQL migration framework
 
-Status: v0.24 foundation, non-live.
+Status: v0.25 SDK sign-only foundation, non-live.
 
 ## Goal
 
@@ -41,6 +41,6 @@ initial migration.
 ## Boundary
 
 This is not a production migration runner. It is the minimum durable framework
-needed for v0.24 schema evolution and local promotion evidence. Backward
+needed for v0.25 schema evolution and local promotion evidence. Backward
 compatibility, dry-run, drift checks, and upgraded-DB/fresh-DB split evidence are
 still required before any production-readiness claim.

@@ -1,6 +1,6 @@
 # Authenticated Non-trading SDK Smoke
 
-> Status: current v0.24.0 shadow-ready baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+> Status: current v0.25.0 shadow-ready SDK sign-only baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
 Status: executed on 2026-05-15 in a credentialed environment with explicit gates. Evidence: `evidence/2026-05-15/v0.10/14-authenticated-smoke.log`.
 

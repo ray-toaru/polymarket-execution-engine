@@ -1,6 +1,6 @@
 # Rust module governance plan
 
-This plan is the v0.24 structure-governance entry point. It is intentionally
+This plan is the v0.25 structure-governance entry point. It is intentionally
 behavior-preserving and must not introduce live submit, live cancel, signing
 material exposure, or production-readiness claims.
 

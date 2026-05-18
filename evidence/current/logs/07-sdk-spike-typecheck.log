@@ -1,11 +1,11 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.95s
-     Running unittests src/lib.rs (adapters/pmx-official-sdk-spike/target/debug/deps/pmx_official_sdk_spike-8d380fed015d760c)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.98s
+     Running unittests src/lib.rs (adapters/pmx-official-sdk-spike/target/debug/deps/pmx_official_sdk_spike-29e4775b30c9edeb)
 
 running 2 tests
 test tests::live_submit_is_disabled_by_default ... ok
 test tests::read_only_ok_smoke ... ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.60s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.51s
 
    Doc-tests pmx_official_sdk_spike
 

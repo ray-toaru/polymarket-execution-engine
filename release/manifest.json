@@ -1,13 +1,13 @@
 {
   "project": "polymarket-execution-engine",
-  "version": "0.24.0",
+  "version": "0.25.0",
   "contract_version": "1.0.0-draft",
-  "status": "v0.24-shadow-ready-candidate-not-production-not-live",
+  "status": "v0.25-shadow-ready-candidate-sdk-sign-only-not-production-not-live",
   "official_sdk_strategy": "sdk-first",
   "official_sdk_crate": "polymarket_client_sdk_v2",
   "official_sdk_version": "=0.6.0-canary.1",
   "rust_msrv": "1.88.0",
-  "evidence_status": "v0.24.0 shadow-ready baseline: Rust, SDK, PostgreSQL, credentialed non-trading smoke, sign-only dry-run, shadow execution, reconciliation drift, rollback, observability, local static, contract, artifact, and governance gates passed in the recorded local environment; live submit/cancel remain blocked.",
+  "evidence_status": "v0.25.0 shadow-ready SDK sign-only baseline: Rust, SDK, PostgreSQL, credentialed non-trading smoke, sign-only dry-run, shadow execution, reconciliation drift, rollback, observability, local static, contract, artifact, and governance gates passed in the recorded local environment; live submit/cancel remain blocked.",
   "validated_gates_landed": [
     "cargo-fmt-v0.10",
     "cargo-check-v0.10",
@@ -52,6 +52,12 @@
     "live-submit-canary-deny-path-tests",
     "productionization-runbook-governance-scaffold",
     "production-readiness-anti-overclaim-guard"
+  ],
+  "v025_source_changes": [
+    "official-sdk-gtd-sign-only-mapping",
+    "executor-owned-standard-sign-only-ref-and-digest-derivation",
+    "standard-sign-only-api-omitted-ref-digest-path",
+    "standard-sign-only-lifecycle-idempotent-replay"
   ],
   "v011_source_changes": [
     "api-server-authoritative-in-memory-store-scaffold",

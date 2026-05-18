@@ -1,6 +1,6 @@
 # Official SDK Adapter Boundary
 
-> Status: current v0.24.0 shadow-ready baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+> Status: current v0.25.0 shadow-ready SDK sign-only baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
 Status: v0.11 adds the formal adapter crate boundary under `adapters/pmx-official-sdk-adapter`.
 

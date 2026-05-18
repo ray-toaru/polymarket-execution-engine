@@ -1,6 +1,5 @@
-   Compiling pmx-service v0.24.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.79s
-     Running unittests src/lib.rs (target/debug/deps/pmx_authz-a32e66cbe17c5ea4)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.30s
+     Running unittests src/lib.rs (target/debug/deps/pmx_authz-0c3b29e6cdffcd0b)
 
 running 2 tests
 test tests::admin_can_cancel ... ok
@@ -8,7 +7,7 @@ test tests::service_cannot_cancel ... ok
 
 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_core-5d88f46b7ccea11a)
+     Running unittests src/lib.rs (target/debug/deps/pmx_core-07cd744da967c77e)
 
 running 18 tests
 test domain::domain_tests::buy_notional_canonicalizes_to_quote_bound ... ok
@@ -32,7 +31,7 @@ test domain::domain_tests::unsupported_cross_quantity_is_explicit ... ok
 
 test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_gateway-92f89013b589185a)
+     Running unittests src/lib.rs (target/debug/deps/pmx_gateway-7038b579ba8f3bd4)
 
 running 9 tests
 test tests::deterministic_signer_provider_posts_reads_and_cancels ... ok
@@ -47,7 +46,7 @@ test tests::signer_provider_defaults_are_production_conservative ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_policy-b6d89b33e5acbd5a)
+     Running unittests src/lib.rs (target/debug/deps/pmx_policy-08b2d18f4af20e6d)
 
 running 3 tests
 test tests::degraded_worker_blocks_pre_live ... ok
@@ -56,14 +55,14 @@ test tests::geoblock_unknown_blocks ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_release-3f94d61f92c9d4ec)
+     Running unittests src/lib.rs (target/debug/deps/pmx_release-11117e862737fa5e)
 
 running 1 test
 test tests::rejects_release_regression ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_runtime-b7a516371cb7e01c)
+     Running unittests src/lib.rs (target/debug/deps/pmx_runtime-a73b589405886cc5)
 
 running 21 tests
 test runtime_tests::all_capabilities_preserves_account_market_asset_worker_groups ... ok
@@ -90,7 +89,7 @@ test runtime_tests::worker_crash_recovery_evaluation_requires_fresh_healthy_requ
 
 test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_service-08849bd023999c2b)
+     Running unittests src/lib.rs (target/debug/deps/pmx_service-b0f825b3b054fb64)
 
 running 24 tests
 test service::tests::service_classifies_and_records_order_lifecycle_divergence_without_remote_side_effect ... ok
@@ -120,7 +119,7 @@ test service::tests::store_backed_runtime_provider_uses_store_state ... ok
 
 test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_store-3bad928257c8dd0c)
+     Running unittests src/lib.rs (target/debug/deps/pmx_store-d75ca96a461a9981)
 
 running 35 tests
 test memory::memory_tests::admin_audit_tests::in_memory_admin_audit_records_without_exposing_secrets ... ok
@@ -159,7 +158,7 @@ test postgres::postgres_tests::tests::remote_unknown_is_persisted_conservatively
 test postgres::postgres_tests::tests::reservation_double_spend_is_prevented_concurrently ... ok
 test postgres::postgres_tests::tests::same_request_replay_is_persisted ... ok
 
-test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.55s
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.29s
 
    Doc-tests pmx_authz
 

@@ -1,7 +1,5 @@
-   Compiling pmx-service v0.24.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
-   Compiling pmx-api v0.24.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.08s
-     Running tests/http_and_fake_e2e.rs (target/debug/deps/http_and_fake_e2e-bbf8b6abec263d25)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.29s
+     Running tests/http_and_fake_e2e.rs (target/debug/deps/http_and_fake_e2e-8383e62ca42b97fb)
 
 running 4 tests
 test equal_service_and_admin_tokens_fail_closed_at_app_construction ... ok

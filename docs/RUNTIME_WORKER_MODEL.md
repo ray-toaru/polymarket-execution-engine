@@ -1,6 +1,6 @@
 # Runtime worker model
 
-> Status: current v0.24.0 shadow-ready baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+> Status: current v0.25.0 shadow-ready SDK sign-only baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
 Status: source landed and covered by current validation evidence.
 
@@ -40,7 +40,7 @@ and reconcile backlog workers should call this per tick after collecting their
 own signal. The helper deliberately has no trading side effect and only updates
 local runtime truth.
 
-`pmx-service::record_runtime_worker_provider_snapshot()` is the v0.24 bridge
+`pmx-service::record_runtime_worker_provider_snapshot()` is the v0.25 bridge
 from a provider snapshot to persisted runtime truth. It evaluates the pure
 runtime loop, records a `runtime-worker-loop` heartbeat, persists all normalized
 observations, and returns whether runtime would allow submit. A stale lease

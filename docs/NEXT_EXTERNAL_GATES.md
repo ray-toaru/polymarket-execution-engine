@@ -1,6 +1,6 @@
 # Next external gates
 
-> Status: current v0.24.0 shadow-ready baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+> Status: current v0.25.0 shadow-ready SDK sign-only baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
 Run from `polymarket-execution-engine` in an environment with Rust 1.88, Cargo, rustfmt, clippy, and optionally PostgreSQL:
 
@@ -56,4 +56,4 @@ Optional credentialed non-trading evidence must only run when explicitly enabled
 17-sign-only-dry-run.log
 ```
 
-Current boundary: until these logs are produced and reviewed, v0.24.0 remains a shadow-ready candidate, not a validated release. Live submit and live cancel remain disabled.
+Current boundary: until these logs are produced and reviewed, v0.25.0 remains a shadow-ready SDK sign-only candidate, not a validated release. Live submit and live cancel remain disabled.
