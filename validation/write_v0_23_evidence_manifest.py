@@ -131,7 +131,7 @@ PASS_MARKERS = (
     "CREATE TABLE",
 )
 FAIL_MARKERS = ("FAIL:", "error:", "test result: FAILED", "could not compile", "panicked at")
-SKIP_MARKERS = ("skipped", "not set")
+SKIP_MARKERS = ("skipped", "skipping", "not set")
 
 
 def sha256(path: Path) -> str:
