@@ -8,26 +8,30 @@ from pathlib import Path
 FORBIDDEN_PARTS = {".venv", "venv", "__pycache__", ".pytest_cache", ".mypy_cache", "target"}
 FORBIDDEN_SUFFIXES = {".pyc", ".pyo", ".sqlite", ".sqlite3", ".db"}
 FORBIDDEN_FILENAMES = {".env"}
+DEV_WORKTREE_ALLOWED_FILENAMES = {".env"}
 
 
-def forbidden(path: str) -> bool:
+def forbidden(path: str, *, dev_worktree: bool = False) -> bool:
     parts = tuple(Path(path).parts)
     name = parts[-1] if parts else path
     suffix = Path(name).suffix
+    forbidden_filenames = FORBIDDEN_FILENAMES
+    if dev_worktree:
+        forbidden_filenames = forbidden_filenames - DEV_WORKTREE_ALLOWED_FILENAMES
     return (
         any(part in FORBIDDEN_PARTS for part in parts)
         or suffix in FORBIDDEN_SUFFIXES
-        or name in FORBIDDEN_FILENAMES
+        or name in forbidden_filenames
     )
 
 
-def scan_directory(root: Path) -> tuple[str, list[str]]:
+def scan_directory(root: Path, *, dev_worktree: bool = False) -> tuple[str, list[str]]:
     problems: list[str] = []
     for path in root.rglob("*"):
         rel = path.relative_to(root)
-        if forbidden(str(rel)):
+        if forbidden(str(rel), dev_worktree=dev_worktree):
             problems.append(str(rel))
-    return "directory", problems
+    return "dev-worktree" if dev_worktree else "directory", problems
 
 
 def scan_zip(root: Path) -> tuple[str, list[str]]:
@@ -40,11 +44,19 @@ def scan_zip(root: Path) -> tuple[str, list[str]]:
 
 
 def main() -> int:
-    root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path.cwd()
+    args = sys.argv[1:]
+    dev_worktree = False
+    if "--dev-worktree" in args:
+        dev_worktree = True
+        args.remove("--dev-worktree")
+    root = Path(args[0]) if args else Path.cwd()
     if root.is_file() and root.suffix == ".zip":
+        if dev_worktree:
+            print("--dev-worktree is only valid for directory scans", file=sys.stderr)
+            return 2
         mode, problems = scan_zip(root)
     else:
-        mode, problems = scan_directory(root)
+        mode, problems = scan_directory(root, dev_worktree=dev_worktree)
     if problems:
         print(f"release hygiene failed mode={mode}:")
         for item in sorted(set(problems)):

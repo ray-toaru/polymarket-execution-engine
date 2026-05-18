@@ -2,7 +2,8 @@
 
 > Status: current v0.24.0 shadow-ready baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
-Release hygiene checks must evaluate release contents, not a developer working tree.
+Release hygiene checks for promotion evidence must evaluate release contents, not a developer
+working tree.
 
 Forbidden local artifacts include:
 
@@ -13,9 +14,12 @@ Forbidden local artifacts include:
 - `.pytest_cache/`
 - `.db`, `.sqlite`, `.sqlite3`
 
-A developer tree may contain these during testing. That does not imply the release artifact is contaminated.
+A developer tree may contain a local `.env` during testing. Use
+`scripts/check_release_hygiene.py . --dev-worktree` for that developer-only check; it permits
+`.env` but still rejects caches, virtual environments, targets, and local database files. The
+default directory and zip modes remain strict and reject `.env`.
 
-v0.18 gates create a clean snapshot before running `scripts/check_release_hygiene.py`:
+Current gates create a clean snapshot before running `scripts/check_release_hygiene.py`:
 
 - if the project is in a git repository, `git archive HEAD` is used;
 - otherwise a tar snapshot is made while excluding local artifacts.
