@@ -47,6 +47,8 @@ material exposure, or production-readiness claims.
 - Service runtime-worker basics, heartbeat lease/continuous tick coverage, and
   non-live order lifecycle tests now live in focused
   `pmx-service::service_tests` modules while preserving the same assertions.
+- The `pmx-service::service_tests` parent file now only keeps shared helpers
+  and module declarations; all service tests live in focused submodules.
 
 ## Per-step rules
 
