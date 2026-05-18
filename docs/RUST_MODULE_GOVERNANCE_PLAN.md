@@ -32,6 +32,8 @@ material exposure, or production-readiness claims.
   observation writes, and status queries under `pmx-store::postgres_worker`.
 - PostgreSQL repository tests now separate runtime-worker health/status and
   order-lifecycle coverage into focused `pmx-store::postgres_tests` modules.
+- PostgreSQL sign-only lifecycle PG tests now live in a focused
+  `pmx-store::postgres_tests::sign_only` module.
 
 ## Per-step rules
 
