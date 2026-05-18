@@ -2,6 +2,65 @@ use super::*;
 use crate::*;
 use chrono::Utc;
 use pmx_core::sign_only_lifecycle_records_equivalent;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+async fn test_store() -> Option<PostgresStore> {
+    let Ok(url) = std::env::var("PMX_TEST_DATABASE_URL") else {
+        eprintln!("PMX_TEST_DATABASE_URL not set; skipping PostgreSQL repository test");
+        return None;
+    };
+    let store = PostgresStore::connect(url).await.ok()?;
+    store.apply_schema().await.expect("apply PostgreSQL schema");
+    Some(store)
+}
+
+fn unique(prefix: &str) -> String {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system time before unix epoch")
+        .as_nanos();
+    format!("{prefix}-{nanos}")
+}
+
+async fn seed_execution_plan(store: &PostgresStore, account_id: &str, execution_id: &str) {
+    let client = store.client().await.expect("test postgres client");
+    let norm = unique("norm");
+    let snap = unique("snap");
+    let dec = unique("decision");
+    let plan_hash = unique("plan-hash");
+    client
+        .execute(
+            "INSERT INTO normalized_intents (normalized_intent_id, intent_hash, account_id, payload) \
+             VALUES ($1, $2, $3, '{}'::jsonb)",
+            &[&norm, &unique("intent-hash"), &account_id],
+        )
+        .await
+        .expect("seed normalized intent");
+    client
+        .execute(
+            "INSERT INTO feasibility_snapshots (snapshot_id, snapshot_hash, normalized_intent_id, payload, captured_at) \
+             VALUES ($1, $2, $3, '{}'::jsonb, now())",
+            &[&snap, &unique("snapshot-hash"), &norm],
+        )
+        .await
+        .expect("seed snapshot");
+    client
+        .execute(
+            "INSERT INTO constraint_decisions (decision_id, decision_hash, snapshot_id, status, reasons, payload) \
+             VALUES ($1, $2, $3, 'ALLOW', '[]'::jsonb, '{}'::jsonb)",
+            &[&dec, &unique("decision-hash"), &snap],
+        )
+        .await
+        .expect("seed decision");
+    client
+        .execute(
+            "INSERT INTO execution_plans (execution_id, account_id, normalized_intent_id, snapshot_id, decision_id, plan_hash, status, summary_json) \
+             VALUES ($1, $2, $3, $4, $5, $6, 'READY', '{}'::jsonb)",
+            &[&execution_id, &account_id, &norm, &snap, &dec, &plan_hash],
+        )
+        .await
+        .expect("seed execution plan");
+}
 
 #[cfg(test)]
 mod tests {
@@ -11,26 +70,7 @@ mod tests {
         OrderReservation, QuantityBound, ReservationState, SignOnlyLifecycleRecord, SubmitReceipt,
         SubmitStatus, WorkerStatus,
     };
-    use std::time::{SystemTime, UNIX_EPOCH};
     use tokio::task::JoinSet;
-
-    async fn test_store() -> Option<PostgresStore> {
-        let Ok(url) = std::env::var("PMX_TEST_DATABASE_URL") else {
-            eprintln!("PMX_TEST_DATABASE_URL not set; skipping PostgreSQL repository test");
-            return None;
-        };
-        let store = PostgresStore::connect(url).await.ok()?;
-        store.apply_schema().await.expect("apply PostgreSQL schema");
-        Some(store)
-    }
-
-    fn unique(prefix: &str) -> String {
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("system time before unix epoch")
-            .as_nanos();
-        format!("{prefix}-{nanos}")
-    }
 
     #[tokio::test]
     async fn postgres_records_schema_migrations() {
@@ -55,50 +95,6 @@ mod tests {
                 .any(|(version, checksum)| version == "0003_order_event_trace"
                     && checksum.len() == 64)
         );
-    }
-
-    pub(super) async fn seed_execution_plan(
-        store: &PostgresStore,
-        account_id: &str,
-        execution_id: &str,
-    ) {
-        let client = store.client().await.expect("test postgres client");
-        let norm = unique("norm");
-        let snap = unique("snap");
-        let dec = unique("decision");
-        let plan_hash = unique("plan-hash");
-        client
-            .execute(
-                "INSERT INTO normalized_intents (normalized_intent_id, intent_hash, account_id, payload) \
-                 VALUES ($1, $2, $3, '{}'::jsonb)",
-                &[&norm, &unique("intent-hash"), &account_id],
-            )
-            .await
-            .expect("seed normalized intent");
-        client
-            .execute(
-                "INSERT INTO feasibility_snapshots (snapshot_id, snapshot_hash, normalized_intent_id, payload, captured_at) \
-                 VALUES ($1, $2, $3, '{}'::jsonb, now())",
-                &[&snap, &unique("snapshot-hash"), &norm],
-            )
-            .await
-            .expect("seed snapshot");
-        client
-            .execute(
-                "INSERT INTO constraint_decisions (decision_id, decision_hash, snapshot_id, status, reasons, payload) \
-                 VALUES ($1, $2, $3, 'ALLOW', '[]'::jsonb, '{}'::jsonb)",
-                &[&dec, &unique("decision-hash"), &snap],
-            )
-            .await
-            .expect("seed decision");
-        client
-            .execute(
-                "INSERT INTO execution_plans (execution_id, account_id, normalized_intent_id, snapshot_id, decision_id, plan_hash, status, summary_json) \
-                 VALUES ($1, $2, $3, $4, $5, $6, 'READY', '{}'::jsonb)",
-                &[&execution_id, &account_id, &norm, &snap, &dec, &plan_hash],
-            )
-            .await
-            .expect("seed execution plan");
     }
 
     #[tokio::test]
@@ -757,293 +753,7 @@ mod tests {
     }
 }
 
-#[cfg(test)]
-mod runtime_worker_health_pg_tests_v23 {
-    use super::*;
-    use chrono::Utc;
-
-    async fn test_store() -> Option<PostgresStore> {
-        let Ok(url) = std::env::var("PMX_TEST_DATABASE_URL") else {
-            eprintln!("PMX_TEST_DATABASE_URL not set; skipping PostgreSQL heartbeat test");
-            return None;
-        };
-        let store = PostgresStore::connect(url).await.ok()?;
-        store.apply_schema().await.ok()?;
-        Some(store)
-    }
-
-    #[tokio::test]
-    async fn postgres_records_worker_heartbeat() {
-        let Some(store) = test_store().await else {
-            return;
-        };
-        let worker_id = format!(
-            "worker-heartbeat-{}",
-            Utc::now().timestamp_nanos_opt().unwrap_or_default()
-        );
-        store
-            .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
-                worker_id: worker_id.clone(),
-                role: "Heartbeat".into(),
-                capability: "heartbeat".into(),
-                status: "HEALTHY".into(),
-                last_heartbeat_at: Utc::now(),
-                last_error: None,
-            })
-            .await
-            .expect("record heartbeat");
-        let client = store.client().await.expect("test postgres client");
-        let row = client
-            .query_one(
-                "SELECT status FROM worker_health WHERE worker_id = $1",
-                &[&worker_id],
-            )
-            .await
-            .expect("heartbeat row");
-        let status: String = row.get(0);
-        assert_eq!(status, "HEALTHY");
-    }
-
-    #[tokio::test]
-    async fn postgres_lists_runtime_worker_status() {
-        let Some(store) = test_store().await else {
-            return;
-        };
-        let suffix = Utc::now().timestamp_nanos_opt().unwrap_or_default();
-        let worker_id = format!("worker-status-query-{suffix}");
-        let account_id = format!("acct-status-query-{suffix}");
-        store
-            .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
-                worker_id: worker_id.clone(),
-                role: "Heartbeat".into(),
-                capability: "heartbeat".into(),
-                status: "HEALTHY".into(),
-                last_heartbeat_at: Utc::now(),
-                last_error: None,
-            })
-            .await
-            .expect("record heartbeat");
-        store
-            .record_runtime_worker_observation(&RuntimeWorkerObservation {
-                account_id: account_id.clone(),
-                capability: "heartbeat-lease".into(),
-                worker_kind: "HeartbeatLease".into(),
-                status: "STALE".into(),
-                should_fail_closed: true,
-                reason: "lease expired".into(),
-                observed_at: None,
-            })
-            .await
-            .expect("record observation");
-        let report = store
-            .list_runtime_worker_status(&RuntimeWorkerStatusQuery {
-                account_id,
-                limit: 100,
-                before_observed_at: None,
-            })
-            .await
-            .expect("list runtime worker status");
-        assert!(
-            report
-                .heartbeats
-                .iter()
-                .any(|heartbeat| heartbeat.worker_id == worker_id)
-        );
-        assert_eq!(report.observations.len(), 1);
-        assert_eq!(report.observations[0].status, "STALE");
-        assert!(report.observations[0].should_fail_closed);
-    }
-}
-
-#[cfg(test)]
-mod order_lifecycle_pg_tests_v23 {
-    use super::tests::seed_execution_plan;
-    use super::*;
-    use pmx_core::{OrderEventKind, OrderLifecycleState};
-
-    async fn test_store() -> Option<PostgresStore> {
-        let Ok(url) = std::env::var("PMX_TEST_DATABASE_URL") else {
-            eprintln!("PMX_TEST_DATABASE_URL not set; skipping PostgreSQL order lifecycle test");
-            return None;
-        };
-        let store = PostgresStore::connect(url).await.ok()?;
-        store.apply_schema().await.ok()?;
-        Some(store)
-    }
-
-    #[tokio::test]
-    async fn postgres_records_order_lifecycle_event() {
-        let Some(store) = test_store().await else {
-            return;
-        };
-        let suffix = Utc::now().timestamp_nanos_opt().unwrap_or_default();
-        let account = format!("acct-order-life-{suffix}");
-        let execution = format!("exec-order-life-{suffix}");
-        seed_execution_plan(&store, &account, &execution).await;
-        let order_id = format!("order-life-{suffix}");
-        store
-            .upsert_order_lifecycle(&OrderLifecycleRecord {
-                order_id: order_id.clone(),
-                execution_id: execution,
-                account_id: account,
-                condition_id: "cond-order-life".into(),
-                token_id: "token-order-life".into(),
-                side: "BUY".into(),
-                lifecycle_state: OrderLifecycleState::Posted,
-                remote_order_id: Some(format!("remote-{order_id}")),
-                remote_state: Some("OPEN".into()),
-                created_at: None,
-                updated_at: None,
-            })
-            .await
-            .expect("upsert order");
-        let updated = store
-            .record_order_lifecycle_event(&OrderLifecycleEventRecord {
-                event_id: None,
-                order_id: order_id.clone(),
-                event: OrderEventKind::CancelRequested,
-                event_source: "pmx-store-test".into(),
-                correlation_id: Some("corr-pg-order-life".into()),
-                payload: serde_json::json!({"no_remote_side_effect": true}),
-                created_at: None,
-            })
-            .await
-            .expect("record order event");
-        assert_eq!(
-            updated.lifecycle_state,
-            OrderLifecycleState::CancelRequested
-        );
-        let events = store
-            .list_order_lifecycle_events(&OrderLifecycleEventQuery {
-                order_id,
-                limit: 10,
-                before_event_id: None,
-            })
-            .await
-            .expect("list order events");
-        assert_eq!(events.len(), 1);
-        assert_eq!(events[0].event, OrderEventKind::CancelRequested);
-        assert_eq!(
-            events[0].correlation_id.as_deref(),
-            Some("corr-pg-order-life")
-        );
-    }
-
-    #[tokio::test]
-    async fn postgres_order_lifecycle_replays_same_correlation_id() {
-        let Some(store) = test_store().await else {
-            return;
-        };
-        let suffix = Utc::now().timestamp_nanos_opt().unwrap_or_default();
-        let account = format!("acct-order-life-replay-{suffix}");
-        let execution = format!("exec-order-life-replay-{suffix}");
-        seed_execution_plan(&store, &account, &execution).await;
-        let order_id = format!("order-life-replay-{suffix}");
-        store
-            .upsert_order_lifecycle(&OrderLifecycleRecord {
-                order_id: order_id.clone(),
-                execution_id: execution,
-                account_id: account,
-                condition_id: "cond-order-life-replay".into(),
-                token_id: "token-order-life-replay".into(),
-                side: "BUY".into(),
-                lifecycle_state: OrderLifecycleState::Posted,
-                remote_order_id: Some(format!("remote-{order_id}")),
-                remote_state: Some("OPEN".into()),
-                created_at: None,
-                updated_at: None,
-            })
-            .await
-            .expect("upsert order");
-        let event = OrderLifecycleEventRecord {
-            event_id: None,
-            order_id: order_id.clone(),
-            event: OrderEventKind::CancelRequested,
-            event_source: "pmx-store-test".into(),
-            correlation_id: Some(format!("corr-pg-order-life-replay-{suffix}")),
-            payload: serde_json::json!({"no_remote_side_effect": true}),
-            created_at: None,
-        };
-        store
-            .record_order_lifecycle_event(&event)
-            .await
-            .expect("record order event");
-        let replayed = store
-            .record_order_lifecycle_event(&event)
-            .await
-            .expect("replay order event");
-        assert_eq!(
-            replayed.lifecycle_state,
-            OrderLifecycleState::CancelRequested
-        );
-        let mut mismatched = event;
-        mismatched.event = OrderEventKind::ReconcileOpen;
-        assert!(matches!(
-            store.record_order_lifecycle_event(&mismatched).await,
-            Err(StoreError::Conflict(_))
-        ));
-        let events = store
-            .list_order_lifecycle_events(&OrderLifecycleEventQuery {
-                order_id,
-                limit: 10,
-                before_event_id: None,
-            })
-            .await
-            .expect("list order events");
-        assert_eq!(events.len(), 1);
-    }
-
-    #[tokio::test]
-    async fn postgres_lists_reconcile_backlog_orders() {
-        let Some(store) = test_store().await else {
-            return;
-        };
-        let suffix = Utc::now().timestamp_nanos_opt().unwrap_or_default();
-        let account = format!("acct-reconcile-backlog-{suffix}");
-        let execution = format!("exec-reconcile-backlog-{suffix}");
-        seed_execution_plan(&store, &account, &execution).await;
-        for (order_id, lifecycle_state) in [
-            (
-                format!("order-reconcile-backlog-remote-{suffix}"),
-                OrderLifecycleState::RemoteUnknown,
-            ),
-            (
-                format!("order-reconcile-backlog-partial-{suffix}"),
-                OrderLifecycleState::PartialRemoteUnknown,
-            ),
-            (
-                format!("order-reconcile-backlog-posted-{suffix}"),
-                OrderLifecycleState::Posted,
-            ),
-        ] {
-            store
-                .upsert_order_lifecycle(&OrderLifecycleRecord {
-                    order_id: order_id.clone(),
-                    execution_id: execution.clone(),
-                    account_id: account.clone(),
-                    condition_id: "cond-reconcile-backlog".into(),
-                    token_id: "token-reconcile-backlog".into(),
-                    side: "BUY".into(),
-                    lifecycle_state,
-                    remote_order_id: Some(format!("remote-{order_id}")),
-                    remote_state: Some("OPEN".into()),
-                    created_at: None,
-                    updated_at: None,
-                })
-                .await
-                .expect("upsert order");
-        }
-        let backlog = store
-            .list_reconcile_backlog_orders(&OrderReconcileBacklogQuery {
-                account_id: account,
-                limit: 100,
-            })
-            .await
-            .expect("list reconcile backlog");
-        assert_eq!(backlog.len(), 2);
-        assert!(backlog.iter().all(|order| matches!(
-            order.lifecycle_state,
-            OrderLifecycleState::RemoteUnknown | OrderLifecycleState::PartialRemoteUnknown
-        )));
-    }
-}
+#[path = "postgres_tests/order_lifecycle.rs"]
+mod order_lifecycle;
+#[path = "postgres_tests/runtime_worker_health.rs"]
+mod runtime_worker_health;

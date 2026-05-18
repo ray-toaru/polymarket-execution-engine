@@ -30,6 +30,8 @@ material exposure, or production-readiness claims.
   `liveness::error_normalization` module while preserving the public function.
 - PostgreSQL runtime worker persistence now separates heartbeat writes,
   observation writes, and status queries under `pmx-store::postgres_worker`.
+- PostgreSQL repository tests now separate runtime-worker health/status and
+  order-lifecycle coverage into focused `pmx-store::postgres_tests` modules.
 
 ## Per-step rules
 
