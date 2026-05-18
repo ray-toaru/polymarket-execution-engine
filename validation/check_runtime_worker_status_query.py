@@ -8,13 +8,13 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-API = ROOT / "crates" / "pmx-api" / "src" / "lib.rs"
+API = ROOT / "crates" / "pmx-api" / "src"
 API_FAKE_E2E = ROOT / "crates" / "pmx-api" / "tests" / "http_and_fake_e2e.rs"
 API_PG_E2E = ROOT / "crates" / "pmx-api" / "tests" / "http_postgres_e2e.rs"
 OPENAPI = ROOT / "openapi" / "executor.v1.yaml"
-STORE = ROOT / "crates" / "pmx-store" / "src" / "lib.rs"
+STORE = ROOT / "crates" / "pmx-store" / "src"
 POSTGRES = ROOT / "crates" / "pmx-store" / "src" / "postgres.rs"
-SERVICE = ROOT / "crates" / "pmx-service" / "src" / "lib.rs"
+SERVICE = ROOT / "crates" / "pmx-service" / "src"
 GATES = ROOT / "validation" / "run_v0_24_gates.sh"
 MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 TEMPLATE = ROOT / "validation" / "templates" / "evidence_manifest.template.json"
@@ -85,13 +85,19 @@ def env_enabled(name: str) -> bool:
     return os.environ.get(name, "").strip() == "1"
 
 
+def source_text(path: Path) -> str:
+    if path.is_dir():
+        return "\n".join(source.read_text() for source in sorted(path.glob("*.rs")))
+    return path.read_text()
+
+
 def main() -> int:
     failures: list[str] = []
     for path, needles in REQUIRED.items():
         if not path.exists():
             failures.append(f"missing artifact: {path.relative_to(ROOT)}")
             continue
-        text = path.read_text()
+        text = source_text(path)
         for needle in needles:
             if needle not in text:
                 failures.append(f"{path.relative_to(ROOT)} missing {needle}")

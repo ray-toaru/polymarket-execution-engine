@@ -6,12 +6,12 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-API = ROOT / "crates" / "pmx-api" / "src" / "lib.rs"
+API = ROOT / "crates" / "pmx-api" / "src"
 API_FAKE_E2E = ROOT / "crates" / "pmx-api" / "tests" / "http_and_fake_e2e.rs"
 API_PG_E2E = ROOT / "crates" / "pmx-api" / "tests" / "http_postgres_e2e.rs"
 AUTHZ = ROOT / "crates" / "pmx-authz" / "src" / "lib.rs"
-SERVICE = ROOT / "crates" / "pmx-service" / "src" / "lib.rs"
-STORE = ROOT / "crates" / "pmx-store" / "src" / "lib.rs"
+SERVICE = ROOT / "crates" / "pmx-service" / "src"
+STORE = ROOT / "crates" / "pmx-store" / "src"
 POSTGRES = ROOT / "crates" / "pmx-store" / "src" / "postgres.rs"
 GATEWAY = ROOT / "crates" / "pmx-gateway" / "src" / "lib.rs"
 OPENAPI = ROOT / "openapi" / "executor.v1.yaml"
@@ -79,7 +79,7 @@ REQUIRED = {
         "service_records_standard_sign_only_construction_without_raw_payload",
         "service_validates_and_persists_sign_only_lifecycle_sequence",
     ],
-    ROOT / "crates" / "pmx-core" / "src" / "lib.rs": [
+    ROOT / "crates" / "pmx-core" / "src": [
         "RedactedPayloadEnvelope",
         "redacted_fields",
         "redacted_payload_envelope",
@@ -286,18 +286,23 @@ FORBIDDEN = {
     ],
 }
 
+def source_text(path: Path) -> str:
+    if path.is_dir():
+        return "\n".join(source.read_text() for source in sorted(path.glob("*.rs")))
+    return path.read_text()
+
 
 def main() -> int:
     failures: list[str] = []
     for path, needles in REQUIRED.items():
         if not path.exists() and path in {VERSION_GUARD, HERMES_CLIENT, HERMES_MODELS}:
             continue
-        text = path.read_text()
+        text = source_text(path)
         for needle in needles:
             if needle not in text:
                 failures.append(f"{path.relative_to(ROOT)} missing {needle}")
     for path, needles in FORBIDDEN.items():
-        text = path.read_text()
+        text = source_text(path)
         for needle in needles:
             if needle in text:
                 failures.append(f"{path.relative_to(ROOT)} contains forbidden token {needle}")

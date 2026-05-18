@@ -7,9 +7,9 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-API = ROOT / "crates" / "pmx-api" / "src" / "lib.rs"
-SERVICE = ROOT / "crates" / "pmx-service" / "src" / "lib.rs"
-STORE = ROOT / "crates" / "pmx-store" / "src" / "lib.rs"
+API = ROOT / "crates" / "pmx-api" / "src"
+SERVICE = ROOT / "crates" / "pmx-service" / "src"
+STORE = ROOT / "crates" / "pmx-store" / "src"
 POSTGRES = ROOT / "crates" / "pmx-store" / "src" / "postgres.rs"
 MIGRATION = ROOT / "migrations" / "0003_order_event_trace.sql"
 SHADOW = ROOT / "validation" / "run_shadow_execution_drill.py"
@@ -74,10 +74,16 @@ FORBIDDEN_PUBLIC_TOKENS = [
 ]
 
 
+def source_text(path: Path) -> str:
+    if path.is_dir():
+        return "\n".join(source.read_text() for source in sorted(path.glob("*.rs")))
+    return path.read_text()
+
+
 def main() -> int:
     failures: list[str] = []
     for path, tokens in REQUIRED.items():
-        text = path.read_text()
+        text = source_text(path)
         for token in tokens:
             if token not in text:
                 failures.append(f"{path.relative_to(ROOT)} missing {token}")

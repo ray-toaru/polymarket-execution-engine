@@ -6,13 +6,13 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / "crates" / "pmx-core" / "src" / "lib.rs"
-STORE = ROOT / "crates" / "pmx-store" / "src" / "lib.rs"
+CORE = ROOT / "crates" / "pmx-core" / "src"
+STORE = ROOT / "crates" / "pmx-store" / "src"
 POSTGRES = ROOT / "crates" / "pmx-store" / "src" / "postgres.rs"
 MIGRATION = ROOT / "migrations" / "0001_initial.sql"
 ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src" / "lib.rs"
-SERVICE = ROOT / "crates" / "pmx-service" / "src" / "lib.rs"
-API = ROOT / "crates" / "pmx-api" / "src" / "lib.rs"
+SERVICE = ROOT / "crates" / "pmx-service" / "src"
+API = ROOT / "crates" / "pmx-api" / "src"
 OPENAPI = ROOT / "openapi" / "executor.v1.yaml"
 
 REQUIRED = {
@@ -62,10 +62,16 @@ REQUIRED = {
     ],
 }
 
+def source_text(path: Path) -> str:
+    if path.is_dir():
+        return "\n".join(source.read_text() for source in sorted(path.glob("*.rs")))
+    return path.read_text()
+
+
 def main() -> int:
     failures = []
     for path, needles in REQUIRED.items():
-        text = path.read_text()
+        text = source_text(path)
         for needle in needles:
             if needle not in text:
                 failures.append(f"{path.relative_to(ROOT)} missing {needle}")

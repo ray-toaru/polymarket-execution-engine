@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "crates" / "pmx-runtime" / "src" / "lib.rs"
-STORE = ROOT / "crates" / "pmx-store" / "src" / "lib.rs"
+STORE = ROOT / "crates" / "pmx-store" / "src"
 POSTGRES = ROOT / "crates" / "pmx-store" / "src" / "postgres.rs"
 MIGRATION = ROOT / "migrations" / "0001_initial.sql"
 
@@ -66,7 +66,7 @@ REQUIRED = {
         "worker_crash_recovery_evaluation_requires_fresh_healthy_required_workers",
         "worker_crash_recovery_evaluation_recovers_after_all_required_workers_are_fresh",
     ],
-    ROOT / "crates" / "pmx-service" / "src" / "lib.rs": [
+    ROOT / "crates" / "pmx-service" / "src": [
         "record_runtime_worker_signals",
         "record_runtime_worker_tick",
         "record_runtime_worker_provider_snapshot",
@@ -133,10 +133,16 @@ REQUIRED = {
     ],
 }
 
+def source_text(path: Path) -> str:
+    if path.is_dir():
+        return "\n".join(source.read_text() for source in sorted(path.glob("*.rs")))
+    return path.read_text()
+
+
 def main() -> int:
     failures = []
     for path, needles in REQUIRED.items():
-        text = path.read_text()
+        text = source_text(path)
         for needle in needles:
             if needle not in text:
                 failures.append(f"{path.relative_to(ROOT)} missing {needle}")
