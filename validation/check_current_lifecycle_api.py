@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static guard for v0.23 lifecycle/query API and runtime-state aggregation scaffolding."""
+"""Static guard for current lifecycle/query API and runtime-state aggregation scaffolding."""
 from __future__ import annotations
 
 import sys
@@ -15,16 +15,15 @@ STORE = ROOT / "crates" / "pmx-store" / "src" / "lib.rs"
 POSTGRES = ROOT / "crates" / "pmx-store" / "src" / "postgres.rs"
 GATEWAY = ROOT / "crates" / "pmx-gateway" / "src" / "lib.rs"
 OPENAPI = ROOT / "openapi" / "executor.v1.yaml"
-GATE = ROOT / "validation" / "run_v0_23_gates.sh"
-SOURCE_CANDIDATE_DOC = ROOT / "docs" / "V0_23_SOURCE_CANDIDATE.md"
+GATE = ROOT / "validation" / "run_v0_24_gates.sh"
 VERSION_GUARD = ROOT.parent / "scripts" / "check_version_consistency.py"
 HERMES_CLIENT = ROOT.parent / "hermes-polymarket-control" / "src" / "hermes_polymarket_control" / "client.py"
 HERMES_MODELS = ROOT.parent / "hermes-polymarket-control" / "src" / "hermes_polymarket_control" / "models.py"
 EVIDENCE_MANIFEST = ROOT / "validation" / "templates" / "evidence_manifest.template.json"
 CURRENT_EVIDENCE_MANIFEST = ROOT / "evidence" / "current" / "manifest.json"
-EVIDENCE_GUARD = ROOT / "validation" / "check_v0_23_evidence_manifest.py"
+EVIDENCE_GUARD = ROOT / "validation" / "check_current_evidence_manifest.py"
 GOVERNANCE_GUARD = ROOT / "validation" / "check_docs_evidence_governance.py"
-EVIDENCE_WRITER = ROOT / "validation" / "write_v0_23_evidence_manifest.py"
+EVIDENCE_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
 
 REQUIRED = {
     API: [
@@ -151,7 +150,8 @@ REQUIRED = {
         "/v1/runtime/workers?account_id=acct-http-e2e-1&limit=20",
     ],
     API_PG_E2E: [
-        "sign-only PG lifecycle response",
+        "/v1/sign-only/standard-constructions",
+        "standard sign-only PG response",
         "PG lifecycle events",
         "degraded snapshot response",
         "audit query response",
@@ -205,23 +205,18 @@ REQUIRED = {
     ],
     GATE: [
         "run_current_gates.sh",
-        "check_v0_23_lifecycle_api.py",
+        "check_current_lifecycle_api.py",
         "check_version_consistency.py",
-        "check_v0_23_evidence_manifest.py",
+        "check_current_evidence_manifest.py",
         "check_docs_evidence_governance.py",
-        "write_v0_23_evidence_manifest.py",
+        "write_current_evidence_manifest.py",
         "evidence/current",
-        "v0.23 gates completed",
-    ],
-    SOURCE_CANDIDATE_DOC: [
-        "v0.23.0 source candidate",
-        "not confirmed here",
-        "live submit",
+        "current gates completed",
     ],
     VERSION_GUARD: [
         "version consistency passed",
         "run_current_gates.sh",
-        "run_v0_23_gates.sh",
+        "run_v0_24_gates.sh",
         "source-candidate",
     ],
     HERMES_CLIENT: [
@@ -310,7 +305,7 @@ def main() -> int:
         for failure in failures:
             print(f"FAIL: {failure}")
         return 1
-    print("v0.23 lifecycle/query static guard passed")
+    print("current lifecycle/query static guard passed")
     return 0
 
 

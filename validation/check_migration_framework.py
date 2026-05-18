@@ -8,8 +8,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATIONS = ROOT / "migrations"
 POSTGRES = ROOT / "crates" / "pmx-store" / "src" / "postgres.rs"
-RUN_GATES = ROOT / "validation" / "run_v0_23_gates.sh"
-MANIFEST_WRITER = ROOT / "validation" / "write_v0_23_evidence_manifest.py"
+RUN_GATES = ROOT / "validation" / "run_v0_24_gates.sh"
+MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
 DRIFT_DRY_RUN = ROOT / "validation" / "run_migration_drift_dry_run.py"
 
 
@@ -52,8 +52,8 @@ def main() -> int:
     require("bad checksum fixture" in drift_dry_run, "migration dry-run must include checksum drift fixture", failures)
     require("0003_order_event_trace" in drift_dry_run, "migration dry-run must include 0003_order_event_trace", failures)
 
-    require("33-migration-framework-guard.log" in gates, "run_v0_23_gates.sh must emit migration framework guard log", failures)
-    require("34-migration-drift-dry-run.log" in gates, "run_v0_23_gates.sh must emit migration drift dry-run log", failures)
+    require("33-migration-framework-guard.log" in gates, "run_v0_24_gates.sh must emit migration framework guard log", failures)
+    require("34-migration-drift-dry-run.log" in gates, "run_v0_24_gates.sh must emit migration drift dry-run log", failures)
     require('"migration_framework_validation"' in manifest, "evidence manifest must include migration_framework_validation", failures)
     require("33-migration-framework-guard.log" in manifest, "evidence manifest must capture migration framework guard log", failures)
     require("34-migration-drift-dry-run.log" in manifest, "evidence manifest must capture migration drift dry-run log", failures)

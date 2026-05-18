@@ -10,8 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 HARDENING_SPEC = ROOT / "docs" / "PRODUCTION_HARDENING_SPEC.md"
 CONTROLS_MATRIX = ROOT / "docs" / "PRODUCTION_CONTROLS_MATRIX.md"
 EVIDENCE_CONTROLS = ROOT / "docs" / "PRODUCTION_EVIDENCE_CONTROLS.md"
-GATES = ROOT / "validation" / "run_v0_23_gates.sh"
-MANIFEST = ROOT / "validation" / "write_v0_23_evidence_manifest.py"
+GATES = ROOT / "validation" / "run_v0_24_gates.sh"
+MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 
 REQUIRED_SPEC_TOKENS = [
     "Secret Custody",
@@ -69,7 +69,7 @@ def main() -> int:
     gates = GATES.read_text()
     manifest = MANIFEST.read_text()
     if "41-production-hardening-config.log" not in gates:
-        failures.append("run_v0_23_gates.sh must emit production hardening config log")
+        failures.append("run_v0_24_gates.sh must emit production hardening config log")
     if '"production_hardening_config_validation"' not in manifest:
         failures.append("evidence manifest must include production_hardening_config_validation")
     if "41-production-hardening-config.log" not in manifest:

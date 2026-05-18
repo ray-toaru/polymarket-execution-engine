@@ -65,13 +65,13 @@
   "required_next_gates": [
     "polymarket-execution-engine/validation/run_current_gates.sh-after-any-behavior-change"
   ],
-  "v023_source_changes": [
+  "source_changes": [
     "version-unification-to-0.23.0-source-candidate",
     "sign-only-lifecycle-api-and-query-closure",
     "runtime-worker-observation-to-runtime-state-aggregation",
     "cancel-reconcile-non-live-lifecycle-test-coverage",
     "lifecycle-and-admin-audit-query-api",
-    "v0.23-gate-script-and-static-guards",
+    "current-gate-script-and-static-guards",
     "docs-evidence-governance-cleanup",
     "canonical-current-evidence-manifest",
     "release-package-archive-exclusions",
@@ -94,7 +94,7 @@
     "historical_evidence_policy": "archive-excluded-from-release-package",
     "artifact_hash_policy": "external .sha256 and .evidence.json sidecars bind the final zip hash; in-archive manifest must not claim validated release by self-reference",
     "current_gate_entrypoint": "polymarket-execution-engine/validation/run_current_gates.sh",
-    "version_pinned_gate": "polymarket-execution-engine/validation/run_v0_23_gates.sh",
+    "version_pinned_gate": "polymarket-execution-engine/validation/run_v0_24_gates.sh",
     "template_path": "polymarket-execution-engine/validation/templates/evidence_manifest.template.json"
   }
 }

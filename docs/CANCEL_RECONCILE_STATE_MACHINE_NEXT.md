@@ -1,6 +1,6 @@
 # Cancel / Reconcile State-machine Next Work
 
-> Status: current v0.23.0 source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+> Status: current v0.24.0 shadow-ready baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
 v0.22 keeps live cancel disabled and adds clearer reconcile classification in `pmx-core`.
 

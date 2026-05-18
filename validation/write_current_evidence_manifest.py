@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write the canonical v0.23 current evidence manifest from gate logs."""
+"""Write the canonical current evidence manifest from gate logs."""
 from __future__ import annotations
 
 import hashlib
@@ -33,7 +33,7 @@ CURRENT_DIR = EXECUTOR / "evidence" / "current"
 DEFAULT_LOG_DIR = CURRENT_DIR / "logs"
 OUT = CURRENT_DIR / "manifest.json"
 ENVIRONMENT = CURRENT_DIR / "environment.json"
-GATE_RUNNER = EXECUTOR / "validation" / "run_v0_23_gates.sh"
+GATE_RUNNER = EXECUTOR / "validation" / "run_v0_24_gates.sh"
 
 SECTIONS: dict[str, list[str]] = {
     "rust_workspace_validation": [
@@ -106,8 +106,8 @@ SECTIONS: dict[str, list[str]] = {
         "19-live-submit-static-guard.log",
         "20-sign-only-lifecycle-guard.log",
         "21-runtime-worker-model-guard.log",
-        "22-v0-23-lifecycle-api-guard.log",
-        "23-v0-23-evidence-manifest-guard.log",
+        "22-current-lifecycle-api-guard.log",
+        "23-current-evidence-manifest-guard.log",
         "24-version-consistency-guard.log",
         "25-contract-validation.log",
         "26-release-hygiene-clean-snapshot.log",

@@ -12,9 +12,9 @@ CONTROLS_MATRIX = ROOT / "docs" / "PRODUCTION_CONTROLS_MATRIX.md"
 HARDENING_SPEC = ROOT / "docs" / "PRODUCTION_HARDENING_SPEC.md"
 EVIDENCE_CONTROLS = ROOT / "docs" / "PRODUCTION_EVIDENCE_CONTROLS.md"
 RELEASE_MANIFEST = ROOT / "release" / "manifest.json"
-EVIDENCE_GUARD = ROOT / "validation" / "check_v0_23_evidence_manifest.py"
-GATE = ROOT / "validation" / "run_v0_23_gates.sh"
-MANIFEST_WRITER = ROOT / "validation" / "write_v0_23_evidence_manifest.py"
+EVIDENCE_GUARD = ROOT / "validation" / "check_current_evidence_manifest.py"
+GATE = ROOT / "validation" / "run_v0_24_gates.sh"
+MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
 
 RUNBOOK_TOKENS = [
     "Secret manager",
@@ -121,9 +121,9 @@ def main() -> int:
     gates = GATE.read_text()
     manifest_writer = MANIFEST_WRITER.read_text()
     if "36-production-readiness-guard.log" not in gates:
-        failures.append("run_v0_23_gates.sh must emit production readiness guard log")
+        failures.append("run_v0_24_gates.sh must emit production readiness guard log")
     if "41-production-hardening-config.log" not in gates:
-        failures.append("run_v0_23_gates.sh must emit production hardening config log")
+        failures.append("run_v0_24_gates.sh must emit production hardening config log")
     if '"productionization_validation"' not in manifest_writer:
         failures.append("evidence manifest must include productionization_validation")
     if "36-production-readiness-guard.log" not in manifest_writer:

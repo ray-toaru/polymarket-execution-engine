@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Guard v0.23 evidence manifests against accidental release overclaiming.
+"""Guard current evidence manifests against accidental release overclaiming.
 
 The template lives under validation/templates so evidence/current remains the single
 canonical evidence location.
@@ -84,7 +84,7 @@ def main(argv: list[str]) -> int:
     else:
         paths = [TEMPLATE]
         # During a version-promotion gate, evidence/current can still contain the
-        # previous manifest until write_v0_23_evidence_manifest.py regenerates it.
+        # previous manifest until write_current_evidence_manifest.py regenerates it.
         # The full gate validates the regenerated current manifest later via the
         # docs/evidence governance guard.
         if CURRENT.exists():

@@ -89,7 +89,7 @@ python validation/check_plan_storage.py 2>&1 | tee "${EVIDENCE_DIR}/18-plan-stor
 python validation/check_live_submit_guard.py 2>&1 | tee "${EVIDENCE_DIR}/19-live-submit-static-guard.log"
 python validation/check_sign_only_lifecycle.py 2>&1 | tee "${EVIDENCE_DIR}/20-sign-only-lifecycle-guard.log"
 python validation/check_runtime_worker_models.py 2>&1 | tee "${EVIDENCE_DIR}/21-runtime-worker-model-guard.log"
-python validation/check_v0_23_evidence_manifest.py 2>&1 | tee "${EVIDENCE_DIR}/23-v0-23-evidence-manifest-guard.log"
+python validation/check_current_evidence_manifest.py 2>&1 | tee "${EVIDENCE_DIR}/23-current-evidence-manifest-guard.log"
 python validation/check_migration_framework.py 2>&1 | tee "${EVIDENCE_DIR}/33-migration-framework-guard.log"
 python validation/run_migration_drift_dry_run.py 2>&1 | tee "${EVIDENCE_DIR}/34-migration-drift-dry-run.log"
 python validation/check_sdk_standard_sign_only.py 2>&1 | tee "${EVIDENCE_DIR}/35-sdk-standard-sign-only-guard.log"
@@ -102,20 +102,20 @@ python validation/check_production_hardening_config.py 2>&1 | tee "${EVIDENCE_DI
 python validation/check_runtime_worker_status_query.py 2>&1 | tee "${EVIDENCE_DIR}/42-runtime-worker-status-query.log"
 python validation/check_observability_evidence.py 2>&1 | tee "${EVIDENCE_DIR}/43-observability-evidence.log"
 python scripts/check_release_hygiene.py "${HYGIENE_ROOT}" 2>&1 | tee "${EVIDENCE_DIR}/26-release-hygiene-clean-snapshot.log"
-python validation/write_v0_23_evidence_manifest.py "${EVIDENCE_DIR}" >/dev/null
+python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" >/dev/null
 
 if [[ -f "${INTEGRATION_ROOT}/scripts/check_version_consistency.py" && -f "${INTEGRATION_ROOT}/scripts/validate_contracts.py" ]]; then
-  python validation/check_v0_23_lifecycle_api.py 2>&1 | tee "${EVIDENCE_DIR}/22-v0-23-lifecycle-api-guard.log"
+  python validation/check_current_lifecycle_api.py 2>&1 | tee "${EVIDENCE_DIR}/22-current-lifecycle-api-guard.log"
   python "${INTEGRATION_ROOT}/scripts/check_version_consistency.py" 2>&1 | tee "${EVIDENCE_DIR}/24-version-consistency-guard.log"
   python "${INTEGRATION_ROOT}/scripts/validate_contracts.py" 2>&1 | tee "${EVIDENCE_DIR}/25-contract-validation.log"
   ARTIFACT_PATH="$(python "${INTEGRATION_ROOT}/scripts/package_release.py" | tee "${EVIDENCE_DIR}/27-package-release.log" | tail -n 1)"
   python "${INTEGRATION_ROOT}/scripts/check_release_artifact.py" "${ARTIFACT_PATH}" "$(cat "${INTEGRATION_ROOT}/VERSION")" 2>&1 | tee "${EVIDENCE_DIR}/28-release-artifact-check.log"
-  python validation/write_v0_23_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
+  python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
   python validation/check_docs_evidence_governance.py 2>&1 | tee "${EVIDENCE_DIR}/30-docs-evidence-governance.log"
-  python validation/write_v0_23_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
+  python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
 else
   echo "integration repository not found; lifecycle parity, contract validation, and release packaging skipped" | tee "${EVIDENCE_DIR}/22-integration-skipped.log"
-  python validation/write_v0_23_evidence_manifest.py "${EVIDENCE_DIR}" >/dev/null
+  python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" >/dev/null
 fi
 
-echo "v0.23 gates completed; evidence in ${EVIDENCE_ROOT}"
+echo "current gates completed; evidence in ${EVIDENCE_ROOT}"

@@ -1,8 +1,8 @@
 # Official SDK Mapping / Error / Liveness Notes
 
-> Status: current v0.23.0 source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+> Status: current v0.24.0 shadow-ready baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
-Status: v0.23 implementation note for `pmx-official-sdk-adapter`.
+Status: historical v0.23 implementation note for `pmx-official-sdk-adapter`.
 
 ## Plan -> order builder mapping
 

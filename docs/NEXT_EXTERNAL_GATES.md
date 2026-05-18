@@ -1,6 +1,6 @@
 # Next external gates
 
-> Status: current v0.23.0 source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+> Status: current v0.24.0 shadow-ready baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
 Run from `polymarket-execution-engine` in an environment with Rust 1.88, Cargo, rustfmt, clippy, and optionally PostgreSQL:
 
@@ -11,7 +11,7 @@ Run from `polymarket-execution-engine` in an environment with Rust 1.88, Cargo, 
 Expected evidence directory:
 
 ```text
-evidence/YYYY-MM-DD/v0.23/
+polymarket-execution-engine/evidence/current/
 ```
 
 Core evidence logs that must exist before calling this a validated release:
@@ -33,7 +33,7 @@ Core evidence logs that must exist before calling this a validated release:
 19-live-submit-static-guard.log
 20-sign-only-lifecycle-guard.log
 21-runtime-worker-model-guard.log
-22-v0-23-lifecycle-api-guard.log
+22-current-lifecycle-api-guard.log
 23-version-consistency-guard.log
 24-contract-validation.log
 25-release-hygiene-clean-snapshot.log
@@ -56,4 +56,4 @@ Optional credentialed non-trading evidence must only run when explicitly enabled
 17-sign-only-dry-run.log
 ```
 
-Current boundary: until these logs are produced and reviewed, v0.23 remains a source candidate, not a validated release. Live submit and live cancel remain disabled.
+Current boundary: until these logs are produced and reviewed, v0.24.0 remains a shadow-ready candidate, not a validated release. Live submit and live cancel remain disabled.

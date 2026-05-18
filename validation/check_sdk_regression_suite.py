@@ -8,8 +8,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src" / "lib.rs"
-GATES = ROOT / "validation" / "run_v0_23_gates.sh"
-MANIFEST = ROOT / "validation" / "write_v0_23_evidence_manifest.py"
+GATES = ROOT / "validation" / "run_v0_24_gates.sh"
+MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 DOC = ROOT / "docs" / "SDK_REGRESSION_SUITE.md"
 
 REQUIRED_ADAPTER_TOKENS = [
@@ -83,7 +83,7 @@ def main() -> int:
     gates = GATES.read_text()
     manifest = MANIFEST.read_text()
     if "37-sdk-regression-suite-guard.log" not in gates:
-        failures.append("run_v0_23_gates.sh must emit SDK regression suite guard log")
+        failures.append("run_v0_24_gates.sh must emit SDK regression suite guard log")
     if '"sdk_regression_suite_validation"' not in manifest:
         failures.append("evidence manifest must include sdk_regression_suite_validation")
     if "37-sdk-regression-suite-guard.log" not in manifest:

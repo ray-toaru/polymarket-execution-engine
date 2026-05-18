@@ -30,7 +30,7 @@ python validation/check_plan_storage.py
 python validation/check_live_submit_guard.py
 python validation/check_sign_only_lifecycle.py
 python validation/check_runtime_worker_models.py
-python validation/check_v0_23_evidence_manifest.py
+python validation/check_current_evidence_manifest.py
 ```
 
 Cross-repository checks such as lifecycle API parity, version consistency, Hermes model parity, and

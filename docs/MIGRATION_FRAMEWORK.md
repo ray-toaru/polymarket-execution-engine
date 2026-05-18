@@ -35,7 +35,7 @@ initial migration.
   `evidence/current/logs/33-migration-framework-guard.log`.
 - `validation/run_current_gates.sh` also writes
   `evidence/current/logs/34-migration-drift-dry-run.log`.
-- `validation/write_v0_23_evidence_manifest.py` records the
+- `validation/write_current_evidence_manifest.py` records the
   `migration_framework_validation` evidence section.
 
 ## Boundary

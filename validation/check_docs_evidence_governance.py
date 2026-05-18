@@ -164,7 +164,6 @@ def validate_execution_docs_and_gates(failures: list[str]) -> None:
     active_versioned = [
         path.name
         for path in docs_dir.glob("V0_*.md")
-        if path.name != "V0_23_SOURCE_CANDIDATE.md"
     ]
     if active_versioned:
         failures.append("stale execution-engine versioned docs must live in docs/archive: " + ", ".join(sorted(active_versioned)))
@@ -174,7 +173,7 @@ def validate_execution_docs_and_gates(failures: list[str]) -> None:
     validation_dir = EXECUTOR / "validation"
     validation_archive = validation_dir / "archive"
     # validation/archive is also excluded from release packages; only active scripts are checked here.
-    allowed_gate_scripts = {"run_current_gates.sh", "run_v0_23_gates.sh"}
+    allowed_gate_scripts = {"run_current_gates.sh", "run_v0_24_gates.sh"}
     active_old_gates = [path.name for path in validation_dir.glob("run_v0_*_gates.sh") if path.name not in allowed_gate_scripts]
     if active_old_gates:
         failures.append("stale gate scripts must live in validation/archive: " + ", ".join(sorted(active_old_gates)))

@@ -8,8 +8,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src" / "lib.rs"
-GATE = ROOT / "validation" / "run_v0_23_gates.sh"
-MANIFEST = ROOT / "validation" / "write_v0_23_evidence_manifest.py"
+GATE = ROOT / "validation" / "run_v0_24_gates.sh"
+MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 
 REQUIRED = [
     "OfficialSdkStandardSignOnlyProfile",
@@ -69,7 +69,7 @@ def main() -> int:
     gates = GATE.read_text()
     manifest = MANIFEST.read_text()
     if "35-sdk-standard-sign-only-guard.log" not in gates:
-        failures.append("run_v0_23_gates.sh must emit SDK standard sign-only guard log")
+        failures.append("run_v0_24_gates.sh must emit SDK standard sign-only guard log")
     if '"sdk_standard_sign_only_validation"' not in manifest:
         failures.append("evidence manifest must include sdk_standard_sign_only_validation")
     if "35-sdk-standard-sign-only-guard.log" not in manifest:

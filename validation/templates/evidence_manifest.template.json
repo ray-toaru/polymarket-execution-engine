@@ -19,8 +19,8 @@
       "19-live-submit-static-guard.log",
       "20-sign-only-lifecycle-guard.log",
       "21-runtime-worker-model-guard.log",
-      "22-v0-23-lifecycle-api-guard.log",
-      "23-v0-23-evidence-manifest-guard.log",
+      "22-current-lifecycle-api-guard.log",
+      "23-current-evidence-manifest-guard.log",
       "24-version-consistency-guard.log",
       "25-contract-validation.log",
       "26-release-hygiene-clean-snapshot.log"

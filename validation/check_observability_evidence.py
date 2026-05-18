@@ -15,8 +15,8 @@ MIGRATION = ROOT / "migrations" / "0003_order_event_trace.sql"
 SHADOW = ROOT / "validation" / "run_shadow_execution_drill.py"
 RECONCILE = ROOT / "validation" / "run_reconciliation_drift_drill.py"
 ROLLBACK = ROOT / "validation" / "run_kill_switch_rollback_drill.py"
-GATES = ROOT / "validation" / "run_v0_23_gates.sh"
-MANIFEST = ROOT / "validation" / "write_v0_23_evidence_manifest.py"
+GATES = ROOT / "validation" / "run_v0_24_gates.sh"
+MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 DOCS = [
     ROOT / "docs" / "PRODUCTION_HARDENING_SPEC.md",
     ROOT / "docs" / "PRODUCTION_EVIDENCE_CONTROLS.md",
@@ -91,7 +91,7 @@ def main() -> int:
     gates = GATES.read_text()
     manifest = MANIFEST.read_text()
     if "43-observability-evidence.log" not in gates:
-        failures.append("run_v0_23_gates.sh must emit observability evidence log")
+        failures.append("run_v0_24_gates.sh must emit observability evidence log")
     if '"observability_evidence_validation"' not in manifest:
         failures.append("evidence manifest must include observability_evidence_validation")
     if "43-observability-evidence.log" not in manifest:

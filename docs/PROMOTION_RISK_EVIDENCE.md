@@ -1,6 +1,6 @@
 # Promotion risk evidence
 
-This document indexes the current v0.23.1 validation-promotion evidence. It is an
+This document indexes historical v0.23.1 validation-promotion evidence. It is an
 evidence map, not a production-readiness claim.
 
 ## Current conclusion
@@ -16,7 +16,7 @@ Live submit, live cancel, and production deployment remain blocked.
 - Environment: `polymarket-execution-engine/evidence/current/environment.json`
 - Logs: `polymarket-execution-engine/evidence/current/logs/`
 - Release manifest: `polymarket-execution-engine/release/manifest.json`
-- External artifact hash sidecars: `polymarket-dual-project-v0.23.0.zip.sha256` and `polymarket-dual-project-v0.23.0.zip.evidence.json`
+- External artifact hash sidecars: `polymarket-dual-project-v0.24.0.zip.sha256` and `polymarket-dual-project-v0.24.0.zip.evidence.json`
 
 ## P1 risk closure
 
@@ -29,7 +29,7 @@ Evidence:
 - `11-sdk-adapter-test.log` and `12-sdk-adapter-typecheck.log` include adapter redaction tests.
 - `05-http-fake-e2e.log` covers fake API lifecycle behavior.
 - `15-http-postgres-e2e.log` covers PostgreSQL-backed lifecycle API behavior.
-- `22-v0-23-lifecycle-api-guard.log` and `25-contract-validation.log` guard OpenAPI/Hermes/Rust parity for `RedactedPayloadEnvelope`.
+- `22-current-lifecycle-api-guard.log` and `25-contract-validation.log` guard OpenAPI/Hermes/Rust parity for `RedactedPayloadEnvelope`.
 
 Boundary:
 
@@ -60,7 +60,7 @@ Evidence:
 - `13-pg-migration.log` applies the sign-only lifecycle schema, including `client_event_id` and partial unique index DDL.
 - `14-pg-store-tests.log` covers PostgreSQL repository tests.
 - `15-http-postgres-e2e.log` covers PostgreSQL-backed API lifecycle paths.
-- `20-sign-only-lifecycle-guard.log` and `22-v0-23-lifecycle-api-guard.log` statically guard lifecycle/idempotency/API invariants.
+- `20-sign-only-lifecycle-guard.log` and `22-current-lifecycle-api-guard.log` statically guard lifecycle/idempotency/API invariants.
 
 Boundary:
 
