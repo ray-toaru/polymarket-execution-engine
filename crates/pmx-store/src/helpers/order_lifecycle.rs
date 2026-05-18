@@ -55,6 +55,7 @@ pub(crate) fn order_event_kind_to_str(event: &OrderEventKind) -> &'static str {
         OrderEventKind::CancelConfirmed => "CANCEL_CONFIRMED",
         OrderEventKind::ReconcileOpen => "RECONCILE_OPEN",
         OrderEventKind::ReconcileMissing => "RECONCILE_MISSING",
+        OrderEventKind::ReconcileUnknown => "RECONCILE_UNKNOWN",
     }
 }
 
@@ -72,6 +73,7 @@ pub(crate) fn order_event_kind_from_str(value: &str) -> Result<OrderEventKind, S
         "CANCEL_CONFIRMED" => Ok(OrderEventKind::CancelConfirmed),
         "RECONCILE_OPEN" => Ok(OrderEventKind::ReconcileOpen),
         "RECONCILE_MISSING" => Ok(OrderEventKind::ReconcileMissing),
+        "RECONCILE_UNKNOWN" => Ok(OrderEventKind::ReconcileUnknown),
         other => Err(StoreError::InvalidData(format!(
             "unknown order lifecycle event: {other}"
         ))),

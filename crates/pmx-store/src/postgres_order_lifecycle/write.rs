@@ -80,6 +80,48 @@ pub(super) async fn record_order_lifecycle_event(
     };
     let current_state: String = row.get(6);
     let current = order_lifecycle_state_from_str(&current_state)?;
+    let event_type = order_event_kind_to_str(&event.event);
+    if let Some(correlation_id) = event.correlation_id.as_deref() {
+        let replay = match client
+            .query_opt(
+                "SELECT event_type FROM order_events
+                 WHERE order_id = $1 AND correlation_id = $2
+                 ORDER BY event_id ASC
+                 LIMIT 1",
+                &[&event.order_id, &correlation_id],
+            )
+            .await
+        {
+            Ok(row) => row,
+            Err(err) => {
+                PostgresStore::rollback(&client).await;
+                return Err(map_db_error(err));
+            }
+        };
+        if let Some(replay) = replay {
+            let previous_event: String = replay.get(0);
+            if previous_event == event_type {
+                client.batch_execute("COMMIT").await.map_err(map_db_error)?;
+                return Ok(OrderLifecycleRecord {
+                    order_id: row.get(0),
+                    execution_id: row.get(1),
+                    account_id: row.get(2),
+                    condition_id: row.get(3),
+                    token_id: row.get(4),
+                    side: row.get(5),
+                    lifecycle_state: current,
+                    remote_order_id: row.get(7),
+                    remote_state: row.get(8),
+                    created_at: Some(row.get(9)),
+                    updated_at: Some(row.get(10)),
+                });
+            }
+            PostgresStore::rollback(&client).await;
+            return Err(StoreError::Conflict(
+                "order lifecycle correlation_id reused with different event".into(),
+            ));
+        }
+    }
     let next = match transition_order_state(current, event.event.clone()) {
         Ok(next) => next,
         Err(err) => {
@@ -91,7 +133,7 @@ pub(super) async fn record_order_lifecycle_event(
     if let Err(err) = client
         .execute(
             "INSERT INTO order_events (order_id, event_type, event_source, correlation_id, payload) VALUES ($1, $2, $3, $4, $5)",
-            &[&event.order_id, &order_event_kind_to_str(&event.event), &event.event_source, &event.correlation_id, &payload],
+            &[&event.order_id, &event_type, &event.event_source, &event.correlation_id, &payload],
         )
         .await
     {

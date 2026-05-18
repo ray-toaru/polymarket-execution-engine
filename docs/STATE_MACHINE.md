@@ -27,8 +27,12 @@ Uncertainty path:
 ```text
 POST_REQUESTED or CANCEL_REQUESTED
   -> REMOTE_UNKNOWN
-  -> RECONCILE_OPEN or RECONCILE_MISSING
+  -> RECONCILE_OPEN, RECONCILE_MISSING, or RECONCILE_UNKNOWN
 ```
+
+`RECONCILE_UNKNOWN` preserves the current remote-unknown state while recording
+an auditable observation. Repeated `RECONCILE_MISSING` escalates from
+`REMOTE_UNKNOWN` to `PARTIAL_REMOTE_UNKNOWN` and then to `FAILED`.
 
 Important rule: cancel request success is not confirmed cancellation.
 

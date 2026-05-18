@@ -20,10 +20,13 @@ where
     }
     if !matches!(
         event,
-        OrderEventKind::ReconcileOpen | OrderEventKind::ReconcileMissing
+        OrderEventKind::ReconcileOpen
+            | OrderEventKind::ReconcileMissing
+            | OrderEventKind::ReconcileUnknown
     ) {
         return Err(ServiceError::BadRequest(
-            "reconcile observation must be ReconcileOpen or ReconcileMissing".into(),
+            "reconcile observation must be ReconcileOpen, ReconcileMissing or ReconcileUnknown"
+                .into(),
         ));
     }
     if store.load_order_lifecycle(order_id).await?.is_none() {

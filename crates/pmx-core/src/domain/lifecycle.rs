@@ -86,6 +86,7 @@ pub enum OrderEventKind {
     CancelConfirmed,
     ReconcileOpen,
     ReconcileMissing,
+    ReconcileUnknown,
 }
 
 pub fn cancel_state_from_lifecycle(state: &OrderLifecycleState) -> crate::CancelState {
@@ -193,7 +194,7 @@ pub fn classify_order_lifecycle_divergence(
             RemoteOrderObservation::Unknown,
         ) => OrderLifecycleDivergence {
             kind: OrderLifecycleDivergenceKind::LocalRemoteUnknownStillUnknown,
-            event: None,
+            event: Some(OrderEventKind::ReconcileUnknown),
             operator_required: true,
             no_remote_side_effect: true,
             reason: "remote truth remains unknown; operator review required".into(),
@@ -274,6 +275,10 @@ pub fn transition_order_state(
         (OrderLifecycleState::PartialRemoteUnknown, OrderEventKind::ReconcileMissing) => {
             OrderLifecycleState::Failed
         }
+        (
+            OrderLifecycleState::RemoteUnknown | OrderLifecycleState::PartialRemoteUnknown,
+            OrderEventKind::ReconcileUnknown,
+        ) => from,
         _ => return Err(CoreError::InvalidTransition { from, event }),
     };
     Ok(next)

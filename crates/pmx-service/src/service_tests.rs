@@ -1454,6 +1454,19 @@ async fn service_records_non_live_cancel_and_reconcile_order_lifecycle() {
         canceled.lifecycle_state,
         OrderLifecycleState::CancelRequested
     );
+    let cancel_replay = service
+        .record_non_live_cancel_request(
+            "order-non-live-cancel",
+            "operator requested cancel",
+            Some("corr-cancel".into()),
+        )
+        .await
+        .expect("replay cancel")
+        .expect("existing order");
+    assert_eq!(
+        cancel_replay.lifecycle_state,
+        OrderLifecycleState::CancelRequested
+    );
 
     store
         .upsert_order_lifecycle(&order(
@@ -1475,6 +1488,27 @@ async fn service_records_non_live_cancel_and_reconcile_order_lifecycle() {
     assert_eq!(
         reconciled.lifecycle_state,
         OrderLifecycleState::PartialRemoteUnknown
+    );
+    store
+        .upsert_order_lifecycle(&order(
+            "order-non-live-reconcile-unknown",
+            OrderLifecycleState::RemoteUnknown,
+        ))
+        .await
+        .expect("upsert remote unknown order");
+    let still_unknown = service
+        .record_non_live_reconcile_observation(
+            "order-non-live-reconcile-unknown",
+            OrderEventKind::ReconcileUnknown,
+            "remote truth unavailable in drill",
+            Some("corr-reconcile-unknown".into()),
+        )
+        .await
+        .expect("record unknown reconcile")
+        .expect("existing order");
+    assert_eq!(
+        still_unknown.lifecycle_state,
+        OrderLifecycleState::RemoteUnknown
     );
 
     let missing = service
@@ -1533,6 +1567,33 @@ async fn service_classifies_and_records_order_lifecycle_divergence_without_remot
     assert_eq!(
         second_update.expect("second update").lifecycle_state,
         OrderLifecycleState::Failed
+    );
+    store
+        .upsert_order_lifecycle(&order(
+            "order-divergence-unknown",
+            OrderLifecycleState::RemoteUnknown,
+        ))
+        .await
+        .expect("upsert unknown order");
+    let (unknown_divergence, unknown_update) = service
+        .reconcile_order_lifecycle_divergence(
+            "order-divergence-unknown",
+            Some("acct-1"),
+            RemoteOrderObservation::Unknown,
+            "remote read stayed unknown",
+            Some("corr-divergence-unknown".into()),
+        )
+        .await
+        .expect("unknown divergence")
+        .expect("order exists");
+    assert_eq!(
+        unknown_divergence.kind,
+        OrderLifecycleDivergenceKind::LocalRemoteUnknownStillUnknown
+    );
+    assert!(unknown_divergence.operator_required);
+    assert_eq!(
+        unknown_update.expect("unknown update").lifecycle_state,
+        OrderLifecycleState::RemoteUnknown
     );
 
     let events = store

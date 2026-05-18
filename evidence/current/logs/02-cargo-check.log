@@ -1,3 +1,8 @@
+    Checking pmx-core v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
+    Checking pmx-store v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
+    Checking pmx-policy v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
+    Checking pmx-runtime v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
     Checking pmx-service v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
     Checking pmx-api v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.74s
+    Checking pmx-gateway v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.92s

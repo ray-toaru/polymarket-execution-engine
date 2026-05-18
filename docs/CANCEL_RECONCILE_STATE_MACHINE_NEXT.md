@@ -27,7 +27,8 @@ Current v0.25 progress:
   `CancelRequested` into the local order lifecycle when the order already
   exists.
 - `ExecutorService::record_non_live_reconcile_observation()` records local
-  `ReconcileOpen` / `ReconcileMissing` observations for existing orders.
+  `ReconcileOpen` / `ReconcileMissing` / `ReconcileUnknown` observations for
+  existing orders.
 - The admin cancel API now attempts the local order-lifecycle write while still
   returning a reconcile-required non-live receipt and preserving the execution
   lifecycle audit event.
@@ -41,6 +42,10 @@ Current v0.25 progress:
   order-lifecycle divergence and still performs no remote side effect.
 - Repeated `MISSING` observations escalate `RemoteUnknown ->
   PartialRemoteUnknown -> Failed` so operator-required paths are explicit.
+- Same `correlation_id` replay for cancel/reconcile order events is idempotent;
+  reusing the same correlation id for a different event is rejected.
+- `UNKNOWN` remote observations are persisted as `ReconcileUnknown` without
+  advancing the local state, preserving an audit trail for operator review.
 
 Boundary:
 

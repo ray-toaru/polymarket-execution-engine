@@ -1,5 +1,10 @@
+   Compiling pmx-core v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
+   Compiling pmx-store v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
+   Compiling pmx-runtime v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
+   Compiling pmx-policy v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
    Compiling pmx-service v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.11s
+   Compiling pmx-gateway v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 13.51s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-0c3b29e6cdffcd0b)
 
 running 2 tests
@@ -120,11 +125,11 @@ test service::tests::service_validates_and_persists_sign_only_lifecycle_sequence
 test service::tests::static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks ... ok
 test service::tests::store_backed_runtime_provider_uses_store_state ... ok
 
-test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-d75ca96a461a9981)
 
-running 36 tests
+running 38 tests
 test memory::memory_tests::admin_audit_tests::in_memory_admin_audit_records_without_exposing_secrets ... ok
 test memory::memory_tests::admin_audit_tests::in_memory_persists_sign_only_lifecycle_records ... ok
 test memory::memory_tests::admin_audit_tests::in_memory_rejects_sign_only_for_unknown_execution ... ok
@@ -134,6 +139,7 @@ test memory::memory_tests::admin_audit_tests::in_memory_sign_only_replay_is_idem
 test memory::memory_tests::order_lifecycle_store_tests_v23::in_memory_lists_reconcile_backlog_orders ... ok
 test memory::memory_tests::order_lifecycle_store_tests_v23::in_memory_order_lifecycle_records_cancel_requested ... ok
 test memory::memory_tests::order_lifecycle_store_tests_v23::in_memory_order_lifecycle_rejects_invalid_transition ... ok
+test memory::memory_tests::order_lifecycle_store_tests_v23::in_memory_order_lifecycle_replays_same_correlation_id ... ok
 test memory::memory_tests::runtime_worker_health_tests_v23::in_memory_lists_runtime_worker_status ... ok
 test memory::memory_tests::runtime_worker_health_tests_v23::in_memory_worker_heartbeat_informs_runtime_state ... ok
 test memory::memory_tests::runtime_worker_health_tests_v23::stale_in_memory_worker_heartbeat_fails_closed ... ok
@@ -144,6 +150,7 @@ test memory::memory_tests::tests::maps_plan_status_for_db ... ok
 test memory::memory_tests::tests::runtime_worker_observations_degrade_loaded_runtime_state ... ok
 test memory::memory_tests::tests::stale_runtime_worker_observations_are_ignored ... ok
 test postgres::postgres_tests::order_lifecycle_pg_tests_v23::postgres_lists_reconcile_backlog_orders ... ok
+test postgres::postgres_tests::order_lifecycle_pg_tests_v23::postgres_order_lifecycle_replays_same_correlation_id ... ok
 test postgres::postgres_tests::order_lifecycle_pg_tests_v23::postgres_records_order_lifecycle_event ... ok
 test postgres::postgres_tests::runtime_worker_health_pg_tests_v23::postgres_lists_runtime_worker_status ... ok
 test postgres::postgres_tests::runtime_worker_health_pg_tests_v23::postgres_records_worker_heartbeat ... ok
@@ -162,7 +169,7 @@ test postgres::postgres_tests::tests::remote_unknown_is_persisted_conservatively
 test postgres::postgres_tests::tests::reservation_double_spend_is_prevented_concurrently ... ok
 test postgres::postgres_tests::tests::same_request_replay_is_persisted ... ok
 
-test result: ok. 36 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.50s
+test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.75s
 
    Doc-tests pmx_authz
 

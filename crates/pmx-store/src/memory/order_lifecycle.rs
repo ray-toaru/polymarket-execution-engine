@@ -30,9 +30,26 @@ impl OrderLifecycleStore for InMemoryStore {
         event: &OrderLifecycleEventRecord,
     ) -> Result<OrderLifecycleRecord, StoreError> {
         let mut state = self.inner.lock().expect("in-memory store mutex poisoned");
-        let Some(order) = state.orders.get_mut(&event.order_id) else {
+        let Some(current) = state.orders.get(&event.order_id).cloned() else {
             return Err(StoreError::NotFound(format!("order_id={}", event.order_id)));
         };
+        if let Some(correlation_id) = event.correlation_id.as_deref()
+            && let Some(previous) = state.order_events.iter().find(|candidate| {
+                candidate.order_id == event.order_id
+                    && candidate.correlation_id.as_deref() == Some(correlation_id)
+            })
+        {
+            if previous.event == event.event {
+                return Ok(current);
+            }
+            return Err(StoreError::Conflict(
+                "order lifecycle correlation_id reused with different event".into(),
+            ));
+        }
+        let order = state
+            .orders
+            .get_mut(&event.order_id)
+            .expect("order existence checked above");
         let next = transition_order_state(order.lifecycle_state.clone(), event.event.clone())
             .map_err(|err| StoreError::Conflict(err.to_string()))?;
         order.lifecycle_state = next;
