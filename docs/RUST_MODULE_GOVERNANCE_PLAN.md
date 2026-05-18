@@ -56,6 +56,9 @@ material exposure, or production-readiness claims.
   `pmx-official-sdk-adapter::tests` modules for canary/config, sign-only,
   mapping, liveness/error redaction, and feature-gated smoke/typecheck paths.
   The parent file only keeps shared helpers and module declarations.
+- Runtime model tests now live in focused `pmx-runtime::runtime_tests` modules
+  for breakdown/loop behavior and capability evaluations; the parent file only
+  keeps module declarations.
 
 ## Per-step rules
 
