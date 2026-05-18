@@ -1,1 +1,4 @@
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.12s
+    Checking pmx-core v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
+    Checking pmx-gateway v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
+    Checking pmx-official-sdk-adapter v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.65s

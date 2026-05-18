@@ -1,5 +1,10 @@
+   Compiling pmx-core v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
+   Compiling pmx-store v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
+   Compiling pmx-runtime v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
+   Compiling pmx-policy v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
    Compiling pmx-service v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.87s
+   Compiling pmx-gateway v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 23.48s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-0c3b29e6cdffcd0b)
 
 running 2 tests
@@ -66,13 +71,13 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
      Running unittests src/lib.rs (target/debug/deps/pmx_runtime-a73b589405886cc5)
 
 running 21 tests
-test runtime_tests::breakdown_loop::capabilities::all_capabilities_preserves_account_market_asset_worker_groups ... ok
-test runtime_tests::breakdown_loop::capabilities::blocking_capabilities_include_submit_required_stale_worker ... ok
-test runtime_tests::breakdown_loop::capabilities::degraded_non_required_capability_does_not_block_submit ... ok
-test runtime_tests::breakdown_loop::capabilities::geoblock_unknown_and_reconcile_backlog_block_submit ... ok
-test runtime_tests::breakdown_loop::capabilities::runtime_signals_map_websocket_and_heartbeat_to_submit_blockers ... ok
-test runtime_tests::breakdown_loop::capabilities::runtime_worker_store_writes_are_fail_closed_for_bad_signals ... ok
-test runtime_tests::breakdown_loop::capabilities::worker_actions_mark_stale_runtime_inputs_as_fail_closed_updates ... ok
+test runtime_tests::breakdown_loop::capabilities::blocking::blocking_capabilities_include_submit_required_stale_worker ... ok
+test runtime_tests::breakdown_loop::capabilities::blocking::degraded_non_required_capability_does_not_block_submit ... ok
+test runtime_tests::breakdown_loop::capabilities::blocking::geoblock_unknown_and_reconcile_backlog_block_submit ... ok
+test runtime_tests::breakdown_loop::capabilities::blocking::runtime_signals_map_websocket_and_heartbeat_to_submit_blockers ... ok
+test runtime_tests::breakdown_loop::capabilities::groups::all_capabilities_preserves_account_market_asset_worker_groups ... ok
+test runtime_tests::breakdown_loop::capabilities::groups::worker_actions_mark_stale_runtime_inputs_as_fail_closed_updates ... ok
+test runtime_tests::breakdown_loop::capabilities::store_writes::runtime_worker_store_writes_are_fail_closed_for_bad_signals ... ok
 test runtime_tests::breakdown_loop::provider::runtime_worker_provider_snapshot_feeds_loop_without_trading_side_effects ... ok
 test runtime_tests::breakdown_loop::worker_loop::runtime_worker_loop_tick_blocks_stale_down_and_geoblocked_submit ... ok
 test runtime_tests::breakdown_loop::worker_loop::runtime_worker_loop_tick_recovers_only_after_all_required_inputs_are_healthy ... ok
@@ -120,18 +125,18 @@ test service::tests::sign_only::standard::service_derives_standard_sign_only_ref
 test service::tests::sign_only::standard::service_records_standard_sign_only_construction_without_raw_payload ... ok
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 
-test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-d75ca96a461a9981)
 
 running 40 tests
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_paginates_and_filters_by_cursor ... ok
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_records_without_exposing_secrets ... ok
-test memory::memory_tests::admin_sign_only::sign_only::in_memory_persists_sign_only_lifecycle_records ... ok
-test memory::memory_tests::admin_sign_only::sign_only::in_memory_rejects_sign_only_for_unknown_execution ... ok
-test memory::memory_tests::admin_sign_only::sign_only::in_memory_rejects_sign_only_remote_side_effect_records ... ok
-test memory::memory_tests::admin_sign_only::sign_only::in_memory_sign_only_client_event_id_replays_and_rejects_mismatch ... ok
-test memory::memory_tests::admin_sign_only::sign_only::in_memory_sign_only_replay_is_idempotent ... ok
+test memory::memory_tests::admin_sign_only::sign_only::happy_path::in_memory_persists_sign_only_lifecycle_records ... ok
+test memory::memory_tests::admin_sign_only::sign_only::happy_path::in_memory_sign_only_replay_is_idempotent ... ok
+test memory::memory_tests::admin_sign_only::sign_only::idempotency::in_memory_sign_only_client_event_id_replays_and_rejects_mismatch ... ok
+test memory::memory_tests::admin_sign_only::sign_only::rejects::in_memory_rejects_sign_only_for_unknown_execution ... ok
+test memory::memory_tests::admin_sign_only::sign_only::rejects::in_memory_rejects_sign_only_remote_side_effect_records ... ok
 test memory::memory_tests::common::advisory_lock_key_is_deterministic_and_scoped ... ok
 test memory::memory_tests::common::idempotency_identity_is_documented_in_trait ... ok
 test memory::memory_tests::common::in_memory_same_request_without_response_is_in_progress ... ok
@@ -166,7 +171,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::postgres_persists_sign_only_lifecycle_records ... ok
 test postgres::postgres_tests::sign_only::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 
-test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.18s
+test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.25s
 
    Doc-tests pmx_authz
 

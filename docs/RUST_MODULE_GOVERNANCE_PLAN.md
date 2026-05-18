@@ -93,9 +93,19 @@ material exposure, or production-readiness claims.
   `evaluations` submodules by capability group, worker-loop behavior,
   provider-fed loop behavior, lease/resource evaluation, reconcile/websocket/
   geoblock evaluation, and crash-recovery evaluation.
+- Core lifecycle domain types and transitions now live in focused
+  `pmx-core::domain::lifecycle` modules for sign-only lifecycle,
+  order-lifecycle transitions, and divergence/reconcile classification.
+- Core plan/control-plane models now live in focused `pmx-core::domain::plan`
+  modules for decision results, execution summaries/submit receipts, redaction
+  envelopes, and control-plane request/receipt models.
 - In-memory store admin/sign-only tests now live in focused
   `pmx-store::memory_tests::admin_sign_only` modules for admin-audit behavior
   and sign-only lifecycle behavior.
+- In-memory store sign-only tests now also separate focused happy-path,
+  idempotency, and reject-path modules.
+- Runtime breakdown capability tests now also separate focused blocking,
+  capability-group, and store-write fail-closed modules.
 - The HTTP fake scaffold E2E path now uses local helper functions to keep the
   single end-to-end assertion flow readable without changing route coverage or
   assertions.
