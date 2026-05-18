@@ -8,6 +8,15 @@ External validation evidence confirms the PostgreSQL advisory-lock primitive: tw
 
 This proves the lock mechanism, not the full application repository.
 
+Repository-level PostgreSQL tests now cover core local invariants:
+
+- same request replay for submit idempotency;
+- fingerprint mismatch conflict;
+- same resource reservation contention;
+- remote-unknown conservative persistence;
+- sign-only lifecycle `client_event_id` replay under concurrent writers;
+- sign-only lifecycle mismatch rejection and terminal-state rejection.
+
 ## Intended submit transaction shape
 
 ```text
@@ -33,19 +42,24 @@ saga state and reconcile handling.
 
 ## What remains unproven
 
-- Actual repository implementation is not yet present.
-- No repository-level double-reserve or idempotent replay test has run.
 - No serialization failure/retry loop has been exercised.
 - No remote side-effect recovery path has been tested against PostgreSQL.
+- Cancel pending/confirmation transition under concurrent reconcile still needs a repository-level PostgreSQL proof.
 
-## Next proof gate
-
-Before any real Polymarket adapter is connected, run repository-level concurrency tests over a real PostgreSQL instance:
+## Covered repository proof gates
 
 ```text
 same request replay
 fingerprint mismatch conflict
 same resource reservation contention
 remote-unknown conservative persistence
+sign-only lifecycle concurrent client_event_id replay
+```
+
+## Next proof gate
+
+Before any real Polymarket adapter is connected, run repository-level concurrency tests over a real PostgreSQL instance:
+
+```text
 cancel pending/confirmation transition under concurrent reconcile
 ```

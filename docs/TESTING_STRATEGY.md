@@ -33,3 +33,6 @@ cargo test --workspace
 - idempotency conflict on request fingerprint mismatch
 - concurrent submit does not double reserve
 - reservation lifecycle binds to order id before active use
+- sign-only lifecycle concurrent `client_event_id` replay
+- sign-only lifecycle mismatched replay rejection
+- sign-only lifecycle terminal-state rejection

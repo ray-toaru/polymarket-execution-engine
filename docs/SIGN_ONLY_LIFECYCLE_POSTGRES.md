@@ -10,6 +10,7 @@ v0.22 adds a persistence boundary for this proof:
 - `pmx_store::SignOnlyLifecycleStore` persists and lists records.
 - `sign_only_lifecycle_events` stores the serialized record and enforces `no_remote_side_effect = TRUE`.
 - Both in-memory and PostgreSQL stores reject records that claim a remote side effect.
+- PostgreSQL repository tests cover concurrent replay of the same `client_event_id`, reject reuse with a different payload, and reject new lifecycle appends after terminal `SignedDryRun`.
 
 Expected sequence:
 

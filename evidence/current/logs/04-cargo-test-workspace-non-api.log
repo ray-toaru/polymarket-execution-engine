@@ -1,4 +1,5 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.30s
+   Compiling pmx-store v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.25s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-0c3b29e6cdffcd0b)
 
 running 2 tests
@@ -121,7 +122,7 @@ test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fin
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-d75ca96a461a9981)
 
-running 35 tests
+running 36 tests
 test memory::memory_tests::admin_audit_tests::in_memory_admin_audit_records_without_exposing_secrets ... ok
 test memory::memory_tests::admin_audit_tests::in_memory_persists_sign_only_lifecycle_records ... ok
 test memory::memory_tests::admin_audit_tests::in_memory_rejects_sign_only_for_unknown_execution ... ok
@@ -154,11 +155,12 @@ test postgres::postgres_tests::tests::postgres_records_execution_lifecycle_event
 test postgres::postgres_tests::tests::postgres_records_runtime_worker_observation ... ok
 test postgres::postgres_tests::tests::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::tests::postgres_runtime_worker_observations_degrade_runtime_state ... ok
+test postgres::postgres_tests::tests::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::tests::remote_unknown_is_persisted_conservatively ... ok
 test postgres::postgres_tests::tests::reservation_double_spend_is_prevented_concurrently ... ok
 test postgres::postgres_tests::tests::same_request_replay_is_persisted ... ok
 
-test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.29s
+test result: ok. 36 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.65s
 
    Doc-tests pmx_authz
 
