@@ -3,7 +3,7 @@ use crate::model::*;
 use crate::support::{ApiResult, require, service_error, validate_auth_config_from_env};
 use axum::{
     Json, Router,
-    extract::{Path, Query, State},
+    extract::State,
     http::{HeaderMap, StatusCode},
     routing::{get, post},
 };
@@ -12,13 +12,10 @@ use pmx_core::*;
 use pmx_service::{
     StandardSignOnlyConstructionReceipt, StandardSignOnlyConstructionRequest, SubmitOutcome,
 };
-use pmx_store::{
-    ExecutionLifecycleEvent, ExecutionLifecycleQuery, OrderLifecycleEventQuery,
-    OrderLifecycleEventRecord, PostgresStore, RuntimeWorkerStatusQuery, RuntimeWorkerStatusReport,
-    SignOnlyLifecycleQuery,
-};
+use pmx_store::PostgresStore;
 
 mod admin;
+mod read;
 
 fn router_with_state(state: AppState) -> Router {
     Router::new()
@@ -28,7 +25,7 @@ fn router_with_state(state: AppState) -> Router {
         .route("/v1/decisions/evaluate", post(decide))
         .route("/v1/plans/compile", post(compile_plan))
         .route("/v1/submissions", post(submit_plan))
-        .route("/v1/submissions/:execution_id", get(get_submission))
+        .route("/v1/submissions/:execution_id", get(read::get_submission))
         .route(
             "/v1/sign-only/lifecycle-events",
             post(record_sign_only_lifecycle_event),
@@ -39,17 +36,17 @@ fn router_with_state(state: AppState) -> Router {
         )
         .route(
             "/v1/sign-only/lifecycle-events/:execution_id",
-            get(list_sign_only_lifecycle_events),
+            get(read::list_sign_only_lifecycle_events),
         )
         .route(
             "/v1/lifecycle/executions/:execution_id/events",
-            get(list_execution_lifecycle_events),
+            get(read::list_execution_lifecycle_events),
         )
         .route(
             "/v1/lifecycle/orders/:order_id/events",
-            get(list_order_lifecycle_events),
+            get(read::list_order_lifecycle_events),
         )
-        .route("/v1/runtime/workers", get(list_runtime_worker_status))
+        .route("/v1/runtime/workers", get(read::list_runtime_worker_status))
         .route(
             "/v1/admin/audit-events",
             get(admin::list_admin_audit_events),
@@ -202,20 +199,6 @@ async fn submit_plan(
     }
 }
 
-async fn get_submission(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Path(execution_id): Path<String>,
-) -> ApiResult<SubmitReceipt> {
-    require(&headers, Operation::ReadReport)?;
-    let receipt = state
-        .service
-        .load_submit_receipt(&execution_id)
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::OK, Json(receipt)))
-}
-
 async fn record_sign_only_lifecycle_event(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -242,79 +225,4 @@ async fn record_standard_sign_only_construction(
         .await
         .map_err(service_error)?;
     Ok((StatusCode::ACCEPTED, Json(receipt)))
-}
-
-async fn list_sign_only_lifecycle_events(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Path(execution_id): Path<String>,
-    Query(query): Query<EventListQuery>,
-) -> ApiResult<Vec<SignOnlyLifecycleRecord>> {
-    require(&headers, Operation::ReadReport)?;
-    let records = state
-        .service
-        .list_sign_only_lifecycle_events(SignOnlyLifecycleQuery {
-            execution_id,
-            limit: query.limit.unwrap_or(100),
-            before_event_id: query.before_event_id,
-        })
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::OK, Json(records)))
-}
-
-async fn list_execution_lifecycle_events(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Path(execution_id): Path<String>,
-    Query(query): Query<EventListQuery>,
-) -> ApiResult<Vec<ExecutionLifecycleEvent>> {
-    require(&headers, Operation::ReadReport)?;
-    let events = state
-        .service
-        .list_execution_lifecycle_events(ExecutionLifecycleQuery {
-            execution_id,
-            limit: query.limit.unwrap_or(100),
-            before_event_id: query.before_event_id,
-        })
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::OK, Json(events)))
-}
-
-async fn list_order_lifecycle_events(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Path(order_id): Path<String>,
-    Query(query): Query<EventListQuery>,
-) -> ApiResult<Vec<OrderLifecycleEventRecord>> {
-    require(&headers, Operation::ReadReport)?;
-    let events = state
-        .service
-        .list_order_lifecycle_events(OrderLifecycleEventQuery {
-            order_id,
-            limit: query.limit.unwrap_or(100),
-            before_event_id: query.before_event_id,
-        })
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::OK, Json(events)))
-}
-
-async fn list_runtime_worker_status(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Query(query): Query<RuntimeWorkerStatusListQuery>,
-) -> ApiResult<RuntimeWorkerStatusReport> {
-    require(&headers, Operation::ReadReport)?;
-    let report = state
-        .service
-        .list_runtime_worker_status(RuntimeWorkerStatusQuery {
-            account_id: query.account_id,
-            limit: query.limit.unwrap_or(100),
-            before_observed_at: query.before_observed_at,
-        })
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::OK, Json(report)))
 }
