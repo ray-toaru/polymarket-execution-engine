@@ -72,6 +72,17 @@ material exposure, or production-readiness claims.
 - Service specialized runtime-worker tests now live in focused
   `pmx-service::service_tests::runtime_worker_specialized` modules for
   resource/reconcile, websocket/geoblock, and crash-recovery coverage.
+- Service runtime-worker basic tests now also live in finer-grained
+  `pmx-service::service_tests::runtime_worker_basic` modules for
+  provider-backed state, runtime signal/tick fail-closed behavior, and
+  runtime-worker status query coverage.
+- Service runtime-worker lease tests now also live in finer-grained
+  `pmx-service::service_tests::runtime_worker_lease` modules for
+  continuous provider snapshots, fail-closed lease election, and
+  persisted/in-PostgreSQL lease-owner parity coverage.
+- Service non-live order-lifecycle tests now live in focused
+  `pmx-service::service_tests::non_live_order_lifecycle` modules for
+  cancel/reconcile recording and divergence escalation behavior.
 - Runtime model tests now also separate focused `breakdown_loop` and
   `evaluations` submodules by capability group, worker-loop behavior,
   provider-fed loop behavior, lease/resource evaluation, reconcile/websocket/
