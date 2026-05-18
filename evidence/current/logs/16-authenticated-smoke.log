@@ -1,8 +1,8 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.95s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.90s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-adapter/target/debug/deps/pmx_official_sdk_adapter-4063c7b669bba65d)
 
 running 1 test
 test tests::feature_gated::authenticated_non_trading_smoke_executes_when_enabled ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 39 filtered out; finished in 3.71s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 39 filtered out; finished in 3.49s
 
