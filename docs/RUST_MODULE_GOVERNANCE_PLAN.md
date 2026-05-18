@@ -63,6 +63,12 @@ material exposure, or production-readiness claims.
   `pmx-api::tests::http_and_fake_e2e` modules for auth/smoke, scaffolded
   lifecycle coverage, and negative startup/object-graph paths; the parent file
   only keeps shared helpers and module declarations.
+- Core domain tests now live in focused `pmx-core::domain_tests` modules for
+  intent normalization, lifecycle transitions, and divergence classification;
+  the parent file only keeps shared helpers and module declarations.
+- Gateway tests now live in focused `pmx-gateway::tests` modules for post/cancel
+  flows, signer-provider boundaries, and read-only reconcile-reader behavior;
+  the parent file only keeps shared helpers and module declarations.
 
 ## Per-step rules
 

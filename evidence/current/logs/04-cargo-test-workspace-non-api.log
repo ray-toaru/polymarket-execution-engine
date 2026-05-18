@@ -1,4 +1,6 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.28s
+   Compiling pmx-gateway v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
+   Compiling pmx-core v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.26s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-0c3b29e6cdffcd0b)
 
 running 2 tests
@@ -10,39 +12,39 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
      Running unittests src/lib.rs (target/debug/deps/pmx_core-07cd744da967c77e)
 
 running 18 tests
-test domain::domain_tests::buy_notional_canonicalizes_to_quote_bound ... ok
-test domain::domain_tests::cancel_confirmation_requires_remote_acceptance ... ok
-test domain::domain_tests::cancel_state_tracks_lifecycle_pending_and_terminal_states ... ok
-test domain::domain_tests::cannot_confirm_cancel_without_pending_cancel ... ok
-test domain::domain_tests::canonical_json_hash_is_key_order_independent ... ok
-test domain::domain_tests::decimal_rejects_scientific_padding_and_trailing_dot ... ok
-test domain::domain_tests::limit_price_is_executor_authoritative ... ok
-test domain::domain_tests::normalized_intent_hash_is_content_derived ... ok
-test domain::domain_tests::order_lifecycle_divergence_escalates_terminal_remote_mismatch ... ok
-test domain::domain_tests::order_lifecycle_divergence_maps_remote_unknown_open_and_missing ... ok
-test domain::domain_tests::quantity_must_be_positive ... ok
-test domain::domain_tests::quantity_requires_exactly_one_bound ... ok
-test domain::domain_tests::reconcile_action_tracks_remote_unknown_and_partial_unknown ... ok
-test domain::domain_tests::remote_unknown_states_require_reconcile ... ok
-test domain::domain_tests::sell_shares_canonicalizes_to_base_bound ... ok
-test domain::domain_tests::sign_only_lifecycle_never_models_remote_post ... ok
-test domain::domain_tests::sign_only_lifecycle_rejects_direct_sign_without_reservation ... ok
-test domain::domain_tests::unsupported_cross_quantity_is_explicit ... ok
+test domain::domain_tests::divergence::order_lifecycle_divergence_escalates_terminal_remote_mismatch ... ok
+test domain::domain_tests::divergence::order_lifecycle_divergence_maps_remote_unknown_open_and_missing ... ok
+test domain::domain_tests::intent_normalization::buy_notional_canonicalizes_to_quote_bound ... ok
+test domain::domain_tests::intent_normalization::canonical_json_hash_is_key_order_independent ... ok
+test domain::domain_tests::intent_normalization::decimal_rejects_scientific_padding_and_trailing_dot ... ok
+test domain::domain_tests::intent_normalization::limit_price_is_executor_authoritative ... ok
+test domain::domain_tests::intent_normalization::normalized_intent_hash_is_content_derived ... ok
+test domain::domain_tests::intent_normalization::quantity_must_be_positive ... ok
+test domain::domain_tests::intent_normalization::quantity_requires_exactly_one_bound ... ok
+test domain::domain_tests::intent_normalization::sell_shares_canonicalizes_to_base_bound ... ok
+test domain::domain_tests::intent_normalization::unsupported_cross_quantity_is_explicit ... ok
+test domain::domain_tests::lifecycle::cancel_confirmation_requires_remote_acceptance ... ok
+test domain::domain_tests::lifecycle::cancel_state_tracks_lifecycle_pending_and_terminal_states ... ok
+test domain::domain_tests::lifecycle::cannot_confirm_cancel_without_pending_cancel ... ok
+test domain::domain_tests::lifecycle::reconcile_action_tracks_remote_unknown_and_partial_unknown ... ok
+test domain::domain_tests::lifecycle::remote_unknown_states_require_reconcile ... ok
+test domain::domain_tests::lifecycle::sign_only_lifecycle_never_models_remote_post ... ok
+test domain::domain_tests::lifecycle::sign_only_lifecycle_rejects_direct_sign_without_reservation ... ok
 
 test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_gateway-7038b579ba8f3bd4)
 
 running 9 tests
-test tests::deterministic_signer_provider_posts_reads_and_cancels ... ok
-test tests::disabled_gateway_reconcile_reader_is_disabled ... ok
-test tests::disabled_signer_provider_refuses_to_materialize_signer ... ok
-test tests::fake_gateway_cancel_maps_to_order_lifecycle_state_machine ... ok
-test tests::fake_gateway_is_account_scoped ... ok
-test tests::fake_gateway_surfaces_remote_unknown_without_local_success ... ok
-test tests::fake_remote_reconcile_reader_is_read_only_and_account_scoped ... ok
-test tests::remote_reconcile_reader_rejects_side_effect_requests ... ok
-test tests::signer_provider_defaults_are_production_conservative ... ok
+test tests::post_cancel::deterministic_signer_provider_posts_reads_and_cancels ... ok
+test tests::post_cancel::fake_gateway_cancel_maps_to_order_lifecycle_state_machine ... ok
+test tests::post_cancel::fake_gateway_is_account_scoped ... ok
+test tests::post_cancel::fake_gateway_surfaces_remote_unknown_without_local_success ... ok
+test tests::reconcile_reader::disabled_gateway_reconcile_reader_is_disabled ... ok
+test tests::reconcile_reader::fake_remote_reconcile_reader_is_read_only_and_account_scoped ... ok
+test tests::reconcile_reader::remote_reconcile_reader_rejects_side_effect_requests ... ok
+test tests::signer::disabled_signer_provider_refuses_to_materialize_signer ... ok
+test tests::signer::signer_provider_defaults_are_production_conservative ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
@@ -119,7 +121,7 @@ test service::tests::sign_only::service_rejects_malformed_standard_sign_only_dig
 test service::tests::sign_only::service_rejects_sign_only_sequence_mismatch ... ok
 test service::tests::sign_only::service_validates_and_persists_sign_only_lifecycle_sequence ... ok
 
-test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-d75ca96a461a9981)
 
@@ -165,7 +167,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::postgres_persists_sign_only_lifecycle_records ... ok
 test postgres::postgres_tests::sign_only::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 
-test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.27s
+test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.06s
 
    Doc-tests pmx_authz
 

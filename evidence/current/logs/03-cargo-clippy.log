@@ -1,1 +1,3 @@
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.35s
+    Checking pmx-gateway v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
+    Checking pmx-core v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.01s
