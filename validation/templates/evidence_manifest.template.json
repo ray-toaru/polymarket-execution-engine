@@ -109,6 +109,13 @@
       "42-runtime-worker-status-query.log"
     ]
   },
+  "shadow_rollback_drill_guard_validation": {
+    "status": "pending",
+    "logs": [],
+    "required_logs": [
+      "44-shadow-rollback-drill-guard.log"
+    ]
+  },
   "release_decision": {
     "validated_release": false,
     "reason": "Template only. Do not mark validated_release=true until all required evidence sections pass with attached logs and the final artifact hash is recorded."

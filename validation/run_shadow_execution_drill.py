@@ -80,27 +80,13 @@ def active_market(markets: list[dict[str, Any]]) -> dict[str, Any]:
     raise ValueError("no active accepting simplified market with token_id found")
 
 
-def main() -> int:
-    if os.environ.get("PMX_RUN_SHADOW_EXECUTION_DRILL") != "1":
-        return skipped("PMX_RUN_SHADOW_EXECUTION_DRILL not set to 1")
-    if os.environ.get("PMX_ALLOW_LIVE_SUBMIT") == "1":
-        return fail("PMX_ALLOW_LIVE_SUBMIT=1 is incompatible with shadow drill")
-
-    clob_host = os.environ.get("PMX_SHADOW_CLOB_HOST", DEFAULT_CLOB_HOST).rstrip("/")
-    limit = int(os.environ.get("PMX_SHADOW_MARKET_LIMIT", str(DEFAULT_MARKET_LIMIT)))
-    size = decimal_string(os.environ.get("PMX_SHADOW_SIZE", DEFAULT_SIZE), "PMX_SHADOW_SIZE")
-    limit_price = decimal_string(
-        os.environ.get("PMX_SHADOW_LIMIT_PRICE", DEFAULT_LIMIT_PRICE),
-        "PMX_SHADOW_LIMIT_PRICE",
-    )
-    url = f"{clob_host}/simplified-markets?limit={limit}"
-
-    try:
-        payload = fetch_json(url)
-        market = active_market(payload.get("data", []))
-    except (urllib.error.URLError, TimeoutError, ValueError, json.JSONDecodeError) as exc:
-        return fail(f"public market read failed: {exc}")
-
+def build_shadow_decision(
+    *,
+    market: dict[str, Any],
+    size: str,
+    limit_price: str,
+    sensitive_env_present: bool,
+) -> dict[str, Any]:
     token = market["tokens"][0]
     token_id = str(token["token_id"])
     condition_id = str(market.get("condition_id") or "")
@@ -115,7 +101,7 @@ def main() -> int:
         sort_keys=True,
     )
     trace_id = f"shadow-{sha256_text(trace_seed)[:24]}"
-    decision = {
+    return {
         "schema_version": 1,
         "status": "pass",
         "captured_at": datetime.now(timezone.utc).isoformat(),
@@ -148,14 +134,74 @@ def main() -> int:
             },
         },
         "safety": {
-            "sensitive_env_present": any(bool(os.environ.get(name)) for name in FORBIDDEN_ENV_NAMES),
+            "sensitive_env_present": sensitive_env_present,
             "credentials_logged": False,
             "raw_signed_payload_logged": False,
             "raw_signature_logged": False,
         },
     }
+
+
+def validate_shadow_decision(decision: dict[str, Any]) -> list[str]:
+    failures: list[str] = []
+    if decision.get("status") != "pass":
+        failures.append("shadow decision must pass")
+    if decision.get("remote_side_effects") is not False:
+        failures.append("shadow drill must not report remote side effects")
+    for key in ("posted", "signed", "cancelled", "live_submit_enabled"):
+        if decision.get(key) is not False:
+            failures.append(f"shadow drill must keep {key}=false")
+    if decision.get("remote_methods") != ["GET /simplified-markets"]:
+        failures.append("shadow drill may only perform the public simplified-markets read")
+    if not str(decision.get("trace_id", "")).startswith("shadow-"):
+        failures.append("shadow drill must emit a shadow trace id")
+    order = decision.get("would_submit", {}).get("order", {})
+    if "token_id" in order or "condition_id" in decision.get("market", {}):
+        failures.append("shadow drill must expose only hashed market/token identifiers")
+    safety = decision.get("safety", {})
+    for key in ("credentials_logged", "raw_signed_payload_logged", "raw_signature_logged"):
+        if safety.get(key) is not False:
+            failures.append(f"shadow drill safety flag {key} must be false")
+    if decision.get("would_submit", {}).get("decision") != "WOULD_SUBMIT_BLOCKED_NON_POSTING_SHADOW":
+        failures.append("shadow drill must remain blocked/non-posting")
+    return failures
+
+
+def main() -> int:
+    if os.environ.get("PMX_RUN_SHADOW_EXECUTION_DRILL") != "1":
+        return skipped("PMX_RUN_SHADOW_EXECUTION_DRILL not set to 1")
+    if os.environ.get("PMX_ALLOW_LIVE_SUBMIT") == "1":
+        return fail("PMX_ALLOW_LIVE_SUBMIT=1 is incompatible with shadow drill")
+    if os.environ.get("PMX_ALLOW_LIVE_CANCEL") == "1":
+        return fail("PMX_ALLOW_LIVE_CANCEL=1 is incompatible with shadow drill")
+
+    clob_host = os.environ.get("PMX_SHADOW_CLOB_HOST", DEFAULT_CLOB_HOST).rstrip("/")
+    limit = int(os.environ.get("PMX_SHADOW_MARKET_LIMIT", str(DEFAULT_MARKET_LIMIT)))
+    size = decimal_string(os.environ.get("PMX_SHADOW_SIZE", DEFAULT_SIZE), "PMX_SHADOW_SIZE")
+    limit_price = decimal_string(
+        os.environ.get("PMX_SHADOW_LIMIT_PRICE", DEFAULT_LIMIT_PRICE),
+        "PMX_SHADOW_LIMIT_PRICE",
+    )
+    url = f"{clob_host}/simplified-markets?limit={limit}"
+
+    try:
+        payload = fetch_json(url)
+        market = active_market(payload.get("data", []))
+    except (urllib.error.URLError, TimeoutError, ValueError, json.JSONDecodeError) as exc:
+        return fail(f"public market read failed: {exc}")
+
+    decision = build_shadow_decision(
+        market=market,
+        size=size,
+        limit_price=limit_price,
+        sensitive_env_present=any(bool(os.environ.get(name)) for name in FORBIDDEN_ENV_NAMES),
+    )
+    failures = validate_shadow_decision(decision)
+    if failures:
+        decision["status"] = "fail"
+        decision["failures"] = failures
     print(json.dumps(decision, indent=2, sort_keys=True))
-    return 0
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":

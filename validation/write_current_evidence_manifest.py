@@ -70,6 +70,9 @@ SECTIONS: dict[str, list[str]] = {
     "rollback_kill_switch_validation": [
         "32-kill-switch-rollback-drill.log",
     ],
+    "shadow_rollback_drill_guard_validation": [
+        "44-shadow-rollback-drill-guard.log",
+    ],
     "migration_framework_validation": [
         "33-migration-framework-guard.log",
         "34-migration-drift-dry-run.log",

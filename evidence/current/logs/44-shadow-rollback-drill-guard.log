@@ -1,0 +1,12 @@
+{
+  "checks": [
+    "shadow_non_posting",
+    "shadow_hashed_identifiers",
+    "shadow_sensitive_env_redacted",
+    "rollback_fail_closed",
+    "rollback_fallback_modes"
+  ],
+  "failures": [],
+  "remote_side_effects": false,
+  "status": "pass"
+}

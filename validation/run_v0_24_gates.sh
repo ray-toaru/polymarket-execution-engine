@@ -64,6 +64,7 @@ export PMX_RUN_SHADOW_EXECUTION_DRILL="${PMX_RUN_SHADOW_EXECUTION_DRILL:-1}"
 python validation/run_shadow_execution_drill.py 2>&1 | tee "${EVIDENCE_DIR}/29-shadow-execution-drill.log"
 python validation/run_reconciliation_drift_drill.py 2>&1 | tee "${EVIDENCE_DIR}/31-reconciliation-drift-drill.log"
 python validation/run_kill_switch_rollback_drill.py 2>&1 | tee "${EVIDENCE_DIR}/32-kill-switch-rollback-drill.log"
+python validation/check_shadow_rollback_drills.py 2>&1 | tee "${EVIDENCE_DIR}/44-shadow-rollback-drill-guard.log"
 
 # Release hygiene should be evaluated on a clean release snapshot, not on a dirty developer
 # working tree with .env, target/, temporary PostgreSQL data, or evidence logs.
