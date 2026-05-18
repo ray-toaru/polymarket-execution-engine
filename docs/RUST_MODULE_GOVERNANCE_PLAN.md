@@ -24,6 +24,8 @@ material exposure, or production-readiness claims.
   construction into separate `pmx-service::sign_only` submodules.
 - PostgreSQL admin audit and execution lifecycle persistence were separated
   under `pmx-store::postgres_audit` implementation modules.
+- SDK adapter plan mapping now separates normalization and validation helpers
+  under `pmx-official-sdk-adapter::mapping` without changing public exports.
 
 ## Per-step rules
 

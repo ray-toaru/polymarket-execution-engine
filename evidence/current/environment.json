@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-05-18T18:43:00.479084+00:00",
+  "captured_at": "2026-05-18T18:55:26.122012+00:00",
   "dependency_locks": {
     "polymarket-execution-engine/Cargo.lock": {
       "exists": true,
@@ -24,7 +24,7 @@
   "git": {
     "execution": {
       "branch": "",
-      "head": "b8da0514f1ec83aecea74e9e49a57cd8e4e9c283",
+      "head": "c4ba734484349fef74507250f16ebe3f7d47e099",
       "path": "polymarket-execution-engine",
       "status_clean": false,
       "status_entry_count": 46
@@ -38,12 +38,12 @@
     },
     "integration": {
       "branch": "v0.25-sdk-sign-only",
-      "head": "70572e15c56dd5d963e1307dadc77f0d4182fd40",
+      "head": "cbeede3802a2b8ed259bebd240dc4dc51eca12df",
       "path": ".",
       "status_clean": false,
       "status_entry_count": 3
     },
-    "submodules": "f0680017a37d5647a0abd2e44e0642a4b7b762da hermes-polymarket-control (remotes/origin/v0.23.1-validation-promotion-4-gf068001)\n+b8da0514f1ec83aecea74e9e49a57cd8e4e9c283 polymarket-execution-engine (remotes/origin/v0.23.1-validation-promotion-114-gb8da051)"
+    "submodules": "f0680017a37d5647a0abd2e44e0642a4b7b762da hermes-polymarket-control (remotes/origin/v0.23.1-validation-promotion-4-gf068001)\n+c4ba734484349fef74507250f16ebe3f7d47e099 polymarket-execution-engine (remotes/origin/v0.23.1-validation-promotion-116-gc4ba734)"
   },
   "integration_root": "/workspaces/universal/rust/polymarket_dual_project",
   "platform": {
