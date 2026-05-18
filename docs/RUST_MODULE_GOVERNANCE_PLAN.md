@@ -34,6 +34,8 @@ material exposure, or production-readiness claims.
   order-lifecycle coverage into focused `pmx-store::postgres_tests` modules.
 - PostgreSQL sign-only lifecycle PG tests now live in a focused
   `pmx-store::postgres_tests::sign_only` module.
+- PostgreSQL admin audit and submit idempotency PG tests now live in focused
+  `pmx-store::postgres_tests` modules.
 
 ## Per-step rules
 
