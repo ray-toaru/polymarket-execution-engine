@@ -26,6 +26,8 @@ material exposure, or production-readiness claims.
   under `pmx-store::postgres_audit` implementation modules.
 - SDK adapter plan mapping now separates normalization and validation helpers
   under `pmx-official-sdk-adapter::mapping` without changing public exports.
+- SDK liveness now keeps SDK error normalization behind a feature-gated
+  `liveness::error_normalization` module while preserving the public function.
 
 ## Per-step rules
 
