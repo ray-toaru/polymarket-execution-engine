@@ -42,6 +42,8 @@ material exposure, or production-readiness claims.
 - In-memory store tests now live in focused `pmx-store::memory_tests` modules
   for common helpers, admin/sign-only, runtime observations, runtime workers,
   and order lifecycle.
+- Service flow and sign-only orchestration tests now live in focused
+  `pmx-service::service_tests` modules while preserving the same assertions.
 
 ## Per-step rules
 
