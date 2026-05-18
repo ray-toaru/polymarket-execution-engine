@@ -1,6 +1,5 @@
-   Compiling pmx-service v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
    Compiling pmx-store v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.62s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.64s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-0c3b29e6cdffcd0b)
 
 running 2 tests
@@ -46,7 +45,7 @@ test tests::fake_remote_reconcile_reader_is_read_only_and_account_scoped ... ok
 test tests::remote_reconcile_reader_rejects_side_effect_requests ... ok
 test tests::signer_provider_defaults_are_production_conservative ... ok
 
-test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_policy-08b2d18f4af20e6d)
 
@@ -121,7 +120,7 @@ test service::tests::service_validates_and_persists_sign_only_lifecycle_sequence
 test service::tests::static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks ... ok
 test service::tests::store_backed_runtime_provider_uses_store_state ... ok
 
-test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-d75ca96a461a9981)
 
@@ -151,23 +150,23 @@ test postgres::postgres_tests::order_lifecycle::postgres_order_lifecycle_replays
 test postgres::postgres_tests::order_lifecycle::postgres_records_order_lifecycle_event ... ok
 test postgres::postgres_tests::runtime_worker_health::postgres_lists_runtime_worker_status ... ok
 test postgres::postgres_tests::runtime_worker_health::postgres_records_worker_heartbeat ... ok
+test postgres::postgres_tests::sign_only::postgres_persists_sign_only_lifecycle_records ... ok
+test postgres::postgres_tests::sign_only::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::tests::fingerprint_mismatch_is_conflict ... ok
 test postgres::postgres_tests::tests::in_progress_replay_does_not_return_proceed ... ok
 test postgres::postgres_tests::tests::postgres_admin_audit_paginates_and_filters_by_cursor ... ok
 test postgres::postgres_tests::tests::postgres_loads_runtime_state_from_runtime_tables ... ok
-test postgres::postgres_tests::tests::postgres_persists_sign_only_lifecycle_records ... ok
 test postgres::postgres_tests::tests::postgres_records_admin_audit_event ... ok
 test postgres::postgres_tests::tests::postgres_records_cancel_reconcile_lifecycle_events ... ok
 test postgres::postgres_tests::tests::postgres_records_execution_lifecycle_event ... ok
 test postgres::postgres_tests::tests::postgres_records_runtime_worker_observation ... ok
 test postgres::postgres_tests::tests::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::tests::postgres_runtime_worker_observations_degrade_runtime_state ... ok
-test postgres::postgres_tests::tests::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::tests::remote_unknown_is_persisted_conservatively ... ok
 test postgres::postgres_tests::tests::reservation_double_spend_is_prevented_concurrently ... ok
 test postgres::postgres_tests::tests::same_request_replay_is_persisted ... ok
 
-test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.75s
+test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.00s
 
    Doc-tests pmx_authz
 
