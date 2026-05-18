@@ -262,7 +262,7 @@ REQUIRED = {
         "validated_release=true",
         "non-pass evidence sections",
         "artifact.sha256",
-        "v0.23 evidence manifest guard passed",
+        "evidence manifest guard passed",
     ],
     GOVERNANCE_GUARD: [
         "docs/evidence governance guard passed",
