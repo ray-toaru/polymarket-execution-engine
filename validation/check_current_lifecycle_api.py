@@ -290,6 +290,11 @@ FORBIDDEN = {
 def source_text(path: Path) -> str:
     if path.is_dir():
         return "\n".join(source.read_text() for source in sorted(path.rglob("*.rs")))
+    module_dir = path.with_suffix("")
+    if module_dir.is_dir():
+        return "\n".join(
+            [path.read_text(), *(source.read_text() for source in sorted(module_dir.rglob("*.rs")))]
+        )
     return path.read_text()
 
 

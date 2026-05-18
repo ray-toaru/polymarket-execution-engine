@@ -49,6 +49,9 @@ material exposure, or production-readiness claims.
   `pmx-service::service_tests` modules while preserving the same assertions.
 - The `pmx-service::service_tests` parent file now only keeps shared helpers
   and module declarations; all service tests live in focused submodules.
+- HTTP PostgreSQL API E2E tests now live in focused
+  `pmx-api::tests::http_postgres_e2e` modules; the parent file only keeps
+  shared request/seed helpers and module declarations.
 
 ## Per-step rules
 
