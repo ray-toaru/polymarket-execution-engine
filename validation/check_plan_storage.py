@@ -7,13 +7,20 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "migrations" / "0001_initial.sql"
-POSTGRES = ROOT / "crates" / "pmx-store" / "src" / "postgres.rs"
+POSTGRES_ENTRYPOINT = ROOT / "crates" / "pmx-store" / "src" / "postgres.rs"
+POSTGRES_EXECUTION = ROOT / "crates" / "pmx-store" / "src" / "postgres_execution"
+
+
+def read_postgres_store_sources() -> str:
+    paths = [POSTGRES_ENTRYPOINT]
+    paths.extend(sorted(POSTGRES_EXECUTION.rglob("*.rs")))
+    return "\n".join(path.read_text() for path in paths)
 
 
 def main() -> int:
     failures: list[str] = []
     migration = MIGRATION.read_text()
-    postgres = POSTGRES.read_text()
+    postgres = read_postgres_store_sources()
     if "DROP TABLE IF EXISTS plan_summaries" not in migration:
         failures.append("migration must explicitly remove legacy plan_summaries")
     if "CREATE TABLE IF NOT EXISTS plan_summaries" in migration:

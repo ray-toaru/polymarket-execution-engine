@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src" / "lib.rs"
+ADAPTER_SRC = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
 PUBLIC_CONTRACT = ROOT / "openapi" / "executor.v1.yaml"
 
 FORBIDDEN_ADAPTER_PATTERNS = [
@@ -60,13 +60,17 @@ def strip_rust_comments(text: str) -> str:
     return text
 
 
+def read_adapter_sources() -> str:
+    return "\n".join(path.read_text() for path in sorted(ADAPTER_SRC.rglob("*.rs")))
+
+
 def main() -> int:
-    adapter_text = strip_rust_comments(ADAPTER.read_text())
+    raw_adapter_text = read_adapter_sources()
+    adapter_text = strip_rust_comments(raw_adapter_text)
     failures: list[str] = []
     for pattern in FORBIDDEN_ADAPTER_PATTERNS:
         if pattern.search(adapter_text):
             failures.append(f"official SDK adapter contains forbidden call pattern: {pattern.pattern}")
-    raw_adapter_text = ADAPTER.read_text()
     for token in REQUIRED_CANARY_TOKENS:
         if token not in raw_adapter_text:
             failures.append(f"official SDK adapter missing live canary guard token: {token}")

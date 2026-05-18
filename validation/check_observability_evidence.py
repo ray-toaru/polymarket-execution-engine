@@ -76,7 +76,7 @@ FORBIDDEN_PUBLIC_TOKENS = [
 
 def source_text(path: Path) -> str:
     if path.is_dir():
-        return "\n".join(source.read_text() for source in sorted(path.glob("*.rs")))
+        return "\n".join(source.read_text() for source in sorted(path.rglob("*.rs")))
     return path.read_text()
 
 

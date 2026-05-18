@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RUNTIME = ROOT / "crates" / "pmx-runtime" / "src" / "lib.rs"
+RUNTIME = ROOT / "crates" / "pmx-runtime" / "src"
 STORE = ROOT / "crates" / "pmx-store" / "src"
 POSTGRES = ROOT / "crates" / "pmx-store" / "src"
 MIGRATION = ROOT / "migrations" / "0001_initial.sql"
@@ -135,7 +135,7 @@ REQUIRED = {
 
 def source_text(path: Path) -> str:
     if path.is_dir():
-        return "\n".join(source.read_text() for source in sorted(path.glob("*.rs")))
+        return "\n".join(source.read_text() for source in sorted(path.rglob("*.rs")))
     return path.read_text()
 
 

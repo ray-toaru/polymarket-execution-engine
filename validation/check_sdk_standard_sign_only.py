@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src" / "lib.rs"
+ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
 GATE = ROOT / "validation" / "run_v0_24_gates.sh"
 MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 
@@ -56,9 +56,13 @@ def strip_rust_comments(text: str) -> str:
     return text
 
 
+def read_rust_sources(path: Path) -> str:
+    return "\n".join(source.read_text() for source in sorted(path.rglob("*.rs")))
+
+
 def main() -> int:
     failures: list[str] = []
-    adapter = ADAPTER.read_text()
+    adapter = read_rust_sources(ADAPTER)
     stripped = strip_rust_comments(adapter)
     for needle in REQUIRED:
         if needle not in adapter:

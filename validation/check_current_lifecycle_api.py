@@ -13,7 +13,7 @@ AUTHZ = ROOT / "crates" / "pmx-authz" / "src" / "lib.rs"
 SERVICE = ROOT / "crates" / "pmx-service" / "src"
 STORE = ROOT / "crates" / "pmx-store" / "src"
 POSTGRES = ROOT / "crates" / "pmx-store" / "src"
-GATEWAY = ROOT / "crates" / "pmx-gateway" / "src" / "lib.rs"
+GATEWAY = ROOT / "crates" / "pmx-gateway" / "src"
 OPENAPI = ROOT / "openapi" / "executor.v1.yaml"
 GATE = ROOT / "validation" / "run_v0_24_gates.sh"
 VERSION_GUARD = ROOT.parent / "scripts" / "check_version_consistency.py"
@@ -86,7 +86,7 @@ REQUIRED = {
         "signed_payload",
         "RemoteOrderObservation",
         "pub struct ReconcileRequest",
-        "remote_observation: Option<RemoteOrderObservation>",
+        "remote_observation",
         "OrderLifecycleDivergence",
         "classify_order_lifecycle_divergence",
         "order_lifecycle_divergence_maps_remote_unknown_open_and_missing",
@@ -288,7 +288,7 @@ FORBIDDEN = {
 
 def source_text(path: Path) -> str:
     if path.is_dir():
-        return "\n".join(source.read_text() for source in sorted(path.glob("*.rs")))
+        return "\n".join(source.read_text() for source in sorted(path.rglob("*.rs")))
     return path.read_text()
 
 

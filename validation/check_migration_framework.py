@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATIONS = ROOT / "migrations"
-POSTGRES = ROOT / "crates" / "pmx-store" / "src" / "postgres.rs"
+POSTGRES = ROOT / "crates" / "pmx-store" / "src"
 RUN_GATES = ROOT / "validation" / "run_v0_24_gates.sh"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
 DRIFT_DRY_RUN = ROOT / "validation" / "run_migration_drift_dry_run.py"
@@ -18,11 +18,15 @@ def require(condition: bool, message: str, failures: list[str]) -> None:
         failures.append(message)
 
 
+def read_rust_sources(path: Path) -> str:
+    return "\n".join(source.read_text() for source in sorted(path.rglob("*.rs")))
+
+
 def main() -> int:
     failures: list[str] = []
     migration_0002 = MIGRATIONS / "0002_migration_framework.sql"
     migration_0003 = MIGRATIONS / "0003_order_event_trace.sql"
-    postgres = POSTGRES.read_text()
+    postgres = read_rust_sources(POSTGRES)
     gates = RUN_GATES.read_text()
     manifest = MANIFEST_WRITER.read_text()
     drift_dry_run = DRIFT_DRY_RUN.read_text()

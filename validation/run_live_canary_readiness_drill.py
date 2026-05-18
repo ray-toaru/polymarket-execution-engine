@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src" / "lib.rs"
+ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
 GATES = ROOT / "validation" / "run_v0_24_gates.sh"
 MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 DOC = ROOT / "docs" / "LIVE_CANARY_READINESS_DRILL.md"
@@ -74,13 +74,17 @@ def strip_rust_comments(text: str) -> str:
     return re.sub(r"/\*.*?\*/", "", text, flags=re.S)
 
 
+def read_rust_sources(path: Path) -> str:
+    return "\n".join(source.read_text() for source in sorted(path.rglob("*.rs")))
+
+
 def env_enabled(name: str) -> bool:
     return os.environ.get(name, "").strip() == "1"
 
 
 def main() -> int:
     failures: list[str] = []
-    adapter = ADAPTER.read_text()
+    adapter = read_rust_sources(ADAPTER)
     stripped_adapter = strip_rust_comments(adapter)
     for token in REQUIRED_ADAPTER_TOKENS + REQUIRED_CANARY_GATES:
         if token not in adapter:

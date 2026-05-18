@@ -10,7 +10,7 @@ CORE = ROOT / "crates" / "pmx-core" / "src"
 STORE = ROOT / "crates" / "pmx-store" / "src"
 POSTGRES = ROOT / "crates" / "pmx-store" / "src"
 MIGRATION = ROOT / "migrations" / "0001_initial.sql"
-ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src" / "lib.rs"
+ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
 SERVICE = ROOT / "crates" / "pmx-service" / "src"
 API = ROOT / "crates" / "pmx-api" / "src"
 OPENAPI = ROOT / "openapi" / "executor.v1.yaml"
@@ -64,7 +64,7 @@ REQUIRED = {
 
 def source_text(path: Path) -> str:
     if path.is_dir():
-        return "\n".join(source.read_text() for source in sorted(path.glob("*.rs")))
+        return "\n".join(source.read_text() for source in sorted(path.rglob("*.rs")))
     return path.read_text()
 
 
