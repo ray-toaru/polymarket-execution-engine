@@ -2,6 +2,7 @@ mod helpers;
 mod memory;
 mod model;
 pub mod postgres;
+mod postgres_audit;
 mod postgres_execution;
 mod postgres_order_lifecycle;
 mod postgres_runtime;
