@@ -2,6 +2,7 @@ mod helpers;
 mod memory;
 mod model;
 pub mod postgres;
+mod postgres_runtime;
 mod postgres_support;
 
 pub use helpers::*;

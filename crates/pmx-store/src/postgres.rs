@@ -2,29 +2,25 @@ use crate::{
     AdminAuditEvent, AdminAuditQuery, AdminAuditStore, ExecutionLifecycleEvent,
     ExecutionLifecycleQuery, ExecutionLifecycleStore, ExecutionStore, IdempotencyAction,
     IdempotencyStore, OrderLifecycleEventQuery, OrderLifecycleEventRecord, OrderLifecycleRecord,
-    OrderLifecycleStore, OrderReconcileBacklogQuery, OrderReconcileBacklogStore, RuntimeStateQuery,
-    RuntimeStateStore, RuntimeWorkerHealthStore, RuntimeWorkerHeartbeat, RuntimeWorkerObservation,
+    OrderLifecycleStore, OrderReconcileBacklogQuery, OrderReconcileBacklogStore,
+    RuntimeWorkerHealthStore, RuntimeWorkerHeartbeat, RuntimeWorkerObservation,
     RuntimeWorkerObservationStore, RuntimeWorkerStatusQuery, RuntimeWorkerStatusReport,
     RuntimeWorkerStatusStore, SignOnlyLifecycleQuery, SignOnlyLifecycleStore, StoreError,
-    advisory_lock_key, apply_runtime_worker_observations, order_event_kind_from_str,
-    order_event_kind_to_str, order_lifecycle_state_from_str, order_lifecycle_state_to_str,
+    advisory_lock_key, order_event_kind_from_str, order_event_kind_to_str,
+    order_lifecycle_state_from_str, order_lifecycle_state_to_str,
     quantity_bound_to_resource_and_amount, reservation_state_to_str,
-    runtime_observation_ttl_seconds, sign_only_lifecycle_record_is_replay, submit_status_str,
+    sign_only_lifecycle_record_is_replay, submit_status_str,
     validate_sign_only_lifecycle_append_for_store,
 };
 use async_trait::async_trait;
 use chrono::Utc;
 use pmx_core::{
     ConstraintDecision, ExecutionPlanSummary, FeasibilitySnapshot, NormalizedIntent,
-    OrderReservation, RuntimeStateSummary, SignOnlyLifecycleRecord, SubmitReceipt,
-    transition_order_state,
+    OrderReservation, SignOnlyLifecycleRecord, SubmitReceipt, transition_order_state,
 };
 use tokio_postgres::{Client, NoTls};
 
-use crate::postgres_support::{
-    collateral_status_from_db, geoblock_from_runtime_account_status, load_json_payload,
-    map_db_error, worker_status_from_rows,
-};
+use crate::postgres_support::{load_json_payload, map_db_error};
 
 #[path = "postgres_migrations.rs"]
 mod postgres_migrations;
@@ -76,7 +72,7 @@ impl PostgresStore {
             .collect())
     }
 
-    async fn client(&self) -> Result<Client, StoreError> {
+    pub(crate) async fn client(&self) -> Result<Client, StoreError> {
         let (client, connection) = tokio_postgres::connect(&self.database_url, NoTls)
             .await
             .map_err(map_db_error)?;
@@ -88,113 +84,8 @@ impl PostgresStore {
         Ok(client)
     }
 
-    async fn rollback(client: &Client) {
+    pub(crate) async fn rollback(client: &Client) {
         let _ = client.batch_execute("ROLLBACK").await;
-    }
-}
-
-#[async_trait]
-impl RuntimeStateStore for PostgresStore {
-    async fn load_runtime_state(
-        &self,
-        query: &RuntimeStateQuery,
-    ) -> Result<RuntimeStateSummary, StoreError> {
-        let client = self.client().await?;
-        let account_row = client
-            .query_opt(
-                "SELECT status, kill_switch_enabled FROM runtime_accounts WHERE account_id = $1",
-                &[&query.account_id],
-            )
-            .await
-            .map_err(map_db_error)?;
-        let (account_status, kill_switch_enabled) = if let Some(row) = account_row {
-            (Some(row.get::<_, String>(0)), row.get::<_, bool>(1))
-        } else {
-            (None, true)
-        };
-
-        let geoblock_status = geoblock_from_runtime_account_status(account_status.as_deref());
-
-        let collateral_profile_status = if let Some(profile_id) = &query.collateral_profile_id {
-            let row = client
-                .query_opt(
-                    "SELECT status FROM collateral_profiles WHERE profile_id = $1",
-                    &[profile_id],
-                )
-                .await
-                .map_err(map_db_error)?;
-            let status = row.map(|row| row.get::<_, String>(0));
-            collateral_status_from_db(status.as_deref(), true)
-        } else {
-            let row = client
-                .query_opt(
-                    "SELECT status FROM collateral_profiles WHERE status IN ('DEFAULT', 'DEFAULT_RESOLVED', 'RESOLVED') ORDER BY created_at DESC LIMIT 1",
-                    &[],
-                )
-                .await
-                .map_err(map_db_error)?;
-            let status = row.map(|row| row.get::<_, String>(0));
-            collateral_status_from_db(status.as_deref(), false)
-        };
-
-        let mut required_capabilities = query.required_capabilities.clone();
-        if required_capabilities.is_empty() {
-            required_capabilities = vec![
-                "heartbeat".into(),
-                "reconcile".into(),
-                "resource-refresh".into(),
-            ];
-        }
-        let mut worker_rows = Vec::new();
-        for capability in &required_capabilities {
-            if let Some(row) = client
-                .query_opt(
-                    "SELECT status, last_heartbeat_at FROM worker_health WHERE capability = $1 ORDER BY updated_at DESC LIMIT 1",
-                    &[capability],
-                )
-                .await
-                .map_err(map_db_error)?
-            {
-                worker_rows.push((
-                    row.get::<_, String>(0),
-                    row.get::<_, chrono::DateTime<Utc>>(1),
-                ));
-            }
-        }
-
-        let base = RuntimeStateSummary {
-            geoblock_status,
-            worker_status: worker_status_from_rows(&worker_rows, required_capabilities.len()),
-            collateral_profile_status,
-            kill_switch_enabled,
-            required_capabilities,
-        };
-        let observation_ttl_seconds: i32 = runtime_observation_ttl_seconds() as i32;
-        let observation_rows = client
-            .query(
-                "SELECT DISTINCT ON (capability)
-                    account_id, capability, worker_kind, status, should_fail_closed, reason, observed_at
-                 FROM runtime_worker_observations
-                 WHERE account_id = $1
-                   AND observed_at >= now() - ($2::integer * interval '1 second')
-                 ORDER BY capability, observed_at DESC, observation_id DESC",
-                &[&query.account_id, &observation_ttl_seconds],
-            )
-            .await
-            .map_err(map_db_error)?;
-        let observations: Vec<RuntimeWorkerObservation> = observation_rows
-            .into_iter()
-            .map(|row| RuntimeWorkerObservation {
-                account_id: row.get(0),
-                capability: row.get(1),
-                worker_kind: row.get(2),
-                status: row.get(3),
-                should_fail_closed: row.get(4),
-                reason: row.get(5),
-                observed_at: Some(row.get(6)),
-            })
-            .collect();
-        Ok(apply_runtime_worker_observations(base, &observations))
     }
 }
 
