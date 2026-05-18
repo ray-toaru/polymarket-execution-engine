@@ -1,6 +1,5 @@
 use crate::backend::{AppState, CONTRACT_VERSION};
-use crate::model::*;
-use crate::support::{ApiResult, require, service_error, validate_auth_config_from_env};
+use crate::support::{ApiResult, require, validate_auth_config_from_env};
 use axum::{
     Json, Router,
     extract::State,
@@ -8,31 +7,28 @@ use axum::{
     routing::{get, post},
 };
 use pmx_authz::Operation;
-use pmx_core::*;
-use pmx_service::{
-    StandardSignOnlyConstructionReceipt, StandardSignOnlyConstructionRequest, SubmitOutcome,
-};
 use pmx_store::PostgresStore;
 
 mod admin;
+mod flow;
 mod read;
 
 fn router_with_state(state: AppState) -> Router {
     Router::new()
         .route("/v1/health", get(health))
-        .route("/v1/intents/normalize", post(normalize))
-        .route("/v1/snapshots/capture", post(capture_snapshot))
-        .route("/v1/decisions/evaluate", post(decide))
-        .route("/v1/plans/compile", post(compile_plan))
-        .route("/v1/submissions", post(submit_plan))
+        .route("/v1/intents/normalize", post(flow::normalize))
+        .route("/v1/snapshots/capture", post(flow::capture_snapshot))
+        .route("/v1/decisions/evaluate", post(flow::decide))
+        .route("/v1/plans/compile", post(flow::compile_plan))
+        .route("/v1/submissions", post(flow::submit_plan))
         .route("/v1/submissions/:execution_id", get(read::get_submission))
         .route(
             "/v1/sign-only/lifecycle-events",
-            post(record_sign_only_lifecycle_event),
+            post(flow::record_sign_only_lifecycle_event),
         )
         .route(
             "/v1/sign-only/standard-constructions",
-            post(record_standard_sign_only_construction),
+            post(flow::record_standard_sign_only_construction),
         )
         .route(
             "/v1/sign-only/lifecycle-events/:execution_id",
@@ -112,117 +108,4 @@ async fn health(State(state): State<AppState>, headers: HeaderMap) -> ApiResult<
             }
         })),
     ))
-}
-
-async fn normalize(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Json(intent): Json<TradeIntent>,
-) -> ApiResult<NormalizedIntent> {
-    require(&headers, Operation::NormalizeIntent)?;
-    let normalized = state
-        .service
-        .normalize(intent)
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::OK, Json(normalized)))
-}
-
-async fn capture_snapshot(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Json(intent): Json<NormalizedIntent>,
-) -> ApiResult<FeasibilitySnapshot> {
-    require(&headers, Operation::CaptureSnapshot)?;
-    let snapshot = state
-        .service
-        .capture_snapshot(intent)
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::OK, Json(snapshot)))
-}
-
-async fn decide(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Json(req): Json<DecisionRequest>,
-) -> ApiResult<ConstraintDecision> {
-    require(&headers, Operation::EvaluateDecision)?;
-    let decision = state
-        .service
-        .evaluate_decision_by_id(pmx_service::DecisionByIdRequest {
-            normalized_intent_id: req.normalized_intent_id,
-            snapshot_id: req.snapshot_id,
-        })
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::OK, Json(decision)))
-}
-
-async fn compile_plan(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Json(req): Json<CompilePlanRequest>,
-) -> ApiResult<ExecutionPlanSummary> {
-    require(&headers, Operation::CompilePlan)?;
-    let plan = state
-        .service
-        .compile_plan_by_id(pmx_service::CompilePlanByIdCommand {
-            normalized_intent_id: req.normalized_intent_id,
-            snapshot_id: req.snapshot_id,
-            decision_id: req.decision_id,
-            approval: req.approval,
-        })
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::OK, Json(plan)))
-}
-
-async fn submit_plan(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Json(req): Json<SubmitPlanRequest>,
-) -> ApiResult<SubmitReceipt> {
-    require(&headers, Operation::SubmitPlan)?;
-    let outcome = state
-        .service
-        .submit_plan(pmx_service::SubmitPlanCommand {
-            execution_id: req.execution_id,
-            plan_hash: req.plan_hash,
-            idempotency_key: req.idempotency_key,
-        })
-        .await
-        .map_err(service_error)?;
-    match outcome {
-        SubmitOutcome::Accepted(receipt) => Ok((StatusCode::ACCEPTED, Json(receipt))),
-        SubmitOutcome::Replayed(receipt) => Ok((StatusCode::OK, Json(receipt))),
-    }
-}
-
-async fn record_sign_only_lifecycle_event(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Json(record): Json<SignOnlyLifecycleRecord>,
-) -> ApiResult<SignOnlyLifecycleRecord> {
-    require(&headers, Operation::RecordSignOnlyLifecycle)?;
-    let recorded = state
-        .service
-        .record_sign_only_lifecycle_event(record)
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::ACCEPTED, Json(recorded)))
-}
-
-async fn record_standard_sign_only_construction(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Json(req): Json<StandardSignOnlyConstructionRequest>,
-) -> ApiResult<StandardSignOnlyConstructionReceipt> {
-    require(&headers, Operation::RecordSignOnlyLifecycle)?;
-    let receipt = state
-        .service
-        .record_standard_sign_only_construction(req)
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::ACCEPTED, Json(receipt)))
 }
