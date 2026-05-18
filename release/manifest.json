@@ -2,7 +2,7 @@
   "project": "polymarket-execution-engine",
   "version": "0.24.0",
   "contract_version": "1.0.0-draft",
-  "status": "v0.24-shadow-ready-baseline-source-candidate-not-production-not-live",
+  "status": "v0.24-shadow-ready-candidate-not-production-not-live",
   "official_sdk_strategy": "sdk-first",
   "official_sdk_crate": "polymarket_client_sdk_v2",
   "official_sdk_version": "=0.6.0-canary.1",

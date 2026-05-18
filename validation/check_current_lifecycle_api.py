@@ -217,7 +217,7 @@ REQUIRED = {
         "version consistency passed",
         "run_current_gates.sh",
         "run_v0_24_gates.sh",
-        "source-candidate",
+        "shadow-ready-candidate",
     ],
     HERMES_CLIENT: [
         "record_sign_only_lifecycle_event",

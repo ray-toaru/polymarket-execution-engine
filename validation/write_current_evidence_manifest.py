@@ -268,7 +268,10 @@ def main(argv: list[str]) -> int:
     ]
     data["release_decision"] = {
         "validated_release": False,
-        "reason": "Source candidate. Do not mark validated_release=true until all required evidence sections pass and artifact.sha256 matches the final package.",
+        "status": "shadow-ready candidate",
+        "production_ready": False,
+        "live_trading_ready": False,
+        "reason": "Shadow-ready candidate. Required source, Rust, PostgreSQL, SDK, credentialed smoke, sign-only dry-run, local static, drill, governance, and artifact checks are bound in current evidence; production and live trading remain explicitly unapproved.",
         "required_non_optional_sections": required_non_optional,
     }
     OUT.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")

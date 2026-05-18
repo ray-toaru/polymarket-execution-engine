@@ -1,8 +1,8 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.94s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.99s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-adapter/target/debug/deps/pmx_official_sdk_adapter-532cb0c60391db28)
 
 running 1 test
 test tests::sign_only_dry_run_executes_when_enabled ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 37 filtered out; finished in 2.82s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 37 filtered out; finished in 3.36s
 
