@@ -18,6 +18,13 @@ material exposure, or production-readiness claims.
 4. SDK adapter config, signer boundary, transport, dry-run, and error mapping.
 5. Service orchestration only after lower-level modules are stable.
 
+## Current progress
+
+- First behavior-preserving split batch moved sign-only lifecycle and standard
+  construction into separate `pmx-service::sign_only` submodules.
+- PostgreSQL admin audit and execution lifecycle persistence were separated
+  under `pmx-store::postgres_audit` implementation modules.
+
 ## Per-step rules
 
 - One small module move per commit.
