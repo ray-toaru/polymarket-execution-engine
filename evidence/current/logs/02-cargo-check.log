@@ -1,1 +1,3 @@
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.38s
+    Checking pmx-service v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
+    Checking pmx-api v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.74s

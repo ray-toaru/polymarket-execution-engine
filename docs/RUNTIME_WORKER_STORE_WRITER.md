@@ -10,11 +10,15 @@ Implemented:
 - `worker_actions_from_runtime_signals()` classifies whether the signal should fail closed.
 - `runtime_worker_store_writes()` produces deterministic store-write payloads.
 - `RuntimeWorkerObservationStore` persists observations to `runtime_worker_observations`.
+- `record_heartbeat_lease_from_worker_status()` persists local heartbeat lease
+  health, reads persisted lease candidates from `worker_health`, elects the
+  owner, and writes fail-closed runtime observations through the store-backed
+  provider bridge. It is covered by in-memory and PostgreSQL-backed service
+  tests.
 
 Not implemented yet:
 
 - Actual WebSocket readers.
-- Actual heartbeat lease renewer.
 - Actual geoblock HTTP provider.
 - Actual reconcile backlog worker.
 - Truth-table updates that drive `RuntimeStateProvider` in production.

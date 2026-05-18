@@ -68,6 +68,14 @@ record_heartbeat_lease_election_tick()` persists that result through the same
 provider snapshot bridge, so stale lease ownership becomes a runtime blocker
 before submit decisions.
 
+`pmx-service::record_heartbeat_lease_from_worker_status()` is the persisted
+heartbeat lease worker boundary. It records the local worker heartbeat into
+`worker_health`, reads heartbeat-lease candidates back through
+`RuntimeWorkerStatusStore`, elects the owner, writes the resulting runtime
+observation, and keeps the local heartbeat capability visible as
+`heartbeat-lease`. This remains local-only and non-trading: it does not open
+network streams, submit, cancel, or read remote orders.
+
 `pmx-runtime::evaluate_resource_refresh_freshness()` models the resource
 refresh worker without I/O. It requires every account, market, and collateral
 observation supplied by the caller to be both fresh and healthy; missing, stale,
