@@ -1,5 +1,5 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.33s
-     Running unittests src/lib.rs (target/debug/deps/pmx_authz-a8b87e591d442027)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.28s
+     Running unittests src/lib.rs (target/debug/deps/pmx_authz-a32e66cbe17c5ea4)
 
 running 2 tests
 test tests::admin_can_cancel ... ok
@@ -7,7 +7,7 @@ test tests::service_cannot_cancel ... ok
 
 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_core-e4a213508822c55f)
+     Running unittests src/lib.rs (target/debug/deps/pmx_core-5d88f46b7ccea11a)
 
 running 18 tests
 test tests::buy_notional_canonicalizes_to_quote_bound ... ok
@@ -31,7 +31,7 @@ test tests::unsupported_cross_quantity_is_explicit ... ok
 
 test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_gateway-9ac8ed762dd54c26)
+     Running unittests src/lib.rs (target/debug/deps/pmx_gateway-92f89013b589185a)
 
 running 9 tests
 test tests::deterministic_signer_provider_posts_reads_and_cancels ... ok
@@ -46,7 +46,7 @@ test tests::signer_provider_defaults_are_production_conservative ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_policy-ab9cf5ea4c3fabab)
+     Running unittests src/lib.rs (target/debug/deps/pmx_policy-b6d89b33e5acbd5a)
 
 running 3 tests
 test tests::degraded_worker_blocks_pre_live ... ok
@@ -55,14 +55,14 @@ test tests::geoblock_unknown_blocks ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_release-317f86b8f1d7f2d1)
+     Running unittests src/lib.rs (target/debug/deps/pmx_release-3f94d61f92c9d4ec)
 
 running 1 test
 test tests::rejects_release_regression ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_runtime-4c1380bfa19309de)
+     Running unittests src/lib.rs (target/debug/deps/pmx_runtime-b7a516371cb7e01c)
 
 running 21 tests
 test capability_tests_v07::all_capabilities_preserves_account_market_asset_worker_groups ... ok
@@ -89,7 +89,7 @@ test tests::worker_actions_mark_stale_runtime_inputs_as_fail_closed_updates ... 
 
 test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_service-66b940741d1a3ea4)
+     Running unittests src/lib.rs (target/debug/deps/pmx_service-08849bd023999c2b)
 
 running 22 tests
 test tests::service_classifies_and_records_order_lifecycle_divergence_without_remote_side_effect ... ok
@@ -115,9 +115,9 @@ test tests::service_validates_and_persists_sign_only_lifecycle_sequence ... ok
 test tests::static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks ... ok
 test tests::store_backed_runtime_provider_uses_store_state ... ok
 
-test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_store-0d1bb31d4413cde9)
+     Running unittests src/lib.rs (target/debug/deps/pmx_store-3bad928257c8dd0c)
 
 running 35 tests
 test admin_audit_tests::in_memory_admin_audit_records_without_exposing_secrets ... ok

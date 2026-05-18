@@ -7,7 +7,7 @@
   "official_sdk_crate": "polymarket_client_sdk_v2",
   "official_sdk_version": "=0.6.0-canary.1",
   "rust_msrv": "1.88.0",
-  "evidence_status": "v0.24.0 shadow-ready baseline: Rust, SDK, PostgreSQL, credentialed non-trading smoke, sign-only dry-run, shadow execution, reconciliation drift, rollback, observability, local static, contract, artifact, and governance gates must be regenerated for the final v0.24.0 artifact; live submit/cancel remain blocked.",
+  "evidence_status": "v0.24.0 shadow-ready baseline: Rust, SDK, PostgreSQL, credentialed non-trading smoke, sign-only dry-run, shadow execution, reconciliation drift, rollback, observability, local static, contract, artifact, and governance gates passed in the recorded local environment; live submit/cancel remain blocked.",
   "validated_gates_landed": [
     "cargo-fmt-v0.10",
     "cargo-check-v0.10",
