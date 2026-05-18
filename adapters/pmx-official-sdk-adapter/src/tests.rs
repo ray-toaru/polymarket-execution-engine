@@ -1,5 +1,6 @@
 use super::*;
 use pmx_core::{AccountId, ExecutionId, GeoblockStatus, HashValue, SignOnlyLifecycleState};
+use pmx_gateway::GatewayError;
 
 fn empty_credentials() -> AdapterCredentialSnapshot {
     AdapterCredentialSnapshot {
