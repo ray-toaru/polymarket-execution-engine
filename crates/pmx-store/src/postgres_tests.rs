@@ -7,8 +7,9 @@ use pmx_core::sign_only_lifecycle_records_equivalent;
 mod tests {
     use super::*;
     use pmx_core::{
-        AccountId, DecimalString, ExecutionId, OrderReservation, QuantityBound, ReservationState,
-        SubmitReceipt, SubmitStatus,
+        AccountId, CollateralProfileStatus, DecimalString, ExecutionId, GeoblockStatus,
+        OrderReservation, QuantityBound, ReservationState, SubmitReceipt, SubmitStatus,
+        WorkerStatus,
     };
     use std::time::{SystemTime, UNIX_EPOCH};
 
