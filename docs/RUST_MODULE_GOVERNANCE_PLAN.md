@@ -52,6 +52,10 @@ material exposure, or production-readiness claims.
 - HTTP PostgreSQL API E2E tests now live in focused
   `pmx-api::tests::http_postgres_e2e` modules; the parent file only keeps
   shared request/seed helpers and module declarations.
+- Official SDK adapter tests now live in focused
+  `pmx-official-sdk-adapter::tests` modules for canary/config, sign-only,
+  mapping, liveness/error redaction, and feature-gated smoke/typecheck paths.
+  The parent file only keeps shared helpers and module declarations.
 
 ## Per-step rules
 
