@@ -13,6 +13,7 @@ Exercise the official SDK order builder and signing path without calling `post_o
 ```text
 PMX_RUN_SIGN_ONLY_DRY_RUN=1
 PMX_ALLOW_SIGN_ONLY_DRY_RUN=1
+PMX_SDK_CALL_TIMEOUT_SECS defaults to 30 in validation/run_current_gates.sh
 PMX_ALLOW_LIVE_SUBMIT must be unset or false
 live-submit Cargo feature must be disabled
 kill switch may remain closed
@@ -54,6 +55,9 @@ reservation consume as posted
 ```text
 - LIMIT path is wired through official SDK builder + sign()
 - token_id must resolve to a real market because SDK fetches tick size / fee metadata before sign
+- current full-gate validation widens SDK remote-call timeout to 30 seconds to
+  reduce false negatives from public metadata latency while preserving
+  non-posting behavior
 - MARKET path remains mapping-only; posting and live submit remain disabled
 - no post_order call exists in the sign-only code path
 ```

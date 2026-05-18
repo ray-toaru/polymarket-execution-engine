@@ -17,6 +17,9 @@ fi
 # Official SDK feature checks pull alloy/aws-lc/rustls/icu. Keep low-resource defaults stable.
 export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
 export RUSTFLAGS="${RUSTFLAGS:--C debuginfo=0}"
+# Credentialed SDK calls depend on remote CLOB metadata/auth responses and need a
+# slightly wider timeout than local/unit/static gates to avoid false negatives.
+export PMX_SDK_CALL_TIMEOUT_SECS="${PMX_SDK_CALL_TIMEOUT_SECS:-30}"
 
 cd "${ROOT}"
 

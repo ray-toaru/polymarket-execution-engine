@@ -1,5 +1,4 @@
-   Compiling pmx-runtime v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.49s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.28s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-0c3b29e6cdffcd0b)
 
 running 2 tests
@@ -120,7 +119,7 @@ test service::tests::sign_only::service_rejects_malformed_standard_sign_only_dig
 test service::tests::sign_only::service_rejects_sign_only_sequence_mismatch ... ok
 test service::tests::sign_only::service_validates_and_persists_sign_only_lifecycle_sequence ... ok
 
-test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-d75ca96a461a9981)
 

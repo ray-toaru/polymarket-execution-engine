@@ -59,6 +59,10 @@ material exposure, or production-readiness claims.
 - Runtime model tests now live in focused `pmx-runtime::runtime_tests` modules
   for breakdown/loop behavior and capability evaluations; the parent file only
   keeps module declarations.
+- HTTP fake/in-memory API E2E tests now live in focused
+  `pmx-api::tests::http_and_fake_e2e` modules for auth/smoke, scaffolded
+  lifecycle coverage, and negative startup/object-graph paths; the parent file
+  only keeps shared helpers and module declarations.
 
 ## Per-step rules
 
