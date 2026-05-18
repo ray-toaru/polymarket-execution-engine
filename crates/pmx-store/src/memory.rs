@@ -1,4 +1,4 @@
-use async_trait::async_trait;
+#[cfg(test)]
 use chrono::Utc;
 #[cfg(test)]
 use pmx_core::{CollateralProfileStatus, GeoblockStatus, WorkerStatus};
@@ -10,16 +10,15 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 mod audit;
+mod execution;
 mod idempotency;
+mod lifecycle;
 mod order_lifecycle;
 mod runtime;
 
 use crate::{
-    AdminAuditEvent, ExecutionLifecycleEvent, ExecutionLifecycleQuery, ExecutionLifecycleStore,
-    ExecutionStore, OrderLifecycleEventRecord, OrderLifecycleRecord, RuntimeWorkerHeartbeat,
-    RuntimeWorkerObservation, SignOnlyLifecycleQuery, SignOnlyLifecycleStore, StoreError,
-    sanitize_execution_lifecycle_event, sanitize_sign_only_lifecycle_record,
-    sign_only_lifecycle_record_is_replay, validate_sign_only_lifecycle_append_for_store,
+    AdminAuditEvent, ExecutionLifecycleEvent, OrderLifecycleEventRecord, OrderLifecycleRecord,
+    RuntimeWorkerHeartbeat, RuntimeWorkerObservation,
 };
 
 #[derive(Clone, Default)]
@@ -65,224 +64,6 @@ fn identity(account_id: &str, execution_id: &str, idempotency_key: &str) -> Stri
 
 fn attempt_counter_key(account_id: &str, execution_id: &str) -> String {
     format!("{account_id}\u{1f}{execution_id}")
-}
-
-#[async_trait]
-impl ExecutionStore for InMemoryStore {
-    async fn save_normalized_intent(&self, intent: &NormalizedIntent) -> Result<(), StoreError> {
-        self.inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .normalized
-            .insert(intent.normalized_intent_id.clone(), intent.clone());
-        Ok(())
-    }
-
-    async fn load_normalized_intent(
-        &self,
-        normalized_intent_id: &str,
-    ) -> Result<NormalizedIntent, StoreError> {
-        self.inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .normalized
-            .get(normalized_intent_id)
-            .cloned()
-            .ok_or_else(|| {
-                StoreError::NotFound(format!("normalized_intent_id={normalized_intent_id}"))
-            })
-    }
-
-    async fn save_snapshot(&self, snapshot: &FeasibilitySnapshot) -> Result<(), StoreError> {
-        self.inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .snapshots
-            .insert(snapshot.snapshot_id.clone(), snapshot.clone());
-        Ok(())
-    }
-
-    async fn load_snapshot(&self, snapshot_id: &str) -> Result<FeasibilitySnapshot, StoreError> {
-        self.inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .snapshots
-            .get(snapshot_id)
-            .cloned()
-            .ok_or_else(|| StoreError::NotFound(format!("snapshot_id={snapshot_id}")))
-    }
-
-    async fn save_decision(&self, decision: &ConstraintDecision) -> Result<(), StoreError> {
-        self.inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .decisions
-            .insert(decision.decision_id.clone(), decision.clone());
-        Ok(())
-    }
-
-    async fn load_decision(&self, decision_id: &str) -> Result<ConstraintDecision, StoreError> {
-        self.inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .decisions
-            .get(decision_id)
-            .cloned()
-            .ok_or_else(|| StoreError::NotFound(format!("decision_id={decision_id}")))
-    }
-
-    async fn save_plan_summary(&self, plan: &ExecutionPlanSummary) -> Result<(), StoreError> {
-        self.inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .plans
-            .insert(plan.execution_id.clone(), plan.clone());
-        Ok(())
-    }
-
-    async fn load_plan_summary(
-        &self,
-        execution_id: &str,
-    ) -> Result<ExecutionPlanSummary, StoreError> {
-        self.inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .plans
-            .get(execution_id)
-            .cloned()
-            .ok_or_else(|| StoreError::NotFound(format!("execution_id={execution_id}")))
-    }
-
-    async fn save_order_reservation(
-        &self,
-        reservation: &OrderReservation,
-    ) -> Result<(), StoreError> {
-        self.inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .reservations
-            .insert(reservation.reservation_id.clone(), reservation.clone());
-        Ok(())
-    }
-
-    async fn record_submit_receipt(&self, receipt: &SubmitReceipt) -> Result<(), StoreError> {
-        self.inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .receipts
-            .insert(receipt.execution_id.clone(), receipt.clone());
-        Ok(())
-    }
-
-    async fn load_submit_receipt(&self, execution_id: &str) -> Result<SubmitReceipt, StoreError> {
-        self.inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .receipts
-            .get(execution_id)
-            .cloned()
-            .ok_or_else(|| StoreError::NotFound(format!("execution_id={execution_id}")))
-    }
-}
-
-#[async_trait]
-impl ExecutionLifecycleStore for InMemoryStore {
-    async fn record_execution_lifecycle_event(
-        &self,
-        event: &ExecutionLifecycleEvent,
-    ) -> Result<(), StoreError> {
-        let mut state = self.inner.lock().expect("in-memory store mutex poisoned");
-        state.lifecycle_event_counter += 1;
-        let mut stored = sanitize_execution_lifecycle_event(event.clone());
-        stored.event_id = Some(state.lifecycle_event_counter);
-        stored.created_at = Some(Utc::now());
-        state.lifecycle_events.push(stored);
-        Ok(())
-    }
-
-    async fn list_execution_lifecycle_events(
-        &self,
-        query: &ExecutionLifecycleQuery,
-    ) -> Result<Vec<ExecutionLifecycleEvent>, StoreError> {
-        let mut events: Vec<_> = self
-            .inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .lifecycle_events
-            .iter()
-            .filter(|event| event.execution_id == query.execution_id)
-            .filter(|event| {
-                query
-                    .before_event_id
-                    .map(|before| event.event_id.unwrap_or(i64::MAX) < before)
-                    .unwrap_or(true)
-            })
-            .cloned()
-            .collect();
-        events.sort_by_key(|event| event.event_id.unwrap_or(0));
-        events.reverse();
-        events.truncate(query.bounded_limit());
-        events.reverse();
-        Ok(events)
-    }
-}
-
-#[async_trait]
-impl SignOnlyLifecycleStore for InMemoryStore {
-    async fn record_sign_only_lifecycle_event(
-        &self,
-        record: &SignOnlyLifecycleRecord,
-    ) -> Result<(), StoreError> {
-        let mut state = self.inner.lock().expect("in-memory store mutex poisoned");
-        if !state.plans.contains_key(&record.execution_id.0) {
-            return Err(StoreError::NotFound(format!(
-                "execution_id={}",
-                record.execution_id.0
-            )));
-        }
-        let existing: Vec<_> = state
-            .sign_only_lifecycle_events
-            .iter()
-            .filter(|existing| existing.execution_id == record.execution_id)
-            .cloned()
-            .collect();
-        if sign_only_lifecycle_record_is_replay(&existing, record)? {
-            return Ok(());
-        }
-        validate_sign_only_lifecycle_append_for_store(&existing, record)?;
-        state.sign_only_event_counter += 1;
-        let mut stored = sanitize_sign_only_lifecycle_record(record.clone());
-        stored.event_id = Some(state.sign_only_event_counter);
-        stored.created_at = Some(Utc::now());
-        state.sign_only_lifecycle_events.push(stored);
-        Ok(())
-    }
-
-    async fn list_sign_only_lifecycle_events(
-        &self,
-        query: &SignOnlyLifecycleQuery,
-    ) -> Result<Vec<SignOnlyLifecycleRecord>, StoreError> {
-        let mut records: Vec<_> = self
-            .inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .sign_only_lifecycle_events
-            .iter()
-            .filter(|record| record.execution_id.0 == query.execution_id)
-            .filter(|record| {
-                query
-                    .before_event_id
-                    .map(|before| record.event_id.unwrap_or(i64::MAX) < before)
-                    .unwrap_or(true)
-            })
-            .cloned()
-            .collect();
-        records.sort_by_key(|record| record.event_id.unwrap_or(0));
-        records.reverse();
-        records.truncate(query.bounded_limit());
-        records.reverse();
-        Ok(records)
-    }
 }
 
 #[cfg(test)]
