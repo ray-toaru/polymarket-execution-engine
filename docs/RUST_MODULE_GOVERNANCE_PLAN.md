@@ -36,6 +36,9 @@ material exposure, or production-readiness claims.
   `pmx-store::postgres_tests::sign_only` module.
 - PostgreSQL admin audit and submit idempotency PG tests now live in focused
   `pmx-store::postgres_tests` modules.
+- The remaining PostgreSQL schema, receipt/reservation, execution lifecycle,
+  and runtime-state PG tests now live in focused `pmx-store::postgres_tests`
+  modules; the parent file only keeps shared helpers and module declarations.
 
 ## Per-step rules
 
