@@ -1,3 +1,4 @@
+use crate::model::*;
 use axum::{
     Json, Router,
     extract::{Path, Query, State},
@@ -545,13 +546,6 @@ async fn capture_snapshot(
     Ok((StatusCode::OK, Json(snapshot)))
 }
 
-#[derive(serde::Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct DecisionRequest {
-    pub normalized_intent_id: String,
-    pub snapshot_id: String,
-}
-
 async fn decide(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -567,15 +561,6 @@ async fn decide(
         .await
         .map_err(service_error)?;
     Ok((StatusCode::OK, Json(decision)))
-}
-
-#[derive(serde::Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct CompilePlanRequest {
-    pub normalized_intent_id: String,
-    pub snapshot_id: String,
-    pub decision_id: String,
-    pub approval: ApprovalReceipt,
 }
 
 async fn compile_plan(
@@ -595,14 +580,6 @@ async fn compile_plan(
         .await
         .map_err(service_error)?;
     Ok((StatusCode::OK, Json(plan)))
-}
-
-#[derive(serde::Deserialize, serde::Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct SubmitPlanRequest {
-    pub execution_id: String,
-    pub plan_hash: String,
-    pub idempotency_key: String,
 }
 
 async fn submit_plan(
@@ -666,21 +643,6 @@ async fn record_standard_sign_only_construction(
         .await
         .map_err(service_error)?;
     Ok((StatusCode::ACCEPTED, Json(receipt)))
-}
-
-#[derive(serde::Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct EventListQuery {
-    pub limit: Option<usize>,
-    pub before_event_id: Option<i64>,
-}
-
-#[derive(serde::Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct RuntimeWorkerStatusListQuery {
-    pub account_id: String,
-    pub limit: Option<usize>,
-    pub before_observed_at: Option<chrono::DateTime<Utc>>,
 }
 
 async fn list_sign_only_lifecycle_events(
@@ -758,17 +720,6 @@ async fn list_runtime_worker_status(
     Ok((StatusCode::OK, Json(report)))
 }
 
-#[derive(serde::Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct AuditQuery {
-    pub limit: Option<usize>,
-    pub before_audit_id: Option<i64>,
-    pub operation: Option<String>,
-    pub principal_subject: Option<String>,
-    pub result: Option<String>,
-    pub correlation_id: Option<String>,
-}
-
 async fn list_admin_audit_events(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -816,33 +767,6 @@ async fn set_kill_switch(
     )
     .await?;
     Ok((StatusCode::ACCEPTED, Json(receipt)))
-}
-
-#[derive(serde::Deserialize, serde::Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct CancelOrderRequest {
-    pub account_id: String,
-    pub order_id: String,
-    pub execution_id: Option<String>,
-    pub reason: String,
-}
-
-#[derive(serde::Deserialize, serde::Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct ReconcileOrderLocalRequest {
-    pub account_id: String,
-    pub order_id: String,
-    pub remote_observation: RemoteOrderObservation,
-    pub reason: String,
-}
-
-#[derive(serde::Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct ReconcileOrderLocalResponse {
-    pub order_id: String,
-    pub divergence: OrderLifecycleDivergence,
-    pub updated_order: Option<OrderLifecycleRecord>,
-    pub no_remote_side_effect: bool,
 }
 
 async fn cancel_order_placeholder(
