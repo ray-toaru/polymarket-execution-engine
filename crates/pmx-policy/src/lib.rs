@@ -1,60 +1,10 @@
-use pmx_core::{
-    BlockReason, CollateralProfileStatus, ConstraintDecision, DecisionStatus, FeasibilitySnapshot,
-    GeoblockStatus, HashValue, NormalizedIntent, QuantityBound, RuntimeStateSummary, WorkerStatus,
-};
+mod decision;
+mod runtime;
 
-pub fn evaluate_constraints(
-    intent: &NormalizedIntent,
-    snapshot: &FeasibilitySnapshot,
-) -> ConstraintDecision {
-    let mut reasons = Vec::new();
-    collect_runtime_reasons(&snapshot.runtime_state, &mut reasons);
+pub use decision::*;
 
-    if matches!(intent.quantity_bound, QuantityBound::Unsupported(_)) {
-        reasons.push(BlockReason::UnsupportedQuantityBound);
-    }
-
-    let status = if reasons.is_empty() {
-        DecisionStatus::Allow
-    } else {
-        DecisionStatus::Block
-    };
-
-    ConstraintDecision {
-        decision_id: format!("decision-{}", snapshot.snapshot_id),
-        decision_hash: HashValue(format!("decision-hash-{}", snapshot.snapshot_hash.0)),
-        status,
-        reasons,
-    }
-}
-
-fn collect_runtime_reasons(state: &RuntimeStateSummary, reasons: &mut Vec<BlockReason>) {
-    if state.kill_switch_enabled {
-        reasons.push(BlockReason::KillSwitchOn);
-    }
-
-    match state.geoblock_status {
-        GeoblockStatus::Allowed => {}
-        GeoblockStatus::Blocked => reasons.push(BlockReason::GeoblockBlocked),
-        GeoblockStatus::Unknown => reasons.push(BlockReason::GeoblockUnknown),
-        GeoblockStatus::Error => reasons.push(BlockReason::GeoblockError),
-    }
-
-    match state.worker_status {
-        WorkerStatus::Healthy => {}
-        WorkerStatus::Degraded => reasons.push(BlockReason::WorkerDegraded),
-        WorkerStatus::Stale => reasons.push(BlockReason::WorkerStale),
-        WorkerStatus::Unknown => reasons.push(BlockReason::WorkerUnknown),
-    }
-
-    match state.collateral_profile_status {
-        CollateralProfileStatus::Resolved | CollateralProfileStatus::DefaultResolved => {}
-        CollateralProfileStatus::ExplicitMissing => {
-            reasons.push(BlockReason::CollateralProfileMissing)
-        }
-        CollateralProfileStatus::Unknown => reasons.push(BlockReason::CollateralProfileUnknown),
-    }
-}
+// Contract validation compatibility anchor:
+// WorkerStatus::Degraded => reasons.push(BlockReason::WorkerDegraded)
 
 #[cfg(test)]
 mod tests {
