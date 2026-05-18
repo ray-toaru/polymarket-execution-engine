@@ -240,7 +240,7 @@ async fn http_postgres_backed_e2e_smoke() {
     let plan_hash = plan["plan_hash"].as_str().expect("plan_hash").to_owned();
     let submit_body = json!({
         "execution_id": execution_id.clone(),
-        "plan_hash": plan_hash,
+        "plan_hash": plan_hash.clone(),
         "idempotency_key": format!("idem-pg-e2e-{suffix}")
     });
     let (status, first_submit) = request_json(
@@ -292,46 +292,29 @@ async fn http_postgres_backed_e2e_smoke() {
     );
     assert_eq!(loaded_submit, first_submit);
 
-    for record in [
-        json!({
+    let digest = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    let (status, standard_sign_only) = request_json(
+        app.clone(),
+        "POST",
+        "/v1/sign-only/standard-constructions",
+        Some("service-token-pg-e2e"),
+        Some(json!({
             "execution_id": execution_id.clone(),
             "account_id": format!("acct-http-pg-e2e-{suffix}"),
-            "state": "RESERVATION_PREPARED",
-            "event": "PREPARE_RESERVATION",
-            "signed_order_ref": null,
+            "plan_hash": plan_hash,
+            "signed_order_ref": format!("sign-only:{execution_id}:digest-ref"),
+            "signed_order_digest": digest,
             "no_remote_side_effect": true
-        }),
-        json!({
-            "execution_id": execution_id.clone(),
-            "account_id": format!("acct-http-pg-e2e-{suffix}"),
-            "state": "SIGNING_REQUESTED",
-            "event": "REQUEST_SIGNING",
-            "signed_order_ref": null,
-            "no_remote_side_effect": true
-        }),
-        json!({
-            "execution_id": execution_id.clone(),
-            "account_id": format!("acct-http-pg-e2e-{suffix}"),
-            "state": "SIGNED_DRY_RUN",
-            "event": "SIGNED_WITHOUT_POST",
-            "signed_order_ref": format!("signed-order-ref-pg-e2e-{suffix}"),
-            "no_remote_side_effect": true
-        }),
-    ] {
-        let (status, recorded) = request_json(
-            app.clone(),
-            "POST",
-            "/v1/sign-only/lifecycle-events",
-            Some("service-token-pg-e2e"),
-            Some(record),
-        )
-        .await;
-        assert_eq!(
-            status,
-            StatusCode::ACCEPTED,
-            "sign-only PG lifecycle response: {recorded}"
-        );
-    }
+        })),
+    )
+    .await;
+    assert_eq!(
+        status,
+        StatusCode::ACCEPTED,
+        "standard sign-only PG response: {standard_sign_only}"
+    );
+    assert_eq!(standard_sign_only["no_remote_side_effect"], true);
+    assert_eq!(standard_sign_only["signed_order_digest"], digest);
     let sign_only_uri = format!("/v1/sign-only/lifecycle-events/{execution_id}");
     let (status, sign_only_records) = request_json(
         app.clone(),

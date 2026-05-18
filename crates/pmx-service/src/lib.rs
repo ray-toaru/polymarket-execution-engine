@@ -282,6 +282,7 @@ pub struct StandardSignOnlyConstructionRequest {
     pub account_id: String,
     pub plan_hash: String,
     pub signed_order_ref: String,
+    pub signed_order_digest: Option<String>,
     pub no_remote_side_effect: bool,
 }
 
@@ -290,6 +291,7 @@ pub struct StandardSignOnlyConstructionRequest {
 pub struct StandardSignOnlyConstructionReceipt {
     pub execution_id: String,
     pub signed_order_ref: String,
+    pub signed_order_digest: Option<String>,
     pub lifecycle_records: Vec<SignOnlyLifecycleRecord>,
     pub no_remote_side_effect: bool,
 }
@@ -1190,6 +1192,13 @@ where
                 "standard sign-only construction requires a redacted sign-only ref".into(),
             ));
         }
+        if let Some(digest) = req.signed_order_digest.as_deref()
+            && (digest.len() != 64 || !digest.chars().all(|ch| ch.is_ascii_hexdigit()))
+        {
+            return Err(ServiceError::BadRequest(
+                "signed_order_digest must be a 64-character hex SHA-256 digest".into(),
+            ));
+        }
         let plan = self.store.load_plan_summary(&req.execution_id).await?;
         if plan.account_id.0 != req.account_id {
             return Err(ServiceError::Conflict(
@@ -1243,6 +1252,7 @@ where
         Ok(StandardSignOnlyConstructionReceipt {
             execution_id: req.execution_id,
             signed_order_ref: req.signed_order_ref,
+            signed_order_digest: req.signed_order_digest,
             lifecycle_records,
             no_remote_side_effect: true,
         })
@@ -1915,12 +1925,19 @@ mod tests {
                 account_id: "acct-sdk-standard".into(),
                 plan_hash: "hash-exec-sdk-standard".into(),
                 signed_order_ref: "sign-only:digest-ref".into(),
+                signed_order_digest: Some(
+                    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".into(),
+                ),
                 no_remote_side_effect: true,
             })
             .await
             .expect("record standard sign-only construction");
 
         assert!(receipt.no_remote_side_effect);
+        assert_eq!(
+            receipt.signed_order_digest.as_deref(),
+            Some("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
+        );
         assert_eq!(receipt.lifecycle_records.len(), 3);
         assert_eq!(
             receipt.lifecycle_records.last().unwrap().state,
@@ -1935,6 +1952,32 @@ mod tests {
                 .as_deref(),
             Some("sign-only:digest-ref")
         );
+    }
+
+    #[tokio::test]
+    async fn service_rejects_malformed_standard_sign_only_digest() {
+        let store = InMemoryStore::default();
+        let service = ExecutorService::new(store.clone());
+        seed_test_plan(
+            &store,
+            "exec-sdk-standard-bad-digest",
+            "acct-sdk-standard-bad-digest",
+        )
+        .await;
+
+        let err = service
+            .record_standard_sign_only_construction(StandardSignOnlyConstructionRequest {
+                execution_id: "exec-sdk-standard-bad-digest".into(),
+                account_id: "acct-sdk-standard-bad-digest".into(),
+                plan_hash: "hash-exec-sdk-standard-bad-digest".into(),
+                signed_order_ref: "sign-only:digest-ref".into(),
+                signed_order_digest: Some("not-a-sha256".into()),
+                no_remote_side_effect: true,
+            })
+            .await
+            .expect_err("malformed digest must be rejected");
+
+        assert!(matches!(err, ServiceError::BadRequest(_)));
     }
 
     #[tokio::test]

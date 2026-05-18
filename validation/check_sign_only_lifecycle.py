@@ -12,6 +12,8 @@ POSTGRES = ROOT / "crates" / "pmx-store" / "src" / "postgres.rs"
 MIGRATION = ROOT / "migrations" / "0001_initial.sql"
 ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src" / "lib.rs"
 SERVICE = ROOT / "crates" / "pmx-service" / "src" / "lib.rs"
+API = ROOT / "crates" / "pmx-api" / "src" / "lib.rs"
+OPENAPI = ROOT / "openapi" / "executor.v1.yaml"
 
 REQUIRED = {
     CORE: [
@@ -48,6 +50,15 @@ REQUIRED = {
         "StandardSignOnlyConstructionReceipt",
         "record_standard_sign_only_construction",
         "service_records_standard_sign_only_construction_without_raw_payload",
+    ],
+    API: [
+        "/v1/sign-only/standard-constructions",
+        "record_standard_sign_only_construction",
+    ],
+    OPENAPI: [
+        "/v1/sign-only/standard-constructions",
+        "StandardSignOnlyConstructionRequest",
+        "StandardSignOnlyConstructionReceipt",
     ],
 }
 

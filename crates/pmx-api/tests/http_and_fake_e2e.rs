@@ -211,7 +211,7 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
         Some("service-token-test-v07"),
         Some(json!({
             "execution_id": execution_id.clone(),
-            "plan_hash": plan_hash,
+            "plan_hash": plan_hash.clone(),
             "idempotency_key": "idem-v07-1"
         })),
     )
@@ -233,46 +233,29 @@ async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
     .await;
     assert_eq!(status, StatusCode::OK, "submission response: {submission}");
 
-    for record in [
-        json!({
+    let digest = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    let (status, standard_sign_only) = request_json(
+        app.clone(),
+        "POST",
+        "/v1/sign-only/standard-constructions",
+        Some("service-token-test-v07"),
+        Some(json!({
             "execution_id": execution_id.clone(),
             "account_id": "acct-http-e2e-1",
-            "state": "RESERVATION_PREPARED",
-            "event": "PREPARE_RESERVATION",
-            "signed_order_ref": null,
+            "plan_hash": plan_hash,
+            "signed_order_ref": format!("sign-only:{execution_id}:digest-ref"),
+            "signed_order_digest": digest,
             "no_remote_side_effect": true
-        }),
-        json!({
-            "execution_id": execution_id.clone(),
-            "account_id": "acct-http-e2e-1",
-            "state": "SIGNING_REQUESTED",
-            "event": "REQUEST_SIGNING",
-            "signed_order_ref": null,
-            "no_remote_side_effect": true
-        }),
-        json!({
-            "execution_id": execution_id.clone(),
-            "account_id": "acct-http-e2e-1",
-            "state": "SIGNED_DRY_RUN",
-            "event": "SIGNED_WITHOUT_POST",
-            "signed_order_ref": "signed-order-ref-v23-fake",
-            "no_remote_side_effect": true
-        }),
-    ] {
-        let (status, recorded) = request_json(
-            app.clone(),
-            "POST",
-            "/v1/sign-only/lifecycle-events",
-            Some("service-token-test-v07"),
-            Some(record),
-        )
-        .await;
-        assert_eq!(
-            status,
-            StatusCode::ACCEPTED,
-            "sign-only lifecycle response: {recorded}"
-        );
-    }
+        })),
+    )
+    .await;
+    assert_eq!(
+        status,
+        StatusCode::ACCEPTED,
+        "standard sign-only response: {standard_sign_only}"
+    );
+    assert_eq!(standard_sign_only["no_remote_side_effect"], true);
+    assert_eq!(standard_sign_only["signed_order_digest"], digest);
 
     let sign_only_uri = format!("/v1/sign-only/lifecycle-events/{execution_id}");
     let (status, sign_only_records) = request_json(

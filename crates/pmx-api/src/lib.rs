@@ -7,7 +7,10 @@ use axum::{
 use chrono::Utc;
 use pmx_authz::{Operation, Principal, Scope, authorize};
 use pmx_core::*;
-use pmx_service::{ExecutorService, ServiceError, StoreBackedRuntimeStateProvider, SubmitOutcome};
+use pmx_service::{
+    ExecutorService, ServiceError, StandardSignOnlyConstructionReceipt,
+    StandardSignOnlyConstructionRequest, StoreBackedRuntimeStateProvider, SubmitOutcome,
+};
 use pmx_store::{
     AdminAuditEvent, AdminAuditQuery, ExecutionLifecycleEvent, ExecutionLifecycleQuery,
     InMemoryStore, OrderLifecycleEventQuery, OrderLifecycleEventRecord, OrderLifecycleRecord,
@@ -201,6 +204,16 @@ impl ServiceBackend {
         }
     }
 
+    async fn record_standard_sign_only_construction(
+        &self,
+        req: StandardSignOnlyConstructionRequest,
+    ) -> Result<StandardSignOnlyConstructionReceipt, ServiceError> {
+        match self {
+            Self::InMemory(service) => service.record_standard_sign_only_construction(req).await,
+            Self::Postgres(service) => service.record_standard_sign_only_construction(req).await,
+        }
+    }
+
     async fn list_sign_only_lifecycle_events(
         &self,
         query: SignOnlyLifecycleQuery,
@@ -262,6 +275,10 @@ fn router_with_state(state: AppState) -> Router {
         .route(
             "/v1/sign-only/lifecycle-events",
             post(record_sign_only_lifecycle_event),
+        )
+        .route(
+            "/v1/sign-only/standard-constructions",
+            post(record_standard_sign_only_construction),
         )
         .route(
             "/v1/sign-only/lifecycle-events/:execution_id",
@@ -635,6 +652,20 @@ async fn record_sign_only_lifecycle_event(
         .await
         .map_err(service_error)?;
     Ok((StatusCode::ACCEPTED, Json(recorded)))
+}
+
+async fn record_standard_sign_only_construction(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(req): Json<StandardSignOnlyConstructionRequest>,
+) -> ApiResult<StandardSignOnlyConstructionReceipt> {
+    require(&headers, Operation::RecordSignOnlyLifecycle)?;
+    let receipt = state
+        .service
+        .record_standard_sign_only_construction(req)
+        .await
+        .map_err(service_error)?;
+    Ok((StatusCode::ACCEPTED, Json(receipt)))
 }
 
 #[derive(serde::Deserialize)]

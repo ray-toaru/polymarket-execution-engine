@@ -142,6 +142,23 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SignOnlyLifecycleRecord' }
+  /v1/sign-only/standard-constructions:
+    post:
+      operationId: recordStandardSignOnlyConstruction
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StandardSignOnlyConstructionRequest' }
+      responses:
+        '202':
+          description: Standard SDK sign-only construction recorded without remote side effects
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StandardSignOnlyConstructionReceipt' }
   /v1/sign-only/lifecycle-events/{execution_id}:
     get:
       operationId: listSignOnlyLifecycleEvents
@@ -546,6 +563,39 @@ components:
         client_event_id: { type: [string, 'null'], description: Optional execution-scoped idempotency key for append/replay }
         signed_order_ref: { type: [string, 'null'] }
         no_remote_side_effect: { type: boolean }
+    StandardSignOnlyConstructionRequest:
+      type: object
+      additionalProperties: false
+      required: [execution_id, account_id, plan_hash, signed_order_ref, signed_order_digest, no_remote_side_effect]
+      properties:
+        execution_id: { type: string }
+        account_id: { type: string }
+        plan_hash: { type: string }
+        signed_order_ref:
+          type: string
+          pattern: '^sign-only:'
+          description: Redacted reference to executor-owned sign-only construction output; never a raw signed order.
+        signed_order_digest:
+          type: [string, 'null']
+          pattern: '^[0-9A-Fa-f]{64}$'
+          description: Optional SHA-256 digest binding for the redacted construction artifact.
+        no_remote_side_effect: { type: boolean, enum: [true] }
+    StandardSignOnlyConstructionReceipt:
+      type: object
+      additionalProperties: false
+      required: [execution_id, signed_order_ref, signed_order_digest, lifecycle_records, no_remote_side_effect]
+      properties:
+        execution_id: { type: string }
+        signed_order_ref:
+          type: string
+          pattern: '^sign-only:'
+        signed_order_digest:
+          type: [string, 'null']
+          pattern: '^[0-9A-Fa-f]{64}$'
+        lifecycle_records:
+          type: array
+          items: { $ref: '#/components/schemas/SignOnlyLifecycleRecord' }
+        no_remote_side_effect: { type: boolean, enum: [true] }
     RedactedPayloadEnvelope:
       type: object
       additionalProperties: false
