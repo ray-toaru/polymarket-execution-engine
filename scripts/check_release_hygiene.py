@@ -5,7 +5,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-FORBIDDEN_PARTS = {"__pycache__", ".pytest_cache", ".mypy_cache", "target"}
+FORBIDDEN_PARTS = {".venv", "venv", "__pycache__", ".pytest_cache", ".mypy_cache", "target"}
 FORBIDDEN_SUFFIXES = {".pyc", ".pyo", ".sqlite", ".sqlite3", ".db"}
 FORBIDDEN_FILENAMES = {".env"}
 
