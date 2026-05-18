@@ -8,6 +8,7 @@ mod postgres_order_lifecycle;
 mod postgres_runtime;
 mod postgres_sign_only;
 mod postgres_support;
+mod postgres_worker;
 
 pub use helpers::*;
 pub use memory::*;
