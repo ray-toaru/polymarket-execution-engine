@@ -1,6 +1,7 @@
 mod binding;
 mod model;
 mod order_lifecycle;
+mod plan_flow;
 mod runtime_state;
 mod runtime_worker;
 mod service;
@@ -10,6 +11,7 @@ mod submit;
 pub use binding::*;
 pub use model::*;
 pub use order_lifecycle::*;
+pub use plan_flow::*;
 pub use runtime_state::*;
 pub use runtime_worker::*;
 pub use service::*;

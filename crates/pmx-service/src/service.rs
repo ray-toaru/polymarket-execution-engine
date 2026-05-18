@@ -1,6 +1,4 @@
-use chrono::Utc;
 use pmx_core::*;
-use pmx_policy::evaluate_constraints;
 use pmx_store::{
     AdminAuditEvent, AdminAuditQuery, AdminAuditStore, ExecutionLifecycleEvent,
     ExecutionLifecycleQuery, ExecutionLifecycleStore, ExecutionStore, IdempotencyStore,
@@ -8,11 +6,7 @@ use pmx_store::{
     RuntimeWorkerStatusReport, RuntimeWorkerStatusStore, SignOnlyLifecycleQuery,
     SignOnlyLifecycleStore,
 };
-use uuid::Uuid;
 
-use crate::binding::{
-    PlanHashInput, SnapshotHashInput, verify_decision_binding, verify_snapshot_binding,
-};
 use crate::model::*;
 use crate::runtime_state::{FailClosedRuntimeStateProvider, RuntimeStateProvider};
 
@@ -204,34 +198,22 @@ where
     }
 
     pub async fn normalize(&self, intent: TradeIntent) -> Result<NormalizedIntent, ServiceError> {
-        let normalized =
-            normalize_intent(intent).map_err(|err| ServiceError::BadRequest(err.to_string()))?;
-        self.store.save_normalized_intent(&normalized).await?;
-        Ok(normalized)
+        crate::plan_flow::normalize(&self.store, intent).await
     }
 
     pub async fn capture_snapshot(
         &self,
         normalized: NormalizedIntent,
     ) -> Result<FeasibilitySnapshot, ServiceError> {
-        self.store.save_normalized_intent(&normalized).await?;
-        let snapshot = self.build_snapshot(&normalized).await?;
-        self.store.save_snapshot(&snapshot).await?;
-        Ok(snapshot)
+        crate::plan_flow::capture_snapshot(&self.store, &self.runtime_state_provider, normalized)
+            .await
     }
 
     pub async fn evaluate_decision(
         &self,
         req: DecisionRequest,
     ) -> Result<ConstraintDecision, ServiceError> {
-        verify_snapshot_binding(&req.normalized_intent, &req.snapshot)?;
-        self.store
-            .save_normalized_intent(&req.normalized_intent)
-            .await?;
-        self.store.save_snapshot(&req.snapshot).await?;
-        let decision = evaluate_constraints(&req.normalized_intent, &req.snapshot);
-        self.store.save_decision(&decision).await?;
-        Ok(decision)
+        crate::plan_flow::evaluate_decision(&self.store, req).await
     }
 
     /// Evaluate constraints by loading the object graph from the executor store.
@@ -244,36 +226,14 @@ where
         &self,
         req: DecisionByIdRequest,
     ) -> Result<ConstraintDecision, ServiceError> {
-        let normalized = self
-            .store
-            .load_normalized_intent(&req.normalized_intent_id)
-            .await?;
-        let snapshot = self.store.load_snapshot(&req.snapshot_id).await?;
-        self.evaluate_decision(DecisionRequest {
-            normalized_intent: normalized,
-            snapshot,
-        })
-        .await
+        crate::plan_flow::evaluate_decision_by_id(&self.store, req).await
     }
 
     pub async fn compile_plan(
         &self,
         req: CompilePlanCommand,
     ) -> Result<ExecutionPlanSummary, ServiceError> {
-        verify_snapshot_binding(&req.normalized_intent, &req.snapshot)?;
-        verify_decision_binding(&req.normalized_intent, &req.snapshot, &req.decision)?;
-        self.store
-            .save_normalized_intent(&req.normalized_intent)
-            .await?;
-        self.store.save_snapshot(&req.snapshot).await?;
-        self.store.save_decision(&req.decision).await?;
-        self.build_and_save_plan(
-            &req.normalized_intent,
-            &req.snapshot,
-            &req.decision,
-            &req.approval,
-        )
-        .await
+        crate::plan_flow::compile_plan(&self.store, req).await
     }
 
     /// Compile a plan by loading all prior objects from the executor store.
@@ -283,50 +243,7 @@ where
         &self,
         req: CompilePlanByIdCommand,
     ) -> Result<ExecutionPlanSummary, ServiceError> {
-        let normalized = self
-            .store
-            .load_normalized_intent(&req.normalized_intent_id)
-            .await?;
-        let snapshot = self.store.load_snapshot(&req.snapshot_id).await?;
-        let decision = self.store.load_decision(&req.decision_id).await?;
-        verify_snapshot_binding(&normalized, &snapshot)?;
-        verify_decision_binding(&normalized, &snapshot, &decision)?;
-        self.build_and_save_plan(&normalized, &snapshot, &decision, &req.approval)
-            .await
-    }
-
-    async fn build_and_save_plan(
-        &self,
-        normalized: &NormalizedIntent,
-        snapshot: &FeasibilitySnapshot,
-        decision: &ConstraintDecision,
-        approval: &ApprovalReceipt,
-    ) -> Result<ExecutionPlanSummary, ServiceError> {
-        let status = if matches!(decision.status, DecisionStatus::Allow) {
-            PlanStatus::Ready
-        } else {
-            PlanStatus::Blocked
-        };
-        let execution_id = format!("exec-{}", normalized.normalized_intent_id);
-        let mut plan = ExecutionPlanSummary {
-            execution_id,
-            account_id: normalized.account_id.clone(),
-            normalized_intent_id: normalized.normalized_intent_id.clone(),
-            snapshot_id: snapshot.snapshot_id.clone(),
-            decision_id: decision.decision_id.clone(),
-            plan_hash: HashValue("pending".into()),
-            status,
-            max_exposure: DecimalString("0".into()),
-            explanation: vec![
-                "v0.15 server-authoritative ID-bound service with admin audit scaffold; live signing/posting remain disabled".into(),
-                format!("approval_id={}", approval.approval_id),
-                format!("snapshot_id={}", snapshot.snapshot_id),
-            ],
-        };
-        plan.plan_hash = canonical_json_sha256(&PlanHashInput::from(&plan))
-            .map_err(|err| ServiceError::Internal(err.to_string()))?;
-        self.store.save_plan_summary(&plan).await?;
-        Ok(plan)
+        crate::plan_flow::compile_plan_by_id(&self.store, req).await
     }
 
     pub async fn submit_plan(&self, req: SubmitPlanCommand) -> Result<SubmitOutcome, ServiceError> {
@@ -345,33 +262,6 @@ where
     ) -> Result<SubmitReceipt, ServiceError> {
         Ok(self.store.load_submit_receipt(execution_id).await?)
     }
-
-    async fn build_snapshot(
-        &self,
-        normalized: &NormalizedIntent,
-    ) -> Result<FeasibilitySnapshot, ServiceError> {
-        let snapshot_id = Uuid::new_v4().to_string();
-        let runtime_state = self
-            .runtime_state_provider
-            .capture_runtime_state(normalized)
-            .await;
-        let captured_at = Utc::now();
-        let hash_input = SnapshotHashInput {
-            snapshot_id: &snapshot_id,
-            normalized_intent_id: &normalized.normalized_intent_id,
-            runtime_state: &runtime_state,
-            captured_at,
-        };
-        let snapshot_hash = canonical_json_sha256(&hash_input)
-            .map_err(|err| ServiceError::Internal(err.to_string()))?;
-        Ok(FeasibilitySnapshot {
-            snapshot_id,
-            snapshot_hash,
-            normalized_intent_id: normalized.normalized_intent_id.clone(),
-            runtime_state,
-            captured_at,
-        })
-    }
 }
 
 #[cfg(test)]
@@ -379,6 +269,8 @@ mod tests {
     use super::*;
     use crate::*;
     use crate::{StaticRuntimeStateProvider, StoreBackedRuntimeStateProvider};
+    use chrono::Utc;
+    use pmx_policy::evaluate_constraints;
     use pmx_runtime::{HeartbeatLeaseCandidate, RuntimeSignal};
     use pmx_store::{
         InMemoryStore, OrderLifecycleStore, RuntimeStateQuery, RuntimeStateStore,
