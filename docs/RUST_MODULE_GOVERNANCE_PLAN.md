@@ -114,8 +114,13 @@ material exposure, or production-readiness claims.
   degradation and observation-write modules.
 - Service standard sign-only implementation now separates request validation,
   digest/ref derivation, and lifecycle persistence/replay helpers.
+- Service heartbeat lease tick implementation now separates lease-election
+  recording and store-backed heartbeat/status persistence while preserving the
+  same public tick helpers and fail-closed semantics.
 - PostgreSQL order-lifecycle write implementation now separates upsert,
   replay lookup/conflict handling, and event-apply SQL paths.
+- In-memory order-lifecycle tests now also separate focused cancel-requested,
+  replay/conflict, invalid-transition, and reconcile-backlog modules.
 - The HTTP fake scaffold E2E path now uses local helper functions to keep the
   single end-to-end assertion flow readable without changing route coverage or
   assertions.
