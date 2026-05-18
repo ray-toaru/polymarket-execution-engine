@@ -44,6 +44,9 @@ material exposure, or production-readiness claims.
   and order lifecycle.
 - Service flow and sign-only orchestration tests now live in focused
   `pmx-service::service_tests` modules while preserving the same assertions.
+- Service runtime-worker basics, heartbeat lease/continuous tick coverage, and
+  non-live order lifecycle tests now live in focused
+  `pmx-service::service_tests` modules while preserving the same assertions.
 
 ## Per-step rules
 
