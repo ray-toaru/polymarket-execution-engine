@@ -1,6 +1,6 @@
 {
   "cancelled": false,
-  "captured_at": "2026-05-18T06:11:08.617038+00:00",
+  "captured_at": "2026-05-18T06:58:59.991320+00:00",
   "drill": "rollback_kill_switch",
   "failed_scenarios": [],
   "posted": false,

@@ -1,5 +1,5 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.31s
-     Running unittests src/lib.rs (target/debug/deps/pmx_authz-a32e66cbe17c5ea4)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.32s
+     Running unittests src/lib.rs (target/debug/deps/pmx_authz-4599dce6a2b114bb)
 
 running 2 tests
 test tests::admin_can_cancel ... ok
@@ -7,31 +7,31 @@ test tests::service_cannot_cancel ... ok
 
 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_core-5d88f46b7ccea11a)
+     Running unittests src/lib.rs (target/debug/deps/pmx_core-f72c2e840ac7b18e)
 
 running 18 tests
-test tests::buy_notional_canonicalizes_to_quote_bound ... ok
-test tests::cancel_confirmation_requires_remote_acceptance ... ok
-test tests::cancel_state_tracks_lifecycle_pending_and_terminal_states ... ok
-test tests::cannot_confirm_cancel_without_pending_cancel ... ok
-test tests::canonical_json_hash_is_key_order_independent ... ok
-test tests::decimal_rejects_scientific_padding_and_trailing_dot ... ok
-test tests::limit_price_is_executor_authoritative ... ok
-test tests::normalized_intent_hash_is_content_derived ... ok
-test tests::order_lifecycle_divergence_escalates_terminal_remote_mismatch ... ok
-test tests::order_lifecycle_divergence_maps_remote_unknown_open_and_missing ... ok
-test tests::quantity_must_be_positive ... ok
-test tests::quantity_requires_exactly_one_bound ... ok
-test tests::reconcile_action_tracks_remote_unknown_and_partial_unknown ... ok
-test tests::remote_unknown_states_require_reconcile ... ok
-test tests::sell_shares_canonicalizes_to_base_bound ... ok
-test tests::sign_only_lifecycle_never_models_remote_post ... ok
-test tests::sign_only_lifecycle_rejects_direct_sign_without_reservation ... ok
-test tests::unsupported_cross_quantity_is_explicit ... ok
+test domain::tests::buy_notional_canonicalizes_to_quote_bound ... ok
+test domain::tests::cancel_confirmation_requires_remote_acceptance ... ok
+test domain::tests::cancel_state_tracks_lifecycle_pending_and_terminal_states ... ok
+test domain::tests::cannot_confirm_cancel_without_pending_cancel ... ok
+test domain::tests::canonical_json_hash_is_key_order_independent ... ok
+test domain::tests::decimal_rejects_scientific_padding_and_trailing_dot ... ok
+test domain::tests::limit_price_is_executor_authoritative ... ok
+test domain::tests::normalized_intent_hash_is_content_derived ... ok
+test domain::tests::order_lifecycle_divergence_escalates_terminal_remote_mismatch ... ok
+test domain::tests::order_lifecycle_divergence_maps_remote_unknown_open_and_missing ... ok
+test domain::tests::quantity_must_be_positive ... ok
+test domain::tests::quantity_requires_exactly_one_bound ... ok
+test domain::tests::reconcile_action_tracks_remote_unknown_and_partial_unknown ... ok
+test domain::tests::remote_unknown_states_require_reconcile ... ok
+test domain::tests::sell_shares_canonicalizes_to_base_bound ... ok
+test domain::tests::sign_only_lifecycle_never_models_remote_post ... ok
+test domain::tests::sign_only_lifecycle_rejects_direct_sign_without_reservation ... ok
+test domain::tests::unsupported_cross_quantity_is_explicit ... ok
 
 test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_gateway-92f89013b589185a)
+     Running unittests src/lib.rs (target/debug/deps/pmx_gateway-5e274a3c581f2be7)
 
 running 9 tests
 test tests::deterministic_signer_provider_posts_reads_and_cancels ... ok
@@ -46,7 +46,7 @@ test tests::signer_provider_defaults_are_production_conservative ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_policy-b6d89b33e5acbd5a)
+     Running unittests src/lib.rs (target/debug/deps/pmx_policy-cb1e591deec0cea2)
 
 running 3 tests
 test tests::degraded_worker_blocks_pre_live ... ok
@@ -55,14 +55,14 @@ test tests::geoblock_unknown_blocks ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_release-3f94d61f92c9d4ec)
+     Running unittests src/lib.rs (target/debug/deps/pmx_release-8007faa0d7ed1f08)
 
 running 1 test
 test tests::rejects_release_regression ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_runtime-b7a516371cb7e01c)
+     Running unittests src/lib.rs (target/debug/deps/pmx_runtime-eda1a55389ff6200)
 
 running 21 tests
 test capability_tests_v07::all_capabilities_preserves_account_market_asset_worker_groups ... ok
@@ -89,47 +89,56 @@ test tests::worker_actions_mark_stale_runtime_inputs_as_fail_closed_updates ... 
 
 test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_service-08849bd023999c2b)
+     Running unittests src/lib.rs (target/debug/deps/pmx_service-c5f82100864fd4f2)
 
 running 23 tests
-test tests::service_classifies_and_records_order_lifecycle_divergence_without_remote_side_effect ... ok
-test tests::service_flow_persists_and_blocks_submit ... ok
-test tests::service_id_bound_flow_persists_and_blocks_submit ... ok
-test tests::service_lists_runtime_worker_status ... ok
-test tests::service_records_continuous_runtime_worker_ticks_fail_closed_on_any_bad_snapshot ... ok
-test tests::service_records_geoblock_worker_tick_for_decision_gate ... ok
-test tests::service_records_heartbeat_lease_election_tick_fail_closed_for_non_owner ... ok
-test tests::service_records_non_live_cancel_and_reconcile_order_lifecycle ... ok
-test tests::service_records_reconcile_backlog_from_order_lifecycle ... ok
-test tests::service_records_reconcile_backlog_worker_tick_for_decision_gate ... ok
-test tests::service_records_resource_refresh_worker_tick_for_decision_gate ... ok
-test tests::service_records_runtime_worker_provider_snapshot_for_decision_gate ... ok
-test tests::service_records_runtime_worker_signals_for_decision_gate ... ok
-test tests::service_records_runtime_worker_tick_heartbeat_and_observations ... ok
-test tests::service_records_standard_sign_only_construction_without_raw_payload ... ok
-test tests::service_records_websocket_liveness_worker_tick_for_decision_gate ... ok
-test tests::service_records_worker_crash_recovery_tick_for_decision_gate ... ok
-test tests::service_rejects_malformed_standard_sign_only_digest ... ok
-test tests::service_rejects_object_graph_mismatch ... ok
-test tests::service_rejects_sign_only_sequence_mismatch ... ok
-test tests::service_validates_and_persists_sign_only_lifecycle_sequence ... ok
-test tests::static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks ... ok
-test tests::store_backed_runtime_provider_uses_store_state ... ok
+test service::tests::service_classifies_and_records_order_lifecycle_divergence_without_remote_side_effect ... ok
+test service::tests::service_flow_persists_and_blocks_submit ... ok
+test service::tests::service_id_bound_flow_persists_and_blocks_submit ... ok
+test service::tests::service_lists_runtime_worker_status ... ok
+test service::tests::service_records_continuous_runtime_worker_ticks_fail_closed_on_any_bad_snapshot ... ok
+test service::tests::service_records_geoblock_worker_tick_for_decision_gate ... ok
+test service::tests::service_records_heartbeat_lease_election_tick_fail_closed_for_non_owner ... ok
+test service::tests::service_records_non_live_cancel_and_reconcile_order_lifecycle ... ok
+test service::tests::service_records_reconcile_backlog_from_order_lifecycle ... ok
+test service::tests::service_records_reconcile_backlog_worker_tick_for_decision_gate ... ok
+test service::tests::service_records_resource_refresh_worker_tick_for_decision_gate ... ok
+test service::tests::service_records_runtime_worker_provider_snapshot_for_decision_gate ... ok
+test service::tests::service_records_runtime_worker_signals_for_decision_gate ... ok
+test service::tests::service_records_runtime_worker_tick_heartbeat_and_observations ... ok
+test service::tests::service_records_standard_sign_only_construction_without_raw_payload ... ok
+test service::tests::service_records_websocket_liveness_worker_tick_for_decision_gate ... ok
+test service::tests::service_records_worker_crash_recovery_tick_for_decision_gate ... ok
+test service::tests::service_rejects_malformed_standard_sign_only_digest ... ok
+test service::tests::service_rejects_object_graph_mismatch ... ok
+test service::tests::service_rejects_sign_only_sequence_mismatch ... ok
+test service::tests::service_validates_and_persists_sign_only_lifecycle_sequence ... ok
+test service::tests::static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks ... ok
+test service::tests::store_backed_runtime_provider_uses_store_state ... ok
 
 test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_store-3bad928257c8dd0c)
+     Running unittests src/lib.rs (target/debug/deps/pmx_store-d4dd6133d81ee6ee)
 
 running 35 tests
-test admin_audit_tests::in_memory_admin_audit_records_without_exposing_secrets ... ok
-test admin_audit_tests::in_memory_persists_sign_only_lifecycle_records ... ok
-test admin_audit_tests::in_memory_rejects_sign_only_for_unknown_execution ... ok
-test admin_audit_tests::in_memory_rejects_sign_only_remote_side_effect_records ... ok
-test admin_audit_tests::in_memory_sign_only_client_event_id_replays_and_rejects_mismatch ... ok
-test admin_audit_tests::in_memory_sign_only_replay_is_idempotent ... ok
-test order_lifecycle_store_tests_v23::in_memory_lists_reconcile_backlog_orders ... ok
-test order_lifecycle_store_tests_v23::in_memory_order_lifecycle_records_cancel_requested ... ok
-test order_lifecycle_store_tests_v23::in_memory_order_lifecycle_rejects_invalid_transition ... ok
+test memory::admin_audit_tests::in_memory_admin_audit_records_without_exposing_secrets ... ok
+test memory::admin_audit_tests::in_memory_persists_sign_only_lifecycle_records ... ok
+test memory::admin_audit_tests::in_memory_rejects_sign_only_for_unknown_execution ... ok
+test memory::admin_audit_tests::in_memory_rejects_sign_only_remote_side_effect_records ... ok
+test memory::admin_audit_tests::in_memory_sign_only_client_event_id_replays_and_rejects_mismatch ... ok
+test memory::admin_audit_tests::in_memory_sign_only_replay_is_idempotent ... ok
+test memory::order_lifecycle_store_tests_v23::in_memory_lists_reconcile_backlog_orders ... ok
+test memory::order_lifecycle_store_tests_v23::in_memory_order_lifecycle_records_cancel_requested ... ok
+test memory::order_lifecycle_store_tests_v23::in_memory_order_lifecycle_rejects_invalid_transition ... ok
+test memory::runtime_worker_health_tests_v23::in_memory_lists_runtime_worker_status ... ok
+test memory::runtime_worker_health_tests_v23::in_memory_worker_heartbeat_informs_runtime_state ... ok
+test memory::runtime_worker_health_tests_v23::stale_in_memory_worker_heartbeat_fails_closed ... ok
+test memory::tests::advisory_lock_key_is_deterministic_and_scoped ... ok
+test memory::tests::idempotency_identity_is_documented_in_trait ... ok
+test memory::tests::in_memory_same_request_without_response_is_in_progress ... ok
+test memory::tests::maps_plan_status_for_db ... ok
+test memory::tests::runtime_worker_observations_degrade_loaded_runtime_state ... ok
+test memory::tests::stale_runtime_worker_observations_are_ignored ... ok
 test postgres::order_lifecycle_pg_tests_v23::postgres_lists_reconcile_backlog_orders ... ok
 test postgres::order_lifecycle_pg_tests_v23::postgres_records_order_lifecycle_event ... ok
 test postgres::runtime_worker_health_pg_tests_v23::postgres_lists_runtime_worker_status ... ok
@@ -147,17 +156,8 @@ test postgres::tests::postgres_runtime_worker_observations_degrade_runtime_state
 test postgres::tests::remote_unknown_is_persisted_conservatively ... ok
 test postgres::tests::reservation_double_spend_is_prevented_concurrently ... ok
 test postgres::tests::same_request_replay_is_persisted ... ok
-test runtime_worker_health_tests_v23::in_memory_lists_runtime_worker_status ... ok
-test runtime_worker_health_tests_v23::in_memory_worker_heartbeat_informs_runtime_state ... ok
-test runtime_worker_health_tests_v23::stale_in_memory_worker_heartbeat_fails_closed ... ok
-test tests::advisory_lock_key_is_deterministic_and_scoped ... ok
-test tests::idempotency_identity_is_documented_in_trait ... ok
-test tests::in_memory_same_request_without_response_is_in_progress ... ok
-test tests::maps_plan_status_for_db ... ok
-test tests::runtime_worker_observations_degrade_loaded_runtime_state ... ok
-test tests::stale_runtime_worker_observations_are_ignored ... ok
 
-test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.29s
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.33s
 
    Doc-tests pmx_authz
 

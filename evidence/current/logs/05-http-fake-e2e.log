@@ -1,5 +1,5 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
-     Running tests/http_and_fake_e2e.rs (target/debug/deps/http_and_fake_e2e-bbf8b6abec263d25)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.30s
+     Running tests/http_and_fake_e2e.rs (target/debug/deps/http_and_fake_e2e-292a050f08548475)
 
 running 4 tests
 test equal_service_and_admin_tokens_fail_closed_at_app_construction ... ok
