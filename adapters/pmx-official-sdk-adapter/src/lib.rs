@@ -18,6 +18,7 @@ use pmx_core::{
 };
 use pmx_gateway::GatewayError;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use thiserror::Error;
 
 #[cfg(feature = "authenticated-smoke")]
@@ -266,6 +267,18 @@ pub struct OfficialSdkStandardSignOnlyPlan {
     pub exposes_raw_signed_order: bool,
     pub may_post_order: bool,
     pub may_cancel_order: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct OfficialSdkStandardSignOnlyConstruction {
+    pub plan: OfficialSdkStandardSignOnlyPlan,
+    pub plan_hash: HashValue,
+    pub signed_order_ref: String,
+    pub signed_order_digest: String,
+    pub no_remote_side_effect: bool,
+    pub raw_signed_order_exposed: bool,
+    pub lifecycle_records: Vec<SignOnlyLifecycleRecord>,
 }
 
 /// Build a conservative sign-only lifecycle trace that can be persisted by the executor.
@@ -709,6 +722,54 @@ pub fn standard_sign_only_default_plan_for_order(
     plan: &OfficialSdkPlanOrder,
 ) -> Result<OfficialSdkStandardSignOnlyPlan, OfficialSdkAdapterError> {
     standard_sign_only_plan_for_order(OfficialSdkStandardSignOnlyProfile::default(), plan)
+}
+
+pub fn standard_sign_only_construction_for_order(
+    plan: &OfficialSdkPlanOrder,
+    plan_hash: HashValue,
+) -> Result<OfficialSdkStandardSignOnlyConstruction, OfficialSdkAdapterError> {
+    let standard_plan = standard_sign_only_default_plan_for_order(plan)?;
+    let signed_order_digest = standard_sign_only_digest(&standard_plan, &plan_hash)?;
+    let signed_order_ref = format!(
+        "{}:{}:{}:digest-{}",
+        standard_plan.signed_order_ref_namespace,
+        plan.execution_id.0,
+        plan_hash.0,
+        &signed_order_digest[..16]
+    );
+    let receipt = SignOnlyDryRunReceipt {
+        account_id: plan.account_id.clone(),
+        execution_id: plan.execution_id.clone(),
+        plan_hash: plan_hash.clone(),
+        signed_order_ref: signed_order_ref.clone(),
+        posted: false,
+    };
+    let lifecycle_records = sign_only_lifecycle_records_from_receipt(&receipt)?;
+    Ok(OfficialSdkStandardSignOnlyConstruction {
+        plan: standard_plan,
+        plan_hash,
+        signed_order_ref,
+        signed_order_digest,
+        no_remote_side_effect: true,
+        raw_signed_order_exposed: false,
+        lifecycle_records,
+    })
+}
+
+fn standard_sign_only_digest(
+    plan: &OfficialSdkStandardSignOnlyPlan,
+    plan_hash: &HashValue,
+) -> Result<String, OfficialSdkAdapterError> {
+    let payload = serde_json::json!({
+        "plan_hash": plan_hash,
+        "profile": plan.profile,
+        "mapping": plan.mapping,
+        "namespace": plan.signed_order_ref_namespace,
+    });
+    let bytes = serde_json::to_vec(&payload)
+        .map_err(|err| OfficialSdkAdapterError::InvalidInput(err.to_string()))?;
+    let digest = Sha256::digest(bytes);
+    Ok(format!("{digest:x}"))
 }
 
 pub fn official_sdk_plan_to_builder_mapping(
@@ -1402,6 +1463,53 @@ mod tests {
     }
 
     #[test]
+    fn standard_sign_only_construction_emits_only_digest_ref_and_lifecycle() {
+        let construction = standard_sign_only_construction_for_order(
+            &sample_plan_limit(),
+            HashValue("plan-hash-standard".into()),
+        )
+        .expect("standard sign-only construction");
+        assert!(construction.no_remote_side_effect);
+        assert!(!construction.raw_signed_order_exposed);
+        assert!(!construction.signed_order_digest.is_empty());
+        assert!(
+            construction
+                .signed_order_ref
+                .starts_with("sign-only:exec-1:plan-hash-standard:digest-")
+        );
+        assert_eq!(construction.lifecycle_records.len(), 3);
+        assert_eq!(
+            construction.lifecycle_records.last().unwrap().state,
+            SignOnlyLifecycleState::SignedDryRun
+        );
+        assert_eq!(
+            construction
+                .lifecycle_records
+                .last()
+                .unwrap()
+                .signed_order_ref
+                .as_deref(),
+            Some(construction.signed_order_ref.as_str())
+        );
+    }
+
+    #[test]
+    fn standard_sign_only_construction_ref_is_stable_for_same_mapping() {
+        let first = standard_sign_only_construction_for_order(
+            &sample_plan_limit(),
+            HashValue("plan-hash-stable".into()),
+        )
+        .expect("first construction");
+        let second = standard_sign_only_construction_for_order(
+            &sample_plan_limit(),
+            HashValue("plan-hash-stable".into()),
+        )
+        .expect("second construction");
+        assert_eq!(first.signed_order_ref, second.signed_order_ref);
+        assert_eq!(first.signed_order_digest, second.signed_order_digest);
+    }
+
+    #[test]
     fn standard_sign_only_plan_rejects_profile_that_can_post_or_expose_raw_order() {
         let profile = OfficialSdkStandardSignOnlyProfile {
             exposes_raw_signed_order: true,
@@ -1594,6 +1702,22 @@ mod tests {
         plan.time_in_force = Some("ioc".into());
         let mapping = official_sdk_plan_to_builder_mapping(&plan).expect("ioc mapping");
         assert_eq!(mapping.time_in_force.as_deref(), Some("FAK"));
+    }
+
+    #[test]
+    fn plan_mapping_supports_fok_limit_orders() {
+        let mut plan = sample_plan_limit();
+        plan.time_in_force = Some("fok".into());
+        let mapping = official_sdk_plan_to_builder_mapping(&plan).expect("fok mapping");
+        assert_eq!(mapping.time_in_force.as_deref(), Some("FOK"));
+    }
+
+    #[test]
+    fn plan_mapping_rejects_gtd_until_expiration_path_exists() {
+        let mut plan = sample_plan_limit();
+        plan.time_in_force = Some("gtd".into());
+        let err = official_sdk_plan_to_builder_mapping(&plan).expect_err("gtd not wired");
+        assert!(err.to_string().contains("GTD mapping requires"));
     }
 
     #[test]
