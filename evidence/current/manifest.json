@@ -22,8 +22,8 @@
   "artifact": {
     "binding_note": "External sidecar manifest binds the final zip hash; the in-archive manifest remains source-candidate evidence and cannot self-bind its containing zip.",
     "name": "polymarket-dual-project-v0.24.0.zip",
-    "path": "polymarket-dual-project-v0.24.0.zip",
-    "sha256": "210a5a9b4173afa68367850273c848ab790bccdc9d6492a2c6ffae68419fd7ff"
+    "path": "dist/polymarket-dual-project-v0.24.0.zip",
+    "sha256": "a72e724199b73eda2e9ed39aa7dcea6134f9572c0270af26832225f66af5a281"
   },
   "artifact_kind": "source_candidate",
   "canonical_evidence_dir": "polymarket-execution-engine/evidence/current",
@@ -49,7 +49,7 @@
     "path": "polymarket-execution-engine/evidence/current/environment.json",
     "sha256": "7c862d6b0c63808cbc06867bec306943ce6c582cd7cf65938ad765e21c3b5a23"
   },
-  "generated_at": "2026-05-18T05:20:45.733012+00:00",
+  "generated_at": "2026-05-18T05:23:41.578544+00:00",
   "live_canary_blocked_validation": {
     "logs": [
       {

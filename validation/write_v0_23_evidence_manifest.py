@@ -159,6 +159,14 @@ def log_entry(path: Path) -> dict[str, str | int]:
     return entry
 
 
+def display_path(path: Path) -> str:
+    path = path.resolve()
+    try:
+        return str(path.relative_to(ROOT.resolve()))
+    except ValueError:
+        return str(path)
+
+
 def load_log_commands() -> dict[str, str]:
     if not GATE_RUNNER.exists():
         return {}
@@ -236,7 +244,7 @@ def main(argv: list[str]) -> int:
         },
         "artifact": {
             "name": artifact_path.name if artifact_path else None,
-            "path": artifact_path.name if artifact_path else None,
+            "path": display_path(artifact_path) if artifact_path else None,
             "sha256": sha256(artifact_path) if artifact_path and artifact_path.exists() else None,
             "binding_note": "External sidecar manifest binds the final zip hash; the in-archive manifest remains source-candidate evidence and cannot self-bind its containing zip.",
         },
