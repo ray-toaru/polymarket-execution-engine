@@ -1,4 +1,5 @@
 use crate::{OfficialSdkAdapterError, OfficialSdkOrderBuilderMapping, OfficialSdkPlanOrder};
+use chrono::DateTime;
 use pmx_core::{validate_limit_price_decimal_string, validate_positive_decimal_string};
 
 pub fn official_sdk_plan_to_builder_mapping(
@@ -8,6 +9,7 @@ pub fn official_sdk_plan_to_builder_mapping(
     let normalized_kind = normalize_order_kind(&plan.order_kind)?;
     let normalized_tif = normalize_time_in_force(plan.time_in_force.as_deref(), &normalized_kind)?;
     validate_token_id(&plan.token_id)?;
+    let expiration = normalize_expiration(plan.expiration.as_deref(), normalized_tif.as_deref())?;
 
     match normalized_kind.as_str() {
         "LIMIT" => {
@@ -33,6 +35,7 @@ pub fn official_sdk_plan_to_builder_mapping(
         size: clone_non_empty(plan.size.as_deref()),
         amount: clone_non_empty(plan.amount.as_deref()),
         time_in_force: normalized_tif,
+        expiration,
         post_only: plan.post_only.unwrap_or(false),
         builder_attribution: clone_non_empty(plan.builder_attribution.as_deref()),
         fee_rate_bps: clone_non_empty(plan.fee_rate_bps.as_deref()),
@@ -121,13 +124,34 @@ fn normalize_time_in_force(
     }
     let normalized = raw.unwrap_or("GTC").trim().to_ascii_uppercase();
     match normalized.as_str() {
-        "GTC" | "FOK" | "FAK" => Ok(Some(normalized)),
+        "GTC" | "GTD" | "FOK" | "FAK" => Ok(Some(normalized)),
         "IOC" => Ok(Some("FAK".into())),
-        "GTD" => Err(OfficialSdkAdapterError::InvalidInput(
-            "GTD mapping requires an explicit expiration path that is not wired in v0.20".into(),
-        )),
         _ => Err(OfficialSdkAdapterError::InvalidInput(format!(
             "unsupported time_in_force: {normalized}"
         ))),
+    }
+}
+
+fn normalize_expiration(
+    raw: Option<&str>,
+    time_in_force: Option<&str>,
+) -> Result<Option<String>, OfficialSdkAdapterError> {
+    let value = clone_non_empty(raw);
+    match (time_in_force, value) {
+        (Some("GTD"), Some(expiration)) => {
+            DateTime::parse_from_rfc3339(&expiration).map_err(|_| {
+                OfficialSdkAdapterError::InvalidInput(
+                    "GTD expiration must be an RFC3339 timestamp".into(),
+                )
+            })?;
+            Ok(Some(expiration))
+        }
+        (Some("GTD"), None) => Err(OfficialSdkAdapterError::InvalidInput(
+            "GTD mapping requires expiration".into(),
+        )),
+        (_, Some(_)) => Err(OfficialSdkAdapterError::InvalidInput(
+            "expiration is only supported for GTD orders".into(),
+        )),
+        (_, None) => Ok(None),
     }
 }

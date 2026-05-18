@@ -13,6 +13,8 @@ pub struct OfficialSdkPlanOrder {
     pub size: Option<String>,
     pub amount: Option<String>,
     pub time_in_force: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expiration: Option<String>,
     pub post_only: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub builder_attribution: Option<String>,
@@ -38,6 +40,7 @@ pub struct OfficialSdkOrderBuilderMapping {
     pub size: Option<String>,
     pub amount: Option<String>,
     pub time_in_force: Option<String>,
+    pub expiration: Option<String>,
     pub post_only: bool,
     pub builder_attribution: Option<String>,
     pub fee_rate_bps: Option<String>,

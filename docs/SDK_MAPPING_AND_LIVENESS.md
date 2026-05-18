@@ -11,8 +11,10 @@ internal side BUY/SELL -> SDK Side::Buy / Side::Sell
 internal order_kind LIMIT -> SDK limit_order()
 internal order_kind MARKET -> validated but not yet executed in sign-only path
 time_in_force GTC/FOK/FAK -> SDK OrderType
-time_in_force GTD -> explicitly rejected in v0.10
+time_in_force IOC -> SDK OrderType::FAK
+time_in_force GTD -> SDK OrderType::GTD with required RFC3339 expiration
 post_only defaults false unless explicitly set
+expiration is rejected for non-GTD orders
 ```
 
 Current sign-only dry-run path:

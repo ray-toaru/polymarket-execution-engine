@@ -2804,6 +2804,7 @@ version = "0.24.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "chrono",
  "pmx-core",
  "pmx-gateway",
  "polymarket_client_sdk_v2",

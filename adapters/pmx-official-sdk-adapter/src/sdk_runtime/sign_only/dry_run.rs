@@ -5,7 +5,9 @@ use crate::{
 };
 
 use super::super::shared::{authenticated_sdk_client, sdk_call_timeout, signer_from_env};
-use super::parsing::{parse_sdk_order_type, parse_sdk_side, signature_fingerprint};
+use super::parsing::{
+    parse_gtd_expiration, parse_sdk_order_type, parse_sdk_side, signature_fingerprint,
+};
 
 use anyhow::Context;
 use polymarket_client_sdk_v2::types::{Decimal as SdkDecimal, U256 as SdkU256};
@@ -46,21 +48,24 @@ pub async fn run_sign_only_dry_run(
             OfficialSdkAdapterError::InvalidInput("missing time_in_force".into())
         })?)?;
 
-    let signable = time::timeout(
-        timeout,
-        client
-            .limit_order()
-            .token_id(token_id)
-            .price(price)
-            .size(size)
-            .side(side)
-            .order_type(order_type)
-            .post_only(mapping.post_only)
-            .build(),
-    )
-    .await
-    .map_err(|_| anyhow::anyhow!("official SDK limit_order().build() timed out after {timeout:?}"))?
-    .context("official SDK limit order build failed")?;
+    let mut builder = client
+        .limit_order()
+        .token_id(token_id)
+        .price(price)
+        .size(size)
+        .side(side)
+        .order_type(order_type)
+        .post_only(mapping.post_only);
+    if let Some(expiration) = mapping.expiration.as_deref() {
+        builder = builder.expiration(parse_gtd_expiration(expiration)?);
+    }
+
+    let signable = time::timeout(timeout, builder.build())
+        .await
+        .map_err(|_| {
+            anyhow::anyhow!("official SDK limit_order().build() timed out after {timeout:?}")
+        })?
+        .context("official SDK limit order build failed")?;
 
     let signed = time::timeout(timeout, client.sign(&signer, signable))
         .await

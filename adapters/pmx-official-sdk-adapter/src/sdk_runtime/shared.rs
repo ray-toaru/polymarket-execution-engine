@@ -73,7 +73,7 @@ pub(super) async fn authenticated_sdk_client(
     Ok(client)
 }
 
-#[cfg(test)]
+#[cfg(all(feature = "sign-only-dry-run", test))]
 pub(super) fn sdk_config() -> SdkConfig {
     SdkConfig::builder().use_server_time(true).build()
 }

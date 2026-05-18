@@ -1,5 +1,6 @@
 use crate::OfficialSdkAdapterError;
 
+use chrono::{DateTime, Utc};
 use polymarket_client_sdk_v2::clob::types::{OrderType as SdkOrderType, Side as SdkSide};
 
 pub(super) fn parse_sdk_side(raw: &str) -> Result<SdkSide, OfficialSdkAdapterError> {
@@ -17,13 +18,18 @@ pub(super) fn parse_sdk_order_type(raw: &str) -> Result<SdkOrderType, OfficialSd
         "GTC" => Ok(SdkOrderType::GTC),
         "FOK" => Ok(SdkOrderType::FOK),
         "FAK" => Ok(SdkOrderType::FAK),
-        "GTD" => Err(OfficialSdkAdapterError::InvalidInput(
-            "GTD sign-only is not wired in v0.20".into(),
-        )),
+        "GTD" => Ok(SdkOrderType::GTD),
         _ => Err(OfficialSdkAdapterError::InvalidInput(format!(
             "unsupported time_in_force: {raw}"
         ))),
     }
+}
+
+pub(super) fn parse_gtd_expiration(raw: &str) -> Result<DateTime<Utc>, OfficialSdkAdapterError> {
+    let parsed = DateTime::parse_from_rfc3339(raw).map_err(|_| {
+        OfficialSdkAdapterError::InvalidInput("GTD expiration must be RFC3339".into())
+    })?;
+    Ok(parsed.with_timezone(&Utc))
 }
 
 pub(super) fn signature_fingerprint(signature: &str) -> String {

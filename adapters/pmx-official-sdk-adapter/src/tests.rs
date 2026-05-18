@@ -34,6 +34,7 @@ fn sample_plan_limit() -> OfficialSdkPlanOrder {
         size: Some("10".into()),
         amount: None,
         time_in_force: Some("gtc".into()),
+        expiration: None,
         post_only: Some(false),
         builder_attribution: None,
         fee_rate_bps: None,
@@ -332,11 +333,34 @@ fn plan_mapping_supports_fok_limit_orders() {
 }
 
 #[test]
-fn plan_mapping_rejects_gtd_until_expiration_path_exists() {
+fn plan_mapping_supports_gtd_with_expiration() {
     let mut plan = sample_plan_limit();
     plan.time_in_force = Some("gtd".into());
-    let err = official_sdk_plan_to_builder_mapping(&plan).expect_err("gtd not wired");
-    assert!(err.to_string().contains("GTD mapping requires"));
+    plan.expiration = Some("2027-01-01T00:00:00Z".into());
+    let mapping = official_sdk_plan_to_builder_mapping(&plan).expect("gtd mapping");
+    assert_eq!(mapping.time_in_force.as_deref(), Some("GTD"));
+    assert_eq!(mapping.expiration.as_deref(), Some("2027-01-01T00:00:00Z"));
+}
+
+#[test]
+fn plan_mapping_rejects_gtd_without_valid_expiration() {
+    let mut plan = sample_plan_limit();
+    plan.time_in_force = Some("gtd".into());
+    let err = official_sdk_plan_to_builder_mapping(&plan).expect_err("gtd needs expiration");
+    assert!(err.to_string().contains("GTD mapping requires expiration"));
+
+    plan.expiration = Some("not-a-time".into());
+    let err = official_sdk_plan_to_builder_mapping(&plan).expect_err("gtd needs valid expiration");
+    assert!(err.to_string().contains("RFC3339"));
+}
+
+#[test]
+fn plan_mapping_rejects_expiration_for_non_gtd() {
+    let mut plan = sample_plan_limit();
+    plan.expiration = Some("2027-01-01T00:00:00Z".into());
+    let err =
+        official_sdk_plan_to_builder_mapping(&plan).expect_err("expiration only valid for gtd");
+    assert!(err.to_string().contains("only supported for GTD"));
 }
 
 #[test]

@@ -29,6 +29,7 @@ impl SignOnlyDryRunRequest {
             size: Some(self.size),
             amount: None,
             time_in_force: Some("GTC".into()),
+            expiration: None,
             post_only: Some(false),
             builder_attribution: None,
             fee_rate_bps: None,
