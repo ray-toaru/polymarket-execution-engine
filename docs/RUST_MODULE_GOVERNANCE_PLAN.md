@@ -159,6 +159,12 @@ material exposure, or production-readiness claims.
   and runtime-worker status queries while preserving the same route surface.
 - API flow routes now separate intent/snapshot/decision, plan compile/submit,
   and sign-only lifecycle handlers while preserving the same route surface.
+- Service submit implementation now separates request/response fingerprinting,
+  blocked-before-remote receipt construction, and replay decoding while
+  preserving the same submit/idempotency behavior.
+- Service runtime-state providers now separate fail-closed fallback, static
+  provider, and store-backed provider implementations while preserving the
+  same provider trait surface.
 - In-memory order-lifecycle tests now also separate focused cancel-requested,
   replay/conflict, invalid-transition, and reconcile-backlog modules.
 - The HTTP fake scaffold E2E path now uses local helper functions to keep the
