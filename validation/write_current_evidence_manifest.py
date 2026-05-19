@@ -164,6 +164,9 @@ SECTIONS: dict[str, list[str]] = {
     "real_funds_canary_lifecycle_validation": [
         "66-real-funds-canary-lifecycle-drill.log",
     ],
+    "real_funds_canary_ready_validation": [
+        "67-real-funds-canary-ready-drill.log",
+    ],
     "runtime_worker_status_validation": [
         "42-runtime-worker-status-query.log",
     ],
@@ -335,12 +338,33 @@ def main(argv: list[str]) -> int:
         "postgres_validation",
         "sdk_adapter_validation",
     ]
+    skipped_sections = [
+        section
+        for section in [
+            "postgres_validation",
+            "credentialed_non_trading_validation",
+        ]
+        if data.get(section, {}).get("status") == "skipped"
+    ]
+    if skipped_sections:
+        reason = (
+            "Shadow-ready SDK sign-only candidate local refresh. Current evidence binds source, "
+            "Rust, SDK, local static, drill, governance, and artifact checks, but does not refresh "
+            f"external sections skipped in this environment: {', '.join(skipped_sections)}. "
+            "Production and live trading remain explicitly unapproved."
+        )
+    else:
+        reason = (
+            "Shadow-ready SDK sign-only candidate. Required source, Rust, PostgreSQL, SDK, "
+            "credentialed smoke, sign-only dry-run, local static, drill, governance, and artifact "
+            "checks are bound in current evidence; production and live trading remain explicitly unapproved."
+        )
     data["release_decision"] = {
         "validated_release": False,
         "status": "shadow-ready SDK sign-only candidate",
         "production_ready": False,
         "live_trading_ready": False,
-        "reason": "Shadow-ready SDK sign-only candidate. Required source, Rust, PostgreSQL, SDK, credentialed smoke, sign-only dry-run, local static, drill, governance, and artifact checks are bound in current evidence; production and live trading remain explicitly unapproved.",
+        "reason": reason,
         "required_non_optional_sections": required_non_optional,
     }
     OUT.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")

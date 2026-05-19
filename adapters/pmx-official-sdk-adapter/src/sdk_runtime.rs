@@ -14,7 +14,7 @@ mod sign_only;
 #[cfg(feature = "authenticated-smoke")]
 pub use authenticated::run_authenticated_non_trading_sdk_smoke;
 #[cfg(feature = "live-submit")]
-pub use live_canary::run_real_funds_canary_fok_fill;
+pub use live_canary::{discover_real_funds_canary_market, run_real_funds_canary_fok_fill};
 #[cfg(feature = "sign-only-dry-run")]
 pub use sign_only::run_sign_only_dry_run;
 

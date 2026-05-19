@@ -1,11 +1,14 @@
 use crate::{
-    OfficialSdkAdapterConfig, OfficialSdkAdapterError, RealFundsCanaryReceipt,
-    RealFundsCanaryRequest, validate_real_funds_canary_preconditions,
+    OfficialSdkAdapterConfig, OfficialSdkAdapterError, RealFundsCanaryMarketCandidate,
+    RealFundsCanaryMarketSelection, RealFundsCanaryReceipt, RealFundsCanaryRequest,
+    select_real_funds_canary_market, validate_real_funds_canary_preconditions,
 };
 
 use super::shared::{authenticated_sdk_client, sdk_call_timeout, signer_from_env};
 
 use anyhow::Context;
+use polymarket_client_sdk_v2::clob::Client as SdkClient;
+use polymarket_client_sdk_v2::clob::types::request::{OrderBookSummaryRequest, SpreadRequest};
 use polymarket_client_sdk_v2::clob::types::{OrderType as SdkOrderType, Side as SdkSide};
 use polymarket_client_sdk_v2::types::{Decimal as SdkDecimal, U256 as SdkU256};
 use std::str::FromStr;
@@ -71,4 +74,87 @@ pub async fn run_real_funds_canary_fok_fill(
         remote_side_effects: true,
         raw_signed_order_exposed: false,
     })
+}
+
+pub async fn discover_real_funds_canary_market(
+    config: &OfficialSdkAdapterConfig,
+    max_notional_usd: &str,
+) -> anyhow::Result<RealFundsCanaryMarketSelection> {
+    let client = SdkClient::new(
+        &config.clob_host,
+        polymarket_client_sdk_v2::clob::Config::builder()
+            .use_server_time(true)
+            .build(),
+    )
+    .context("creating public official SDK client for real-funds canary market discovery")?;
+    let timeout = sdk_call_timeout();
+    let markets = time::timeout(timeout, client.simplified_markets(None))
+        .await
+        .map_err(|_| {
+            anyhow::anyhow!("official SDK simplified_markets() timed out after {timeout:?}")
+        })?
+        .context("official SDK simplified_markets() failed")?;
+
+    let mut candidates = Vec::new();
+    for market in markets.data.iter().filter(|market| {
+        market.active && !market.closed && !market.archived && market.accepting_orders
+    }) {
+        let Some(condition_id) = market.condition_id.as_ref() else {
+            continue;
+        };
+        for token in &market.tokens {
+            let order_book = time::timeout(
+                timeout,
+                client.order_book(
+                    &OrderBookSummaryRequest::builder()
+                        .token_id(token.token_id)
+                        .build(),
+                ),
+            )
+            .await
+            .map_err(|_| anyhow::anyhow!("official SDK order_book() timed out after {timeout:?}"))?
+            .context("official SDK order_book() failed during canary market discovery")?;
+            let spread = time::timeout(
+                timeout,
+                client.spread(&SpreadRequest::builder().token_id(token.token_id).build()),
+            )
+            .await
+            .map_err(|_| anyhow::anyhow!("official SDK spread() timed out after {timeout:?}"))?
+            .context("official SDK spread() failed during canary market discovery")?;
+
+            let Some(best_ask) = order_book.asks.first() else {
+                continue;
+            };
+            let spread_bps = decimal_to_bps(&spread.spread.to_string()).unwrap_or(u64::MAX);
+            let liquidity_score = decimal_scaled_u64(&best_ask.size.to_string()).unwrap_or(0);
+            candidates.push(RealFundsCanaryMarketCandidate {
+                market_id: condition_id.to_string(),
+                token_id: token.token_id.to_string(),
+                active: market.active,
+                accepting_orders: market.accepting_orders,
+                closed: market.closed,
+                archived: market.archived,
+                best_ask: best_ask.price.to_string(),
+                ask_size: best_ask.size.to_string(),
+                spread_bps,
+                min_order_size: order_book.min_order_size.to_string(),
+                liquidity_score,
+            });
+        }
+    }
+    select_real_funds_canary_market(&candidates, max_notional_usd).map_err(Into::into)
+}
+
+fn decimal_to_bps(value: &str) -> Option<u64> {
+    let parsed = value.parse::<f64>().ok()?;
+    parsed
+        .is_finite()
+        .then_some((parsed * 10_000.0).round() as u64)
+}
+
+fn decimal_scaled_u64(value: &str) -> Option<u64> {
+    let parsed = value.parse::<f64>().ok()?;
+    parsed
+        .is_finite()
+        .then_some((parsed * 1_000_000.0).round() as u64)
 }

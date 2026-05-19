@@ -5,7 +5,7 @@
     "evidence_manifest_sha256_bound": true,
     "evidence_sidecar_verified": true,
     "path": "/workspaces/universal/rust/polymarket_dual_project/dist/polymarket-dual-project-v0.25.0.zip",
-    "sha256": "fb47860f8ca564666a61a5fe68216f054f0cc8ced12817c1202b3b7f1ef80fe8"
+    "sha256": "d330fa344e2895e3abbb707f75761be70d5d580806ad8b4feba2bcd087d71b05"
   },
   "config_diff_review_evidence_verified": true,
   "config_diff_review_log": {

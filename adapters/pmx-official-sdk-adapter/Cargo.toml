@@ -12,6 +12,11 @@ authenticated-smoke = ["sdk-typecheck", "dep:tokio", "dep:anyhow"]
 sign-only-dry-run = ["sdk-typecheck", "dep:tokio", "dep:anyhow"]
 live-submit = ["sdk-typecheck", "dep:tokio", "dep:anyhow"]
 
+[[bin]]
+name = "pmx-real-funds-canary"
+path = "src/bin/pmx-real-funds-canary.rs"
+required-features = ["live-submit"]
+
 [dependencies]
 pmx-core = { path = "../../crates/pmx-core" }
 pmx-gateway = { path = "../../crates/pmx-gateway" }

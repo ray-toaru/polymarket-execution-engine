@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-05-19T10:23:45.869453+00:00",
+  "captured_at": "2026-05-19T11:42:34.756062+00:00",
   "dependency_locks": {
     "polymarket-execution-engine/Cargo.lock": {
       "exists": true,
@@ -15,35 +15,35 @@
     }
   },
   "environment": {
-    "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE": "1",
-    "PMX_RUN_SIGN_ONLY_DRY_RUN": "1",
-    "PMX_TEST_DATABASE_URL_set": true,
+    "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE": null,
+    "PMX_RUN_SIGN_ONLY_DRY_RUN": null,
+    "PMX_TEST_DATABASE_URL_set": false,
     "python_executable": "/usr/local/python/current/bin/python",
     "python_version": "3.14.2 (main, Jan 20 2026, 13:54:38) [GCC 13.3.0]"
   },
   "git": {
     "execution": {
       "branch": "",
-      "head": "8e7897ed67c826c62bf2f91fd5e83e0fb0461640",
+      "head": "61d69d9b7b20008b35ec4980f588f9103630a3e4",
       "path": "polymarket-execution-engine",
       "status_clean": false,
-      "status_entry_count": 87
+      "status_entry_count": 66
     },
     "hermes": {
       "branch": "",
-      "head": "71c2676a43ac2996f131eb59f179f2d88b311391",
+      "head": "cc04f9b4af03505907dbd5d977016ebef4c0319c",
       "path": "hermes-polymarket-control",
       "status_clean": true,
       "status_entry_count": 0
     },
     "integration": {
       "branch": "v0.25-sdk-sign-only",
-      "head": "9127a8e995616e98f5179a8e1ea9da4986f0bacf",
+      "head": "9fbb85765e82cd7449b2192b3d48eb41f739f094",
       "path": ".",
       "status_clean": false,
-      "status_entry_count": 4
+      "status_entry_count": 8
     },
-    "submodules": "71c2676a43ac2996f131eb59f179f2d88b311391 hermes-polymarket-control (remotes/origin/v0.23.1-validation-promotion-5-g71c2676)\n 8e7897ed67c826c62bf2f91fd5e83e0fb0461640 polymarket-execution-engine (remotes/origin/v0.23.1-validation-promotion-193-g8e7897e)"
+    "submodules": "+cc04f9b4af03505907dbd5d977016ebef4c0319c hermes-polymarket-control (remotes/origin/v0.23.1-validation-promotion-6-gcc04f9b)\n+61d69d9b7b20008b35ec4980f588f9103630a3e4 polymarket-execution-engine (remotes/origin/v0.23.1-validation-promotion-195-g61d69d9)"
   },
   "integration_root": "/workspaces/universal/rust/polymarket_dual_project",
   "platform": {

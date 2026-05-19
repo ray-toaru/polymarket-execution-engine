@@ -1,7 +1,5 @@
-   Compiling pmx-store v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
-   Compiling pmx-service v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.38s
-     Running unittests src/lib.rs (target/debug/deps/pmx_authz-0c3b29e6cdffcd0b)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.28s
+     Running unittests src/lib.rs (target/debug/deps/pmx_authz-604ea22cf138d17e)
 
 running 2 tests
 test tests::admin_can_cancel ... ok
@@ -9,7 +7,7 @@ test tests::service_cannot_cancel ... ok
 
 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_core-07cd744da967c77e)
+     Running unittests src/lib.rs (target/debug/deps/pmx_core-f866db33c81456fe)
 
 running 18 tests
 test domain::domain_tests::divergence::order_lifecycle_divergence_escalates_terminal_remote_mismatch ... ok
@@ -33,7 +31,7 @@ test domain::domain_tests::lifecycle::sign_only_lifecycle_rejects_direct_sign_wi
 
 test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_gateway-7038b579ba8f3bd4)
+     Running unittests src/lib.rs (target/debug/deps/pmx_gateway-cf62797622b26e4e)
 
 running 9 tests
 test tests::post_cancel::deterministic_signer_provider_posts_reads_and_cancels ... ok
@@ -48,7 +46,7 @@ test tests::signer::signer_provider_defaults_are_production_conservative ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_policy-08b2d18f4af20e6d)
+     Running unittests src/lib.rs (target/debug/deps/pmx_policy-224e4a262450e97c)
 
 running 3 tests
 test tests::degraded_worker_blocks_pre_live ... ok
@@ -57,14 +55,14 @@ test tests::geoblock_unknown_blocks ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_release-11117e862737fa5e)
+     Running unittests src/lib.rs (target/debug/deps/pmx_release-14feae2d18038061)
 
 running 1 test
 test tests::rejects_release_regression ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_runtime-a73b589405886cc5)
+     Running unittests src/lib.rs (target/debug/deps/pmx_runtime-44c3b906b5580610)
 
 running 23 tests
 test non_trading_worker::tests::emit_non_trading_heartbeat_delivers_to_sink_without_trading_side_effects ... ok
@@ -93,7 +91,7 @@ test runtime_tests::evaluations::reconcile_websocket_geoblock::websocket_livenes
 
 test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_service-b0f825b3b054fb64)
+     Running unittests src/lib.rs (target/debug/deps/pmx_service-6b676e7d855bb06a)
 
 running 30 tests
 test service::tests::flow::service_flow_persists_and_blocks_submit ... ok
@@ -127,9 +125,9 @@ test service::tests::sign_only::standard::service_derives_standard_sign_only_ref
 test service::tests::sign_only::standard::service_records_standard_sign_only_construction_without_raw_payload ... ok
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 
-test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_store-d75ca96a461a9981)
+     Running unittests src/lib.rs (target/debug/deps/pmx_store-ad3acbdc89aeb574)
 
 running 47 tests
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_paginates_and_filters_by_cursor ... ok
@@ -180,7 +178,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 47 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.73s
+test result: ok. 47 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
    Doc-tests pmx_authz
 

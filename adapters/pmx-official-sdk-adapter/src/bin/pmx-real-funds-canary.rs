@@ -1,0 +1,207 @@
+use pmx_core::{AccountId, ExecutionId, HashValue};
+use pmx_official_sdk_adapter::{
+    BuildRealFundsCanaryPreconditionsInput, LiveCanaryPreconditions, OfficialSdkAdapterConfig,
+    RealFundsCanaryApproval, RealFundsCanaryRequest, RealFundsCanaryRiskLimits,
+    build_real_funds_canary_preconditions, discover_real_funds_canary_market,
+    run_real_funds_canary_fok_fill,
+};
+use serde::Serialize;
+use std::collections::HashMap;
+use std::path::PathBuf;
+
+const ENV_ALLOW_REAL_FUNDS_CANARY: &str = "PMX_ALLOW_REAL_FUNDS_CANARY";
+
+#[derive(Debug)]
+struct Args {
+    approval_file: PathBuf,
+    artifact_sha256: String,
+    evidence_manifest_sha256: String,
+    idempotency_key: String,
+    account_id: String,
+    execution_id: String,
+    plan_hash: String,
+    daily_used_notional_usd: String,
+    dry_run: bool,
+    armed: bool,
+    allow_live_submit_config: bool,
+    allow_real_funds_canary_config: bool,
+}
+
+#[derive(Debug, Serialize)]
+struct CanaryCliReport {
+    status: String,
+    dry_run: bool,
+    armed: bool,
+    selected_market_id: String,
+    selected_token_id_hash: String,
+    limit_price: String,
+    size: String,
+    notional_usd: String,
+    approval_hash: String,
+    artifact_bound: bool,
+    evidence_manifest_bound: bool,
+    live_submit_allowed: bool,
+    real_funds_canary_allowed: bool,
+    posted: bool,
+    remote_side_effects: bool,
+    raw_signed_order_exposed: bool,
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let args = parse_args()?;
+    if args.armed && args.dry_run {
+        anyhow::bail!("--armed and --dry-run are mutually exclusive");
+    }
+    let approval: RealFundsCanaryApproval =
+        serde_json::from_str(&std::fs::read_to_string(&args.approval_file)?)?;
+    let risk_limits = RealFundsCanaryRiskLimits {
+        max_order_notional_usd: approval.max_order_notional_usd.clone(),
+        max_daily_notional_usd: approval.max_daily_notional_usd.clone(),
+        daily_used_notional_usd: args.daily_used_notional_usd.clone(),
+    };
+    let config = OfficialSdkAdapterConfig {
+        allow_live_submit: args.allow_live_submit_config,
+        allow_real_funds_canary: args.allow_real_funds_canary_config,
+        ..OfficialSdkAdapterConfig::default()
+    };
+    let real_funds_env_enabled =
+        std::env::var(ENV_ALLOW_REAL_FUNDS_CANARY).ok().as_deref() == Some("1");
+    let market =
+        discover_real_funds_canary_market(&config, &approval.max_order_notional_usd).await?;
+    let live_canary = LiveCanaryPreconditions {
+        compile_feature_live_submit: cfg!(feature = "live-submit"),
+        env_allow_live_submit: std::env::var("PMX_ALLOW_LIVE_SUBMIT").ok().as_deref() == Some("1"),
+        config_allow_live_submit: args.allow_live_submit_config,
+        kill_switch_open: std::env::var("PMX_KILL_SWITCH_OPEN").ok().as_deref() == Some("1"),
+        runtime_worker_healthy: std::env::var("PMX_RUNTIME_WORKER_HEALTHY").ok().as_deref()
+            == Some("1"),
+        geoblock_allowed: std::env::var("PMX_GEOBLOCK_ALLOWED").ok().as_deref() == Some("1"),
+        repository_reservation_exists: std::env::var("PMX_REPOSITORY_RESERVATION_EXISTS")
+            .ok()
+            .as_deref()
+            == Some("1"),
+        idempotency_key_written: std::env::var("PMX_IDEMPOTENCY_KEY_WRITTEN").ok().as_deref()
+            == Some("1"),
+        reconcile_worker_healthy: std::env::var("PMX_RECONCILE_WORKER_HEALTHY")
+            .ok()
+            .as_deref()
+            == Some("1"),
+        account_whitelisted: approval.account_id.0 == args.account_id,
+        market_whitelisted: true,
+        size_cap_ok: true,
+        daily_cap_ok: true,
+        operator_approved: !approval.operator_identity_ref.trim().is_empty(),
+        cancel_only_fallback_ready: std::env::var("PMX_CANCEL_ONLY_FALLBACK_READY")
+            .ok()
+            .as_deref()
+            == Some("1"),
+    };
+    let preconditions =
+        build_real_funds_canary_preconditions(BuildRealFundsCanaryPreconditionsInput {
+            approval: &approval,
+            risk_limits: &risk_limits,
+            market: &market,
+            live_canary,
+            artifact_sha256: &args.artifact_sha256,
+            evidence_manifest_sha256: &args.evidence_manifest_sha256,
+            config_allow_real_funds_canary: args.allow_real_funds_canary_config,
+            balance_allowance_checked: std::env::var("PMX_BALANCE_ALLOWANCE_CHECKED")
+                .ok()
+                .as_deref()
+                == Some("1"),
+            selected_market_safe: true,
+        });
+    let request = RealFundsCanaryRequest {
+        account_id: AccountId(args.account_id.clone()),
+        execution_id: ExecutionId(args.execution_id.clone()),
+        plan_hash: HashValue(args.plan_hash.clone()),
+        idempotency_key: args.idempotency_key.clone(),
+        approval: approval.clone(),
+        risk_limits,
+        market: market.clone(),
+        preconditions,
+    };
+
+    if args.armed {
+        let receipt = run_real_funds_canary_fok_fill(&config, request).await?;
+        println!("{}", serde_json::to_string_pretty(&receipt)?);
+        return Ok(());
+    }
+
+    let report = CanaryCliReport {
+        status: "dry_run_ready".into(),
+        dry_run: true,
+        armed: false,
+        selected_market_id: market.market_id,
+        selected_token_id_hash: format!("{:x}", sha2::Sha256::digest(market.token_id.as_bytes())),
+        limit_price: market.limit_price,
+        size: market.size,
+        notional_usd: market.notional_usd,
+        approval_hash: approval.approval_hash,
+        artifact_bound: approval.artifact_sha256 == args.artifact_sha256,
+        evidence_manifest_bound: approval.evidence_manifest_sha256 == args.evidence_manifest_sha256,
+        live_submit_allowed: false,
+        real_funds_canary_allowed: args.armed && real_funds_env_enabled,
+        posted: false,
+        remote_side_effects: false,
+        raw_signed_order_exposed: false,
+    };
+    println!("{}", serde_json::to_string_pretty(&report)?);
+    Ok(())
+}
+
+fn parse_args() -> anyhow::Result<Args> {
+    let mut values = HashMap::<String, String>::new();
+    let mut dry_run = true;
+    let mut armed = false;
+    let mut iter = std::env::args().skip(1);
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--dry-run" => dry_run = true,
+            "--armed" => {
+                armed = true;
+                dry_run = false;
+            }
+            "--allow-live-submit-config" => {
+                values.insert(arg.to_string(), "true".into());
+            }
+            "--allow-real-funds-canary-config" => {
+                values.insert(arg.to_string(), "true".into());
+            }
+            flag if flag.starts_with("--") => {
+                let value = iter
+                    .next()
+                    .ok_or_else(|| anyhow::anyhow!("missing value for {flag}"))?;
+                values.insert(flag.into(), value);
+            }
+            _ => anyhow::bail!("unknown argument {arg}"),
+        }
+    }
+    Ok(Args {
+        approval_file: required(&values, "--approval-file")?.into(),
+        artifact_sha256: required(&values, "--artifact-sha256")?,
+        evidence_manifest_sha256: required(&values, "--evidence-manifest-sha256")?,
+        idempotency_key: required(&values, "--idempotency-key")?,
+        account_id: required(&values, "--account-id")?,
+        execution_id: required(&values, "--execution-id")?,
+        plan_hash: required(&values, "--plan-hash")?,
+        daily_used_notional_usd: values
+            .get("--daily-used-notional-usd")
+            .cloned()
+            .unwrap_or_else(|| "0".into()),
+        dry_run,
+        armed,
+        allow_live_submit_config: values.contains_key("--allow-live-submit-config"),
+        allow_real_funds_canary_config: values.contains_key("--allow-real-funds-canary-config"),
+    })
+}
+
+fn required(values: &HashMap<String, String>, key: &str) -> anyhow::Result<String> {
+    values
+        .get(key)
+        .cloned()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument {key}"))
+}
+
+use sha2::Digest;

@@ -1,0 +1,11 @@
+{
+  "actual_execution_performed": false,
+  "cli_defaults_to_dry_run": true,
+  "entrypoint": "pmx-real-funds-canary",
+  "failures": [],
+  "market_selection": "official-sdk-read-only-auto-selection",
+  "posted": false,
+  "program_ready": true,
+  "remote_side_effects": false,
+  "status": "pass"
+}
