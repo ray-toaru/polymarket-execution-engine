@@ -1,0 +1,30 @@
+{
+  "export_record": {
+    "access_reviewed": true,
+    "client_event_id": "event-001",
+    "deletion_policy_defined": true,
+    "export_batch_id": "audit-export-local-001",
+    "export_failure_blocks_promotion": true,
+    "immutable_export": true,
+    "legal_hold": false,
+    "lifecycle_state": "SIGNED_DRY_RUN",
+    "order_id": "order-001",
+    "redacted_export": true,
+    "retention_duration_days": 365,
+    "retention_policy_id": "retention-365d-redacted",
+    "signed_order_digest": "aff65c1407f0c568b9b4bc5edf9b6eef88cefb36a6007b6b0f18c9f126a6f642",
+    "signed_order_ref": "signed-ref-001",
+    "trace_id": "trace-prod-audit-001"
+  },
+  "failures": [],
+  "forbidden_keys_absent": [
+    "SignedOrderEnvelope",
+    "clob_secret",
+    "private_key",
+    "raw_signature",
+    "raw_signed_payload"
+  ],
+  "production_ready_claimed": false,
+  "remote_side_effects": false,
+  "status": "pass"
+}

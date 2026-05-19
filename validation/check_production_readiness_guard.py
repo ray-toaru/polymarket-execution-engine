@@ -15,6 +15,7 @@ HARDENING_SPEC = ROOT / "docs" / "PRODUCTION_HARDENING_SPEC.md"
 EVIDENCE_CONTROLS = ROOT / "docs" / "PRODUCTION_EVIDENCE_CONTROLS.md"
 OPERATIONS_DRILL = ROOT / "docs" / "PRODUCTION_OPERATIONS_DRILL.md"
 AUTHORIZATION_BLOCK_DRILL = ROOT / "docs" / "PRODUCTION_AUTHORIZATION_BLOCK_DRILL.md"
+AUDIT_EXPORT_DRILL = ROOT / "docs" / "PRODUCTION_AUDIT_EXPORT_DRILL.md"
 RELEASE_MANIFEST = ROOT / "release" / "manifest.json"
 EVIDENCE_GUARD = ROOT / "validation" / "check_current_evidence_manifest.py"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
@@ -118,6 +119,22 @@ AUTHORIZATION_BLOCK_TOKENS = [
     "remote_side_effects = false",
 ]
 
+AUDIT_EXPORT_TOKENS = [
+    "trace_id",
+    "signed_order_ref",
+    "signed_order_digest",
+    "retention_policy_id",
+    "export_batch_id",
+    "private_key",
+    "clob_secret",
+    "raw_signed_payload",
+    "raw_signature",
+    "SignedOrderEnvelope",
+    "immutable_export = true",
+    "redacted_export = true",
+    "remote_side_effects = false",
+]
+
 
 def main() -> int:
     failures: list[str] = []
@@ -151,6 +168,11 @@ def main() -> int:
         if token not in authorization_block_drill:
             failures.append(f"production authorization block drill missing {token}")
 
+    audit_export_drill = AUDIT_EXPORT_DRILL.read_text()
+    for token in AUDIT_EXPORT_TOKENS:
+        if token not in audit_export_drill:
+            failures.append(f"production audit export drill missing {token}")
+
     release = json.loads(RELEASE_MANIFEST.read_text())
     status = str(release.get("status", "")).lower()
     if "production-ready" in status or "production_ready" in status:
@@ -168,6 +190,7 @@ def main() -> int:
     require_current_gate_log("41-production-hardening-config.log", "production hardening config", failures)
     require_current_gate_log("46-production-operations-drill.log", "production operations drill", failures)
     require_current_gate_log("47-production-authorization-block-drill.log", "production authorization block drill", failures)
+    require_current_gate_log("48-production-audit-export-drill.log", "production audit export drill", failures)
     if '"productionization_validation"' not in manifest_writer:
         failures.append("evidence manifest must include productionization_validation")
     if "36-production-readiness-guard.log" not in manifest_writer:
@@ -182,6 +205,10 @@ def main() -> int:
         failures.append("evidence manifest must include production_authorization_block_validation")
     if "47-production-authorization-block-drill.log" not in manifest_writer:
         failures.append("evidence manifest must capture production authorization block drill log")
+    if '"production_audit_export_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include production_audit_export_validation")
+    if "48-production-audit-export-drill.log" not in manifest_writer:
+        failures.append("evidence manifest must capture production audit export drill log")
 
     if failures:
         for failure in failures:
