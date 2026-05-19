@@ -1,0 +1,22 @@
+{
+  "artifact": {
+    "artifact_sha256_verified": true,
+    "artifact_sidecar_verified": true,
+    "evidence_manifest_sha256_bound": true,
+    "evidence_sidecar_verified": true,
+    "path": "/workspaces/universal/rust/polymarket_dual_project/dist/polymarket-dual-project-v0.25.0.zip",
+    "sha256": "47fa7a798a6572574cee09fd0b64485abc6adf70bdff5dda0dcf979888778acc"
+  },
+  "config_diff_review_required": true,
+  "deploy_allowed": false,
+  "failures": [],
+  "live_cancel_allowed": false,
+  "live_cancel_disabled": true,
+  "live_submit_allowed": false,
+  "live_submit_disabled": true,
+  "migration_evidence_present": true,
+  "operator_approval_required": true,
+  "production_ready_claimed": false,
+  "remote_side_effects": false,
+  "status": "pass"
+}

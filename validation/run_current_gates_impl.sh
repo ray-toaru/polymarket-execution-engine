@@ -119,6 +119,7 @@ if [[ -f "${INTEGRATION_ROOT}/scripts/check_version_consistency.py" && -f "${INT
   python "${INTEGRATION_ROOT}/scripts/validate_contracts.py" 2>&1 | tee "${EVIDENCE_DIR}/25-contract-validation.log"
   ARTIFACT_PATH="$(python "${INTEGRATION_ROOT}/scripts/package_release.py" | tee "${EVIDENCE_DIR}/27-package-release.log" | tail -n 1)"
   python "${INTEGRATION_ROOT}/scripts/check_release_artifact.py" "${ARTIFACT_PATH}" "$(cat "${INTEGRATION_ROOT}/VERSION")" 2>&1 | tee "${EVIDENCE_DIR}/28-release-artifact-check.log"
+  PMX_RELEASE_ARTIFACT_PATH="${ARTIFACT_PATH}" python validation/run_production_deployment_preflight_drill.py 2>&1 | tee "${EVIDENCE_DIR}/50-production-deployment-preflight-drill.log"
   python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
   python validation/check_docs_evidence_governance.py 2>&1 | tee "${EVIDENCE_DIR}/30-docs-evidence-governance.log"
   python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null

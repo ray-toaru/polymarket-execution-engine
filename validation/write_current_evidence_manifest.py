@@ -113,6 +113,9 @@ SECTIONS: dict[str, list[str]] = {
     "production_dependency_breakage_validation": [
         "49-production-dependency-breakage-drill.log",
     ],
+    "production_deployment_preflight_validation": [
+        "50-production-deployment-preflight-drill.log",
+    ],
     "runtime_worker_status_validation": [
         "42-runtime-worker-status-query.log",
     ],

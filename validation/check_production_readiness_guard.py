@@ -17,6 +17,7 @@ OPERATIONS_DRILL = ROOT / "docs" / "PRODUCTION_OPERATIONS_DRILL.md"
 AUTHORIZATION_BLOCK_DRILL = ROOT / "docs" / "PRODUCTION_AUTHORIZATION_BLOCK_DRILL.md"
 AUDIT_EXPORT_DRILL = ROOT / "docs" / "PRODUCTION_AUDIT_EXPORT_DRILL.md"
 DEPENDENCY_BREAKAGE_DRILL = ROOT / "docs" / "PRODUCTION_DEPENDENCY_BREAKAGE_DRILL.md"
+DEPLOYMENT_PREFLIGHT_DRILL = ROOT / "docs" / "PRODUCTION_DEPLOYMENT_PREFLIGHT_DRILL.md"
 RELEASE_MANIFEST = ROOT / "release" / "manifest.json"
 EVIDENCE_GUARD = ROOT / "validation" / "check_current_evidence_manifest.py"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
@@ -152,6 +153,20 @@ DEPENDENCY_BREAKAGE_TOKENS = [
     "remote_side_effects = false",
 ]
 
+DEPLOYMENT_PREFLIGHT_TOKENS = [
+    "artifact_sha256_verified",
+    "artifact_sidecar_verified",
+    "evidence_sidecar_verified",
+    "evidence_manifest_sha256_bound",
+    "migration_evidence_present",
+    "config_diff_review_required",
+    "operator_approval_required",
+    "live_submit_disabled",
+    "live_cancel_disabled",
+    "deploy_allowed = false",
+    "remote_side_effects = false",
+]
+
 
 def main() -> int:
     failures: list[str] = []
@@ -195,6 +210,11 @@ def main() -> int:
         if token not in dependency_breakage_drill:
             failures.append(f"production dependency breakage drill missing {token}")
 
+    deployment_preflight_drill = DEPLOYMENT_PREFLIGHT_DRILL.read_text()
+    for token in DEPLOYMENT_PREFLIGHT_TOKENS:
+        if token not in deployment_preflight_drill:
+            failures.append(f"production deployment preflight drill missing {token}")
+
     release = json.loads(RELEASE_MANIFEST.read_text())
     status = str(release.get("status", "")).lower()
     if "production-ready" in status or "production_ready" in status:
@@ -214,6 +234,7 @@ def main() -> int:
     require_current_gate_log("47-production-authorization-block-drill.log", "production authorization block drill", failures)
     require_current_gate_log("48-production-audit-export-drill.log", "production audit export drill", failures)
     require_current_gate_log("49-production-dependency-breakage-drill.log", "production dependency breakage drill", failures)
+    require_current_gate_log("50-production-deployment-preflight-drill.log", "production deployment preflight drill", failures)
     if '"productionization_validation"' not in manifest_writer:
         failures.append("evidence manifest must include productionization_validation")
     if "36-production-readiness-guard.log" not in manifest_writer:
@@ -236,6 +257,10 @@ def main() -> int:
         failures.append("evidence manifest must include production_dependency_breakage_validation")
     if "49-production-dependency-breakage-drill.log" not in manifest_writer:
         failures.append("evidence manifest must capture production dependency breakage drill log")
+    if '"production_deployment_preflight_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include production_deployment_preflight_validation")
+    if "50-production-deployment-preflight-drill.log" not in manifest_writer:
+        failures.append("evidence manifest must capture production deployment preflight drill log")
 
     if failures:
         for failure in failures:
