@@ -140,6 +140,15 @@ SECTIONS: dict[str, list[str]] = {
     "live_canary_controlled_prep_validation": [
         "58-live-canary-controlled-prep-drill.log",
     ],
+    "external_secret_provider_preflight_validation": [
+        "59-external-secret-provider-preflight.log",
+    ],
+    "external_operator_approval_preflight_validation": [
+        "60-external-operator-approval-preflight.log",
+    ],
+    "external_alert_routing_preflight_validation": [
+        "61-external-alert-routing-preflight.log",
+    ],
     "runtime_worker_status_validation": [
         "42-runtime-worker-status-query.log",
     ],

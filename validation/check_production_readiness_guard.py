@@ -26,6 +26,9 @@ RISK_LIMITS_DRILL = ROOT / "docs" / "PRODUCTION_RISK_LIMITS_DRILL.md"
 CONFIG_PROFILE_DRILL = ROOT / "docs" / "PRODUCTION_CONFIG_PROFILE_DRILL.md"
 RELEASE_DECISION_GUARD = ROOT / "docs" / "PRODUCTION_RELEASE_DECISION_GUARD.md"
 CONTROLLED_CANARY_PREP_DRILL = ROOT / "docs" / "LIVE_CANARY_CONTROLLED_PREP_DRILL.md"
+EXTERNAL_SECRET_PROVIDER_PREFLIGHT = ROOT / "docs" / "EXTERNAL_SECRET_PROVIDER_PREFLIGHT.md"
+EXTERNAL_OPERATOR_APPROVAL_PREFLIGHT = ROOT / "docs" / "EXTERNAL_OPERATOR_APPROVAL_PREFLIGHT.md"
+EXTERNAL_ALERT_ROUTING_PREFLIGHT = ROOT / "docs" / "EXTERNAL_ALERT_ROUTING_PREFLIGHT.md"
 RELEASE_MANIFEST = ROOT / "release" / "manifest.json"
 EVIDENCE_GUARD = ROOT / "validation" / "check_current_evidence_manifest.py"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
@@ -292,6 +295,58 @@ CONTROLLED_CANARY_PREP_TOKENS = [
     "remote_side_effects = false",
 ]
 
+EXTERNAL_SECRET_PROVIDER_TOKENS = [
+    "secret_provider_reference_present",
+    "kms_key_reference_present",
+    "rotation_evidence_reference_present",
+    "break_glass_review_reference_present",
+    "plaintext_secret_values_absent",
+    "provider_health_check_required",
+    "credential_rotation_required",
+    "break_glass_review_required",
+    "external_secret_custody_ready = false",
+    "live_submit_allowed = false",
+    "live_cancel_allowed = false",
+    "remote_side_effects = false",
+    "production_ready_claimed = false",
+]
+
+EXTERNAL_OPERATOR_APPROVAL_TOKENS = [
+    "approval_id_present",
+    "approval_hash_present",
+    "approval_ticket_present",
+    "approver_identity_present",
+    "approval_expiry_present",
+    "approval_scope_present",
+    "dual_control_required",
+    "approval_replay_block_required",
+    "approval_expiry_enforced",
+    "operator_approval_ready = false",
+    "live_submit_allowed = false",
+    "live_cancel_allowed = false",
+    "remote_side_effects = false",
+    "production_ready_claimed = false",
+]
+
+EXTERNAL_ALERT_ROUTING_TOKENS = [
+    "alert_provider_reference_present",
+    "alert_route_reference_present",
+    "pager_escalation_policy_present",
+    "dashboard_reference_present",
+    "alert_test_evidence_present",
+    "runtime_worker_health_alert",
+    "reconcile_backlog_alert",
+    "remote_unknown_alert",
+    "sdk_error_rate_alert",
+    "audit_export_failure_alert",
+    "pager_ack_required",
+    "alerting_ready = false",
+    "live_submit_allowed = false",
+    "live_cancel_allowed = false",
+    "remote_side_effects = false",
+    "production_ready_claimed = false",
+]
+
 
 def main() -> int:
     failures: list[str] = []
@@ -380,6 +435,21 @@ def main() -> int:
         if token not in controlled_canary_prep_drill:
             failures.append(f"controlled canary prep drill missing {token}")
 
+    external_secret_provider_preflight = EXTERNAL_SECRET_PROVIDER_PREFLIGHT.read_text()
+    for token in EXTERNAL_SECRET_PROVIDER_TOKENS:
+        if token not in external_secret_provider_preflight:
+            failures.append(f"external secret provider preflight missing {token}")
+
+    external_operator_approval_preflight = EXTERNAL_OPERATOR_APPROVAL_PREFLIGHT.read_text()
+    for token in EXTERNAL_OPERATOR_APPROVAL_TOKENS:
+        if token not in external_operator_approval_preflight:
+            failures.append(f"external operator approval preflight missing {token}")
+
+    external_alert_routing_preflight = EXTERNAL_ALERT_ROUTING_PREFLIGHT.read_text()
+    for token in EXTERNAL_ALERT_ROUTING_TOKENS:
+        if token not in external_alert_routing_preflight:
+            failures.append(f"external alert routing preflight missing {token}")
+
     release = json.loads(RELEASE_MANIFEST.read_text())
     status = str(release.get("status", "")).lower()
     if "production-ready" in status or "production_ready" in status:
@@ -408,6 +478,9 @@ def main() -> int:
     require_current_gate_log("56-production-config-profile-drill.log", "production config profile drill", failures)
     require_current_gate_log("57-production-release-decision-guard.log", "production release decision guard", failures)
     require_current_gate_log("58-live-canary-controlled-prep-drill.log", "controlled live canary prep drill", failures)
+    require_current_gate_log("59-external-secret-provider-preflight.log", "external secret provider preflight", failures)
+    require_current_gate_log("60-external-operator-approval-preflight.log", "external operator approval preflight", failures)
+    require_current_gate_log("61-external-alert-routing-preflight.log", "external alert routing preflight", failures)
     if '"productionization_validation"' not in manifest_writer:
         failures.append("evidence manifest must include productionization_validation")
     if "36-production-readiness-guard.log" not in manifest_writer:
@@ -466,6 +539,18 @@ def main() -> int:
         failures.append("evidence manifest must include live_canary_controlled_prep_validation")
     if "58-live-canary-controlled-prep-drill.log" not in manifest_writer:
         failures.append("evidence manifest must capture controlled live canary prep drill log")
+    if '"external_secret_provider_preflight_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include external_secret_provider_preflight_validation")
+    if "59-external-secret-provider-preflight.log" not in manifest_writer:
+        failures.append("evidence manifest must capture external secret provider preflight log")
+    if '"external_operator_approval_preflight_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include external_operator_approval_preflight_validation")
+    if "60-external-operator-approval-preflight.log" not in manifest_writer:
+        failures.append("evidence manifest must capture external operator approval preflight log")
+    if '"external_alert_routing_preflight_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include external_alert_routing_preflight_validation")
+    if "61-external-alert-routing-preflight.log" not in manifest_writer:
+        failures.append("evidence manifest must capture external alert routing preflight log")
 
     if failures:
         for failure in failures:

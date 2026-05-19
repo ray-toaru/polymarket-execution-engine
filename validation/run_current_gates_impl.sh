@@ -128,6 +128,9 @@ if [[ -f "${INTEGRATION_ROOT}/scripts/check_version_consistency.py" && -f "${INT
   python validation/run_production_config_profile_drill.py 2>&1 | tee "${EVIDENCE_DIR}/56-production-config-profile-drill.log"
   python validation/run_production_release_decision_guard.py 2>&1 | tee "${EVIDENCE_DIR}/57-production-release-decision-guard.log"
   python validation/run_live_canary_controlled_prep_drill.py 2>&1 | tee "${EVIDENCE_DIR}/58-live-canary-controlled-prep-drill.log"
+  python validation/run_external_secret_provider_preflight.py 2>&1 | tee "${EVIDENCE_DIR}/59-external-secret-provider-preflight.log"
+  python validation/run_external_operator_approval_preflight.py 2>&1 | tee "${EVIDENCE_DIR}/60-external-operator-approval-preflight.log"
+  python validation/run_external_alert_routing_preflight.py 2>&1 | tee "${EVIDENCE_DIR}/61-external-alert-routing-preflight.log"
   python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
   python validation/check_docs_evidence_governance.py 2>&1 | tee "${EVIDENCE_DIR}/30-docs-evidence-governance.log"
   python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null

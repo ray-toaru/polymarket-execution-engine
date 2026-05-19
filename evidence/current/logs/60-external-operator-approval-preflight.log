@@ -1,0 +1,20 @@
+{
+  "approval_expiry_enforced": true,
+  "approval_replay_block_required": true,
+  "dual_control_required": true,
+  "failures": [],
+  "live_cancel_allowed": false,
+  "live_submit_allowed": false,
+  "operator_approval_ready": false,
+  "production_ready_claimed": false,
+  "remote_side_effects": false,
+  "signals": {
+    "approval_expiry_present": false,
+    "approval_hash_present": false,
+    "approval_id_present": false,
+    "approval_scope_present": false,
+    "approval_ticket_present": false,
+    "approver_identity_present": false
+  },
+  "status": "pass"
+}
