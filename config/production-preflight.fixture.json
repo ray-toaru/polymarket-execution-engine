@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "secret_provider": {
+    "provider_ref": "vault://fixture/polymarket/execution-engine",
+    "kms_key_ref": "kms://fixture-region/fixture-key-id",
+    "rotation_evidence_ref": "change-ticket://fixture-rotation-review",
+    "break_glass_review_ref": "change-ticket://fixture-break-glass-review"
+  },
+  "operator_approval": {
+    "approval_id": "fixture-approval-001",
+    "approval_hash": "sha256:fixture-approval-payload-digest",
+    "ticket_ref": "change-ticket://fixture-canary-approval",
+    "approver_identity_ref": "user://fixture-operator",
+    "expires_at": "2099-01-01T00:00:00Z",
+    "scope": "fixture-canary-preflight-only"
+  },
+  "alert_routing": {
+    "provider_ref": "pager://fixture-provider",
+    "route_ref": "pager-route://fixture-execution-engine",
+    "pager_escalation_policy_ref": "pager-policy://fixture-trading-safety",
+    "dashboard_ref": "dashboard://fixture-execution-safety",
+    "alert_test_evidence_ref": "change-ticket://fixture-alert-test"
+  }
+}

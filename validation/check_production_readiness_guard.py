@@ -30,6 +30,7 @@ EXTERNAL_SECRET_PROVIDER_PREFLIGHT = ROOT / "docs" / "EXTERNAL_SECRET_PROVIDER_P
 EXTERNAL_OPERATOR_APPROVAL_PREFLIGHT = ROOT / "docs" / "EXTERNAL_OPERATOR_APPROVAL_PREFLIGHT.md"
 EXTERNAL_ALERT_ROUTING_PREFLIGHT = ROOT / "docs" / "EXTERNAL_ALERT_ROUTING_PREFLIGHT.md"
 PRODUCTION_PREFLIGHT_CONFIG_GUARD = ROOT / "docs" / "PRODUCTION_PREFLIGHT_CONFIG_GUARD.md"
+PRODUCTION_PREFLIGHT_CONFIG_FIXTURE_DRILL = ROOT / "docs" / "PRODUCTION_PREFLIGHT_CONFIG_FIXTURE_DRILL.md"
 RELEASE_MANIFEST = ROOT / "release" / "manifest.json"
 EVIDENCE_GUARD = ROOT / "validation" / "check_current_evidence_manifest.py"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
@@ -374,6 +375,23 @@ PRODUCTION_PREFLIGHT_CONFIG_TOKENS = [
     "production_ready_claimed = false",
 ]
 
+PRODUCTION_PREFLIGHT_CONFIG_FIXTURE_TOKENS = [
+    "fixture_secret_provider_ready = true",
+    "fixture_operator_approval_ready = true",
+    "fixture_alerting_ready = true",
+    "fixture_live_submit_allowed = false",
+    "fixture_live_cancel_allowed = false",
+    "fixture_remote_side_effects = false",
+    "invalid_sensitive_fixture_rejected = true",
+    "invalid_sensitive_fixture_secret_value_logged = false",
+    "invalid_sensitive_fixture_reports_path_only = true",
+    "forbidden_sensitive_keys_absent = false",
+    "live_submit_allowed = false",
+    "live_cancel_allowed = false",
+    "remote_side_effects = false",
+    "production_ready_claimed = false",
+]
+
 
 def main() -> int:
     failures: list[str] = []
@@ -482,6 +500,11 @@ def main() -> int:
         if token not in production_preflight_config_guard:
             failures.append(f"production preflight config guard missing {token}")
 
+    production_preflight_config_fixture_drill = PRODUCTION_PREFLIGHT_CONFIG_FIXTURE_DRILL.read_text()
+    for token in PRODUCTION_PREFLIGHT_CONFIG_FIXTURE_TOKENS:
+        if token not in production_preflight_config_fixture_drill:
+            failures.append(f"production preflight config fixture drill missing {token}")
+
     release = json.loads(RELEASE_MANIFEST.read_text())
     status = str(release.get("status", "")).lower()
     if "production-ready" in status or "production_ready" in status:
@@ -514,6 +537,7 @@ def main() -> int:
     require_current_gate_log("60-external-operator-approval-preflight.log", "external operator approval preflight", failures)
     require_current_gate_log("61-external-alert-routing-preflight.log", "external alert routing preflight", failures)
     require_current_gate_log("62-production-preflight-config-guard.log", "production preflight config guard", failures)
+    require_current_gate_log("63-production-preflight-config-fixture-drill.log", "production preflight config fixture drill", failures)
     if '"productionization_validation"' not in manifest_writer:
         failures.append("evidence manifest must include productionization_validation")
     if "36-production-readiness-guard.log" not in manifest_writer:
@@ -588,6 +612,10 @@ def main() -> int:
         failures.append("evidence manifest must include production_preflight_config_validation")
     if "62-production-preflight-config-guard.log" not in manifest_writer:
         failures.append("evidence manifest must capture production preflight config guard log")
+    if '"production_preflight_config_fixture_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include production_preflight_config_fixture_validation")
+    if "63-production-preflight-config-fixture-drill.log" not in manifest_writer:
+        failures.append("evidence manifest must capture production preflight config fixture drill log")
 
     if failures:
         for failure in failures:

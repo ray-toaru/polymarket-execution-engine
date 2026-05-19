@@ -1,0 +1,20 @@
+{
+  "failures": [],
+  "fixture_alerting_ready": true,
+  "fixture_live_cancel_allowed": false,
+  "fixture_live_submit_allowed": false,
+  "fixture_operator_approval_ready": true,
+  "fixture_remote_side_effects": false,
+  "fixture_secret_provider_ready": true,
+  "forbidden_sensitive_keys_absent": false,
+  "invalid_sensitive_fixture_rejected": true,
+  "invalid_sensitive_fixture_reports_path_only": true,
+  "invalid_sensitive_fixture_secret_value_logged": false,
+  "live_cancel_allowed": false,
+  "live_submit_allowed": false,
+  "negative_fixture": "config/production-preflight.invalid-sensitive.fixture.json",
+  "positive_fixture": "config/production-preflight.fixture.json",
+  "production_ready_claimed": false,
+  "remote_side_effects": false,
+  "status": "pass"
+}

@@ -152,6 +152,9 @@ SECTIONS: dict[str, list[str]] = {
     "production_preflight_config_validation": [
         "62-production-preflight-config-guard.log",
     ],
+    "production_preflight_config_fixture_validation": [
+        "63-production-preflight-config-fixture-drill.log",
+    ],
     "runtime_worker_status_validation": [
         "42-runtime-worker-status-query.log",
     ],
