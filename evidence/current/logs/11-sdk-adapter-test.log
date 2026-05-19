@@ -1,18 +1,18 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.36s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.43s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-adapter/target/debug/deps/pmx_official_sdk_adapter-de5424c120c800cd)
 
 running 35 tests
 test tests::canary::authenticated_non_trading_is_explicit_opt_in ... ok
-test tests::canary::default_config_cannot_live_submit ... ok
 test tests::canary::live_canary_prep_requires_whitelist_caps_approval_and_cancel_fallback ... ok
-test tests::canary::live_canary_default_preconditions_are_blocked_without_side_effects ... ok
 test tests::canary::live_canary_prep_freezes_on_remote_unknown_and_never_submits ... ok
-test tests::canary::live_submit_canary_requires_cancel_only_fallback ... ok
 test tests::canary::live_submit_canary_requires_every_gate ... ok
 test tests::canary::live_submit_preconditions_are_closed_by_default ... ok
+test tests::canary::live_submit_canary_requires_cancel_only_fallback ... ok
 test tests::canary::read_only_smoke_ignores_ambient_credentials_but_must_remain_unauthenticated ... ok
 test tests::canary::sign_only_is_not_live_submit ... ok
+test tests::canary::default_config_cannot_live_submit ... ok
 test tests::liveness_errors::gateway_error_conversion_redacts_sensitive_message ... ok
+test tests::canary::live_canary_default_preconditions_are_blocked_without_side_effects ... ok
 test tests::liveness_errors::liveness_geoblock_blocks_first ... ok
 test tests::liveness_errors::liveness_requires_reconcile_when_remote_unknown_exists ... ok
 test tests::liveness_errors::normalized_error_redaction_covers_remote_unknown_messages ... ok
@@ -22,21 +22,21 @@ test tests::mapping::plan_mapping_maps_ioc_to_sdk_fak ... ok
 test tests::mapping::plan_mapping_normalizes_limit_orders ... ok
 test tests::mapping::plan_mapping_preserves_metadata_without_exposing_signed_payload ... ok
 test tests::mapping::plan_mapping_rejects_expiration_for_non_gtd ... ok
-test tests::mapping::plan_mapping_rejects_gtd_without_valid_expiration ... ok
 test tests::mapping::plan_mapping_rejects_invalid_limit_price_and_zero_size ... ok
+test tests::mapping::plan_mapping_rejects_gtd_without_valid_expiration ... ok
 test tests::mapping::plan_mapping_rejects_placeholder_token_id ... ok
 test tests::mapping::plan_mapping_requires_market_amount ... ok
-test tests::mapping::plan_mapping_supports_fok_limit_orders ... ok
 test tests::mapping::plan_mapping_supports_gtd_with_expiration ... ok
-test tests::mapping::plan_mapping_supports_market_amount ... ok
 test tests::sign_only::sign_only_lifecycle_records_are_persistable_and_non_mutating ... ok
+test tests::mapping::plan_mapping_supports_fok_limit_orders ... ok
 test tests::sign_only::sign_only_lifecycle_rejects_posted_receipt ... ok
+test tests::mapping::plan_mapping_supports_market_amount ... ok
 test tests::sign_only::sign_only_request_converts_to_limit_plan ... ok
 test tests::sign_only::standard_sign_only_plan_is_default_sdk_construct_path_without_raw_payload ... ok
-test tests::sign_only::standard_sign_only_plan_rejects_profile_that_can_post_or_expose_raw_order ... ok
 test tests::sign_only::standard_sign_only_construction_emits_only_digest_ref_and_lifecycle ... ok
-test tests::sign_only::standard_sign_only_profile_is_non_posting_v2_pusd ... ok
 test tests::sign_only::standard_sign_only_construction_ref_is_stable_for_same_mapping ... ok
+test tests::sign_only::standard_sign_only_plan_rejects_profile_that_can_post_or_expose_raw_order ... ok
+test tests::sign_only::standard_sign_only_profile_is_non_posting_v2_pusd ... ok
 
 test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
