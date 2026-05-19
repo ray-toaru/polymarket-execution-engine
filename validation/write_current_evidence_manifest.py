@@ -158,6 +158,9 @@ SECTIONS: dict[str, list[str]] = {
     "production_preflight_config_diff_review_validation": [
         "64-production-preflight-config-diff-review.log",
     ],
+    "real_funds_canary_preflight_validation": [
+        "65-real-funds-canary-preflight.log",
+    ],
     "runtime_worker_status_validation": [
         "42-runtime-worker-status-query.log",
     ],

@@ -1,0 +1,19 @@
+{
+  "approval_file_required": true,
+  "approval_fixture": "config/real-funds-canary.approval.example.json",
+  "artifact_hash_required": true,
+  "auto_market_selection_guarded": true,
+  "evidence_manifest_hash_required": true,
+  "execution_style": "FOK_LIMIT_FILL",
+  "failures": [],
+  "live_cancel_allowed": false,
+  "live_submit_allowed": false,
+  "max_daily_notional_usd": "5",
+  "max_order_notional_usd": "1",
+  "posted": false,
+  "raw_signed_order_exposed": false,
+  "raw_signed_order_logged": false,
+  "real_funds_canary_allowed": false,
+  "remote_side_effects": false,
+  "status": "pass"
+}

@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Static guard for pre-live execution releases.
+"""Static guard for pre-live and guarded-canary execution releases.
 
 This check is deliberately conservative: the official SDK adapter may contain documentation,
-feature-gate names, and validation helpers for future live submit, but it must not contain an
-actual SDK post_order invocation in pre-live releases. Fake gateway tests live in pmx-gateway and
-are intentionally out of scope.
+feature-gate names, validation helpers, and one guarded real-funds canary submit call site behind
+the live-submit feature. Fake gateway tests live in pmx-gateway and are intentionally out of scope.
 """
 from __future__ import annotations
 
@@ -16,10 +15,9 @@ ROOT = Path(__file__).resolve().parents[1]
 ADAPTER_SRC = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
 PUBLIC_CONTRACT = ROOT / "openapi" / "executor.v1.yaml"
 
-FORBIDDEN_ADAPTER_PATTERNS = [
-    re.compile(r"\.\s*post_order\s*\("),
-    re.compile(r"\.\s*post_orders\s*\("),
-]
+ALLOWED_POST_ORDER_FILE = ADAPTER_SRC / "sdk_runtime" / "live_canary.rs"
+FORBIDDEN_BULK_POST_ORDER = re.compile(r"\.\s*post_orders\s*\(")
+POST_ORDER_CALL = re.compile(r"\.\s*post_order\s*\(")
 FORBIDDEN_PUBLIC_TERMS = [
     "SignedOrderEnvelope",
     "signed_payload",
@@ -49,6 +47,12 @@ REQUIRED_CANARY_TOKENS = [
     "live_submit_canary_requires_every_gate",
     "live_canary_default_preconditions_are_blocked_without_side_effects",
     "live_submit_canary_requires_cancel_only_fallback",
+    "RealFundsCanaryPreconditions",
+    "ENV_ALLOW_REAL_FUNDS_CANARY",
+    "validate_real_funds_canary_preconditions",
+    "run_real_funds_canary_fok_fill",
+    "SdkOrderType::FOK",
+    "raw_signed_order_exposed: false",
 ]
 
 
@@ -64,13 +68,35 @@ def read_adapter_sources() -> str:
     return "\n".join(path.read_text() for path in sorted(ADAPTER_SRC.rglob("*.rs")))
 
 
+def adapter_source_files() -> list[Path]:
+    return sorted(ADAPTER_SRC.rglob("*.rs"))
+
+
 def main() -> int:
     raw_adapter_text = read_adapter_sources()
     adapter_text = strip_rust_comments(raw_adapter_text)
     failures: list[str] = []
-    for pattern in FORBIDDEN_ADAPTER_PATTERNS:
-        if pattern.search(adapter_text):
-            failures.append(f"official SDK adapter contains forbidden call pattern: {pattern.pattern}")
+    if FORBIDDEN_BULK_POST_ORDER.search(adapter_text):
+        failures.append("official SDK adapter contains forbidden bulk post_orders call pattern")
+    post_order_call_sites: list[Path] = []
+    for path in adapter_source_files():
+        text = strip_rust_comments(path.read_text())
+        if POST_ORDER_CALL.search(text):
+            post_order_call_sites.append(path)
+    if post_order_call_sites != [ALLOWED_POST_ORDER_FILE]:
+        display = ", ".join(str(path.relative_to(ADAPTER_SRC)) for path in post_order_call_sites) or "none"
+        failures.append(f"official SDK adapter post_order call sites must be limited to sdk_runtime/live_canary.rs; found {display}")
+    if ALLOWED_POST_ORDER_FILE.exists():
+        allowed_text = strip_rust_comments(ALLOWED_POST_ORDER_FILE.read_text())
+        if ".post_order(signed)" not in allowed_text:
+            failures.append("allowed live canary post_order call must submit only the locally signed canary order")
+        for token in [
+            "validate_real_funds_canary_preconditions",
+            "SdkOrderType::FOK",
+            "raw_signed_order_exposed: false",
+        ]:
+            if token not in allowed_text:
+                failures.append(f"allowed live canary post_order file missing token: {token}")
     for token in REQUIRED_CANARY_TOKENS:
         if token not in raw_adapter_text:
             failures.append(f"official SDK adapter missing live canary guard token: {token}")

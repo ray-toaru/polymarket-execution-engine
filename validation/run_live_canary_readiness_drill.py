@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
 MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 DOC = ROOT / "docs" / "LIVE_CANARY_READINESS_DRILL.md"
+ALLOWED_CANARY_POST_ORDER = ADAPTER / "sdk_runtime" / "live_canary.rs"
 
 REQUIRED_CANARY_GATES = [
     "compile_feature_live_submit",
@@ -63,11 +64,11 @@ REQUIRED_DOC_TOKENS = [
 ]
 
 FORBIDDEN_SIDE_EFFECT_CALLS = [
-    re.compile(r"\.\s*post_order\s*\("),
     re.compile(r"\.\s*post_orders\s*\("),
     re.compile(r"\.\s*cancel_order\s*\("),
     re.compile(r"\.\s*cancel_orders\s*\("),
 ]
+POST_ORDER_CALL = re.compile(r"\.\s*post_order\s*\(")
 
 
 def strip_rust_comments(text: str) -> str:
@@ -77,6 +78,10 @@ def strip_rust_comments(text: str) -> str:
 
 def read_rust_sources(path: Path) -> str:
     return "\n".join(source.read_text() for source in sorted(path.rglob("*.rs")))
+
+
+def rust_sources(path: Path) -> list[Path]:
+    return sorted(path.rglob("*.rs"))
 
 
 def env_enabled(name: str) -> bool:
@@ -93,6 +98,26 @@ def main() -> int:
     for pattern in FORBIDDEN_SIDE_EFFECT_CALLS:
         if pattern.search(stripped_adapter):
             failures.append(f"adapter contains forbidden remote side-effect call: {pattern.pattern}")
+    post_order_call_sites = [
+        source
+        for source in rust_sources(ADAPTER)
+        if POST_ORDER_CALL.search(strip_rust_comments(source.read_text()))
+    ]
+    if post_order_call_sites != [ALLOWED_CANARY_POST_ORDER]:
+        display = ", ".join(str(path.relative_to(ADAPTER)) for path in post_order_call_sites) or "none"
+        failures.append(
+            "post_order call sites must be limited to guarded real-funds canary, "
+            f"not readiness-drill paths; found {display}"
+        )
+    if ALLOWED_CANARY_POST_ORDER.exists():
+        canary = strip_rust_comments(ALLOWED_CANARY_POST_ORDER.read_text())
+        for token in [
+            "validate_real_funds_canary_preconditions",
+            "SdkOrderType::FOK",
+            "raw_signed_order_exposed: false",
+        ]:
+            if token not in canary:
+                failures.append(f"guarded canary post_order site missing token: {token}")
     if env_enabled("PMX_ALLOW_LIVE_SUBMIT"):
         failures.append("PMX_ALLOW_LIVE_SUBMIT=1 is not allowed during readiness drill")
     if env_enabled("PMX_ALLOW_LIVE_CANCEL"):

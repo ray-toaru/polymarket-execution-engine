@@ -27,6 +27,7 @@ def main() -> int:
     failures: list[str] = []
     migration_0002 = MIGRATIONS / "0002_migration_framework.sql"
     migration_0003 = MIGRATIONS / "0003_order_event_trace.sql"
+    migration_0004 = MIGRATIONS / "0004_real_funds_canary.sql"
     postgres = read_rust_sources(POSTGRES)
     manifest = MANIFEST_WRITER.read_text()
     drift_dry_run = DRIFT_DRY_RUN.read_text()
@@ -42,11 +43,18 @@ def main() -> int:
     require("0001_initial" in postgres, "SCHEMA_MIGRATIONS must include 0001_initial", failures)
     require("0002_migration_framework" in postgres, "SCHEMA_MIGRATIONS must include 0002_migration_framework", failures)
     require("0003_order_event_trace" in postgres, "SCHEMA_MIGRATIONS must include 0003_order_event_trace", failures)
+    require("0004_real_funds_canary" in postgres, "SCHEMA_MIGRATIONS must include 0004_real_funds_canary", failures)
     require(migration_0003.exists(), "missing migrations/0003_order_event_trace.sql", failures)
     if migration_0003.exists():
         migration_sql = migration_0003.read_text()
         require("ADD COLUMN IF NOT EXISTS correlation_id" in migration_sql, "0003 must add order_events.correlation_id", failures)
         require("idx_order_events_order_correlation" in migration_sql, "0003 must index order event correlation lookup", failures)
+    require(migration_0004.exists(), "missing migrations/0004_real_funds_canary.sql", failures)
+    if migration_0004.exists():
+        migration_sql = migration_0004.read_text()
+        require("CREATE TABLE IF NOT EXISTS real_funds_canary_runs" in migration_sql, "0004 must create real_funds_canary_runs", failures)
+        require("UNIQUE (account_id, idempotency_key)" in migration_sql, "0004 must enforce canary idempotency", failures)
+        require("real_funds_canary_no_raw_signed_order" in migration_sql, "0004 must forbid raw signed order exposure", failures)
     require("record_applied_migration" in postgres, "apply_schema must record applied migrations", failures)
     require("schema migration checksum mismatch" in postgres, "migration checksum drift must fail closed", failures)
     require("applied_schema_migrations" in postgres, "store must expose applied migration evidence for PG tests", failures)
@@ -55,6 +63,7 @@ def main() -> int:
     require("fresh_schema" in drift_dry_run and "upgraded_schema" in drift_dry_run, "migration dry-run must cover fresh and upgraded schemas", failures)
     require("bad checksum fixture" in drift_dry_run, "migration dry-run must include checksum drift fixture", failures)
     require("0003_order_event_trace" in drift_dry_run, "migration dry-run must include 0003_order_event_trace", failures)
+    require("0004_real_funds_canary" in drift_dry_run, "migration dry-run must include 0004_real_funds_canary", failures)
 
     require_current_gate_log("33-migration-framework-guard.log", "migration framework guard", failures)
     require_current_gate_log("34-migration-drift-dry-run.log", "migration drift dry-run", failures)

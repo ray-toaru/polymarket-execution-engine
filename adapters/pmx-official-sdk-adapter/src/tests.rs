@@ -47,6 +47,9 @@ fn sample_plan_limit() -> OfficialSdkPlanOrder {
 #[path = "tests/canary.rs"]
 mod canary;
 
+#[path = "tests/real_funds.rs"]
+mod real_funds;
+
 #[path = "tests/feature_gated.rs"]
 mod feature_gated;
 

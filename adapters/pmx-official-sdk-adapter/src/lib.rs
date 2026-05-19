@@ -28,6 +28,8 @@ pub use model::*;
 pub use redaction::*;
 #[cfg(feature = "authenticated-smoke")]
 pub use sdk_runtime::run_authenticated_non_trading_sdk_smoke;
+#[cfg(feature = "live-submit")]
+pub use sdk_runtime::run_real_funds_canary_fok_fill;
 #[cfg(feature = "sign-only-dry-run")]
 pub use sdk_runtime::run_sign_only_dry_run;
 pub use standard_sign_only::*;

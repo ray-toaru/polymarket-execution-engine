@@ -24,4 +24,9 @@ async fn postgres_records_schema_migrations() {
             .iter()
             .any(|(version, checksum)| version == "0003_order_event_trace" && checksum.len() == 64)
     );
+    assert!(
+        migrations
+            .iter()
+            .any(|(version, checksum)| version == "0004_real_funds_canary" && checksum.len() == 64)
+    );
 }

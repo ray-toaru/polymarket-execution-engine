@@ -10,7 +10,7 @@ default = []
 sdk-typecheck = ["dep:polymarket_client_sdk_v2"]
 authenticated-smoke = ["sdk-typecheck", "dep:tokio", "dep:anyhow"]
 sign-only-dry-run = ["sdk-typecheck", "dep:tokio", "dep:anyhow"]
-live-submit = []
+live-submit = ["sdk-typecheck", "dep:tokio", "dep:anyhow"]
 
 [dependencies]
 pmx-core = { path = "../../crates/pmx-core" }

@@ -16,4 +16,8 @@ pub const SCHEMA_MIGRATIONS: &[SchemaMigration] = &[
         version: "0003_order_event_trace",
         sql: include_str!("../../../../migrations/0003_order_event_trace.sql"),
     },
+    SchemaMigration {
+        version: "0004_real_funds_canary",
+        sql: include_str!("../../../../migrations/0004_real_funds_canary.sql"),
+    },
 ];

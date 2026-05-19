@@ -6,6 +6,7 @@ fn default_config_cannot_live_submit() {
     assert!(!config.allow_authenticated_non_trading_smoke);
     assert!(!config.allow_sign_only_dry_run);
     assert!(!config.allow_live_submit);
+    assert!(!config.allow_real_funds_canary);
     assert!(config.require_kill_switch_open_for_live_submit);
     assert!(config.require_repository_reservation_for_live_submit);
     assert!(config.require_reconcile_worker_for_live_submit);

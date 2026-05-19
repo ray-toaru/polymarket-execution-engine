@@ -58,7 +58,10 @@
     "executor-owned-standard-sign-only-ref-and-digest-derivation",
     "standard-sign-only-api-omitted-ref-digest-path",
     "standard-sign-only-lifecycle-idempotent-replay",
-    "non-trading-runtime-heartbeat-worker-sink"
+    "non-trading-runtime-heartbeat-worker-sink",
+    "guarded-real-funds-canary-preflight-scaffold",
+    "real-funds-canary-approval-artifact-evidence-binding",
+    "real-funds-canary-fok-limit-fill-code-path-behind-live-submit-feature"
   ],
   "v011_source_changes": [
     "api-server-authoritative-in-memory-store-scaffold",
@@ -93,7 +96,9 @@
     "observability-evidence-manifest-section",
     "reconciliation-drift-multi-scenario-drill",
     "rollback-kill-switch-expanded-fallback-drill",
-    "live-canary-rehearsal-expanded-stage-drill"
+    "live-canary-rehearsal-expanded-stage-drill",
+    "real-funds-canary-preflight-validation",
+    "real-funds-canary-forward-migration"
   ],
   "canonical_evidence": {
     "manifest_path": "polymarket-execution-engine/evidence/current/manifest.json",
