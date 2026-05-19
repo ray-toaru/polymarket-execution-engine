@@ -5,8 +5,14 @@
     "evidence_manifest_sha256_bound": true,
     "evidence_sidecar_verified": true,
     "path": "/workspaces/universal/rust/polymarket_dual_project/dist/polymarket-dual-project-v0.25.0.zip",
-    "sha256": "6c904804ab46a762786b970a69df6dae2dd6e501ac8df36bb2b4422b51d0fbca"
+    "sha256": "bbb6effc66c5daa00364ee4b35502ff767c795652e8b0a3167b83190f7455143"
   },
+  "config_diff_review_evidence_verified": true,
+  "config_diff_review_log": {
+    "path": "polymarket-execution-engine/evidence/current/logs/64-production-preflight-config-diff-review.log",
+    "sha256": "1754b475d1a9e14554ab6f871f3fd3e994bf0dd639bf57fef61d33882d3fa3e7"
+  },
+  "config_diff_review_log_hash_verified": true,
   "config_diff_review_required": true,
   "deploy_allowed": false,
   "failures": [],

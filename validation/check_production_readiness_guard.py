@@ -174,6 +174,8 @@ DEPLOYMENT_PREFLIGHT_TOKENS = [
     "evidence_manifest_sha256_bound",
     "migration_evidence_present",
     "config_diff_review_required",
+    "config_diff_review_evidence_verified",
+    "config_diff_review_log_hash_verified",
     "operator_approval_required",
     "live_submit_disabled",
     "live_cancel_disabled",

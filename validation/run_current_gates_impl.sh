@@ -111,6 +111,7 @@ python validation/run_production_dependency_breakage_drill.py 2>&1 | tee "${EVID
 python validation/check_runtime_worker_status_query.py 2>&1 | tee "${EVIDENCE_DIR}/42-runtime-worker-status-query.log"
 python validation/check_observability_evidence.py 2>&1 | tee "${EVIDENCE_DIR}/43-observability-evidence.log"
 python scripts/check_release_hygiene.py "${HYGIENE_ROOT}" 2>&1 | tee "${EVIDENCE_DIR}/26-release-hygiene-clean-snapshot.log"
+python validation/run_production_preflight_config_diff_review.py 2>&1 | tee "${EVIDENCE_DIR}/64-production-preflight-config-diff-review.log"
 python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" >/dev/null
 
 if [[ -f "${INTEGRATION_ROOT}/scripts/check_version_consistency.py" && -f "${INTEGRATION_ROOT}/scripts/validate_contracts.py" ]]; then
@@ -133,7 +134,6 @@ if [[ -f "${INTEGRATION_ROOT}/scripts/check_version_consistency.py" && -f "${INT
   python validation/run_external_alert_routing_preflight.py 2>&1 | tee "${EVIDENCE_DIR}/61-external-alert-routing-preflight.log"
   python validation/run_production_preflight_config_guard.py 2>&1 | tee "${EVIDENCE_DIR}/62-production-preflight-config-guard.log"
   python validation/run_production_preflight_config_fixture_drill.py 2>&1 | tee "${EVIDENCE_DIR}/63-production-preflight-config-fixture-drill.log"
-  python validation/run_production_preflight_config_diff_review.py 2>&1 | tee "${EVIDENCE_DIR}/64-production-preflight-config-diff-review.log"
   python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
   python validation/check_docs_evidence_governance.py 2>&1 | tee "${EVIDENCE_DIR}/30-docs-evidence-governance.log"
   python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null

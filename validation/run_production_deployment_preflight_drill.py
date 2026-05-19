@@ -13,6 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_ROOT = ROOT.parent
 DOC = ROOT / "docs" / "PRODUCTION_DEPLOYMENT_PREFLIGHT_DRILL.md"
 MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
+CURRENT_MANIFEST = ROOT / "evidence" / "current" / "manifest.json"
+DIFF_REVIEW_SECTION = "production_preflight_config_diff_review_validation"
+DIFF_REVIEW_LOG = "64-production-preflight-config-diff-review.log"
 
 
 def env_enabled(name: str) -> bool:
@@ -47,6 +50,8 @@ def main() -> int:
             "evidence_manifest_sha256_bound",
             "migration_evidence_present",
             "config_diff_review_required",
+            "config_diff_review_evidence_verified",
+            "config_diff_review_log_hash_verified",
             "operator_approval_required",
             "live_submit_disabled",
             "live_cancel_disabled",
@@ -107,8 +112,45 @@ def main() -> int:
         "13-pg-migration.log",
         "27-package-release.log",
         "28-release-artifact-check.log",
+        DIFF_REVIEW_LOG,
     ]:
         require_current_gate_log(log_name, f"deployment preflight source evidence {log_name}", failures)
+
+    config_diff_review_evidence_verified = False
+    config_diff_review_log_hash_verified = False
+    config_diff_review_log_path = None
+    config_diff_review_log_sha256 = None
+    if not CURRENT_MANIFEST.exists():
+        failures.append("current evidence manifest missing for config diff review evidence verification")
+    else:
+        current_manifest = json.loads(CURRENT_MANIFEST.read_text())
+        section = current_manifest.get(DIFF_REVIEW_SECTION, {})
+        if section.get("status") != "pass":
+            failures.append("config diff review evidence section must be pass")
+        logs = section.get("logs", [])
+        matching_logs = [
+            log for log in logs
+            if isinstance(log, dict) and str(log.get("path", "")).endswith(DIFF_REVIEW_LOG)
+        ]
+        if not matching_logs:
+            failures.append("config diff review evidence log missing from manifest section")
+        else:
+            log_entry = matching_logs[0]
+            config_diff_review_log_path = log_entry.get("path")
+            config_diff_review_log_sha256 = log_entry.get("sha256")
+            log_path = INTEGRATION_ROOT / str(config_diff_review_log_path)
+            config_diff_review_log_hash_verified = (
+                log_path.exists()
+                and bool(config_diff_review_log_sha256)
+                and sha256(log_path) == config_diff_review_log_sha256
+            )
+            if not config_diff_review_log_hash_verified:
+                failures.append("config diff review evidence log hash mismatch")
+        config_diff_review_evidence_verified = (
+            section.get("status") == "pass"
+            and bool(matching_logs)
+            and config_diff_review_log_hash_verified
+        )
 
     result = {
         "status": "fail" if failures else "pass",
@@ -122,6 +164,12 @@ def main() -> int:
         },
         "migration_evidence_present": True,
         "config_diff_review_required": True,
+        "config_diff_review_evidence_verified": config_diff_review_evidence_verified,
+        "config_diff_review_log_hash_verified": config_diff_review_log_hash_verified,
+        "config_diff_review_log": {
+            "path": config_diff_review_log_path,
+            "sha256": config_diff_review_log_sha256,
+        },
         "operator_approval_required": True,
         "live_submit_disabled": not env_enabled("PMX_ALLOW_LIVE_SUBMIT"),
         "live_cancel_disabled": not env_enabled("PMX_ALLOW_LIVE_CANCEL"),

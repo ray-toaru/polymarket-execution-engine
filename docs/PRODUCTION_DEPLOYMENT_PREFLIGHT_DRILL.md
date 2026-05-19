@@ -12,6 +12,8 @@ Required preflight inputs:
 - evidence_manifest_sha256_bound
 - migration_evidence_present
 - config_diff_review_required
+- config_diff_review_evidence_verified
+- config_diff_review_log_hash_verified
 - operator_approval_required
 - live_submit_disabled
 - live_cancel_disabled
@@ -28,6 +30,7 @@ production_ready_claimed = false
 ```
 
 Passing this drill means the local package, SHA-256 sidecar, evidence sidecar,
-and migration evidence can be checked as deployment preflight inputs. It does
-not replace a real deployment, external change-management approval, production
-config diff review, or operator approval.
+current evidence manifest, migration evidence, and production config diff review
+evidence can be checked as deployment preflight inputs. It does not replace a
+real deployment, external change-management approval, production config diff
+review, or operator approval.
