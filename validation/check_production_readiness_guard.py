@@ -20,6 +20,12 @@ DEPENDENCY_BREAKAGE_DRILL = ROOT / "docs" / "PRODUCTION_DEPENDENCY_BREAKAGE_DRIL
 DEPLOYMENT_PREFLIGHT_DRILL = ROOT / "docs" / "PRODUCTION_DEPLOYMENT_PREFLIGHT_DRILL.md"
 SECRET_CUSTODY_DRILL = ROOT / "docs" / "PRODUCTION_SECRET_CUSTODY_DRILL.md"
 MONITORING_SLO_DRILL = ROOT / "docs" / "PRODUCTION_MONITORING_SLO_DRILL.md"
+INCIDENT_RESPONSE_DRILL = ROOT / "docs" / "PRODUCTION_INCIDENT_RESPONSE_DRILL.md"
+ROLLBACK_DOWNGRADE_DRILL = ROOT / "docs" / "PRODUCTION_ROLLBACK_DOWNGRADE_DRILL.md"
+RISK_LIMITS_DRILL = ROOT / "docs" / "PRODUCTION_RISK_LIMITS_DRILL.md"
+CONFIG_PROFILE_DRILL = ROOT / "docs" / "PRODUCTION_CONFIG_PROFILE_DRILL.md"
+RELEASE_DECISION_GUARD = ROOT / "docs" / "PRODUCTION_RELEASE_DECISION_GUARD.md"
+CONTROLLED_CANARY_PREP_DRILL = ROOT / "docs" / "LIVE_CANARY_CONTROLLED_PREP_DRILL.md"
 RELEASE_MANIFEST = ROOT / "release" / "manifest.json"
 EVIDENCE_GUARD = ROOT / "validation" / "check_current_evidence_manifest.py"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
@@ -201,6 +207,91 @@ MONITORING_SLO_TOKENS = [
     "remote_side_effects = false",
 ]
 
+INCIDENT_RESPONSE_TOKENS = [
+    "remote_unknown",
+    "cancel_failure",
+    "sdk_failure",
+    "postgres_unavailable",
+    "geoblock",
+    "low_resource",
+    "worker_degraded",
+    "live_submit_allowed = false",
+    "operator_required = true",
+    "evidence_preserved = true",
+    "remote_side_effects = false",
+]
+
+ROLLBACK_DOWNGRADE_TOKENS = [
+    "sdk_failure_to_sign_only",
+    "remote_unknown_to_cancel_only",
+    "postgres_unavailable_to_read_only",
+    "geoblock_to_read_only",
+    "kill_switch_to_read_only",
+    "recovery_requires_operator_review",
+    "sign-only",
+    "cancel-only",
+    "read-only",
+    "auto_reenable_live_submit = false",
+    "remote_side_effects = false",
+]
+
+RISK_LIMITS_TOKENS = [
+    "account_whitelist",
+    "market_whitelist",
+    "per_order_cap",
+    "per_day_cap",
+    "exposure_cap",
+    "operator_approval_threshold",
+    "remote_unknown_freeze_override",
+    "stale_market_data_blocks",
+    "geoblock_blocks",
+    "live_submit_allowed = false",
+]
+
+CONFIG_PROFILE_TOKENS = [
+    "live_submit_default_disabled",
+    "live_cancel_default_disabled",
+    "production_ready_default_false",
+    "kill_switch_default_closed",
+    "per_account_enablement_required",
+    "per_market_enablement_required",
+    "amount_caps_required",
+    "operator_approval_required",
+    "canary_profile_isolated",
+    "live_submit_allowed = false",
+]
+
+RELEASE_DECISION_TOKENS = [
+    "release_status_not_production_ready",
+    "release_status_not_live_ready",
+    "validated_release_false",
+    "production_ready_false",
+    "live_trading_ready_false",
+    "production_blocker_present",
+    "live_blocker_present",
+    "artifact_kind_source_candidate",
+    "no_production_promotion_without_review",
+    "production_ready_claimed = false",
+]
+
+CONTROLLED_CANARY_PREP_TOKENS = [
+    "compile_feature_live_submit",
+    "env_allow_live_submit",
+    "config_allow_live_submit",
+    "operator_approval_present",
+    "account_whitelisted",
+    "market_whitelisted",
+    "tiny_size_cap",
+    "limit_order_only",
+    "idempotency_key_written",
+    "repository_reservation_exists",
+    "reconcile_after_submit_required",
+    "remote_unknown_freezes_submit",
+    "cancel_only_fallback_ready",
+    "canary_submit_allowed = false",
+    "remote_side_effects = false",
+]
+
 
 def main() -> int:
     failures: list[str] = []
@@ -259,6 +350,36 @@ def main() -> int:
         if token not in monitoring_slo_drill:
             failures.append(f"production monitoring SLO drill missing {token}")
 
+    incident_response_drill = INCIDENT_RESPONSE_DRILL.read_text()
+    for token in INCIDENT_RESPONSE_TOKENS:
+        if token not in incident_response_drill:
+            failures.append(f"production incident response drill missing {token}")
+
+    rollback_downgrade_drill = ROLLBACK_DOWNGRADE_DRILL.read_text()
+    for token in ROLLBACK_DOWNGRADE_TOKENS:
+        if token not in rollback_downgrade_drill:
+            failures.append(f"production rollback downgrade drill missing {token}")
+
+    risk_limits_drill = RISK_LIMITS_DRILL.read_text()
+    for token in RISK_LIMITS_TOKENS:
+        if token not in risk_limits_drill:
+            failures.append(f"production risk limits drill missing {token}")
+
+    config_profile_drill = CONFIG_PROFILE_DRILL.read_text()
+    for token in CONFIG_PROFILE_TOKENS:
+        if token not in config_profile_drill:
+            failures.append(f"production config profile drill missing {token}")
+
+    release_decision_guard = RELEASE_DECISION_GUARD.read_text()
+    for token in RELEASE_DECISION_TOKENS:
+        if token not in release_decision_guard:
+            failures.append(f"production release decision guard missing {token}")
+
+    controlled_canary_prep_drill = CONTROLLED_CANARY_PREP_DRILL.read_text()
+    for token in CONTROLLED_CANARY_PREP_TOKENS:
+        if token not in controlled_canary_prep_drill:
+            failures.append(f"controlled canary prep drill missing {token}")
+
     release = json.loads(RELEASE_MANIFEST.read_text())
     status = str(release.get("status", "")).lower()
     if "production-ready" in status or "production_ready" in status:
@@ -281,6 +402,12 @@ def main() -> int:
     require_current_gate_log("50-production-deployment-preflight-drill.log", "production deployment preflight drill", failures)
     require_current_gate_log("51-production-secret-custody-drill.log", "production secret custody drill", failures)
     require_current_gate_log("52-production-monitoring-slo-drill.log", "production monitoring SLO drill", failures)
+    require_current_gate_log("53-production-incident-response-drill.log", "production incident response drill", failures)
+    require_current_gate_log("54-production-rollback-downgrade-drill.log", "production rollback downgrade drill", failures)
+    require_current_gate_log("55-production-risk-limits-drill.log", "production risk limits drill", failures)
+    require_current_gate_log("56-production-config-profile-drill.log", "production config profile drill", failures)
+    require_current_gate_log("57-production-release-decision-guard.log", "production release decision guard", failures)
+    require_current_gate_log("58-live-canary-controlled-prep-drill.log", "controlled live canary prep drill", failures)
     if '"productionization_validation"' not in manifest_writer:
         failures.append("evidence manifest must include productionization_validation")
     if "36-production-readiness-guard.log" not in manifest_writer:
@@ -315,6 +442,30 @@ def main() -> int:
         failures.append("evidence manifest must include production_monitoring_slo_validation")
     if "52-production-monitoring-slo-drill.log" not in manifest_writer:
         failures.append("evidence manifest must capture production monitoring SLO drill log")
+    if '"production_incident_response_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include production_incident_response_validation")
+    if "53-production-incident-response-drill.log" not in manifest_writer:
+        failures.append("evidence manifest must capture production incident response drill log")
+    if '"production_rollback_downgrade_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include production_rollback_downgrade_validation")
+    if "54-production-rollback-downgrade-drill.log" not in manifest_writer:
+        failures.append("evidence manifest must capture production rollback downgrade drill log")
+    if '"production_risk_limits_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include production_risk_limits_validation")
+    if "55-production-risk-limits-drill.log" not in manifest_writer:
+        failures.append("evidence manifest must capture production risk limits drill log")
+    if '"production_config_profile_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include production_config_profile_validation")
+    if "56-production-config-profile-drill.log" not in manifest_writer:
+        failures.append("evidence manifest must capture production config profile drill log")
+    if '"production_release_decision_guard_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include production_release_decision_guard_validation")
+    if "57-production-release-decision-guard.log" not in manifest_writer:
+        failures.append("evidence manifest must capture production release decision guard log")
+    if '"live_canary_controlled_prep_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include live_canary_controlled_prep_validation")
+    if "58-live-canary-controlled-prep-drill.log" not in manifest_writer:
+        failures.append("evidence manifest must capture controlled live canary prep drill log")
 
     if failures:
         for failure in failures:

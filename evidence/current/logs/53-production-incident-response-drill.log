@@ -1,0 +1,71 @@
+{
+  "failures": [],
+  "production_ready_claimed": false,
+  "remote_side_effects": false,
+  "scenarios": [
+    {
+      "evidence_preserved": true,
+      "fallback_mode": "cancel-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "name": "remote_unknown",
+      "operator_required": true,
+      "remote_side_effects": false
+    },
+    {
+      "evidence_preserved": true,
+      "fallback_mode": "operator-required",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "name": "cancel_failure",
+      "operator_required": true,
+      "remote_side_effects": false
+    },
+    {
+      "evidence_preserved": true,
+      "fallback_mode": "sign-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "name": "sdk_failure",
+      "operator_required": true,
+      "remote_side_effects": false
+    },
+    {
+      "evidence_preserved": true,
+      "fallback_mode": "read-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "name": "postgres_unavailable",
+      "operator_required": true,
+      "remote_side_effects": false
+    },
+    {
+      "evidence_preserved": true,
+      "fallback_mode": "read-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "name": "geoblock",
+      "operator_required": true,
+      "remote_side_effects": false
+    },
+    {
+      "evidence_preserved": true,
+      "fallback_mode": "read-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "name": "low_resource",
+      "operator_required": true,
+      "remote_side_effects": false
+    },
+    {
+      "evidence_preserved": true,
+      "fallback_mode": "read-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "name": "worker_degraded",
+      "operator_required": true,
+      "remote_side_effects": false
+    }
+  ],
+  "status": "pass"
+}

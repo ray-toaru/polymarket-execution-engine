@@ -1,0 +1,28 @@
+{
+  "canary_status": "controlled_prep_blocked_without_reviewed_release",
+  "canary_submit_allowed": false,
+  "cancelled": false,
+  "failures": [],
+  "gates": {
+    "account_whitelisted": true,
+    "cancel_only_fallback_ready": true,
+    "compile_feature_live_submit": true,
+    "config_allow_live_submit": true,
+    "env_allow_live_submit": true,
+    "idempotency_key_written": true,
+    "limit_order_only": true,
+    "market_whitelisted": true,
+    "operator_approval_present": true,
+    "reconcile_after_submit_required": true,
+    "remote_unknown_freezes_submit": true,
+    "repository_reservation_exists": true,
+    "tiny_size_cap": true
+  },
+  "live_cancel_allowed": false,
+  "live_submit_allowed": false,
+  "posted": false,
+  "production_ready_claimed": false,
+  "remote_side_effects": false,
+  "reviewed_release_decision_present": false,
+  "status": "pass"
+}

@@ -1,0 +1,10 @@
+{
+  "failures": [],
+  "live_ready_claimed": false,
+  "production_ready_claimed": false,
+  "release_status_not_live_ready": true,
+  "release_status_not_production_ready": true,
+  "remote_side_effects": false,
+  "status": "pass",
+  "validated_release": false
+}

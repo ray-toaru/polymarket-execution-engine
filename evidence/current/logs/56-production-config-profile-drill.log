@@ -1,0 +1,19 @@
+{
+  "config": {
+    "amount_caps_required": true,
+    "canary_profile_isolated": true,
+    "kill_switch_default_closed": true,
+    "live_cancel_allowed": false,
+    "live_cancel_default_disabled": true,
+    "live_submit_allowed": false,
+    "live_submit_default_disabled": true,
+    "operator_approval_required": true,
+    "per_account_enablement_required": true,
+    "per_market_enablement_required": true,
+    "production_ready_claimed": false,
+    "production_ready_default_false": true,
+    "remote_side_effects": false
+  },
+  "failures": [],
+  "status": "pass"
+}

@@ -122,6 +122,24 @@ SECTIONS: dict[str, list[str]] = {
     "production_monitoring_slo_validation": [
         "52-production-monitoring-slo-drill.log",
     ],
+    "production_incident_response_validation": [
+        "53-production-incident-response-drill.log",
+    ],
+    "production_rollback_downgrade_validation": [
+        "54-production-rollback-downgrade-drill.log",
+    ],
+    "production_risk_limits_validation": [
+        "55-production-risk-limits-drill.log",
+    ],
+    "production_config_profile_validation": [
+        "56-production-config-profile-drill.log",
+    ],
+    "production_release_decision_guard_validation": [
+        "57-production-release-decision-guard.log",
+    ],
+    "live_canary_controlled_prep_validation": [
+        "58-live-canary-controlled-prep-drill.log",
+    ],
     "runtime_worker_status_validation": [
         "42-runtime-worker-status-query.log",
     ],

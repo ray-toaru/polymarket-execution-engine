@@ -1,0 +1,189 @@
+{
+  "failures": [],
+  "live_submit_allowed": false,
+  "production_ready_claimed": false,
+  "remote_side_effects": false,
+  "scenarios": [
+    {
+      "checks": {
+        "account_whitelist": true,
+        "exposure_cap": true,
+        "geoblock_blocks": false,
+        "market_whitelist": true,
+        "operator_approval_threshold": true,
+        "per_day_cap": true,
+        "per_order_cap": true,
+        "remote_unknown_freeze_override": false,
+        "stale_market_data_blocks": false
+      },
+      "live_submit_allowed": false,
+      "name": "baseline_local_risk_ready_but_live_blocked",
+      "operator_required": false,
+      "remote_side_effects": false,
+      "risk_local_ready": true
+    },
+    {
+      "checks": {
+        "account_whitelist": false,
+        "exposure_cap": true,
+        "geoblock_blocks": false,
+        "market_whitelist": true,
+        "operator_approval_threshold": true,
+        "per_day_cap": true,
+        "per_order_cap": true,
+        "remote_unknown_freeze_override": false,
+        "stale_market_data_blocks": false
+      },
+      "live_submit_allowed": false,
+      "name": "account_not_whitelisted",
+      "operator_required": true,
+      "remote_side_effects": false,
+      "risk_local_ready": false
+    },
+    {
+      "checks": {
+        "account_whitelist": true,
+        "exposure_cap": true,
+        "geoblock_blocks": false,
+        "market_whitelist": false,
+        "operator_approval_threshold": true,
+        "per_day_cap": true,
+        "per_order_cap": true,
+        "remote_unknown_freeze_override": false,
+        "stale_market_data_blocks": false
+      },
+      "live_submit_allowed": false,
+      "name": "market_not_whitelisted",
+      "operator_required": true,
+      "remote_side_effects": false,
+      "risk_local_ready": false
+    },
+    {
+      "checks": {
+        "account_whitelist": true,
+        "exposure_cap": true,
+        "geoblock_blocks": false,
+        "market_whitelist": true,
+        "operator_approval_threshold": true,
+        "per_day_cap": true,
+        "per_order_cap": false,
+        "remote_unknown_freeze_override": false,
+        "stale_market_data_blocks": false
+      },
+      "live_submit_allowed": false,
+      "name": "per_order_cap_exceeded",
+      "operator_required": true,
+      "remote_side_effects": false,
+      "risk_local_ready": false
+    },
+    {
+      "checks": {
+        "account_whitelist": true,
+        "exposure_cap": true,
+        "geoblock_blocks": false,
+        "market_whitelist": true,
+        "operator_approval_threshold": true,
+        "per_day_cap": false,
+        "per_order_cap": true,
+        "remote_unknown_freeze_override": false,
+        "stale_market_data_blocks": false
+      },
+      "live_submit_allowed": false,
+      "name": "per_day_cap_exceeded",
+      "operator_required": true,
+      "remote_side_effects": false,
+      "risk_local_ready": false
+    },
+    {
+      "checks": {
+        "account_whitelist": true,
+        "exposure_cap": false,
+        "geoblock_blocks": false,
+        "market_whitelist": true,
+        "operator_approval_threshold": true,
+        "per_day_cap": true,
+        "per_order_cap": true,
+        "remote_unknown_freeze_override": false,
+        "stale_market_data_blocks": false
+      },
+      "live_submit_allowed": false,
+      "name": "exposure_cap_exceeded",
+      "operator_required": true,
+      "remote_side_effects": false,
+      "risk_local_ready": false
+    },
+    {
+      "checks": {
+        "account_whitelist": true,
+        "exposure_cap": true,
+        "geoblock_blocks": false,
+        "market_whitelist": true,
+        "operator_approval_threshold": false,
+        "per_day_cap": true,
+        "per_order_cap": true,
+        "remote_unknown_freeze_override": false,
+        "stale_market_data_blocks": false
+      },
+      "live_submit_allowed": false,
+      "name": "operator_threshold_missing",
+      "operator_required": true,
+      "remote_side_effects": false,
+      "risk_local_ready": false
+    },
+    {
+      "checks": {
+        "account_whitelist": true,
+        "exposure_cap": true,
+        "geoblock_blocks": false,
+        "market_whitelist": true,
+        "operator_approval_threshold": true,
+        "per_day_cap": true,
+        "per_order_cap": true,
+        "remote_unknown_freeze_override": true,
+        "stale_market_data_blocks": false
+      },
+      "live_submit_allowed": false,
+      "name": "remote_unknown_freeze",
+      "operator_required": true,
+      "remote_side_effects": false,
+      "risk_local_ready": false
+    },
+    {
+      "checks": {
+        "account_whitelist": true,
+        "exposure_cap": true,
+        "geoblock_blocks": false,
+        "market_whitelist": true,
+        "operator_approval_threshold": true,
+        "per_day_cap": true,
+        "per_order_cap": true,
+        "remote_unknown_freeze_override": false,
+        "stale_market_data_blocks": true
+      },
+      "live_submit_allowed": false,
+      "name": "stale_market_data",
+      "operator_required": true,
+      "remote_side_effects": false,
+      "risk_local_ready": false
+    },
+    {
+      "checks": {
+        "account_whitelist": true,
+        "exposure_cap": true,
+        "geoblock_blocks": true,
+        "market_whitelist": true,
+        "operator_approval_threshold": true,
+        "per_day_cap": true,
+        "per_order_cap": true,
+        "remote_unknown_freeze_override": false,
+        "stale_market_data_blocks": false
+      },
+      "live_submit_allowed": false,
+      "name": "geoblocked",
+      "operator_required": true,
+      "remote_side_effects": false,
+      "risk_local_ready": false
+    }
+  ],
+  "status": "pass"
+}

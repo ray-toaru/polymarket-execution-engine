@@ -1,6 +1,6 @@
 {
   "cancelled": false,
-  "captured_at": "2026-05-19T06:37:50.303552+00:00",
+  "captured_at": "2026-05-19T06:52:28.265287+00:00",
   "drill": "shadow_execution_would_submit",
   "live_submit_enabled": false,
   "market": {

@@ -1,0 +1,61 @@
+{
+  "allowed_fallback_modes": [
+    "sign-only",
+    "cancel-only",
+    "read-only"
+  ],
+  "failures": [],
+  "production_ready_claimed": false,
+  "remote_side_effects": false,
+  "scenarios": [
+    {
+      "auto_reenable_live_submit": false,
+      "fallback_mode": "sign-only",
+      "live_submit_allowed": false,
+      "name": "sdk_failure_to_sign_only",
+      "operator_required": true,
+      "remote_side_effects": false
+    },
+    {
+      "auto_reenable_live_submit": false,
+      "fallback_mode": "cancel-only",
+      "live_submit_allowed": false,
+      "name": "remote_unknown_to_cancel_only",
+      "operator_required": true,
+      "remote_side_effects": false
+    },
+    {
+      "auto_reenable_live_submit": false,
+      "fallback_mode": "read-only",
+      "live_submit_allowed": false,
+      "name": "postgres_unavailable_to_read_only",
+      "operator_required": true,
+      "remote_side_effects": false
+    },
+    {
+      "auto_reenable_live_submit": false,
+      "fallback_mode": "read-only",
+      "live_submit_allowed": false,
+      "name": "geoblock_to_read_only",
+      "operator_required": true,
+      "remote_side_effects": false
+    },
+    {
+      "auto_reenable_live_submit": false,
+      "fallback_mode": "read-only",
+      "live_submit_allowed": false,
+      "name": "kill_switch_to_read_only",
+      "operator_required": true,
+      "remote_side_effects": false
+    },
+    {
+      "auto_reenable_live_submit": false,
+      "fallback_mode": "sign-only",
+      "live_submit_allowed": false,
+      "name": "recovery_requires_operator_review",
+      "operator_required": true,
+      "remote_side_effects": false
+    }
+  ],
+  "status": "pass"
+}

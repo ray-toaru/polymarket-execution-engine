@@ -122,6 +122,12 @@ if [[ -f "${INTEGRATION_ROOT}/scripts/check_version_consistency.py" && -f "${INT
   PMX_RELEASE_ARTIFACT_PATH="${ARTIFACT_PATH}" python validation/run_production_deployment_preflight_drill.py 2>&1 | tee "${EVIDENCE_DIR}/50-production-deployment-preflight-drill.log"
   PMX_RELEASE_ARTIFACT_PATH="${ARTIFACT_PATH}" python validation/run_production_secret_custody_drill.py 2>&1 | tee "${EVIDENCE_DIR}/51-production-secret-custody-drill.log"
   python validation/run_production_monitoring_slo_drill.py 2>&1 | tee "${EVIDENCE_DIR}/52-production-monitoring-slo-drill.log"
+  python validation/run_production_incident_response_drill.py 2>&1 | tee "${EVIDENCE_DIR}/53-production-incident-response-drill.log"
+  python validation/run_production_rollback_downgrade_drill.py 2>&1 | tee "${EVIDENCE_DIR}/54-production-rollback-downgrade-drill.log"
+  python validation/run_production_risk_limits_drill.py 2>&1 | tee "${EVIDENCE_DIR}/55-production-risk-limits-drill.log"
+  python validation/run_production_config_profile_drill.py 2>&1 | tee "${EVIDENCE_DIR}/56-production-config-profile-drill.log"
+  python validation/run_production_release_decision_guard.py 2>&1 | tee "${EVIDENCE_DIR}/57-production-release-decision-guard.log"
+  python validation/run_live_canary_controlled_prep_drill.py 2>&1 | tee "${EVIDENCE_DIR}/58-live-canary-controlled-prep-drill.log"
   python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
   python validation/check_docs_evidence_governance.py 2>&1 | tee "${EVIDENCE_DIR}/30-docs-evidence-governance.log"
   python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
