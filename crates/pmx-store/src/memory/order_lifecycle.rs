@@ -8,98 +8,40 @@ use crate::{
     OrderReconcileBacklogQuery, OrderReconcileBacklogStore, StoreError,
 };
 
+#[path = "order_lifecycle/backlog.rs"]
+mod backlog;
+
+#[path = "order_lifecycle/query.rs"]
+mod query;
+
+#[path = "order_lifecycle/write.rs"]
+mod write;
+
 #[async_trait]
 impl OrderLifecycleStore for InMemoryStore {
     async fn upsert_order_lifecycle(&self, order: &OrderLifecycleRecord) -> Result<(), StoreError> {
-        let mut stored = order.clone();
-        let now = Utc::now();
-        if stored.created_at.is_none() {
-            stored.created_at = Some(now);
-        }
-        stored.updated_at = Some(now);
-        self.inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .orders
-            .insert(stored.order_id.clone(), stored);
-        Ok(())
+        write::upsert_order_lifecycle(self, order)
     }
 
     async fn record_order_lifecycle_event(
         &self,
         event: &OrderLifecycleEventRecord,
     ) -> Result<OrderLifecycleRecord, StoreError> {
-        let mut state = self.inner.lock().expect("in-memory store mutex poisoned");
-        let Some(current) = state.orders.get(&event.order_id).cloned() else {
-            return Err(StoreError::NotFound(format!("order_id={}", event.order_id)));
-        };
-        if let Some(correlation_id) = event.correlation_id.as_deref()
-            && let Some(previous) = state.order_events.iter().find(|candidate| {
-                candidate.order_id == event.order_id
-                    && candidate.correlation_id.as_deref() == Some(correlation_id)
-            })
-        {
-            if previous.event == event.event {
-                return Ok(current);
-            }
-            return Err(StoreError::Conflict(
-                "order lifecycle correlation_id reused with different event".into(),
-            ));
-        }
-        let order = state
-            .orders
-            .get_mut(&event.order_id)
-            .expect("order existence checked above");
-        let next = transition_order_state(order.lifecycle_state.clone(), event.event.clone())
-            .map_err(|err| StoreError::Conflict(err.to_string()))?;
-        order.lifecycle_state = next;
-        order.updated_at = Some(Utc::now());
-        let updated = order.clone();
-        state.order_event_counter += 1;
-        let mut stored_event = event.clone();
-        stored_event.event_id = Some(state.order_event_counter);
-        stored_event.created_at = Some(Utc::now());
-        state.order_events.push(stored_event);
-        Ok(updated)
+        write::record_order_lifecycle_event(self, event)
     }
 
     async fn load_order_lifecycle(
         &self,
         order_id: &str,
     ) -> Result<Option<OrderLifecycleRecord>, StoreError> {
-        Ok(self
-            .inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .orders
-            .get(order_id)
-            .cloned())
+        write::load_order_lifecycle(self, order_id)
     }
 
     async fn list_order_lifecycle_events(
         &self,
         query: &OrderLifecycleEventQuery,
     ) -> Result<Vec<OrderLifecycleEventRecord>, StoreError> {
-        let mut events: Vec<_> = self
-            .inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .order_events
-            .iter()
-            .filter(|event| event.order_id == query.order_id)
-            .filter(|event| {
-                query
-                    .before_event_id
-                    .map(|before| event.event_id.unwrap_or(i64::MAX) < before)
-                    .unwrap_or(true)
-            })
-            .cloned()
-            .collect();
-        events.sort_by_key(|event| event.event_id.unwrap_or(0));
-        events.reverse();
-        events.truncate(query.bounded_limit());
-        events.reverse();
-        Ok(events)
+        query::list_order_lifecycle_events(self, query)
     }
 }
 
@@ -109,23 +51,6 @@ impl OrderReconcileBacklogStore for InMemoryStore {
         &self,
         query: &OrderReconcileBacklogQuery,
     ) -> Result<Vec<OrderLifecycleRecord>, StoreError> {
-        let mut orders: Vec<_> = self
-            .inner
-            .lock()
-            .expect("in-memory store mutex poisoned")
-            .orders
-            .values()
-            .filter(|order| order.account_id == query.account_id)
-            .filter(|order| lifecycle_requires_reconcile(&order.lifecycle_state))
-            .cloned()
-            .collect();
-        orders.sort_by(|left, right| {
-            right
-                .updated_at
-                .cmp(&left.updated_at)
-                .then_with(|| left.order_id.cmp(&right.order_id))
-        });
-        orders.truncate(query.bounded_limit());
-        Ok(orders)
+        backlog::list_reconcile_backlog_orders(self, query)
     }
 }

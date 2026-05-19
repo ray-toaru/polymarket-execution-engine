@@ -122,6 +122,11 @@ material exposure, or production-readiness claims.
   same public tick helpers and fail-closed semantics.
 - PostgreSQL order-lifecycle write implementation now separates upsert,
   replay lookup/conflict handling, and event-apply SQL paths.
+- In-memory order-lifecycle store implementation now separates write,
+  event-query, and reconcile-backlog helpers while preserving the same trait
+  surface.
+- In-memory lifecycle store implementation now separates execution-lifecycle
+  and sign-only lifecycle helpers while preserving the same trait surface.
 - In-memory order-lifecycle tests now also separate focused cancel-requested,
   replay/conflict, invalid-transition, and reconcile-backlog modules.
 - The HTTP fake scaffold E2E path now uses local helper functions to keep the
