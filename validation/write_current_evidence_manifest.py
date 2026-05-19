@@ -95,6 +95,9 @@ SECTIONS: dict[str, list[str]] = {
     "live_canary_rehearsal_validation": [
         "40-live-canary-rehearsal-drill.log",
     ],
+    "live_canary_preflight_validation": [
+        "45-live-canary-preflight-drill.log",
+    ],
     "production_hardening_config_validation": [
         "41-production-hardening-config.log",
     ],

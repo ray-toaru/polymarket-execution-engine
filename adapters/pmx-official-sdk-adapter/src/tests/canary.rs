@@ -130,3 +130,94 @@ fn live_canary_prep_requires_whitelist_caps_approval_and_cancel_fallback() {
     assert!(!decision.submit_allowed);
     assert!(!decision.live_side_effects);
 }
+
+fn canary_prep_base_input() -> LiveCanaryPrepInput {
+    LiveCanaryPrepInput {
+        account_id: "acct-canary".into(),
+        market_id: "market-canary".into(),
+        order_size_units: 1,
+        daily_used_units: 0,
+        per_order_cap_units: 10,
+        per_day_cap_units: 10,
+        account_whitelist: vec!["acct-canary".into()],
+        market_whitelist: vec!["market-canary".into()],
+        operator_approval_id: Some("approval-1".into()),
+        cancel_only_fallback_ready: true,
+        remote_unknown_orders: 0,
+    }
+}
+
+#[test]
+fn live_canary_prep_negative_scenarios_fail_closed_individually() {
+    let cases = [
+        (
+            "missing_operator_approval",
+            LiveCanaryPrepInput {
+                operator_approval_id: None,
+                ..canary_prep_base_input()
+            },
+            "operator approval missing",
+        ),
+        (
+            "per_order_cap_exceeded",
+            LiveCanaryPrepInput {
+                order_size_units: 11,
+                ..canary_prep_base_input()
+            },
+            "per-order cap exceeded",
+        ),
+        (
+            "per_day_cap_exceeded",
+            LiveCanaryPrepInput {
+                daily_used_units: 10,
+                ..canary_prep_base_input()
+            },
+            "per-day cap exceeded",
+        ),
+        (
+            "account_not_whitelisted",
+            LiveCanaryPrepInput {
+                account_id: "acct-other".into(),
+                ..canary_prep_base_input()
+            },
+            "account not whitelisted",
+        ),
+        (
+            "market_not_whitelisted",
+            LiveCanaryPrepInput {
+                market_id: "market-other".into(),
+                ..canary_prep_base_input()
+            },
+            "market not whitelisted",
+        ),
+        (
+            "cancel_only_fallback_missing",
+            LiveCanaryPrepInput {
+                cancel_only_fallback_ready: false,
+                ..canary_prep_base_input()
+            },
+            "cancel-only fallback missing",
+        ),
+        (
+            "remote_unknown_freeze",
+            LiveCanaryPrepInput {
+                remote_unknown_orders: 1,
+                ..canary_prep_base_input()
+            },
+            "remote unknown freeze active",
+        ),
+    ];
+
+    for (name, input, reason) in cases {
+        let decision = prepare_live_canary_decision(&input);
+        assert!(!decision.submit_allowed, "{name} must fail closed");
+        assert!(
+            !decision.live_side_effects,
+            "{name} must not execute remotely"
+        );
+        assert!(
+            decision.reasons.iter().any(|candidate| candidate == reason),
+            "{name} should record reason {reason}"
+        );
+    }
+}

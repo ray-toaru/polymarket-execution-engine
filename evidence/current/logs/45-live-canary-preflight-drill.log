@@ -1,0 +1,212 @@
+{
+  "cancelled": false,
+  "failures": [],
+  "live_cancel_env_enabled": false,
+  "live_submit_env_enabled": false,
+  "operator_approved_live_canary": false,
+  "posted": false,
+  "preflight_status": "local_ready_but_live_blocked",
+  "remote_side_effects": false,
+  "scenarios": [
+    {
+      "cancelled": false,
+      "checks": {
+        "account_whitelisted": true,
+        "cancel_only_fallback_ready": true,
+        "daily_cap_ok": true,
+        "idempotency_ready": true,
+        "market_whitelisted": true,
+        "operator_approved": true,
+        "reconcile_ready": true,
+        "remote_unknown_freeze_clear": true,
+        "reservation_ready": true,
+        "size_cap_ok": true
+      },
+      "frozen": false,
+      "local_preflight_ready": true,
+      "name": "baseline_local_preflight",
+      "posted": false,
+      "reasons": [],
+      "remote_side_effects": false,
+      "status": "pass",
+      "submit_allowed": false
+    },
+    {
+      "cancelled": false,
+      "checks": {
+        "account_whitelisted": true,
+        "cancel_only_fallback_ready": true,
+        "daily_cap_ok": true,
+        "idempotency_ready": true,
+        "market_whitelisted": true,
+        "operator_approved": false,
+        "reconcile_ready": true,
+        "remote_unknown_freeze_clear": true,
+        "reservation_ready": true,
+        "size_cap_ok": true
+      },
+      "frozen": false,
+      "local_preflight_ready": false,
+      "name": "missing_operator_approval",
+      "posted": false,
+      "reasons": [
+        "operator approval missing"
+      ],
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancelled": false,
+      "checks": {
+        "account_whitelisted": true,
+        "cancel_only_fallback_ready": true,
+        "daily_cap_ok": false,
+        "idempotency_ready": true,
+        "market_whitelisted": true,
+        "operator_approved": true,
+        "reconcile_ready": true,
+        "remote_unknown_freeze_clear": true,
+        "reservation_ready": true,
+        "size_cap_ok": false
+      },
+      "frozen": false,
+      "local_preflight_ready": false,
+      "name": "per_order_cap_exceeded",
+      "posted": false,
+      "reasons": [
+        "per-order cap exceeded",
+        "per-day cap exceeded"
+      ],
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancelled": false,
+      "checks": {
+        "account_whitelisted": true,
+        "cancel_only_fallback_ready": true,
+        "daily_cap_ok": false,
+        "idempotency_ready": true,
+        "market_whitelisted": true,
+        "operator_approved": true,
+        "reconcile_ready": true,
+        "remote_unknown_freeze_clear": true,
+        "reservation_ready": true,
+        "size_cap_ok": true
+      },
+      "frozen": false,
+      "local_preflight_ready": false,
+      "name": "per_day_cap_exceeded",
+      "posted": false,
+      "reasons": [
+        "per-day cap exceeded"
+      ],
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancelled": false,
+      "checks": {
+        "account_whitelisted": false,
+        "cancel_only_fallback_ready": true,
+        "daily_cap_ok": true,
+        "idempotency_ready": true,
+        "market_whitelisted": true,
+        "operator_approved": true,
+        "reconcile_ready": true,
+        "remote_unknown_freeze_clear": true,
+        "reservation_ready": true,
+        "size_cap_ok": true
+      },
+      "frozen": false,
+      "local_preflight_ready": false,
+      "name": "account_not_whitelisted",
+      "posted": false,
+      "reasons": [
+        "account not whitelisted"
+      ],
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancelled": false,
+      "checks": {
+        "account_whitelisted": true,
+        "cancel_only_fallback_ready": true,
+        "daily_cap_ok": true,
+        "idempotency_ready": true,
+        "market_whitelisted": false,
+        "operator_approved": true,
+        "reconcile_ready": true,
+        "remote_unknown_freeze_clear": true,
+        "reservation_ready": true,
+        "size_cap_ok": true
+      },
+      "frozen": false,
+      "local_preflight_ready": false,
+      "name": "market_not_whitelisted",
+      "posted": false,
+      "reasons": [
+        "market not whitelisted"
+      ],
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancelled": false,
+      "checks": {
+        "account_whitelisted": true,
+        "cancel_only_fallback_ready": false,
+        "daily_cap_ok": true,
+        "idempotency_ready": true,
+        "market_whitelisted": true,
+        "operator_approved": true,
+        "reconcile_ready": true,
+        "remote_unknown_freeze_clear": true,
+        "reservation_ready": true,
+        "size_cap_ok": true
+      },
+      "frozen": false,
+      "local_preflight_ready": false,
+      "name": "cancel_only_fallback_missing",
+      "posted": false,
+      "reasons": [
+        "cancel-only fallback missing"
+      ],
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancelled": false,
+      "checks": {
+        "account_whitelisted": true,
+        "cancel_only_fallback_ready": true,
+        "daily_cap_ok": true,
+        "idempotency_ready": true,
+        "market_whitelisted": true,
+        "operator_approved": true,
+        "reconcile_ready": true,
+        "remote_unknown_freeze_clear": false,
+        "reservation_ready": true,
+        "size_cap_ok": true
+      },
+      "frozen": true,
+      "local_preflight_ready": false,
+      "name": "remote_unknown_freeze",
+      "posted": false,
+      "reasons": [
+        "remote unknown freeze active"
+      ],
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    }
+  ],
+  "status": "pass"
+}

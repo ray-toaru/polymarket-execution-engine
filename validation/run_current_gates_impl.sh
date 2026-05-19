@@ -102,6 +102,7 @@ python validation/check_sdk_regression_suite.py 2>&1 | tee "${EVIDENCE_DIR}/37-s
 python validation/run_live_canary_readiness_drill.py 2>&1 | tee "${EVIDENCE_DIR}/38-live-canary-readiness-drill.log"
 python validation/run_live_canary_blocked_drill.py 2>&1 | tee "${EVIDENCE_DIR}/39-live-canary-blocked-drill.log"
 python validation/run_live_canary_rehearsal_drill.py 2>&1 | tee "${EVIDENCE_DIR}/40-live-canary-rehearsal-drill.log"
+python validation/run_live_canary_preflight_drill.py 2>&1 | tee "${EVIDENCE_DIR}/45-live-canary-preflight-drill.log"
 python validation/check_production_hardening_config.py 2>&1 | tee "${EVIDENCE_DIR}/41-production-hardening-config.log"
 python validation/check_runtime_worker_status_query.py 2>&1 | tee "${EVIDENCE_DIR}/42-runtime-worker-status-query.log"
 python validation/check_observability_evidence.py 2>&1 | tee "${EVIDENCE_DIR}/43-observability-evidence.log"
