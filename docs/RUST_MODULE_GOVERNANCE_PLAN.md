@@ -133,6 +133,12 @@ material exposure, or production-readiness claims.
 - Service binding helpers now separate hash-input DTOs, sign-only lifecycle
   append validation, and snapshot/decision binding verification while
   preserving the same exports.
+- Runtime helper logic now separates freshness horizon checks, worker-status
+  aggregation, and observation-application helpers while preserving the same
+  helper exports.
+- PostgreSQL runtime-state loading now separates account/collateral lookup,
+  worker-heartbeat row collection, and runtime-worker observation loading while
+  preserving the same `RuntimeStateStore` implementation.
 - In-memory order-lifecycle tests now also separate focused cancel-requested,
   replay/conflict, invalid-transition, and reconcile-backlog modules.
 - The HTTP fake scaffold E2E path now uses local helper functions to keep the
