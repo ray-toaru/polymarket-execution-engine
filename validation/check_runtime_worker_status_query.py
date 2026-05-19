@@ -7,6 +7,8 @@ import os
 import sys
 from pathlib import Path
 
+from current_gate_chain import ACTIVE_GATE_IMPLEMENTATION, CURRENT_GATES
+
 ROOT = Path(__file__).resolve().parents[1]
 API = ROOT / "crates" / "pmx-api" / "src"
 API_FAKE_E2E = ROOT / "crates" / "pmx-api" / "tests" / "http_and_fake_e2e.rs"
@@ -15,7 +17,8 @@ OPENAPI = ROOT / "openapi" / "executor.v1.yaml"
 STORE = ROOT / "crates" / "pmx-store" / "src"
 POSTGRES = ROOT / "crates" / "pmx-store" / "src"
 SERVICE = ROOT / "crates" / "pmx-service" / "src"
-GATES = ROOT / "validation" / "run_v0_24_gates.sh"
+GATES = CURRENT_GATES
+ACTIVE_GATES = ACTIVE_GATE_IMPLEMENTATION
 MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 TEMPLATE = ROOT / "validation" / "templates" / "evidence_manifest.template.json"
 DOC = ROOT / "docs" / "RUNTIME_WORKER_MODEL.md"
@@ -62,6 +65,9 @@ REQUIRED = {
         'runtime worker status response',
     ],
     GATES: [
+        ACTIVE_GATES.name,
+    ],
+    ACTIVE_GATES: [
         '42-runtime-worker-status-query.log',
         'check_runtime_worker_status_query.py',
     ],

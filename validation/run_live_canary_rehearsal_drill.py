@@ -7,10 +7,10 @@ import os
 import re
 from pathlib import Path
 
+from current_gate_chain import require_current_gate_log
+
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
-CURRENT_GATES = ROOT / "validation" / "run_current_gates.sh"
-IMPLEMENTATION_GATES = ROOT / "validation" / "run_v0_24_gates.sh"
 MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 DOC = ROOT / "docs" / "LIVE_CANARY_REHEARSAL_DRILL.md"
 
@@ -82,13 +82,8 @@ def main() -> int:
             if token not in doc:
                 failures.append(f"live canary rehearsal document missing token: {token}")
 
-    current_gates = CURRENT_GATES.read_text()
-    implementation_gates = IMPLEMENTATION_GATES.read_text()
     manifest = MANIFEST.read_text()
-    if IMPLEMENTATION_GATES.name not in current_gates:
-        failures.append("run_current_gates.sh must delegate to the active gate implementation")
-    if "40-live-canary-rehearsal-drill.log" not in implementation_gates:
-        failures.append("current gates must emit live canary rehearsal drill log")
+    require_current_gate_log("40-live-canary-rehearsal-drill.log", "live canary rehearsal drill", failures)
     if '"live_canary_rehearsal_validation"' not in manifest:
         failures.append("evidence manifest must include live_canary_rehearsal_validation")
     if "40-live-canary-rehearsal-drill.log" not in manifest:

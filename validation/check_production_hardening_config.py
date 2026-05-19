@@ -6,11 +6,12 @@ import json
 import os
 from pathlib import Path
 
+from current_gate_chain import require_current_gate_log
+
 ROOT = Path(__file__).resolve().parents[1]
 HARDENING_SPEC = ROOT / "docs" / "PRODUCTION_HARDENING_SPEC.md"
 CONTROLS_MATRIX = ROOT / "docs" / "PRODUCTION_CONTROLS_MATRIX.md"
 EVIDENCE_CONTROLS = ROOT / "docs" / "PRODUCTION_EVIDENCE_CONTROLS.md"
-GATES = ROOT / "validation" / "run_v0_24_gates.sh"
 MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 
 REQUIRED_SPEC_TOKENS = [
@@ -66,10 +67,8 @@ def main() -> int:
         if token not in evidence_controls:
             failures.append(f"production evidence controls missing token: {token}")
 
-    gates = GATES.read_text()
     manifest = MANIFEST.read_text()
-    if "41-production-hardening-config.log" not in gates:
-        failures.append("run_v0_24_gates.sh must emit production hardening config log")
+    require_current_gate_log("41-production-hardening-config.log", "production hardening config", failures)
     if '"production_hardening_config_validation"' not in manifest:
         failures.append("evidence manifest must include production_hardening_config_validation")
     if "41-production-hardening-config.log" not in manifest:

@@ -6,6 +6,8 @@ import json
 import sys
 from pathlib import Path
 
+from current_gate_chain import require_current_gate_log
+
 ROOT = Path(__file__).resolve().parents[1]
 RUNBOOK = ROOT / "docs" / "PRODUCTIONIZATION_RUNBOOK.md"
 CONTROLS_MATRIX = ROOT / "docs" / "PRODUCTION_CONTROLS_MATRIX.md"
@@ -13,7 +15,6 @@ HARDENING_SPEC = ROOT / "docs" / "PRODUCTION_HARDENING_SPEC.md"
 EVIDENCE_CONTROLS = ROOT / "docs" / "PRODUCTION_EVIDENCE_CONTROLS.md"
 RELEASE_MANIFEST = ROOT / "release" / "manifest.json"
 EVIDENCE_GUARD = ROOT / "validation" / "check_current_evidence_manifest.py"
-GATE = ROOT / "validation" / "run_v0_24_gates.sh"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
 
 RUNBOOK_TOKENS = [
@@ -118,12 +119,9 @@ def main() -> int:
         if token not in evidence_guard:
             failures.append(f"evidence guard missing anti-overclaim token: {token}")
 
-    gates = GATE.read_text()
     manifest_writer = MANIFEST_WRITER.read_text()
-    if "36-production-readiness-guard.log" not in gates:
-        failures.append("run_v0_24_gates.sh must emit production readiness guard log")
-    if "41-production-hardening-config.log" not in gates:
-        failures.append("run_v0_24_gates.sh must emit production hardening config log")
+    require_current_gate_log("36-production-readiness-guard.log", "production readiness guard", failures)
+    require_current_gate_log("41-production-hardening-config.log", "production hardening config", failures)
     if '"productionization_validation"' not in manifest_writer:
         failures.append("evidence manifest must include productionization_validation")
     if "36-production-readiness-guard.log" not in manifest_writer:

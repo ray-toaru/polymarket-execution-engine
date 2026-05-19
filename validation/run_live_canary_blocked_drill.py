@@ -7,10 +7,10 @@ import os
 import re
 from pathlib import Path
 
+from current_gate_chain import require_current_gate_log
+
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
-CURRENT_GATES = ROOT / "validation" / "run_current_gates.sh"
-IMPLEMENTATION_GATES = ROOT / "validation" / "run_v0_24_gates.sh"
 MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 DOC = ROOT / "docs" / "LIVE_CANARY_BLOCKED_DRILL.md"
 
@@ -54,13 +54,8 @@ def main() -> int:
             failures.append(f"adapter contains forbidden remote side-effect call: {pattern.pattern}")
     if not DOC.exists():
         failures.append("live canary blocked drill document missing")
-    current_gates = CURRENT_GATES.read_text()
-    implementation_gates = IMPLEMENTATION_GATES.read_text()
     manifest = MANIFEST.read_text()
-    if IMPLEMENTATION_GATES.name not in current_gates:
-        failures.append("run_current_gates.sh must delegate to the active gate implementation")
-    if "39-live-canary-blocked-drill.log" not in implementation_gates:
-        failures.append("current gates must emit live canary blocked drill log")
+    require_current_gate_log("39-live-canary-blocked-drill.log", "live canary blocked drill", failures)
     if '"live_canary_blocked_validation"' not in manifest:
         failures.append("evidence manifest must include live_canary_blocked_validation")
     if "39-live-canary-blocked-drill.log" not in manifest:

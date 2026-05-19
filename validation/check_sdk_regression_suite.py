@@ -6,9 +6,10 @@ import re
 import sys
 from pathlib import Path
 
+from current_gate_chain import require_current_gate_log
+
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
-GATES = ROOT / "validation" / "run_v0_24_gates.sh"
 MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 DOC = ROOT / "docs" / "SDK_REGRESSION_SUITE.md"
 
@@ -86,10 +87,8 @@ def main() -> int:
             if token not in doc:
                 failures.append(f"SDK regression suite document missing token: {token}")
 
-    gates = GATES.read_text()
     manifest = MANIFEST.read_text()
-    if "37-sdk-regression-suite-guard.log" not in gates:
-        failures.append("run_v0_24_gates.sh must emit SDK regression suite guard log")
+    require_current_gate_log("37-sdk-regression-suite-guard.log", "SDK regression suite guard", failures)
     if '"sdk_regression_suite_validation"' not in manifest:
         failures.append("evidence manifest must include sdk_regression_suite_validation")
     if "37-sdk-regression-suite-guard.log" not in manifest:

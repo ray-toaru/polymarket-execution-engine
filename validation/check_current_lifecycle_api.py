@@ -5,6 +5,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from current_gate_chain import ACTIVE_GATE_IMPLEMENTATION, CURRENT_GATES
+
 ROOT = Path(__file__).resolve().parents[1]
 API = ROOT / "crates" / "pmx-api" / "src"
 API_FAKE_E2E = ROOT / "crates" / "pmx-api" / "tests" / "http_and_fake_e2e.rs"
@@ -15,7 +17,8 @@ STORE = ROOT / "crates" / "pmx-store" / "src"
 POSTGRES = ROOT / "crates" / "pmx-store" / "src"
 GATEWAY = ROOT / "crates" / "pmx-gateway" / "src"
 OPENAPI = ROOT / "openapi" / "executor.v1.yaml"
-GATE = ROOT / "validation" / "run_v0_24_gates.sh"
+GATE = CURRENT_GATES
+ACTIVE_GATE = ACTIVE_GATE_IMPLEMENTATION
 VERSION_GUARD = ROOT.parent / "scripts" / "check_version_consistency.py"
 HERMES_CLIENT = ROOT.parent / "hermes-polymarket-control" / "src" / "hermes_polymarket_control" / "client.py"
 HERMES_MODELS = ROOT.parent / "hermes-polymarket-control" / "src" / "hermes_polymarket_control" / "models.py"
@@ -205,7 +208,9 @@ REQUIRED = {
         "OrderLifecycleRecord",
     ],
     GATE: [
-        "run_current_gates.sh",
+        ACTIVE_GATE.name,
+    ],
+    ACTIVE_GATE: [
         "check_current_lifecycle_api.py",
         "check_version_consistency.py",
         "check_current_evidence_manifest.py",

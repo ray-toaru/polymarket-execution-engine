@@ -6,9 +6,10 @@ import re
 import sys
 from pathlib import Path
 
+from current_gate_chain import require_current_gate_log
+
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
-GATE = ROOT / "validation" / "run_v0_24_gates.sh"
 MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 
 REQUIRED = [
@@ -72,10 +73,8 @@ def main() -> int:
     for pattern in FORBIDDEN_PATTERNS:
         if pattern.search(stripped):
             failures.append(f"adapter contains forbidden remote side-effect call: {pattern.pattern}")
-    gates = GATE.read_text()
     manifest = MANIFEST.read_text()
-    if "35-sdk-standard-sign-only-guard.log" not in gates:
-        failures.append("run_v0_24_gates.sh must emit SDK standard sign-only guard log")
+    require_current_gate_log("35-sdk-standard-sign-only-guard.log", "SDK standard sign-only guard", failures)
     if '"sdk_standard_sign_only_validation"' not in manifest:
         failures.append("evidence manifest must include sdk_standard_sign_only_validation")
     if "35-sdk-standard-sign-only-guard.log" not in manifest:
