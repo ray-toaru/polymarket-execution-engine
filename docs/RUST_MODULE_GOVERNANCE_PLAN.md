@@ -99,6 +99,9 @@ material exposure, or production-readiness claims.
 - Core plan/control-plane models now live in focused `pmx-core::domain::plan`
   modules for decision results, execution summaries/submit receipts, redaction
   envelopes, and control-plane request/receipt models.
+- Core base domain primitives now live in focused `pmx-core::domain::base`
+  modules for shared errors, typed ids, decimal validation, and canonical JSON
+  hashing/serialization helpers.
 - In-memory store admin/sign-only tests now live in focused
   `pmx-store::memory_tests::admin_sign_only` modules for admin-audit behavior
   and sign-only lifecycle behavior.
