@@ -1,4 +1,6 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.28s
+   Compiling pmx-store v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
+   Compiling pmx-service v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.38s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-0c3b29e6cdffcd0b)
 
 running 2 tests
@@ -93,13 +95,17 @@ test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fin
 
      Running unittests src/lib.rs (target/debug/deps/pmx_service-b0f825b3b054fb64)
 
-running 26 tests
+running 30 tests
 test service::tests::flow::service_flow_persists_and_blocks_submit ... ok
 test service::tests::flow::service_id_bound_flow_persists_and_blocks_submit ... ok
 test service::tests::flow::service_rejects_object_graph_mismatch ... ok
 test service::tests::flow::static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks ... ok
 test service::tests::non_live_order_lifecycle::cancel_reconcile::service_records_non_live_cancel_and_reconcile_order_lifecycle ... ok
 test service::tests::non_live_order_lifecycle::divergence::service_classifies_and_records_order_lifecycle_divergence_without_remote_side_effect ... ok
+test service::tests::real_funds_canary::service_freeze_blocks_live_disabled_downgrade ... ok
+test service::tests::real_funds_canary::service_real_funds_canary_replay_returns_existing_run ... ok
+test service::tests::real_funds_canary::service_records_real_funds_canary_preflight_without_remote_side_effects ... ok
+test service::tests::real_funds_canary::service_simulated_reconcile_remains_no_remote_side_effect ... ok
 test service::tests::runtime_worker_basic::provider_state::service_records_runtime_worker_provider_snapshot_for_decision_gate ... ok
 test service::tests::runtime_worker_basic::provider_state::store_backed_runtime_provider_uses_store_state ... ok
 test service::tests::runtime_worker_basic::signals_ticks::service_records_runtime_worker_signals_for_decision_gate ... ok
@@ -121,11 +127,11 @@ test service::tests::sign_only::standard::service_derives_standard_sign_only_ref
 test service::tests::sign_only::standard::service_records_standard_sign_only_construction_without_raw_payload ... ok
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 
-test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-d75ca96a461a9981)
 
-running 40 tests
+running 47 tests
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_paginates_and_filters_by_cursor ... ok
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_records_without_exposing_secrets ... ok
 test memory::memory_tests::admin_sign_only::sign_only::happy_path::in_memory_persists_sign_only_lifecycle_records ... ok
@@ -141,6 +147,10 @@ test memory::memory_tests::order_lifecycle::backlog::in_memory_lists_reconcile_b
 test memory::memory_tests::order_lifecycle::cancel_requested::in_memory_order_lifecycle_records_cancel_requested ... ok
 test memory::memory_tests::order_lifecycle::rejects::in_memory_order_lifecycle_rejects_invalid_transition ... ok
 test memory::memory_tests::order_lifecycle::replay::in_memory_order_lifecycle_replays_same_correlation_id ... ok
+test memory::memory_tests::real_funds_canary::real_funds_canary_freezes_remote_unknown_and_blocks_downgrade ... ok
+test memory::memory_tests::real_funds_canary::real_funds_canary_rejects_idempotency_payload_mismatch ... ok
+test memory::memory_tests::real_funds_canary::real_funds_canary_rejects_raw_signed_exposure ... ok
+test memory::memory_tests::real_funds_canary::real_funds_canary_replays_same_idempotency ... ok
 test memory::memory_tests::runtime_observation::runtime_worker_observations_degrade_loaded_runtime_state ... ok
 test memory::memory_tests::runtime_observation::stale_runtime_worker_observations_are_ignored ... ok
 test memory::memory_tests::runtime_worker_health::in_memory_lists_runtime_worker_status ... ok
@@ -156,6 +166,9 @@ test postgres::postgres_tests::idempotency::same_request_replay_is_persisted ...
 test postgres::postgres_tests::order_lifecycle::backlog::postgres_lists_reconcile_backlog_orders ... ok
 test postgres::postgres_tests::order_lifecycle::persistence::postgres_records_order_lifecycle_event ... ok
 test postgres::postgres_tests::order_lifecycle::replay::postgres_order_lifecycle_replays_same_correlation_id ... ok
+test postgres::postgres_tests::real_funds_canary::postgres_real_funds_canary_freeze_blocks_downgrade ... ok
+test postgres::postgres_tests::real_funds_canary::postgres_real_funds_canary_persists_and_replays_idempotency ... ok
+test postgres::postgres_tests::real_funds_canary::postgres_real_funds_canary_rejects_idempotency_payload_mismatch ... ok
 test postgres::postgres_tests::receipt_reservation::remote_unknown_is_persisted_conservatively ... ok
 test postgres::postgres_tests::receipt_reservation::reservation_double_spend_is_prevented_concurrently ... ok
 test postgres::postgres_tests::runtime_state::load::postgres_loads_runtime_state_from_runtime_tables ... ok
@@ -167,7 +180,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.58s
+test result: ok. 47 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.73s
 
    Doc-tests pmx_authz
 

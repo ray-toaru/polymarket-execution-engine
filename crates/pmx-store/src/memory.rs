@@ -14,11 +14,12 @@ mod execution;
 mod idempotency;
 mod lifecycle;
 mod order_lifecycle;
+mod real_funds_canary;
 mod runtime;
 
 use crate::{
     AdminAuditEvent, ExecutionLifecycleEvent, OrderLifecycleEventRecord, OrderLifecycleRecord,
-    RuntimeWorkerHeartbeat, RuntimeWorkerObservation,
+    RealFundsCanaryRunRecord, RuntimeWorkerHeartbeat, RuntimeWorkerObservation,
 };
 
 #[derive(Clone, Default)]
@@ -48,6 +49,8 @@ struct InMemoryState {
     orders: HashMap<String, OrderLifecycleRecord>,
     order_events: Vec<OrderLifecycleEventRecord>,
     order_event_counter: i64,
+    real_funds_canary_runs: HashMap<String, RealFundsCanaryRunRecord>,
+    real_funds_canary_idempotency: HashMap<String, String>,
 }
 
 #[derive(Clone)]

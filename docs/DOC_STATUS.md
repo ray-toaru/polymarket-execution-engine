@@ -11,3 +11,8 @@ Current validation entrypoint:
 ```
 
 `validation/run_current_gates_impl.sh` is the implementation used by the wrapper. Older `run_v0_x_gates.sh` files are archived and are not active release gates.
+
+Current canary documents:
+
+- `REAL_FUNDS_CANARY.md`: guarded real-funds preflight and live-submit preconditions.
+- `REAL_FUNDS_CANARY_LIFECYCLE.md`: local run persistence, idempotency, remote-unknown freeze, and simulated reconcile behavior with no remote side effects.

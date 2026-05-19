@@ -5,6 +5,7 @@ mod execution;
 mod idempotency;
 mod lifecycle;
 mod order_lifecycle;
+mod real_funds_canary;
 mod runtime;
 
 pub use advisory::*;
@@ -14,4 +15,5 @@ pub use execution::*;
 pub use idempotency::*;
 pub use lifecycle::*;
 pub use order_lifecycle::*;
+pub use real_funds_canary::*;
 pub use runtime::*;

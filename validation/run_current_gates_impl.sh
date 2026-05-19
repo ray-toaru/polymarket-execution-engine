@@ -136,6 +136,7 @@ python validation/run_production_preflight_config_guard.py 2>&1 | tee "${EVIDENC
 python validation/run_production_preflight_config_fixture_drill.py 2>&1 | tee "${EVIDENCE_DIR}/63-production-preflight-config-fixture-drill.log"
 python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
 python validation/run_real_funds_canary_preflight_drill.py 2>&1 | tee "${EVIDENCE_DIR}/65-real-funds-canary-preflight.log"
+python validation/run_real_funds_canary_lifecycle_drill.py 2>&1 | tee "${EVIDENCE_DIR}/66-real-funds-canary-lifecycle-drill.log"
 python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
 python validation/check_docs_evidence_governance.py 2>&1 | tee "${EVIDENCE_DIR}/30-docs-evidence-governance.log"
 python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null

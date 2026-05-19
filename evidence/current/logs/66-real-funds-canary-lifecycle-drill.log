@@ -1,0 +1,13 @@
+{
+  "cancelled": false,
+  "failures": [],
+  "idempotency_conflict_checked": true,
+  "idempotency_replay_checked": true,
+  "operator_required_escalation_state": "OPERATOR_REQUIRED",
+  "posted": false,
+  "raw_signed_order_exposed": false,
+  "remote_side_effects": false,
+  "remote_unknown_freeze_checked": true,
+  "simulated_reconcile_checked": true,
+  "status": "pass"
+}

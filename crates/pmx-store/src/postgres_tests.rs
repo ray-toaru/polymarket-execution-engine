@@ -68,6 +68,8 @@ mod execution_lifecycle;
 mod idempotency;
 #[path = "postgres_tests/order_lifecycle.rs"]
 mod order_lifecycle;
+#[path = "postgres_tests/real_funds_canary.rs"]
+mod real_funds_canary;
 #[path = "postgres_tests/receipt_reservation.rs"]
 mod receipt_reservation;
 #[path = "postgres_tests/runtime_state.rs"]
