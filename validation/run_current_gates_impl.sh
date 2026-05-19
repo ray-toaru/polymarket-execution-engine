@@ -133,6 +133,7 @@ if [[ -f "${INTEGRATION_ROOT}/scripts/check_version_consistency.py" && -f "${INT
   python validation/run_external_alert_routing_preflight.py 2>&1 | tee "${EVIDENCE_DIR}/61-external-alert-routing-preflight.log"
   python validation/run_production_preflight_config_guard.py 2>&1 | tee "${EVIDENCE_DIR}/62-production-preflight-config-guard.log"
   python validation/run_production_preflight_config_fixture_drill.py 2>&1 | tee "${EVIDENCE_DIR}/63-production-preflight-config-fixture-drill.log"
+  python validation/run_production_preflight_config_diff_review.py 2>&1 | tee "${EVIDENCE_DIR}/64-production-preflight-config-diff-review.log"
   python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
   python validation/check_docs_evidence_governance.py 2>&1 | tee "${EVIDENCE_DIR}/30-docs-evidence-governance.log"
   python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null

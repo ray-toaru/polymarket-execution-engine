@@ -4,5 +4,5 @@
 running 1 test
 test tests::feature_gated::authenticated_non_trading_smoke_executes_when_enabled ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 41 filtered out; finished in 3.69s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 41 filtered out; finished in 4.24s
 

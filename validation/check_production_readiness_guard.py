@@ -31,6 +31,7 @@ EXTERNAL_OPERATOR_APPROVAL_PREFLIGHT = ROOT / "docs" / "EXTERNAL_OPERATOR_APPROV
 EXTERNAL_ALERT_ROUTING_PREFLIGHT = ROOT / "docs" / "EXTERNAL_ALERT_ROUTING_PREFLIGHT.md"
 PRODUCTION_PREFLIGHT_CONFIG_GUARD = ROOT / "docs" / "PRODUCTION_PREFLIGHT_CONFIG_GUARD.md"
 PRODUCTION_PREFLIGHT_CONFIG_FIXTURE_DRILL = ROOT / "docs" / "PRODUCTION_PREFLIGHT_CONFIG_FIXTURE_DRILL.md"
+PRODUCTION_PREFLIGHT_CONFIG_DIFF_REVIEW = ROOT / "docs" / "PRODUCTION_PREFLIGHT_CONFIG_DIFF_REVIEW.md"
 RELEASE_MANIFEST = ROOT / "release" / "manifest.json"
 EVIDENCE_GUARD = ROOT / "validation" / "check_current_evidence_manifest.py"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
@@ -392,6 +393,23 @@ PRODUCTION_PREFLIGHT_CONFIG_FIXTURE_TOKENS = [
     "production_ready_claimed = false",
 ]
 
+PRODUCTION_PREFLIGHT_CONFIG_DIFF_REVIEW_TOKENS = [
+    "PMX_PRODUCTION_PREFLIGHT_BASELINE_CONFIG",
+    "PMX_PRODUCTION_PREFLIGHT_CANDIDATE_CONFIG",
+    "config_diff_review_passed = true",
+    "config_diff_review_rejected_sensitive_candidate = true",
+    "config_diff_review_secret_value_logged = false",
+    "config_diff_review_reports_path_only = true",
+    "config_diff_summary_uses_hashes = true",
+    "changed_field_paths_present = true",
+    "baseline_config_hash_present = true",
+    "candidate_config_hash_present = true",
+    "live_submit_allowed = false",
+    "live_cancel_allowed = false",
+    "remote_side_effects = false",
+    "production_ready_claimed = false",
+]
+
 
 def main() -> int:
     failures: list[str] = []
@@ -505,6 +523,11 @@ def main() -> int:
         if token not in production_preflight_config_fixture_drill:
             failures.append(f"production preflight config fixture drill missing {token}")
 
+    production_preflight_config_diff_review = PRODUCTION_PREFLIGHT_CONFIG_DIFF_REVIEW.read_text()
+    for token in PRODUCTION_PREFLIGHT_CONFIG_DIFF_REVIEW_TOKENS:
+        if token not in production_preflight_config_diff_review:
+            failures.append(f"production preflight config diff review missing {token}")
+
     release = json.loads(RELEASE_MANIFEST.read_text())
     status = str(release.get("status", "")).lower()
     if "production-ready" in status or "production_ready" in status:
@@ -538,6 +561,7 @@ def main() -> int:
     require_current_gate_log("61-external-alert-routing-preflight.log", "external alert routing preflight", failures)
     require_current_gate_log("62-production-preflight-config-guard.log", "production preflight config guard", failures)
     require_current_gate_log("63-production-preflight-config-fixture-drill.log", "production preflight config fixture drill", failures)
+    require_current_gate_log("64-production-preflight-config-diff-review.log", "production preflight config diff review", failures)
     if '"productionization_validation"' not in manifest_writer:
         failures.append("evidence manifest must include productionization_validation")
     if "36-production-readiness-guard.log" not in manifest_writer:
@@ -616,6 +640,10 @@ def main() -> int:
         failures.append("evidence manifest must include production_preflight_config_fixture_validation")
     if "63-production-preflight-config-fixture-drill.log" not in manifest_writer:
         failures.append("evidence manifest must capture production preflight config fixture drill log")
+    if '"production_preflight_config_diff_review_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include production_preflight_config_diff_review_validation")
+    if "64-production-preflight-config-diff-review.log" not in manifest_writer:
+        failures.append("evidence manifest must capture production preflight config diff review log")
 
     if failures:
         for failure in failures:

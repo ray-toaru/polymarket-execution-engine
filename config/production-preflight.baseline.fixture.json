@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "secret_provider": {
+    "provider_ref": "vault://fixture-baseline/polymarket/execution-engine",
+    "kms_key_ref": "kms://fixture-region/baseline-key-id",
+    "rotation_evidence_ref": "change-ticket://baseline-rotation-review",
+    "break_glass_review_ref": "change-ticket://baseline-break-glass-review"
+  },
+  "operator_approval": {
+    "approval_id": "baseline-approval-001",
+    "approval_hash": "sha256:baseline-approval-payload-digest",
+    "ticket_ref": "change-ticket://baseline-canary-approval",
+    "approver_identity_ref": "user://baseline-operator",
+    "expires_at": "2099-01-01T00:00:00Z",
+    "scope": "baseline-canary-preflight-only"
+  },
+  "alert_routing": {
+    "provider_ref": "pager://baseline-provider",
+    "route_ref": "pager-route://baseline-execution-engine",
+    "pager_escalation_policy_ref": "pager-policy://baseline-trading-safety",
+    "dashboard_ref": "dashboard://baseline-execution-safety",
+    "alert_test_evidence_ref": "change-ticket://baseline-alert-test"
+  }
+}

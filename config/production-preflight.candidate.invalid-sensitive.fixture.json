@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "secret_provider": {
+    "provider_ref": "vault://fixture-candidate/polymarket/execution-engine",
+    "kms_key_ref": "kms://fixture-region/candidate-key-id",
+    "rotation_evidence_ref": "change-ticket://candidate-rotation-review",
+    "break_glass_review_ref": "change-ticket://candidate-break-glass-review"
+  },
+  "operator_approval": {
+    "approval_id": "candidate-approval-001",
+    "approval_hash": "sha256:candidate-approval-payload-digest",
+    "ticket_ref": "change-ticket://candidate-canary-approval",
+    "approver_identity_ref": "user://candidate-operator",
+    "expires_at": "2099-01-02T00:00:00Z",
+    "scope": "candidate-canary-preflight-only"
+  },
+  "alert_routing": {
+    "provider_ref": "pager://candidate-provider",
+    "route_ref": "pager-route://candidate-execution-engine",
+    "pager_escalation_policy_ref": "pager-policy://candidate-trading-safety",
+    "dashboard_ref": "dashboard://candidate-execution-safety",
+    "alert_test_evidence_ref": "change-ticket://candidate-alert-test",
+    "clob_secret": "candidate-sensitive-value-must-not-be-logged"
+  }
+}
