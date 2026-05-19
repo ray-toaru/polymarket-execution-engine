@@ -1,4 +1,4 @@
     Checking pmx-runtime v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
     Checking pmx-service v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
     Checking pmx-api v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 11.38s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.09s

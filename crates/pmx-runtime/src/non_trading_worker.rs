@@ -36,6 +36,17 @@ pub fn non_trading_worker_heartbeat(
     }
 }
 
+pub async fn emit_non_trading_heartbeat<S, Fut>(
+    config: &NonTradingHeartbeatWorkerConfig,
+    observed_at: DateTime<Utc>,
+    sink: S,
+) where
+    S: FnOnce(WorkerHeartbeat) -> Fut,
+    Fut: Future<Output = ()>,
+{
+    sink(non_trading_worker_heartbeat(config, observed_at)).await;
+}
+
 /// Run a non-trading heartbeat loop and hand each heartbeat to the caller.
 ///
 /// This runtime crate deliberately owns no database or network side effects.
@@ -52,7 +63,7 @@ pub async fn run_non_trading_heartbeat_worker<S, Fut>(
     let mut ticker = interval(Duration::from_secs(interval_seconds));
     loop {
         ticker.tick().await;
-        sink(non_trading_worker_heartbeat(&config, Utc::now())).await;
+        emit_non_trading_heartbeat(&config, Utc::now(), &mut sink).await;
     }
 }
 
@@ -65,6 +76,7 @@ pub async fn run_placeholder_worker(worker_id: String) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::{Arc, Mutex};
 
     #[test]
     fn non_trading_worker_heartbeat_builds_persistable_heartbeat() {
@@ -83,5 +95,29 @@ mod tests {
         assert_eq!(heartbeat.capability, "heartbeat-lease");
         assert_eq!(heartbeat.observed_at, observed_at);
         assert!(heartbeat.last_error.is_none());
+    }
+
+    #[tokio::test]
+    async fn emit_non_trading_heartbeat_delivers_to_sink_without_trading_side_effects() {
+        let captured = Arc::new(Mutex::new(Vec::new()));
+        let sink_capture = Arc::clone(&captured);
+
+        emit_non_trading_heartbeat(
+            &NonTradingHeartbeatWorkerConfig::heartbeat("worker-runtime-sink"),
+            Utc::now(),
+            move |heartbeat| {
+                let sink_capture = Arc::clone(&sink_capture);
+                async move {
+                    sink_capture.lock().expect("capture lock").push(heartbeat);
+                }
+            },
+        )
+        .await;
+
+        let captured = captured.lock().expect("capture lock");
+        assert_eq!(captured.len(), 1);
+        assert_eq!(captured[0].worker_id, "worker-runtime-sink");
+        assert_eq!(captured[0].capability, "heartbeat");
+        assert!(captured[0].last_error.is_none());
     }
 }
