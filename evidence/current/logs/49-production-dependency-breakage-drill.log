@@ -1,0 +1,23 @@
+{
+  "dependency_breakage_response": {
+    "adapter_lockfile_present": true,
+    "authenticated_non_trading_evidence": true,
+    "compatibility_review_required": true,
+    "downgrade_to_read_only": true,
+    "downgrade_to_sign_only": true,
+    "exact_sdk_pin": "=0.6.0-canary.1",
+    "fallback_mode": "sign-only",
+    "freeze_live_submit": true,
+    "live_cancel_allowed": false,
+    "live_submit_allowed": false,
+    "preserve_evidence": true,
+    "production_ready_claimed": false,
+    "remote_side_effects": false,
+    "rollback_plan": "revert SDK pin and lockfiles, keep live submit frozen, rerun current gates",
+    "sdk_typecheck_evidence": true,
+    "sign_only_regression_evidence": true,
+    "spike_lockfile_present": true
+  },
+  "failures": [],
+  "status": "pass"
+}

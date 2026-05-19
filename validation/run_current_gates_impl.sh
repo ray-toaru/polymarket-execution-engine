@@ -107,6 +107,7 @@ python validation/check_production_hardening_config.py 2>&1 | tee "${EVIDENCE_DI
 python validation/run_production_operations_drill.py 2>&1 | tee "${EVIDENCE_DIR}/46-production-operations-drill.log"
 python validation/run_production_authorization_block_drill.py 2>&1 | tee "${EVIDENCE_DIR}/47-production-authorization-block-drill.log"
 python validation/run_production_audit_export_drill.py 2>&1 | tee "${EVIDENCE_DIR}/48-production-audit-export-drill.log"
+python validation/run_production_dependency_breakage_drill.py 2>&1 | tee "${EVIDENCE_DIR}/49-production-dependency-breakage-drill.log"
 python validation/check_runtime_worker_status_query.py 2>&1 | tee "${EVIDENCE_DIR}/42-runtime-worker-status-query.log"
 python validation/check_observability_evidence.py 2>&1 | tee "${EVIDENCE_DIR}/43-observability-evidence.log"
 python scripts/check_release_hygiene.py "${HYGIENE_ROOT}" 2>&1 | tee "${EVIDENCE_DIR}/26-release-hygiene-clean-snapshot.log"
