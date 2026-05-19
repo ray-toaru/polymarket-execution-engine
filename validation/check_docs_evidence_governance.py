@@ -141,6 +141,11 @@ def validate_current_manifest(failures: list[str]) -> None:
                 failures.append(f"manifest log missing: {rel}")
                 continue
             expected_hash = entry.get("sha256")
+            if Path(rel).name == "30-docs-evidence-governance.log":
+                # This guard is normally tee'd into its own evidence log. The
+                # final manifest is regenerated after the guard runs, so this
+                # invocation cannot safely validate the previous self-log hash.
+                continue
             if expected_hash and sha256(path) != expected_hash:
                 failures.append(f"manifest log hash mismatch: {rel}")
 
@@ -173,7 +178,7 @@ def validate_execution_docs_and_gates(failures: list[str]) -> None:
     validation_dir = EXECUTOR / "validation"
     validation_archive = validation_dir / "archive"
     # validation/archive is also excluded from release packages; only active scripts are checked here.
-    allowed_gate_scripts = {"run_current_gates.sh", "run_v0_24_gates.sh"}
+    allowed_gate_scripts = {"run_current_gates.sh", "run_current_gates_impl.sh"}
     active_old_gates = [path.name for path in validation_dir.glob("run_v0_*_gates.sh") if path.name not in allowed_gate_scripts]
     if active_old_gates:
         failures.append("stale gate scripts must live in validation/archive: " + ", ".join(sorted(active_old_gates)))

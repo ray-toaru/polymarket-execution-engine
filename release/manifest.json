@@ -100,7 +100,7 @@
     "historical_evidence_policy": "archive-excluded-from-release-package",
     "artifact_hash_policy": "external .sha256 and .evidence.json sidecars bind the final zip hash; in-archive manifest must not claim validated release by self-reference",
     "current_gate_entrypoint": "polymarket-execution-engine/validation/run_current_gates.sh",
-    "version_pinned_gate": "polymarket-execution-engine/validation/run_v0_24_gates.sh",
+    "current_gate_implementation": "polymarket-execution-engine/validation/run_current_gates_impl.sh",
     "template_path": "polymarket-execution-engine/validation/templates/evidence_manifest.template.json"
   }
 }

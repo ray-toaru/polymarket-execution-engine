@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CURRENT_GATES = ROOT / "validation" / "run_current_gates.sh"
-ACTIVE_GATE_IMPLEMENTATION = ROOT / "validation" / "run_v0_24_gates.sh"
+ACTIVE_GATE_IMPLEMENTATION = ROOT / "validation" / "run_current_gates_impl.sh"
 
 
 def current_gate_text() -> str:

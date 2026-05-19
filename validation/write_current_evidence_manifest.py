@@ -33,7 +33,7 @@ CURRENT_DIR = EXECUTOR / "evidence" / "current"
 DEFAULT_LOG_DIR = CURRENT_DIR / "logs"
 OUT = CURRENT_DIR / "manifest.json"
 ENVIRONMENT = CURRENT_DIR / "environment.json"
-GATE_RUNNER = EXECUTOR / "validation" / "run_v0_24_gates.sh"
+GATE_RUNNER = EXECUTOR / "validation" / "run_current_gates_impl.sh"
 
 SECTIONS: dict[str, list[str]] = {
     "rust_workspace_validation": [

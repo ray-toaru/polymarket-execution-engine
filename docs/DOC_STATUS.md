@@ -10,4 +10,4 @@ Current validation entrypoint:
 ./validation/run_current_gates.sh
 ```
 
-`validation/run_v0_24_gates.sh` is the version-pinned implementation used by the wrapper. Older `run_v0_x_gates.sh` files are archived and are not active release gates.
+`validation/run_current_gates_impl.sh` is the implementation used by the wrapper. Older `run_v0_x_gates.sh` files are archived and are not active release gates.
