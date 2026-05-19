@@ -10,7 +10,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
-GATES = ROOT / "validation" / "run_v0_24_gates.sh"
+CURRENT_GATES = ROOT / "validation" / "run_current_gates.sh"
+IMPLEMENTATION_GATES = ROOT / "validation" / "run_v0_24_gates.sh"
 MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 DOC = ROOT / "docs" / "LIVE_CANARY_READINESS_DRILL.md"
 
@@ -105,10 +106,13 @@ def main() -> int:
             if token not in doc:
                 failures.append(f"live canary readiness drill document missing token: {token}")
 
-    gates = GATES.read_text()
+    current_gates = CURRENT_GATES.read_text()
+    implementation_gates = IMPLEMENTATION_GATES.read_text()
     manifest = MANIFEST.read_text()
-    if "38-live-canary-readiness-drill.log" not in gates:
-        failures.append("run_v0_24_gates.sh must emit live canary readiness drill log")
+    if IMPLEMENTATION_GATES.name not in current_gates:
+        failures.append("run_current_gates.sh must delegate to the active gate implementation")
+    if "38-live-canary-readiness-drill.log" not in implementation_gates:
+        failures.append("current gates must emit live canary readiness drill log")
     if '"live_canary_readiness_validation"' not in manifest:
         failures.append("evidence manifest must include live_canary_readiness_validation")
     if "38-live-canary-readiness-drill.log" not in manifest:

@@ -37,6 +37,10 @@ Validation entrypoint:
 python validation/run_live_canary_readiness_drill.py
 ```
 
+The release gate entrypoint remains `validation/run_current_gates.sh`; this
+drill checks that the current gate chain captures
+`38-live-canary-readiness-drill.log` in current evidence.
+
 The script must fail if `PMX_ALLOW_LIVE_SUBMIT=1` or `PMX_ALLOW_LIVE_CANCEL=1`
 is present in the validation environment. Passing this drill means the gate model
 is present and current source remains no live submit / no live cancel; it is not

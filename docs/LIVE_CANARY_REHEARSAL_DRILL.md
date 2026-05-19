@@ -27,3 +27,7 @@ remote_side_effects = false
 
 This drill is not approval to run a live canary. Live submit and live cancel
 remain blocked until a future reviewed release decision changes that boundary.
+
+The release gate entrypoint remains `validation/run_current_gates.sh`; this
+drill checks that the current gate chain captures
+`40-live-canary-rehearsal-drill.log` in current evidence.

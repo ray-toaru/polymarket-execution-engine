@@ -16,3 +16,7 @@ remote_side_effects: false
 The drill fails if `PMX_ALLOW_LIVE_SUBMIT=1`, `PMX_ALLOW_LIVE_CANCEL=1`, or
 `PMX_OPERATOR_APPROVED_LIVE_CANARY=1` is present. A future real canary must add
 new evidence rather than editing this blocked result into success.
+
+The release gate entrypoint remains `validation/run_current_gates.sh`; this
+drill checks that the current gate chain captures
+`39-live-canary-blocked-drill.log` in current evidence.
