@@ -1,5 +1,5 @@
    Compiling pmx-api v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.73s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.81s
      Running tests/http_and_fake_e2e.rs (target/debug/deps/http_and_fake_e2e-8383e62ca42b97fb)
 
 running 4 tests
