@@ -1,0 +1,55 @@
+{
+  "availability_recovery_auto_enables_live_submit": false,
+  "error_budget_auto_enables_live_submit": false,
+  "failures": [],
+  "live_submit_allowed": false,
+  "production_ready_claimed": false,
+  "remote_side_effects": false,
+  "safety_slo_breach_freezes_live_submit": true,
+  "scenarios": [
+    {
+      "alert_required": true,
+      "fallback_mode": "read-only",
+      "live_submit_allowed": false,
+      "name": "safety_slo_breach",
+      "operator_required": true,
+      "signal": "remote_unknown_count"
+    },
+    {
+      "alert_required": true,
+      "fallback_mode": "sign-only",
+      "live_submit_allowed": false,
+      "name": "availability_recovered_after_safety_breach",
+      "operator_required": true,
+      "signal": "runtime_worker_health"
+    },
+    {
+      "alert_required": true,
+      "fallback_mode": "sign-only",
+      "live_submit_allowed": false,
+      "name": "error_budget_available_but_safety_unknown",
+      "operator_required": true,
+      "signal": "sdk_error_rate"
+    },
+    {
+      "alert_required": true,
+      "fallback_mode": "read-only",
+      "live_submit_allowed": false,
+      "name": "audit_export_failure",
+      "operator_required": true,
+      "signal": "audit_export_failure"
+    }
+  ],
+  "signals": [
+    "runtime_worker_health",
+    "reconcile_backlog",
+    "remote_unknown_count",
+    "idempotency_conflict_rate",
+    "sdk_error_rate",
+    "audit_export_failure",
+    "stale_worker_heartbeat",
+    "geoblock_blocked",
+    "postgres_unavailable"
+  ],
+  "status": "pass"
+}
