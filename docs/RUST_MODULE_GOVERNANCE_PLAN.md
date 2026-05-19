@@ -127,6 +127,9 @@ material exposure, or production-readiness claims.
   surface.
 - In-memory lifecycle store implementation now separates execution-lifecycle
   and sign-only lifecycle helpers while preserving the same trait surface.
+- In-memory execution store implementation now separates normalized-intent/
+  snapshot, decision, plan-summary, and reservation/receipt helpers while
+  preserving the same trait surface.
 - In-memory order-lifecycle tests now also separate focused cancel-requested,
   replay/conflict, invalid-transition, and reconcile-backlog modules.
 - The HTTP fake scaffold E2E path now uses local helper functions to keep the
