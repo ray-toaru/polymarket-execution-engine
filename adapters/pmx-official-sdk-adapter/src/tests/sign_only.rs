@@ -29,6 +29,25 @@ fn standard_sign_only_plan_is_default_sdk_construct_path_without_raw_payload() {
 }
 
 #[test]
+fn standard_sign_only_plan_supports_market_mapping_without_raw_payload() {
+    let mut order = sample_plan_limit();
+    order.order_kind = "MARKET".into();
+    order.limit_price = None;
+    order.size = None;
+    order.amount = Some("12.5".into());
+    order.time_in_force = None;
+
+    let plan = standard_sign_only_default_plan_for_order(&order).expect("market sign-only plan");
+    assert_eq!(plan.mapping.order_kind, "MARKET");
+    assert_eq!(plan.mapping.amount.as_deref(), Some("12.5"));
+    assert!(plan.mapping.limit_price.is_none());
+    assert!(plan.mapping.size.is_none());
+    assert!(!plan.exposes_raw_signed_order);
+    assert!(!plan.may_post_order);
+    assert!(!plan.may_cancel_order);
+}
+
+#[test]
 fn standard_sign_only_construction_emits_only_digest_ref_and_lifecycle() {
     let construction = standard_sign_only_construction_for_order(
         &sample_plan_limit(),

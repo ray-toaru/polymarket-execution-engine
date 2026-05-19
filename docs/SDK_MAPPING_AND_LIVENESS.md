@@ -9,13 +9,17 @@ Status: historical v0.23 implementation note for `pmx-official-sdk-adapter`.
 ```text
 internal side BUY/SELL -> SDK Side::Buy / Side::Sell
 internal order_kind LIMIT -> SDK limit_order()
-internal order_kind MARKET -> validated but not yet executed in sign-only path
+internal order_kind MARKET -> validated and normalized in standard sign-only mapping
 time_in_force GTC/FOK/FAK -> SDK OrderType
 time_in_force IOC -> SDK OrderType::FAK
 time_in_force GTD -> SDK OrderType::GTD with required RFC3339 expiration
 post_only defaults false unless explicitly set
 expiration is rejected for non-GTD orders
 ```
+
+Current `SignOnlyDryRunRequest` still constructs a limit-order dry-run request.
+Market orders are covered at the standard sign-only plan/mapping boundary and
+must remain non-posting unless a later reviewed release decision changes that.
 
 Current sign-only dry-run path:
 
