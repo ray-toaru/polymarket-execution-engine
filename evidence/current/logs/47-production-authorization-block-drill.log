@@ -1,0 +1,475 @@
+{
+  "authorization_status": "blocked_without_reviewed_release",
+  "failures": [],
+  "live_cancel_env_enabled": false,
+  "live_submit_env_enabled": false,
+  "production_ready_claimed": false,
+  "remote_side_effects": false,
+  "scenarios": [
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": true,
+        "compile_feature_live_submit": true,
+        "config_allow_live_submit": true,
+        "env_allow_live_submit": true,
+        "geoblock_allowed": true,
+        "idempotency_key_written": true,
+        "kill_switch_open": true,
+        "market_whitelisted": true,
+        "operator_approval_present": true,
+        "per_day_cap_ok": true,
+        "per_order_cap_ok": true,
+        "reconcile_healthy": true,
+        "repository_reservation_exists": true,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": true
+      },
+      "missing": [
+        "reviewed_release_decision_present"
+      ],
+      "name": "all_local_gates_but_no_reviewed_release",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": true,
+        "compile_feature_live_submit": false,
+        "config_allow_live_submit": true,
+        "env_allow_live_submit": true,
+        "geoblock_allowed": true,
+        "idempotency_key_written": true,
+        "kill_switch_open": true,
+        "market_whitelisted": true,
+        "operator_approval_present": true,
+        "per_day_cap_ok": true,
+        "per_order_cap_ok": true,
+        "reconcile_healthy": true,
+        "repository_reservation_exists": true,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": true
+      },
+      "missing": [
+        "compile_feature_live_submit",
+        "reviewed_release_decision_present"
+      ],
+      "name": "missing_compile_feature",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": true,
+        "compile_feature_live_submit": true,
+        "config_allow_live_submit": true,
+        "env_allow_live_submit": false,
+        "geoblock_allowed": true,
+        "idempotency_key_written": true,
+        "kill_switch_open": true,
+        "market_whitelisted": true,
+        "operator_approval_present": true,
+        "per_day_cap_ok": true,
+        "per_order_cap_ok": true,
+        "reconcile_healthy": true,
+        "repository_reservation_exists": true,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": true
+      },
+      "missing": [
+        "env_allow_live_submit",
+        "reviewed_release_decision_present"
+      ],
+      "name": "missing_env_allow",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": true,
+        "compile_feature_live_submit": true,
+        "config_allow_live_submit": false,
+        "env_allow_live_submit": true,
+        "geoblock_allowed": true,
+        "idempotency_key_written": true,
+        "kill_switch_open": true,
+        "market_whitelisted": true,
+        "operator_approval_present": true,
+        "per_day_cap_ok": true,
+        "per_order_cap_ok": true,
+        "reconcile_healthy": true,
+        "repository_reservation_exists": true,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": true
+      },
+      "missing": [
+        "config_allow_live_submit",
+        "reviewed_release_decision_present"
+      ],
+      "name": "missing_config_allow",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": true,
+        "compile_feature_live_submit": true,
+        "config_allow_live_submit": true,
+        "env_allow_live_submit": true,
+        "geoblock_allowed": true,
+        "idempotency_key_written": true,
+        "kill_switch_open": false,
+        "market_whitelisted": true,
+        "operator_approval_present": true,
+        "per_day_cap_ok": true,
+        "per_order_cap_ok": true,
+        "reconcile_healthy": true,
+        "repository_reservation_exists": true,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": true
+      },
+      "missing": [
+        "kill_switch_open",
+        "reviewed_release_decision_present"
+      ],
+      "name": "kill_switch_closed",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": true,
+        "compile_feature_live_submit": true,
+        "config_allow_live_submit": true,
+        "env_allow_live_submit": true,
+        "geoblock_allowed": true,
+        "idempotency_key_written": true,
+        "kill_switch_open": true,
+        "market_whitelisted": true,
+        "operator_approval_present": true,
+        "per_day_cap_ok": true,
+        "per_order_cap_ok": true,
+        "reconcile_healthy": true,
+        "repository_reservation_exists": true,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": false
+      },
+      "missing": [
+        "runtime_healthy",
+        "reviewed_release_decision_present"
+      ],
+      "name": "runtime_unhealthy",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": true,
+        "compile_feature_live_submit": true,
+        "config_allow_live_submit": true,
+        "env_allow_live_submit": true,
+        "geoblock_allowed": false,
+        "idempotency_key_written": true,
+        "kill_switch_open": true,
+        "market_whitelisted": true,
+        "operator_approval_present": true,
+        "per_day_cap_ok": true,
+        "per_order_cap_ok": true,
+        "reconcile_healthy": true,
+        "repository_reservation_exists": true,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": true
+      },
+      "missing": [
+        "geoblock_allowed",
+        "reviewed_release_decision_present"
+      ],
+      "name": "geoblocked",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": true,
+        "compile_feature_live_submit": true,
+        "config_allow_live_submit": true,
+        "env_allow_live_submit": true,
+        "geoblock_allowed": true,
+        "idempotency_key_written": true,
+        "kill_switch_open": true,
+        "market_whitelisted": true,
+        "operator_approval_present": true,
+        "per_day_cap_ok": true,
+        "per_order_cap_ok": true,
+        "reconcile_healthy": true,
+        "repository_reservation_exists": false,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": true
+      },
+      "missing": [
+        "repository_reservation_exists",
+        "reviewed_release_decision_present"
+      ],
+      "name": "missing_repository_reservation",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": true,
+        "compile_feature_live_submit": true,
+        "config_allow_live_submit": true,
+        "env_allow_live_submit": true,
+        "geoblock_allowed": true,
+        "idempotency_key_written": false,
+        "kill_switch_open": true,
+        "market_whitelisted": true,
+        "operator_approval_present": true,
+        "per_day_cap_ok": true,
+        "per_order_cap_ok": true,
+        "reconcile_healthy": true,
+        "repository_reservation_exists": true,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": true
+      },
+      "missing": [
+        "idempotency_key_written",
+        "reviewed_release_decision_present"
+      ],
+      "name": "missing_idempotency_key",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": true,
+        "compile_feature_live_submit": true,
+        "config_allow_live_submit": true,
+        "env_allow_live_submit": true,
+        "geoblock_allowed": true,
+        "idempotency_key_written": true,
+        "kill_switch_open": true,
+        "market_whitelisted": true,
+        "operator_approval_present": true,
+        "per_day_cap_ok": true,
+        "per_order_cap_ok": true,
+        "reconcile_healthy": false,
+        "repository_reservation_exists": true,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": true
+      },
+      "missing": [
+        "reconcile_healthy",
+        "reviewed_release_decision_present"
+      ],
+      "name": "reconcile_unhealthy",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": false,
+        "compile_feature_live_submit": true,
+        "config_allow_live_submit": true,
+        "env_allow_live_submit": true,
+        "geoblock_allowed": true,
+        "idempotency_key_written": true,
+        "kill_switch_open": true,
+        "market_whitelisted": true,
+        "operator_approval_present": true,
+        "per_day_cap_ok": true,
+        "per_order_cap_ok": true,
+        "reconcile_healthy": true,
+        "repository_reservation_exists": true,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": true
+      },
+      "missing": [
+        "account_whitelisted",
+        "reviewed_release_decision_present"
+      ],
+      "name": "account_not_whitelisted",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": true,
+        "compile_feature_live_submit": true,
+        "config_allow_live_submit": true,
+        "env_allow_live_submit": true,
+        "geoblock_allowed": true,
+        "idempotency_key_written": true,
+        "kill_switch_open": true,
+        "market_whitelisted": false,
+        "operator_approval_present": true,
+        "per_day_cap_ok": true,
+        "per_order_cap_ok": true,
+        "reconcile_healthy": true,
+        "repository_reservation_exists": true,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": true
+      },
+      "missing": [
+        "market_whitelisted",
+        "reviewed_release_decision_present"
+      ],
+      "name": "market_not_whitelisted",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": true,
+        "compile_feature_live_submit": true,
+        "config_allow_live_submit": true,
+        "env_allow_live_submit": true,
+        "geoblock_allowed": true,
+        "idempotency_key_written": true,
+        "kill_switch_open": true,
+        "market_whitelisted": true,
+        "operator_approval_present": true,
+        "per_day_cap_ok": true,
+        "per_order_cap_ok": false,
+        "reconcile_healthy": true,
+        "repository_reservation_exists": true,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": true
+      },
+      "missing": [
+        "per_order_cap_ok",
+        "reviewed_release_decision_present"
+      ],
+      "name": "per_order_cap_exceeded",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": true,
+        "compile_feature_live_submit": true,
+        "config_allow_live_submit": true,
+        "env_allow_live_submit": true,
+        "geoblock_allowed": true,
+        "idempotency_key_written": true,
+        "kill_switch_open": true,
+        "market_whitelisted": true,
+        "operator_approval_present": true,
+        "per_day_cap_ok": false,
+        "per_order_cap_ok": true,
+        "reconcile_healthy": true,
+        "repository_reservation_exists": true,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": true
+      },
+      "missing": [
+        "per_day_cap_ok",
+        "reviewed_release_decision_present"
+      ],
+      "name": "per_day_cap_exceeded",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    },
+    {
+      "cancel_allowed": false,
+      "cancelled": false,
+      "gates": {
+        "account_whitelisted": true,
+        "compile_feature_live_submit": true,
+        "config_allow_live_submit": true,
+        "env_allow_live_submit": true,
+        "geoblock_allowed": true,
+        "idempotency_key_written": true,
+        "kill_switch_open": true,
+        "market_whitelisted": true,
+        "operator_approval_present": false,
+        "per_day_cap_ok": true,
+        "per_order_cap_ok": true,
+        "reconcile_healthy": true,
+        "repository_reservation_exists": true,
+        "reviewed_release_decision_present": false,
+        "runtime_healthy": true
+      },
+      "missing": [
+        "operator_approval_present",
+        "reviewed_release_decision_present"
+      ],
+      "name": "missing_operator_approval",
+      "posted": false,
+      "production_ready_claimed": false,
+      "remote_side_effects": false,
+      "status": "fail_closed",
+      "submit_allowed": false
+    }
+  ],
+  "status": "pass"
+}

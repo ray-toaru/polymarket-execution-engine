@@ -5,7 +5,7 @@ running 2 tests
 test tests::live_submit_is_disabled_by_default ... ok
 test tests::read_only_ok_smoke ... ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.85s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.14s
 
    Doc-tests pmx_official_sdk_spike
 

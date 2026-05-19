@@ -104,6 +104,9 @@ SECTIONS: dict[str, list[str]] = {
     "production_operations_validation": [
         "46-production-operations-drill.log",
     ],
+    "production_authorization_block_validation": [
+        "47-production-authorization-block-drill.log",
+    ],
     "runtime_worker_status_validation": [
         "42-runtime-worker-status-query.log",
     ],
