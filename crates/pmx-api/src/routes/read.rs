@@ -14,91 +14,17 @@ use pmx_store::{
     SignOnlyLifecycleQuery,
 };
 
-pub(crate) async fn get_submission(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Path(execution_id): Path<String>,
-) -> ApiResult<SubmitReceipt> {
-    require(&headers, Operation::ReadReport)?;
-    let receipt = state
-        .service
-        .load_submit_receipt(&execution_id)
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::OK, Json(receipt)))
-}
+#[path = "read/lifecycle.rs"]
+mod lifecycle;
 
-pub(crate) async fn list_sign_only_lifecycle_events(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Path(execution_id): Path<String>,
-    Query(query): Query<EventListQuery>,
-) -> ApiResult<Vec<SignOnlyLifecycleRecord>> {
-    require(&headers, Operation::ReadReport)?;
-    let records = state
-        .service
-        .list_sign_only_lifecycle_events(SignOnlyLifecycleQuery {
-            execution_id,
-            limit: query.limit.unwrap_or(100),
-            before_event_id: query.before_event_id,
-        })
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::OK, Json(records)))
-}
+#[path = "read/runtime.rs"]
+mod runtime;
 
-pub(crate) async fn list_execution_lifecycle_events(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Path(execution_id): Path<String>,
-    Query(query): Query<EventListQuery>,
-) -> ApiResult<Vec<ExecutionLifecycleEvent>> {
-    require(&headers, Operation::ReadReport)?;
-    let events = state
-        .service
-        .list_execution_lifecycle_events(ExecutionLifecycleQuery {
-            execution_id,
-            limit: query.limit.unwrap_or(100),
-            before_event_id: query.before_event_id,
-        })
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::OK, Json(events)))
-}
+#[path = "read/submission.rs"]
+mod submission;
 
-pub(crate) async fn list_order_lifecycle_events(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Path(order_id): Path<String>,
-    Query(query): Query<EventListQuery>,
-) -> ApiResult<Vec<OrderLifecycleEventRecord>> {
-    require(&headers, Operation::ReadReport)?;
-    let events = state
-        .service
-        .list_order_lifecycle_events(OrderLifecycleEventQuery {
-            order_id,
-            limit: query.limit.unwrap_or(100),
-            before_event_id: query.before_event_id,
-        })
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::OK, Json(events)))
-}
-
-pub(crate) async fn list_runtime_worker_status(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Query(query): Query<RuntimeWorkerStatusListQuery>,
-) -> ApiResult<RuntimeWorkerStatusReport> {
-    require(&headers, Operation::ReadReport)?;
-    let report = state
-        .service
-        .list_runtime_worker_status(RuntimeWorkerStatusQuery {
-            account_id: query.account_id,
-            limit: query.limit.unwrap_or(100),
-            before_observed_at: query.before_observed_at,
-        })
-        .await
-        .map_err(service_error)?;
-    Ok((StatusCode::OK, Json(report)))
-}
+pub(crate) use lifecycle::{
+    list_execution_lifecycle_events, list_order_lifecycle_events, list_sign_only_lifecycle_events,
+};
+pub(crate) use runtime::list_runtime_worker_status;
+pub(crate) use submission::get_submission;

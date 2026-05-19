@@ -155,6 +155,10 @@ material exposure, or production-readiness claims.
 - API in-memory/PostgreSQL E2E tests now serialize process-env token mutation
   so local `cargo test -p pmx-api` remains deterministic under parallel test
   scheduling.
+- API read routes now separate submit-receipt reads, lifecycle-event queries,
+  and runtime-worker status queries while preserving the same route surface.
+- API flow routes now separate intent/snapshot/decision, plan compile/submit,
+  and sign-only lifecycle handlers while preserving the same route surface.
 - In-memory order-lifecycle tests now also separate focused cancel-requested,
   replay/conflict, invalid-transition, and reconcile-backlog modules.
 - The HTTP fake scaffold E2E path now uses local helper functions to keep the
