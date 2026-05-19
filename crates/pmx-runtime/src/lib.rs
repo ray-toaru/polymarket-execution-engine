@@ -1,12 +1,12 @@
 mod evaluation;
 mod health;
-mod placeholder_worker;
+mod non_trading_worker;
 mod worker_loop;
 mod worker_provider;
 
 pub use evaluation::*;
 pub use health::*;
-pub use placeholder_worker::*;
+pub use non_trading_worker::*;
 pub use worker_loop::*;
 pub use worker_provider::*;
 

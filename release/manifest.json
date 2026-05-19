@@ -57,7 +57,8 @@
     "official-sdk-gtd-sign-only-mapping",
     "executor-owned-standard-sign-only-ref-and-digest-derivation",
     "standard-sign-only-api-omitted-ref-digest-path",
-    "standard-sign-only-lifecycle-idempotent-replay"
+    "standard-sign-only-lifecycle-idempotent-replay",
+    "non-trading-runtime-heartbeat-worker-sink"
   ],
   "v011_source_changes": [
     "api-server-authoritative-in-memory-store-scaffold",
