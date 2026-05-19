@@ -130,6 +130,9 @@ material exposure, or production-readiness claims.
 - In-memory execution store implementation now separates normalized-intent/
   snapshot, decision, plan-summary, and reservation/receipt helpers while
   preserving the same trait surface.
+- Service binding helpers now separate hash-input DTOs, sign-only lifecycle
+  append validation, and snapshot/decision binding verification while
+  preserving the same exports.
 - In-memory order-lifecycle tests now also separate focused cancel-requested,
   replay/conflict, invalid-transition, and reconcile-backlog modules.
 - The HTTP fake scaffold E2E path now uses local helper functions to keep the
