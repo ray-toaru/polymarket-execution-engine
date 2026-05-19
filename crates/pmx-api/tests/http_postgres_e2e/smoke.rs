@@ -14,6 +14,7 @@ mod sign_only;
 
 #[tokio::test]
 async fn http_postgres_backed_e2e_smoke() {
+    let _guard = env_lock().await;
     let Ok(database_url) = std::env::var("PMX_TEST_DATABASE_URL") else {
         eprintln!("PMX_TEST_DATABASE_URL not set; skipping HTTP PostgreSQL E2E smoke");
         return;

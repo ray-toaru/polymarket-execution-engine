@@ -8,6 +8,7 @@ mod runtime_state;
 
 #[tokio::test]
 async fn http_postgres_runtime_rows_can_reach_ready_plan_but_submit_still_blocks() {
+    let _guard = env_lock().await;
     let Ok(database_url) = std::env::var("PMX_TEST_DATABASE_URL") else {
         eprintln!("PMX_TEST_DATABASE_URL not set; skipping HTTP PostgreSQL runtime E2E smoke");
         return;

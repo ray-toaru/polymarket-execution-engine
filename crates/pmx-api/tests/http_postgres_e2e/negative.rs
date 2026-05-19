@@ -2,6 +2,7 @@ use super::*;
 
 #[tokio::test]
 async fn http_postgres_rejects_cross_object_graph_and_bad_plan_hash() {
+    let _guard = env_lock().await;
     let Ok(database_url) = std::env::var("PMX_TEST_DATABASE_URL") else {
         eprintln!("PMX_TEST_DATABASE_URL not set; skipping HTTP PostgreSQL negative E2E smoke");
         return;

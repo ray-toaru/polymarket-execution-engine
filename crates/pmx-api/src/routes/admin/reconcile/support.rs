@@ -2,98 +2,55 @@ use axum::{
     Json,
     http::{HeaderMap, StatusCode},
 };
-use pmx_authz::Operation;
 use pmx_core::ReconcileRequest;
 
 use crate::backend::AppState;
-use crate::support::{
-    api_error_with_correlation, correlation_id_from_headers, record_admin_audit,
-    request_fingerprint, require,
-};
 
-pub(super) async fn require_reconcile_request(
+#[path = "support/context.rs"]
+mod context;
+
+#[path = "support/local.rs"]
+mod local;
+
+#[path = "support/placeholder.rs"]
+mod placeholder;
+
+pub(super) use local::require_local_reconcile_request;
+pub(super) use placeholder::require_reconcile_request;
+
+pub(super) type ReconcileApiError = (StatusCode, Json<serde_json::Value>);
+
+pub(super) type ReconcileRequestParts = (
+    pmx_authz::Principal,
+    String,
+    Option<String>,
+    Option<(String, pmx_core::RemoteOrderObservation)>,
+);
+
+pub(super) async fn require_reconcile_context<T: serde::Serialize>(
     state: &AppState,
     headers: &HeaderMap,
-    req: &ReconcileRequest,
-) -> Result<
-    (
-        pmx_authz::Principal,
-        String,
-        Option<String>,
-        Option<(String, pmx_core::RemoteOrderObservation)>,
-    ),
-    (StatusCode, Json<serde_json::Value>),
-> {
-    let principal = require(headers, Operation::Reconcile)?;
-    let correlation_id = correlation_id_from_headers(headers);
-    let fingerprint = request_fingerprint(req);
-    if req.reason.trim().is_empty() {
-        record_admin_audit(
-            state,
-            &principal,
-            "Reconcile",
-            fingerprint,
-            Some(correlation_id.clone()),
-            "REJECTED bad_request",
-        )
-        .await?;
-        return Err(api_error_with_correlation(
-            StatusCode::BAD_REQUEST,
-            "reason must be non-empty",
-            correlation_id,
-        ));
-    }
-    let local_reconcile = match (&req.order_id, &req.remote_observation) {
-        (Some(order_id), Some(remote_observation)) => {
-            Some((order_id.clone(), remote_observation.clone()))
-        }
-        (None, None) => None,
-        _ => {
-            record_admin_audit(
-                state,
-                &principal,
-                "Reconcile",
-                fingerprint,
-                Some(correlation_id.clone()),
-                "REJECTED bad_request",
-            )
-            .await?;
-            return Err(api_error_with_correlation(
-                StatusCode::BAD_REQUEST,
-                "order_id and remote_observation must be provided together",
-                correlation_id,
-            ));
-        }
-    };
-    Ok((principal, correlation_id, fingerprint, local_reconcile))
+    operation: pmx_authz::Operation,
+    req: &T,
+) -> Result<(pmx_authz::Principal, String, Option<String>), ReconcileApiError> {
+    context::require_reconcile_context(state, headers, operation, req).await
 }
 
-pub(super) async fn require_local_reconcile_request(
+pub(super) async fn reject_bad_request(
     state: &AppState,
-    headers: &HeaderMap,
-    req: &crate::model::ReconcileOrderLocalRequest,
-) -> Result<(pmx_authz::Principal, String, Option<String>), (StatusCode, Json<serde_json::Value>)> {
-    let principal = require(headers, Operation::Reconcile)?;
-    let correlation_id = correlation_id_from_headers(headers);
-    let fingerprint = request_fingerprint(req);
-    if req.account_id.trim().is_empty()
-        || req.order_id.trim().is_empty()
-        || req.reason.trim().is_empty()
-    {
-        record_admin_audit(
-            state,
-            &principal,
-            "ReconcileOrderLocal",
-            fingerprint,
-            Some(correlation_id.clone()),
-            "REJECTED bad_request",
-        )
-        .await?;
-        return Err(api_error_with_correlation(
-            StatusCode::BAD_REQUEST,
-            "account_id, order_id and reason must be non-empty",
-            correlation_id,
-        ));
-    }
-    Ok((principal, correlation_id, fingerprint))
+    principal: &pmx_authz::Principal,
+    operation_name: &'static str,
+    fingerprint: Option<String>,
+    correlation_id: String,
+    message: &str,
+) -> Result<ReconcileApiError, ReconcileApiError> {
+    context::reject_bad_request(
+        state,
+        principal,
+        operation_name,
+        fingerprint,
+        correlation_id,
+        message,
+    )
+    .await
 }

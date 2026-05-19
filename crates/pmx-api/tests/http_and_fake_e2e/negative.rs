@@ -1,7 +1,8 @@
 use super::*;
 
-#[test]
-fn equal_service_and_admin_tokens_fail_closed_at_app_construction() {
+#[tokio::test]
+async fn equal_service_and_admin_tokens_fail_closed_at_app_construction() {
+    let _guard = env_lock().await;
     unsafe {
         std::env::set_var("PM_EXEC_SERVICE_TOKEN", "same-token-test");
         std::env::set_var("PM_EXEC_ADMIN_TOKEN", "same-token-test");
@@ -12,6 +13,7 @@ fn equal_service_and_admin_tokens_fail_closed_at_app_construction() {
 
 #[tokio::test]
 async fn mismatched_object_graph_is_rejected() {
+    let _guard = env_lock().await;
     unsafe {
         std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-mismatch");
         std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-mismatch");

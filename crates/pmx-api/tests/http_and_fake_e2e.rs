@@ -3,7 +3,14 @@ use axum::{
     http::{Request, StatusCode},
 };
 use serde_json::{Value, json};
+use std::sync::OnceLock;
+use tokio::sync::{Mutex, MutexGuard};
 use tower::ServiceExt;
+
+async fn env_lock() -> MutexGuard<'static, ()> {
+    static ENV_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+    ENV_LOCK.get_or_init(|| Mutex::new(())).lock().await
+}
 
 fn bearer(token: &str) -> String {
     format!("Bearer {token}")

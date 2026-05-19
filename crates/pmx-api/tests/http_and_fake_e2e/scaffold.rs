@@ -1,3 +1,5 @@
+use super::*;
+
 #[path = "scaffold/admin_paths.rs"]
 mod admin_paths;
 
@@ -12,6 +14,7 @@ mod submit_sign_only;
 
 #[tokio::test]
 async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
+    let _guard = env_lock().await;
     unsafe {
         std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-test-v07");
         std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-test-v07");
