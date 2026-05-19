@@ -1,0 +1,31 @@
+{
+  "config_loaded": true,
+  "config_path": "config/production-preflight.example.json",
+  "failures": [],
+  "field_signals": {
+    "alert_provider_reference_present": true,
+    "alert_route_reference_present": true,
+    "alert_test_evidence_present": true,
+    "approval_expiry_present": true,
+    "approval_hash_present": true,
+    "approval_id_present": true,
+    "approval_scope_present": true,
+    "approval_ticket_present": true,
+    "approver_identity_present": true,
+    "break_glass_review_reference_present": true,
+    "dashboard_reference_present": true,
+    "kms_key_reference_present": true,
+    "pager_escalation_policy_present": true,
+    "rotation_evidence_reference_present": true,
+    "secret_provider_reference_present": true
+  },
+  "forbidden_sensitive_keys_absent": true,
+  "forbidden_sensitive_values_absent": true,
+  "live_cancel_allowed": false,
+  "live_submit_allowed": false,
+  "production_preflight_config_schema_version": 1,
+  "production_ready_claimed": false,
+  "references_only_no_secret_values": true,
+  "remote_side_effects": false,
+  "status": "pass"
+}

@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 
 from current_gate_chain import require_current_gate_log
+from production_preflight_config import load_config, nested_present
 
 ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "EXTERNAL_ALERT_ROUTING_PREFLIGHT.md"
@@ -18,6 +19,13 @@ REFERENCE_ENV = {
     "pager_escalation_policy_present": "PMX_PAGER_ESCALATION_POLICY_ID",
     "dashboard_reference_present": "PMX_DASHBOARD_REFERENCE",
     "alert_test_evidence_present": "PMX_ALERT_TEST_EVIDENCE_ID",
+}
+CONFIG_FIELDS = {
+    "alert_provider_reference_present": ("alert_routing", "provider_ref"),
+    "alert_route_reference_present": ("alert_routing", "route_ref"),
+    "pager_escalation_policy_present": ("alert_routing", "pager_escalation_policy_ref"),
+    "dashboard_reference_present": ("alert_routing", "dashboard_ref"),
+    "alert_test_evidence_present": ("alert_routing", "alert_test_evidence_ref"),
 }
 ALERT_SIGNALS = [
     "runtime_worker_health_alert",
@@ -74,12 +82,20 @@ def main() -> int:
     if "61-external-alert-routing-preflight.log" not in manifest:
         failures.append("evidence manifest must capture external alert routing preflight log")
 
-    references = {label: present(env_name) for label, env_name in REFERENCE_ENV.items()}
+    config, config_path, config_failures = load_config()
+    failures.extend(config_failures)
+    references = {
+        label: present(REFERENCE_ENV[label])
+        or nested_present(config, *CONFIG_FIELDS[label])
+        for label in REFERENCE_ENV
+    }
     alert_signal_presence = {signal: True for signal in ALERT_SIGNALS}
     alerting_ready = all(references.values()) and all(alert_signal_presence.values())
     result = {
         "status": "fail" if failures else "pass",
         "references": references,
+        "config_path": str(config_path.relative_to(ROOT)) if config_path and ROOT in config_path.parents else str(config_path) if config_path else None,
+        "config_loaded": bool(config),
         "alert_signals": alert_signal_presence,
         "pager_ack_required": True,
         "alerting_ready": alerting_ready,

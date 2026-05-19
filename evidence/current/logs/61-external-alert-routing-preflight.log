@@ -7,6 +7,8 @@
     "sdk_error_rate_alert": true
   },
   "alerting_ready": false,
+  "config_loaded": false,
+  "config_path": null,
   "failures": [],
   "live_cancel_allowed": false,
   "live_submit_allowed": false,

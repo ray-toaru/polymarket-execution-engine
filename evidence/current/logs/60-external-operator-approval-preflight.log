@@ -1,6 +1,8 @@
 {
   "approval_expiry_enforced": true,
   "approval_replay_block_required": true,
+  "config_loaded": false,
+  "config_path": null,
   "dual_control_required": true,
   "failures": [],
   "live_cancel_allowed": false,

@@ -29,6 +29,7 @@ CONTROLLED_CANARY_PREP_DRILL = ROOT / "docs" / "LIVE_CANARY_CONTROLLED_PREP_DRIL
 EXTERNAL_SECRET_PROVIDER_PREFLIGHT = ROOT / "docs" / "EXTERNAL_SECRET_PROVIDER_PREFLIGHT.md"
 EXTERNAL_OPERATOR_APPROVAL_PREFLIGHT = ROOT / "docs" / "EXTERNAL_OPERATOR_APPROVAL_PREFLIGHT.md"
 EXTERNAL_ALERT_ROUTING_PREFLIGHT = ROOT / "docs" / "EXTERNAL_ALERT_ROUTING_PREFLIGHT.md"
+PRODUCTION_PREFLIGHT_CONFIG_GUARD = ROOT / "docs" / "PRODUCTION_PREFLIGHT_CONFIG_GUARD.md"
 RELEASE_MANIFEST = ROOT / "release" / "manifest.json"
 EVIDENCE_GUARD = ROOT / "validation" / "check_current_evidence_manifest.py"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
@@ -347,6 +348,32 @@ EXTERNAL_ALERT_ROUTING_TOKENS = [
     "production_ready_claimed = false",
 ]
 
+PRODUCTION_PREFLIGHT_CONFIG_TOKENS = [
+    "production_preflight_config_schema_version = 1",
+    "secret_provider_reference_present",
+    "kms_key_reference_present",
+    "rotation_evidence_reference_present",
+    "break_glass_review_reference_present",
+    "approval_id_present",
+    "approval_hash_present",
+    "approval_ticket_present",
+    "approver_identity_present",
+    "approval_expiry_present",
+    "approval_scope_present",
+    "alert_provider_reference_present",
+    "alert_route_reference_present",
+    "pager_escalation_policy_present",
+    "dashboard_reference_present",
+    "alert_test_evidence_present",
+    "forbidden_sensitive_keys_absent = true",
+    "forbidden_sensitive_values_absent = true",
+    "references_only_no_secret_values = true",
+    "live_submit_allowed = false",
+    "live_cancel_allowed = false",
+    "remote_side_effects = false",
+    "production_ready_claimed = false",
+]
+
 
 def main() -> int:
     failures: list[str] = []
@@ -450,6 +477,11 @@ def main() -> int:
         if token not in external_alert_routing_preflight:
             failures.append(f"external alert routing preflight missing {token}")
 
+    production_preflight_config_guard = PRODUCTION_PREFLIGHT_CONFIG_GUARD.read_text()
+    for token in PRODUCTION_PREFLIGHT_CONFIG_TOKENS:
+        if token not in production_preflight_config_guard:
+            failures.append(f"production preflight config guard missing {token}")
+
     release = json.loads(RELEASE_MANIFEST.read_text())
     status = str(release.get("status", "")).lower()
     if "production-ready" in status or "production_ready" in status:
@@ -481,6 +513,7 @@ def main() -> int:
     require_current_gate_log("59-external-secret-provider-preflight.log", "external secret provider preflight", failures)
     require_current_gate_log("60-external-operator-approval-preflight.log", "external operator approval preflight", failures)
     require_current_gate_log("61-external-alert-routing-preflight.log", "external alert routing preflight", failures)
+    require_current_gate_log("62-production-preflight-config-guard.log", "production preflight config guard", failures)
     if '"productionization_validation"' not in manifest_writer:
         failures.append("evidence manifest must include productionization_validation")
     if "36-production-readiness-guard.log" not in manifest_writer:
@@ -551,6 +584,10 @@ def main() -> int:
         failures.append("evidence manifest must include external_alert_routing_preflight_validation")
     if "61-external-alert-routing-preflight.log" not in manifest_writer:
         failures.append("evidence manifest must capture external alert routing preflight log")
+    if '"production_preflight_config_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include production_preflight_config_validation")
+    if "62-production-preflight-config-guard.log" not in manifest_writer:
+        failures.append("evidence manifest must capture production preflight config guard log")
 
     if failures:
         for failure in failures:

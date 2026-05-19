@@ -149,6 +149,9 @@ SECTIONS: dict[str, list[str]] = {
     "external_alert_routing_preflight_validation": [
         "61-external-alert-routing-preflight.log",
     ],
+    "production_preflight_config_validation": [
+        "62-production-preflight-config-guard.log",
+    ],
     "runtime_worker_status_validation": [
         "42-runtime-worker-status-query.log",
     ],

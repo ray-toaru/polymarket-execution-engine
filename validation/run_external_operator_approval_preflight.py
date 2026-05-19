@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 
 from current_gate_chain import require_current_gate_log
+from production_preflight_config import load_config, nested_present
 
 ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "EXTERNAL_OPERATOR_APPROVAL_PREFLIGHT.md"
@@ -19,6 +20,14 @@ REFERENCE_ENV = {
     "approver_identity_present": "PMX_OPERATOR_APPROVER_ID",
     "approval_expiry_present": "PMX_OPERATOR_APPROVAL_EXPIRES_AT",
     "approval_scope_present": "PMX_OPERATOR_APPROVAL_SCOPE",
+}
+CONFIG_FIELDS = {
+    "approval_id_present": ("operator_approval", "approval_id"),
+    "approval_hash_present": ("operator_approval", "approval_hash"),
+    "approval_ticket_present": ("operator_approval", "ticket_ref"),
+    "approver_identity_present": ("operator_approval", "approver_identity_ref"),
+    "approval_expiry_present": ("operator_approval", "expires_at"),
+    "approval_scope_present": ("operator_approval", "scope"),
 }
 
 
@@ -66,11 +75,19 @@ def main() -> int:
     if "60-external-operator-approval-preflight.log" not in manifest:
         failures.append("evidence manifest must capture external operator approval preflight log")
 
-    signals = {label: present(env_name) for label, env_name in REFERENCE_ENV.items()}
+    config, config_path, config_failures = load_config()
+    failures.extend(config_failures)
+    signals = {
+        label: present(REFERENCE_ENV[label])
+        or nested_present(config, *CONFIG_FIELDS[label])
+        for label in REFERENCE_ENV
+    }
     operator_ready = all(signals.values())
     result = {
         "status": "fail" if failures else "pass",
         "signals": signals,
+        "config_path": str(config_path.relative_to(ROOT)) if config_path and ROOT in config_path.parents else str(config_path) if config_path else None,
+        "config_loaded": bool(config),
         "dual_control_required": True,
         "approval_replay_block_required": True,
         "approval_expiry_enforced": True,

@@ -131,6 +131,7 @@ if [[ -f "${INTEGRATION_ROOT}/scripts/check_version_consistency.py" && -f "${INT
   python validation/run_external_secret_provider_preflight.py 2>&1 | tee "${EVIDENCE_DIR}/59-external-secret-provider-preflight.log"
   python validation/run_external_operator_approval_preflight.py 2>&1 | tee "${EVIDENCE_DIR}/60-external-operator-approval-preflight.log"
   python validation/run_external_alert_routing_preflight.py 2>&1 | tee "${EVIDENCE_DIR}/61-external-alert-routing-preflight.log"
+  python validation/run_production_preflight_config_guard.py 2>&1 | tee "${EVIDENCE_DIR}/62-production-preflight-config-guard.log"
   python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
   python validation/check_docs_evidence_governance.py 2>&1 | tee "${EVIDENCE_DIR}/30-docs-evidence-governance.log"
   python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
