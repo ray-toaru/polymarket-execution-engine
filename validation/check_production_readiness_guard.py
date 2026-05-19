@@ -13,6 +13,7 @@ RUNBOOK = ROOT / "docs" / "PRODUCTIONIZATION_RUNBOOK.md"
 CONTROLS_MATRIX = ROOT / "docs" / "PRODUCTION_CONTROLS_MATRIX.md"
 HARDENING_SPEC = ROOT / "docs" / "PRODUCTION_HARDENING_SPEC.md"
 EVIDENCE_CONTROLS = ROOT / "docs" / "PRODUCTION_EVIDENCE_CONTROLS.md"
+OPERATIONS_DRILL = ROOT / "docs" / "PRODUCTION_OPERATIONS_DRILL.md"
 RELEASE_MANIFEST = ROOT / "release" / "manifest.json"
 EVIDENCE_GUARD = ROOT / "validation" / "check_current_evidence_manifest.py"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
@@ -84,6 +85,19 @@ EVIDENCE_CONTROL_TOKENS = [
     "Production promotion is forbidden",
 ]
 
+OPERATIONS_DRILL_TOKENS = [
+    "secret_custody",
+    "deployment_preflight",
+    "rollback_runbook",
+    "incident_drill",
+    "alerting_dashboard",
+    "slo_error_budget",
+    "audit_export_retention",
+    "risk_limits",
+    "dependency_sdk_breakage",
+    "not production-ready",
+]
+
 
 def main() -> int:
     failures: list[str] = []
@@ -107,6 +121,11 @@ def main() -> int:
         if token not in evidence_controls:
             failures.append(f"production evidence controls missing {token}")
 
+    operations_drill = OPERATIONS_DRILL.read_text()
+    for token in OPERATIONS_DRILL_TOKENS:
+        if token not in operations_drill:
+            failures.append(f"production operations drill missing {token}")
+
     release = json.loads(RELEASE_MANIFEST.read_text())
     status = str(release.get("status", "")).lower()
     if "production-ready" in status or "production_ready" in status:
@@ -122,12 +141,17 @@ def main() -> int:
     manifest_writer = MANIFEST_WRITER.read_text()
     require_current_gate_log("36-production-readiness-guard.log", "production readiness guard", failures)
     require_current_gate_log("41-production-hardening-config.log", "production hardening config", failures)
+    require_current_gate_log("46-production-operations-drill.log", "production operations drill", failures)
     if '"productionization_validation"' not in manifest_writer:
         failures.append("evidence manifest must include productionization_validation")
     if "36-production-readiness-guard.log" not in manifest_writer:
         failures.append("evidence manifest must capture production readiness guard log")
     if '"production_hardening_config_validation"' not in manifest_writer:
         failures.append("evidence manifest must include production_hardening_config_validation")
+    if '"production_operations_validation"' not in manifest_writer:
+        failures.append("evidence manifest must include production_operations_validation")
+    if "46-production-operations-drill.log" not in manifest_writer:
+        failures.append("evidence manifest must capture production operations drill log")
 
     if failures:
         for failure in failures:

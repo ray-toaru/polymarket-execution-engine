@@ -1,0 +1,167 @@
+{
+  "allowed_runtime_modes": [
+    "read-only",
+    "sign-only",
+    "cancel-only"
+  ],
+  "failures": [],
+  "forbidden_claims": [
+    "production-ready",
+    "live-ready"
+  ],
+  "live_cancel_env_enabled": false,
+  "live_submit_env_enabled": false,
+  "production_ready_claimed": false,
+  "remote_side_effects": false,
+  "scenarios": [
+    {
+      "fallback_mode": "read-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "missing": [],
+      "name": "secret_custody",
+      "production_ready_claimed": false,
+      "required_evidence": [
+        "secret manager or KMS or HSM design review",
+        "no plaintext private keys in logs",
+        "credential rotation drill",
+        "break-glass access review"
+      ],
+      "status": "pass"
+    },
+    {
+      "fallback_mode": "read-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "missing": [],
+      "name": "deployment_preflight",
+      "production_ready_claimed": false,
+      "required_evidence": [
+        "artifact SHA-256 verification",
+        "evidence manifest SHA-256 verification",
+        "migration evidence",
+        "config diff review",
+        "operator approval"
+      ],
+      "status": "pass"
+    },
+    {
+      "fallback_mode": "sign-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "missing": [],
+      "name": "rollback_runbook",
+      "production_ready_claimed": false,
+      "required_evidence": [
+        "config kill switch",
+        "sign-only fallback",
+        "cancel-only fallback",
+        "read-only fallback",
+        "database forward-fix boundary"
+      ],
+      "status": "pass"
+    },
+    {
+      "fallback_mode": "read-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "missing": [],
+      "name": "incident_drill",
+      "production_ready_claimed": false,
+      "required_evidence": [
+        "remote unknown",
+        "cancel failure",
+        "SDK failure",
+        "PostgreSQL unavailable",
+        "geoblock",
+        "low resource",
+        "degraded runtime workers"
+      ],
+      "status": "pass"
+    },
+    {
+      "fallback_mode": "read-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "missing": [],
+      "name": "alerting_dashboard",
+      "production_ready_claimed": false,
+      "required_evidence": [
+        "runtime worker health",
+        "reconcile backlog",
+        "remote unknown count",
+        "idempotency conflict rate",
+        "SDK error rate",
+        "audit export failure",
+        "per-order trace id"
+      ],
+      "status": "pass"
+    },
+    {
+      "fallback_mode": "read-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "missing": [],
+      "name": "slo_error_budget",
+      "production_ready_claimed": false,
+      "required_evidence": [
+        "safety SLO",
+        "availability SLO",
+        "safety breach freezes live submit",
+        "error budget cannot auto-enable live submit"
+      ],
+      "status": "pass"
+    },
+    {
+      "fallback_mode": "read-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "missing": [],
+      "name": "audit_export_retention",
+      "production_ready_claimed": false,
+      "required_evidence": [
+        "redacted immutable export",
+        "retention duration",
+        "deletion policy",
+        "legal hold behavior",
+        "access review"
+      ],
+      "status": "pass"
+    },
+    {
+      "fallback_mode": "cancel-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "missing": [],
+      "name": "risk_limits",
+      "production_ready_claimed": false,
+      "required_evidence": [
+        "account whitelist",
+        "market whitelist",
+        "per-order cap",
+        "per-day cap",
+        "exposure cap",
+        "operator approval threshold",
+        "remote unknown freeze override"
+      ],
+      "status": "pass"
+    },
+    {
+      "fallback_mode": "sign-only",
+      "live_cancel_allowed": false,
+      "live_submit_allowed": false,
+      "missing": [],
+      "name": "dependency_sdk_breakage",
+      "production_ready_claimed": false,
+      "required_evidence": [
+        "pinned dependencies",
+        "compatibility report",
+        "sign-only regression evidence",
+        "rollback plan",
+        "upstream breakage playbook"
+      ],
+      "status": "pass"
+    }
+  ],
+  "status": "pass"
+}
