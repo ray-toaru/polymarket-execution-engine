@@ -12,8 +12,11 @@
     "0004_real_funds_canary"
   ],
   "postgres_dry_run": {
-    "reason": "PMX_TEST_DATABASE_URL not set",
-    "status": "skipped"
+    "drift_detection": "bad checksum fixture created; production runner must fail closed on mismatch",
+    "drift_schema": "pmx_migration_drift_1779195211814_107060",
+    "fresh_schema": "pmx_migration_fresh_1779195211814_107060",
+    "status": "pass",
+    "upgraded_schema": "pmx_migration_upgraded_1779195211814_107060"
   },
   "status": "pass"
 }
