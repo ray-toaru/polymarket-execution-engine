@@ -144,6 +144,11 @@ material exposure, or production-readiness claims.
   backend method surface.
 - API route assembly now separates bootstrap/router construction and health
   endpoint helpers while preserving the same exported app builders.
+- PostgreSQL support helpers now separate database-error normalization,
+  JSON-payload loading, and runtime-state enum/status conversion helpers while
+  preserving the same helper exports.
+- PostgreSQL migration helpers now separate manifest/checksum, apply flow, and
+  applied-migration recording while preserving the same `apply_schema` entry.
 - In-memory order-lifecycle tests now also separate focused cancel-requested,
   replay/conflict, invalid-transition, and reconcile-backlog modules.
 - The HTTP fake scaffold E2E path now uses local helper functions to keep the
