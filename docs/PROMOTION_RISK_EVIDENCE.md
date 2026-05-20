@@ -16,7 +16,7 @@ Live submit, live cancel, and production deployment remain blocked.
 - Environment: `polymarket-execution-engine/evidence/current/environment.json`
 - Logs: `polymarket-execution-engine/evidence/current/logs/`
 - Release manifest: `polymarket-execution-engine/release/manifest.json`
-- External artifact hash sidecars: `polymarket-dual-project-v0.25.0.zip.sha256` and `polymarket-dual-project-v0.25.0.zip.evidence.json`
+- External artifact hash sidecars: `polymarket-execution-suite-v0.25.0.zip.sha256` and `polymarket-execution-suite-v0.25.0.zip.evidence.json`
 
 ## P1 risk closure
 

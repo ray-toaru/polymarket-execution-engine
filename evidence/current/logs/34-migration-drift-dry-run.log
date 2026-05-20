@@ -13,10 +13,10 @@
   ],
   "postgres_dry_run": {
     "drift_detection": "bad checksum fixture created; production runner must fail closed on mismatch",
-    "drift_schema": "pmx_migration_drift_1779250135588_304820",
-    "fresh_schema": "pmx_migration_fresh_1779250135588_304820",
+    "drift_schema": "pmx_migration_drift_1779253964440_351349",
+    "fresh_schema": "pmx_migration_fresh_1779253964440_351349",
     "status": "pass",
-    "upgraded_schema": "pmx_migration_upgraded_1779250135588_304820"
+    "upgraded_schema": "pmx_migration_upgraded_1779253964440_351349"
   },
   "status": "pass"
 }

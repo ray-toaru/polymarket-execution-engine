@@ -4,7 +4,7 @@
 
 Date: 2026-05-14
 
-Execution root: `/workspaces/universal/rust/polymarket_dual_project`
+Execution root: current `polymarket-execution-suite` checkout
 Evidence root: `/tmp/pmx_validation`
 
 ## 1) Rust compile/test gates

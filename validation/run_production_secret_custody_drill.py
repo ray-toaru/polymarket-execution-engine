@@ -107,7 +107,7 @@ def main() -> int:
         failures.append("evidence manifest must capture production secret custody drill log")
 
     artifact_env = os.environ.get("PMX_RELEASE_ARTIFACT_PATH", "").strip()
-    artifact_path = Path(artifact_env) if artifact_env else INTEGRATION_ROOT / "dist" / f"polymarket-dual-project-v{(INTEGRATION_ROOT / 'VERSION').read_text().strip()}.zip"
+    artifact_path = Path(artifact_env) if artifact_env else INTEGRATION_ROOT / "dist" / f"polymarket-execution-suite-v{(INTEGRATION_ROOT / 'VERSION').read_text().strip()}.zip"
     if not artifact_path.is_absolute():
         artifact_path = (INTEGRATION_ROOT / artifact_path).resolve()
 

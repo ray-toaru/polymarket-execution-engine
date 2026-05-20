@@ -22,8 +22,8 @@ VERSION_CANDIDATES = [
     else None,
     ROOT / "VERSION",
     EXECUTOR / "VERSION",
-    ROOT / "polymarket_dual_project" / "VERSION",
-    EXECUTOR.parent / "polymarket_dual_project" / "VERSION",
+    ROOT / "polymarket_execution_suite" / "VERSION",
+    EXECUTOR.parent / "polymarket_execution_suite" / "VERSION",
 ]
 VERSION_PATH = next((path for path in VERSION_CANDIDATES if path and path.exists()), None)
 if VERSION_PATH is None:
