@@ -79,6 +79,29 @@ jobs:
       - name: Run official SDK adapter typecheck tests
         run: cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --features sdk-typecheck --locked -- --test-threads=1
 
+  current-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust 1.88
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.88.0
+          components: rustfmt, clippy
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run current gates
+        run: ./validation/run_current_gates.sh
+
   static-guards:
     runs-on: ubuntu-latest
     steps:
