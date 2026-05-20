@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "status": "invalid_sensitive_fixture",
+  "source_release": "v0.25.0",
+  "artifact_sha256": "a022e81e1255e3d80a6aee3bc94c6513023a1cf7118857fb0c267ff79df4cd1d",
+  "evidence_manifest_sha256": "11711ef30110d30ffb2556de507b9e1d3e3b181c9eea353cbc626da721f7481a",
+  "github_evidence": {
+    "root_ci_run_id": "26176061318",
+    "hermes_ci_run_id": "26174554396",
+    "execution_engine_ci_run_id": "26174564854",
+    "credentialed_sdk_run_id": "26175786984"
+  },
+  "secret_custody": {
+    "provider_ref": "vault://polymarket/execution-engine",
+    "kms_key_ref": "kms://example-region/example-key-id",
+    "rotation_evidence_ref": "change-ticket://rotation-review-001",
+    "break_glass_review_ref": "change-ticket://break-glass-review-001",
+    "private_key": "fixture-sensitive-value-must-not-be-logged"
+  },
+  "operator_approval": {
+    "approval_id": "approval-controlled-canary-example",
+    "approval_hash": "sha256:controlled-canary-approval-payload-digest",
+    "ticket_ref": "change-ticket://controlled-canary-approval-001",
+    "approver_identity_ref": "user://operator-a",
+    "expires_at": "2099-01-01T00:00:00Z",
+    "scope": "REAL_FUNDS_CANARY"
+  },
+  "alert_routing": {
+    "provider_ref": "pager://example-provider",
+    "route_ref": "pager-route://polymarket-execution-engine",
+    "pager_escalation_policy_ref": "pager-policy://trading-safety",
+    "dashboard_ref": "dashboard://execution-safety",
+    "alert_test_evidence_ref": "change-ticket://alert-test-001"
+  },
+  "runbooks": {
+    "rollback_runbook_ref": "runbook://controlled-canary-rollback",
+    "incident_runbook_ref": "runbook://controlled-canary-incident",
+    "canary_retry_policy_ref": "runbook://controlled-canary-retry-policy"
+  },
+  "references_only_no_secret_values": true,
+  "live_submit_allowed": false,
+  "live_cancel_allowed": false,
+  "real_funds_canary_authorized": false,
+  "remote_side_effects": false,
+  "production_ready_claimed": false
+}

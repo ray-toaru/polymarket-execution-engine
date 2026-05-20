@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "status": "template_not_reviewed",
+  "source_release": "v0.25.0",
+  "artifact_sha256": "REPLACE_WITH_RELEASE_ARTIFACT_SHA256",
+  "evidence_manifest_sha256": "REPLACE_WITH_EVIDENCE_MANIFEST_SHA256",
+  "github_evidence": {
+    "root_ci_run_id": "REPLACE_WITH_ROOT_CI_RUN_ID",
+    "hermes_ci_run_id": "REPLACE_WITH_HERMES_CI_RUN_ID",
+    "execution_engine_ci_run_id": "REPLACE_WITH_EXECUTION_ENGINE_CI_RUN_ID",
+    "credentialed_sdk_run_id": "REPLACE_WITH_CREDENTIALED_SDK_RUN_ID"
+  },
+  "secret_custody": {
+    "provider_ref": "REPLACE_WITH_EXTERNAL_SECRET_PROVIDER_REFERENCE",
+    "kms_key_ref": "REPLACE_WITH_KMS_KEY_REFERENCE",
+    "rotation_evidence_ref": "REPLACE_WITH_ROTATION_EVIDENCE_REFERENCE",
+    "break_glass_review_ref": "REPLACE_WITH_BREAK_GLASS_REVIEW_REFERENCE"
+  },
+  "operator_approval": {
+    "approval_id": "REPLACE_WITH_APPROVAL_ID",
+    "approval_hash": "REPLACE_WITH_APPROVAL_HASH",
+    "ticket_ref": "REPLACE_WITH_APPROVAL_TICKET_REFERENCE",
+    "approver_identity_ref": "REPLACE_WITH_APPROVER_IDENTITY_REFERENCE",
+    "expires_at": "REPLACE_WITH_APPROVAL_EXPIRY_UTC",
+    "scope": "REAL_FUNDS_CANARY"
+  },
+  "alert_routing": {
+    "provider_ref": "REPLACE_WITH_ALERT_PROVIDER_REFERENCE",
+    "route_ref": "REPLACE_WITH_ALERT_ROUTE_REFERENCE",
+    "pager_escalation_policy_ref": "REPLACE_WITH_PAGER_ESCALATION_POLICY_REFERENCE",
+    "dashboard_ref": "REPLACE_WITH_DASHBOARD_REFERENCE",
+    "alert_test_evidence_ref": "REPLACE_WITH_ALERT_TEST_EVIDENCE_REFERENCE"
+  },
+  "runbooks": {
+    "rollback_runbook_ref": "REPLACE_WITH_ROLLBACK_RUNBOOK_REFERENCE",
+    "incident_runbook_ref": "REPLACE_WITH_INCIDENT_RUNBOOK_REFERENCE",
+    "canary_retry_policy_ref": "REPLACE_WITH_CANARY_RETRY_POLICY_REFERENCE"
+  },
+  "references_only_no_secret_values": true,
+  "live_submit_allowed": false,
+  "live_cancel_allowed": false,
+  "real_funds_canary_authorized": false,
+  "remote_side_effects": false,
+  "production_ready_claimed": false
+}

@@ -13,6 +13,7 @@ INTEGRATION_ROOT = ROOT.parent
 DEFAULT_MANIFEST = ROOT / "evidence" / "current" / "manifest.json"
 DEFAULT_APPROVAL = ROOT / "config" / "real-funds-canary.approval.example.json"
 DEFAULT_RELEASE_DECISION = ROOT / "config" / "controlled-canary.release-decision.template.json"
+DEFAULT_EXTERNAL_REFERENCES = ROOT / "config" / "controlled-canary.external-references.template.json"
 DEFAULT_ROOT_CI_RUN_ID = "26176061318"
 DEFAULT_HERMES_CI_RUN_ID = "26174554396"
 DEFAULT_EXECUTION_ENGINE_CI_RUN_ID = "26174564854"
@@ -32,6 +33,7 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--approval-template", type=Path, default=DEFAULT_APPROVAL)
     parser.add_argument("--release-decision-template", type=Path, default=DEFAULT_RELEASE_DECISION)
+    parser.add_argument("--external-references-template", type=Path, default=DEFAULT_EXTERNAL_REFERENCES)
     parser.add_argument("--root-ci-run-id", default=DEFAULT_ROOT_CI_RUN_ID)
     parser.add_argument("--hermes-ci-run-id", default=DEFAULT_HERMES_CI_RUN_ID)
     parser.add_argument("--execution-engine-ci-run-id", default=DEFAULT_EXECUTION_ENGINE_CI_RUN_ID)
@@ -59,10 +61,25 @@ def main() -> int:
         "execution_engine_ci_run_id": args.execution_engine_ci_run_id,
         "credentialed_sdk_run_id": args.credentialed_sdk_run_id,
     }
+    external_references = json.loads(args.external_references_template.read_text())
+    external_references["artifact_sha256"] = artifact_sha
+    external_references["evidence_manifest_sha256"] = manifest_sha
+    external_references["github_evidence"] = release_decision["github_evidence"]
+    release_decision["external_references"] = {
+        "secret_custody_ref": external_references.get("secret_custody", {}).get("provider_ref"),
+        "operator_approval_ref": external_references.get("operator_approval", {}).get("ticket_ref"),
+        "alert_routing_ref": external_references.get("alert_routing", {}).get("route_ref"),
+        "dashboard_ref": external_references.get("alert_routing", {}).get("dashboard_ref"),
+        "rollback_runbook_ref": external_references.get("runbooks", {}).get("rollback_runbook_ref"),
+        "incident_runbook_ref": external_references.get("runbooks", {}).get("incident_runbook_ref"),
+    }
 
     out = args.output_dir
     out.mkdir(parents=True, exist_ok=True)
     (out / "approval.json").write_text(json.dumps(approval, indent=2, sort_keys=True) + "\n")
+    (out / "external-references.json").write_text(
+        json.dumps(external_references, indent=2, sort_keys=True) + "\n"
+    )
     (out / "release-decision.json").write_text(
         json.dumps(release_decision, indent=2, sort_keys=True) + "\n"
     )
@@ -89,8 +106,10 @@ def main() -> int:
         "canonical_evidence_manifest": "polymarket-execution-engine/evidence/current/manifest.json",
         "dry_run_command": " ".join(dry_run_command),
         "release_decision_json": "release-decision.json",
+        "external_references_json": "external-references.json",
         "required_before_armed": [
             "reviewed release decision JSON bound to artifact and evidence manifest",
+            "complete external references with no placeholders and no secret values",
             "successful dry-run with a safe market candidate",
             "balance and allowance check",
             "explicit --armed operator command",
@@ -116,6 +135,7 @@ def main() -> int:
                 "- real_funds_canary_authorized: `false`",
                 "- remote_side_effects: `false`",
                 "- secrets_included: `false`",
+                "- external_references_json: `external-references.json`",
                 "",
             ]
         )

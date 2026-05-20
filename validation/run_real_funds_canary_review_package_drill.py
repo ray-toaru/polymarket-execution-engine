@@ -12,6 +12,7 @@ from current_gate_chain import require_current_gate_log
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "validation" / "prepare_real_funds_canary_review.py"
 DECISION_VALIDATOR = ROOT / "validation" / "validate_controlled_canary_release_decision.py"
+EXTERNAL_REFERENCES_VALIDATOR = ROOT / "validation" / "validate_controlled_canary_external_references.py"
 DOC = ROOT / "docs" / "REAL_FUNDS_CANARY_OPERATIONS_READINESS.md"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
 
@@ -28,6 +29,7 @@ def main() -> int:
     for token in [
         "reviewed release decision JSON",
         "release-decision.json",
+        "external-references.json",
         "default no-go",
         "external secret provider reference",
         "external alert routing reference",
@@ -55,6 +57,17 @@ def main() -> int:
     )
     if validator.returncode != 0:
         failures.append(f"controlled canary release-decision validation failed: {validator.stderr.strip() or validator.stdout.strip()}")
+    references_validator = subprocess.run(
+        ["python", str(EXTERNAL_REFERENCES_VALIDATOR)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if references_validator.returncode != 0:
+        failures.append(
+            f"controlled canary external-reference validation failed: {references_validator.stderr.strip() or references_validator.stdout.strip()}"
+        )
 
     with tempfile.TemporaryDirectory() as tmp:
         output_dir = Path(tmp) / "review"
@@ -67,7 +80,7 @@ def main() -> int:
         )
         if completed.returncode != 0:
             failures.append(f"review package script failed: {completed.stderr.strip()}")
-        for name in ["approval.json", "release-decision.json", "review.json", "README.md"]:
+        for name in ["approval.json", "external-references.json", "release-decision.json", "review.json", "README.md"]:
             if not (output_dir / name).exists():
                 failures.append(f"review package missing {name}")
         if (output_dir / "review.json").exists():
@@ -104,6 +117,19 @@ def main() -> int:
             ]:
                 if decision.get(key) is not False:
                     failures.append(f"review package release decision must keep {key}=false")
+        if (output_dir / "external-references.json").exists():
+            references = json.loads((output_dir / "external-references.json").read_text())
+            if references.get("references_only_no_secret_values") is not True:
+                failures.append("review package external references must be reference-only")
+            for key in [
+                "live_submit_allowed",
+                "live_cancel_allowed",
+                "real_funds_canary_authorized",
+                "remote_side_effects",
+                "production_ready_claimed",
+            ]:
+                if references.get(key) is not False:
+                    failures.append(f"review package external references must keep {key}=false")
 
     result = {
         "status": "fail" if failures else "pass",
