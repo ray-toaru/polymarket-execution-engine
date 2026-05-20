@@ -1,0 +1,162 @@
+name: ci
+
+on:
+  push:
+    paths:
+      - ".github/**"
+      - "adapters/**"
+      - "config/**"
+      - "crates/**"
+      - "docs/**"
+      - "migrations/**"
+      - "openapi/**"
+      - "release/**"
+      - "scripts/**"
+      - "validation/**"
+      - "AGENTS.md"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "README.md"
+      - "rust-toolchain.toml"
+  pull_request:
+    paths:
+      - ".github/**"
+      - "adapters/**"
+      - "config/**"
+      - "crates/**"
+      - "docs/**"
+      - "migrations/**"
+      - "openapi/**"
+      - "release/**"
+      - "scripts/**"
+      - "validation/**"
+      - "AGENTS.md"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "README.md"
+      - "rust-toolchain.toml"
+
+permissions:
+  contents: read
+
+jobs:
+  rust-locked:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust 1.88
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.88.0
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Check workspace
+        run: cargo check --workspace --locked
+
+      - name: Run clippy
+        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+
+      - name: Run workspace unit tests
+        run: cargo test --workspace --exclude pmx-api --locked -- --test-threads=1
+
+      - name: Run fake HTTP e2e tests
+        run: cargo test -p pmx-api --test http_and_fake_e2e --locked -- --test-threads=1
+
+      - name: Run official SDK spike tests
+        run: cargo test --manifest-path adapters/pmx-official-sdk-spike/Cargo.toml --features sdk-typecheck --locked -- --test-threads=1
+
+      - name: Run official SDK adapter tests
+        run: cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --locked -- --test-threads=1
+
+      - name: Run official SDK adapter typecheck tests
+        run: cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --features sdk-typecheck --locked -- --test-threads=1
+
+  static-guards:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Compile validation scripts
+        run: python -m compileall -q validation scripts
+
+      - name: Check plan storage
+        run: python validation/check_plan_storage.py
+
+      - name: Check live-submit guard
+        run: python validation/check_live_submit_guard.py
+
+      - name: Check sign-only lifecycle guard
+        run: python validation/check_sign_only_lifecycle.py
+
+      - name: Check runtime worker models
+        run: python validation/check_runtime_worker_models.py
+
+      - name: Check migration framework
+        run: python validation/check_migration_framework.py
+
+      - name: Check SDK standard sign-only guard
+        run: python validation/check_sdk_standard_sign_only.py
+
+      - name: Check SDK regression suite
+        run: python validation/check_sdk_regression_suite.py
+
+      - name: Check production readiness guard
+        run: python validation/check_production_readiness_guard.py
+
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PMX_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust 1.88
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.88.0
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply migrations
+        run: psql "$PMX_TEST_DATABASE_URL" -f migrations/0001_initial.sql
+
+      - name: Run store PostgreSQL tests
+        run: cargo test -p pmx-store postgres::tests --locked -- --nocapture --test-threads=1
+
+      - name: Run API PostgreSQL e2e tests
+        run: cargo test -p pmx-api --test http_postgres_e2e --locked -- --nocapture --test-threads=1
+
+      - name: Run migration drift dry-run
+        run: python validation/run_migration_drift_dry_run.py
