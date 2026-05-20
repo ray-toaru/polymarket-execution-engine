@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "decision_id": "controlled-canary-v0.25.0-no-go-example",
+  "status": "reviewed_no_go_example",
+  "decision": "no_go",
+  "decision_reason": "Example decision package bound to the v0.25.0 prerelease evidence. External custody, approval, alerting, dashboard, rollback, and incident references are intentionally missing, so no live action is authorized.",
+  "source_release": "v0.25.0",
+  "scope": "REAL_FUNDS_CANARY",
+  "execution_style": "FOK_LIMIT_FILL",
+  "artifact_sha256": "a022e81e1255e3d80a6aee3bc94c6513023a1cf7118857fb0c267ff79df4cd1d",
+  "evidence_manifest_sha256": "11711ef30110d30ffb2556de507b9e1d3e3b181c9eea353cbc626da721f7481a",
+  "github_evidence": {
+    "root_ci_run_id": "26176061318",
+    "hermes_ci_run_id": "26174554396",
+    "execution_engine_ci_run_id": "26174564854",
+    "credentialed_sdk_run_id": "26175786984"
+  },
+  "external_references": {
+    "secret_custody_ref": null,
+    "operator_approval_ref": null,
+    "alert_routing_ref": null,
+    "dashboard_ref": null,
+    "rollback_runbook_ref": null,
+    "incident_runbook_ref": null
+  },
+  "risk_limits": {
+    "max_order_notional_usd": "1",
+    "max_daily_notional_usd": "5"
+  },
+  "required_review_signals": {
+    "artifact_hash_reviewed": true,
+    "evidence_manifest_hash_reviewed": true,
+    "operator_dual_control_reviewed": false,
+    "secret_custody_reviewed": false,
+    "alerting_reviewed": false,
+    "rollback_reviewed": false,
+    "runtime_health_reviewed": false,
+    "reconcile_and_cancel_fallback_reviewed": false
+  },
+  "expires_at": "2099-01-01T00:00:00Z",
+  "live_submit_authorized": false,
+  "live_cancel_authorized": false,
+  "production_deployment_authorized": false,
+  "real_funds_canary_authorized": false,
+  "remote_side_effects_authorized": false,
+  "secrets_included": false
+}

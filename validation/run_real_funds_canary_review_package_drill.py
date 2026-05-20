@@ -11,6 +11,7 @@ from current_gate_chain import require_current_gate_log
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "validation" / "prepare_real_funds_canary_review.py"
+DECISION_VALIDATOR = ROOT / "validation" / "validate_controlled_canary_release_decision.py"
 DOC = ROOT / "docs" / "REAL_FUNDS_CANARY_OPERATIONS_READINESS.md"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
 
@@ -26,6 +27,8 @@ def main() -> int:
     doc = DOC.read_text() if DOC.exists() else ""
     for token in [
         "reviewed release decision JSON",
+        "release-decision.json",
+        "default no-go",
         "external secret provider reference",
         "external alert routing reference",
         "rollback runbook",
@@ -43,6 +46,16 @@ def main() -> int:
     if "68-real-funds-canary-review-package.log" not in writer:
         failures.append("evidence manifest must capture real-funds canary review package log")
 
+    validator = subprocess.run(
+        ["python", str(DECISION_VALIDATOR)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if validator.returncode != 0:
+        failures.append(f"controlled canary release-decision validation failed: {validator.stderr.strip() or validator.stdout.strip()}")
+
     with tempfile.TemporaryDirectory() as tmp:
         output_dir = Path(tmp) / "review"
         completed = subprocess.run(
@@ -54,7 +67,7 @@ def main() -> int:
         )
         if completed.returncode != 0:
             failures.append(f"review package script failed: {completed.stderr.strip()}")
-        for name in ["approval.json", "review.json", "README.md"]:
+        for name in ["approval.json", "release-decision.json", "review.json", "README.md"]:
             if not (output_dir / name).exists():
                 failures.append(f"review package missing {name}")
         if (output_dir / "review.json").exists():
@@ -63,16 +76,42 @@ def main() -> int:
                 failures.append("review package must not claim armed approval")
             if review.get("live_submit_allowed") is not False:
                 failures.append("review package must keep live submit disabled")
+            if review.get("live_cancel_allowed") is not False:
+                failures.append("review package must keep live cancel disabled")
+            if review.get("real_funds_canary_authorized") is not False:
+                failures.append("review package must not authorize real-funds canary")
             if review.get("remote_side_effects") is not False:
                 failures.append("review package must be no-remote-side-effect")
             if review.get("secrets_included") is not False:
                 failures.append("review package must not include secrets")
+        if (output_dir / "release-decision.json").exists():
+            decision = json.loads((output_dir / "release-decision.json").read_text())
+            if decision.get("decision") != "no_go":
+                failures.append("review package release decision must default to no_go")
+            for key in [
+                "root_ci_run_id",
+                "hermes_ci_run_id",
+                "execution_engine_ci_run_id",
+                "credentialed_sdk_run_id",
+            ]:
+                if not decision.get("github_evidence", {}).get(key):
+                    failures.append(f"review package release decision must bind GitHub evidence {key}")
+            for key in [
+                "live_submit_authorized",
+                "live_cancel_authorized",
+                "real_funds_canary_authorized",
+                "remote_side_effects_authorized",
+            ]:
+                if decision.get(key) is not False:
+                    failures.append(f"review package release decision must keep {key}=false")
 
     result = {
         "status": "fail" if failures else "pass",
         "review_package_generated": not failures,
         "armed_approval_created": False,
         "live_submit_allowed": False,
+        "live_cancel_allowed": False,
+        "real_funds_canary_authorized": False,
         "remote_side_effects": False,
         "secrets_included": False,
         "failures": failures,

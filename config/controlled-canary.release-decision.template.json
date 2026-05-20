@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "decision_id": "controlled-canary-release-decision-template",
+  "status": "template_not_reviewed",
+  "decision": "no_go",
+  "decision_reason": "Template only. A reviewed decision package must replace all placeholders before any future controlled canary can be considered.",
+  "source_release": "v0.25.0",
+  "scope": "REAL_FUNDS_CANARY",
+  "execution_style": "FOK_LIMIT_FILL",
+  "artifact_sha256": "REPLACE_WITH_RELEASE_ARTIFACT_SHA256",
+  "evidence_manifest_sha256": "REPLACE_WITH_EVIDENCE_MANIFEST_SHA256",
+  "github_evidence": {
+    "root_ci_run_id": "REPLACE_WITH_ROOT_CI_RUN_ID",
+    "hermes_ci_run_id": "REPLACE_WITH_HERMES_CI_RUN_ID",
+    "execution_engine_ci_run_id": "REPLACE_WITH_EXECUTION_ENGINE_CI_RUN_ID",
+    "credentialed_sdk_run_id": "REPLACE_WITH_CREDENTIALED_SDK_RUN_ID"
+  },
+  "external_references": {
+    "secret_custody_ref": "REPLACE_WITH_EXTERNAL_SECRET_CUSTODY_REFERENCE",
+    "operator_approval_ref": "REPLACE_WITH_OPERATOR_APPROVAL_REFERENCE",
+    "alert_routing_ref": "REPLACE_WITH_ALERT_ROUTING_REFERENCE",
+    "dashboard_ref": "REPLACE_WITH_DASHBOARD_REFERENCE",
+    "rollback_runbook_ref": "REPLACE_WITH_ROLLBACK_RUNBOOK_REFERENCE",
+    "incident_runbook_ref": "REPLACE_WITH_INCIDENT_RUNBOOK_REFERENCE"
+  },
+  "risk_limits": {
+    "max_order_notional_usd": "1",
+    "max_daily_notional_usd": "5"
+  },
+  "required_review_signals": {
+    "artifact_hash_reviewed": false,
+    "evidence_manifest_hash_reviewed": false,
+    "operator_dual_control_reviewed": false,
+    "secret_custody_reviewed": false,
+    "alerting_reviewed": false,
+    "rollback_reviewed": false,
+    "runtime_health_reviewed": false,
+    "reconcile_and_cancel_fallback_reviewed": false
+  },
+  "expires_at": "REPLACE_WITH_REVIEW_EXPIRY_UTC",
+  "live_submit_authorized": false,
+  "live_cancel_authorized": false,
+  "production_deployment_authorized": false,
+  "real_funds_canary_authorized": false,
+  "remote_side_effects_authorized": false,
+  "secrets_included": false
+}
