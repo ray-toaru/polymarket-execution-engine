@@ -7,6 +7,7 @@ import json
 import os
 import re
 import sys
+import tomllib
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -26,9 +27,11 @@ VERSION_CANDIDATES = [
     EXECUTOR.parent / "polymarket_execution_suite" / "VERSION",
 ]
 VERSION_PATH = next((path for path in VERSION_CANDIDATES if path and path.exists()), None)
-if VERSION_PATH is None:
-    raise FileNotFoundError("VERSION not found in integration or execution repository paths")
-VERSION = VERSION_PATH.read_text().strip()
+if VERSION_PATH is not None:
+    VERSION = VERSION_PATH.read_text().strip()
+else:
+    cargo = tomllib.loads((EXECUTOR / "Cargo.toml").read_text())
+    VERSION = cargo["workspace"]["package"]["version"]
 CURRENT_DIR = EXECUTOR / "evidence" / "current"
 DEFAULT_LOG_DIR = CURRENT_DIR / "logs"
 OUT = CURRENT_DIR / "manifest.json"
