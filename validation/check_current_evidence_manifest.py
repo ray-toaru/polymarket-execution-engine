@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,7 +37,8 @@ def expected_version() -> str:
     for path in VERSION_PATHS:
         if path.exists():
             return path.read_text().strip()
-    return "0.24.0"
+    cargo = tomllib.loads((ROOT / "Cargo.toml").read_text())
+    return cargo["workspace"]["package"]["version"]
 
 
 def validate(path: Path) -> int:
