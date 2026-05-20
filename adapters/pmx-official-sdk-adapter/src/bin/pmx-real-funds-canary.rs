@@ -1,9 +1,10 @@
 use pmx_core::{AccountId, ExecutionId, HashValue};
 use pmx_official_sdk_adapter::{
     BuildRealFundsCanaryPreconditionsInput, LiveCanaryPreconditions, OfficialSdkAdapterConfig,
-    RealFundsCanaryApproval, RealFundsCanaryRequest, RealFundsCanaryRiskLimits,
-    build_real_funds_canary_preconditions, discover_real_funds_canary_market,
-    run_real_funds_canary_fok_fill,
+    RealFundsCanaryApproval, RealFundsCanaryMarketDiagnostics, RealFundsCanaryRequest,
+    RealFundsCanaryRiskLimits, ReviewedRealFundsCanaryReleaseDecision,
+    build_real_funds_canary_preconditions, discover_real_funds_canary_market_with_diagnostics,
+    run_real_funds_canary_fok_fill, validate_reviewed_real_funds_canary_release_decision,
 };
 use serde::Serialize;
 use std::collections::HashMap;
@@ -21,6 +22,7 @@ struct Args {
     execution_id: String,
     plan_hash: String,
     daily_used_notional_usd: String,
+    release_decision_file: Option<PathBuf>,
     dry_run: bool,
     armed: bool,
     allow_live_submit_config: bool,
@@ -32,14 +34,16 @@ struct CanaryCliReport {
     status: String,
     dry_run: bool,
     armed: bool,
-    selected_market_id: String,
-    selected_token_id_hash: String,
-    limit_price: String,
-    size: String,
-    notional_usd: String,
+    selected_market_id_hash: Option<String>,
+    selected_token_id_hash: Option<String>,
+    limit_price: Option<String>,
+    size: Option<String>,
+    notional_usd: Option<String>,
+    market_diagnostics: RealFundsCanaryMarketDiagnostics,
     approval_hash: String,
     artifact_bound: bool,
     evidence_manifest_bound: bool,
+    release_decision_bound: bool,
     live_submit_allowed: bool,
     real_funds_canary_allowed: bool,
     posted: bool,
@@ -67,8 +71,41 @@ async fn main() -> anyhow::Result<()> {
     };
     let real_funds_env_enabled =
         std::env::var(ENV_ALLOW_REAL_FUNDS_CANARY).ok().as_deref() == Some("1");
-    let market =
-        discover_real_funds_canary_market(&config, &approval.max_order_notional_usd).await?;
+    let release_decision_bound = if args.armed {
+        validate_reviewed_release_decision(&args, &approval)?
+    } else {
+        false
+    };
+    let discovery = discover_real_funds_canary_market_with_diagnostics(
+        &config,
+        &approval.max_order_notional_usd,
+    )
+    .await?;
+    let Some(market) = discovery.selection else {
+        let report = CanaryCliReport {
+            status: "dry_run_blocked_no_safe_market".into(),
+            dry_run: true,
+            armed: false,
+            selected_market_id_hash: None,
+            selected_token_id_hash: None,
+            limit_price: None,
+            size: None,
+            notional_usd: None,
+            market_diagnostics: discovery.diagnostics,
+            approval_hash: approval.approval_hash,
+            artifact_bound: approval.artifact_sha256 == args.artifact_sha256,
+            evidence_manifest_bound: approval.evidence_manifest_sha256
+                == args.evidence_manifest_sha256,
+            release_decision_bound,
+            live_submit_allowed: false,
+            real_funds_canary_allowed: false,
+            posted: false,
+            remote_side_effects: false,
+            raw_signed_order_exposed: false,
+        };
+        println!("{}", serde_json::to_string_pretty(&report)?);
+        return Ok(());
+    };
     let live_canary = LiveCanaryPreconditions {
         compile_feature_live_submit: cfg!(feature = "live-submit"),
         env_allow_live_submit: std::env::var("PMX_ALLOW_LIVE_SUBMIT").ok().as_deref() == Some("1"),
@@ -133,14 +170,22 @@ async fn main() -> anyhow::Result<()> {
         status: "dry_run_ready".into(),
         dry_run: true,
         armed: false,
-        selected_market_id: market.market_id,
-        selected_token_id_hash: format!("{:x}", sha2::Sha256::digest(market.token_id.as_bytes())),
-        limit_price: market.limit_price,
-        size: market.size,
-        notional_usd: market.notional_usd,
+        selected_market_id_hash: Some(format!(
+            "{:x}",
+            sha2::Sha256::digest(market.market_id.as_bytes())
+        )),
+        selected_token_id_hash: Some(format!(
+            "{:x}",
+            sha2::Sha256::digest(market.token_id.as_bytes())
+        )),
+        limit_price: Some(market.limit_price),
+        size: Some(market.size),
+        notional_usd: Some(market.notional_usd),
+        market_diagnostics: discovery.diagnostics,
         approval_hash: approval.approval_hash,
         artifact_bound: approval.artifact_sha256 == args.artifact_sha256,
         evidence_manifest_bound: approval.evidence_manifest_sha256 == args.evidence_manifest_sha256,
+        release_decision_bound,
         live_submit_allowed: false,
         real_funds_canary_allowed: args.armed && real_funds_env_enabled,
         posted: false,
@@ -186,6 +231,7 @@ fn parse_args() -> anyhow::Result<Args> {
         account_id: required(&values, "--account-id")?,
         execution_id: required(&values, "--execution-id")?,
         plan_hash: required(&values, "--plan-hash")?,
+        release_decision_file: values.get("--release-decision-file").map(PathBuf::from),
         daily_used_notional_usd: values
             .get("--daily-used-notional-usd")
             .cloned()
@@ -202,6 +248,25 @@ fn required(values: &HashMap<String, String>, key: &str) -> anyhow::Result<Strin
         .get(key)
         .cloned()
         .ok_or_else(|| anyhow::anyhow!("missing required argument {key}"))
+}
+
+fn validate_reviewed_release_decision(
+    args: &Args,
+    approval: &RealFundsCanaryApproval,
+) -> anyhow::Result<bool> {
+    let path = args
+        .release_decision_file
+        .as_ref()
+        .ok_or_else(|| anyhow::anyhow!("--release-decision-file is required with --armed"))?;
+    let decision: ReviewedRealFundsCanaryReleaseDecision =
+        serde_json::from_str(&std::fs::read_to_string(path)?)?;
+    validate_reviewed_real_funds_canary_release_decision(
+        &decision,
+        approval,
+        &args.artifact_sha256,
+        &args.evidence_manifest_sha256,
+    )?;
+    Ok(true)
 }
 
 use sha2::Digest;

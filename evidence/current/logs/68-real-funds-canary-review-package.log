@@ -1,0 +1,9 @@
+{
+  "armed_approval_created": false,
+  "failures": [],
+  "live_submit_allowed": false,
+  "remote_side_effects": false,
+  "review_package_generated": true,
+  "secrets_included": false,
+  "status": "pass"
+}

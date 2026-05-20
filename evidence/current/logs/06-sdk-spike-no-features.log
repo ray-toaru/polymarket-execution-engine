@@ -1,4 +1,4 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.38s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.37s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-spike/target/debug/deps/pmx_official_sdk_spike-89316341ec332cb8)
 
 running 1 test

@@ -31,7 +31,10 @@ pub use sdk_runtime::run_authenticated_non_trading_sdk_smoke;
 #[cfg(feature = "sign-only-dry-run")]
 pub use sdk_runtime::run_sign_only_dry_run;
 #[cfg(feature = "live-submit")]
-pub use sdk_runtime::{discover_real_funds_canary_market, run_real_funds_canary_fok_fill};
+pub use sdk_runtime::{
+    discover_real_funds_canary_market, discover_real_funds_canary_market_with_diagnostics,
+    run_real_funds_canary_fok_fill,
+};
 pub use standard_sign_only::*;
 
 #[cfg(all(feature = "sign-only-dry-run", test))]

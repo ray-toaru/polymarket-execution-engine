@@ -2,8 +2,10 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     ENV_ALLOW_REAL_FUNDS_CANARY, OfficialSdkAdapterConfig, OfficialSdkAdapterError,
-    RealFundsCanaryApproval, RealFundsCanaryMarketCandidate, RealFundsCanaryMarketSelection,
-    RealFundsCanaryPreconditions, RealFundsCanaryRequest, RealFundsCanaryRiskLimits, env_flag,
+    RealFundsCanaryApproval, RealFundsCanaryMarketCandidate, RealFundsCanaryMarketDiagnostics,
+    RealFundsCanaryMarketDiscovery, RealFundsCanaryMarketRejectionCounts,
+    RealFundsCanaryMarketSelection, RealFundsCanaryPreconditions, RealFundsCanaryRequest,
+    RealFundsCanaryRiskLimits, ReviewedRealFundsCanaryReleaseDecision, env_flag,
     validate_live_submit_canary_preconditions,
 };
 
@@ -96,6 +98,58 @@ pub fn validate_real_funds_canary_preconditions(
     Ok(())
 }
 
+pub fn validate_reviewed_real_funds_canary_release_decision(
+    decision: &ReviewedRealFundsCanaryReleaseDecision,
+    approval: &RealFundsCanaryApproval,
+    artifact_sha256: &str,
+    evidence_manifest_sha256: &str,
+) -> Result<(), OfficialSdkAdapterError> {
+    let required = [
+        (
+            !decision.decision_id.trim().is_empty(),
+            "decision_id missing",
+        ),
+        (decision.scope == REAL_FUNDS_CANARY_SCOPE, "scope mismatch"),
+        (
+            decision.allow_real_funds_canary,
+            "real-funds canary not allowed by release decision",
+        ),
+        (
+            decision.reviewed_release_decision_present,
+            "reviewed release decision not present",
+        ),
+        (
+            !decision.operator_identity_ref.trim().is_empty(),
+            "operator identity ref missing",
+        ),
+        (
+            decision.artifact_sha256 == artifact_sha256
+                && decision.artifact_sha256 == approval.artifact_sha256,
+            "artifact hash mismatch",
+        ),
+        (
+            decision.evidence_manifest_sha256 == evidence_manifest_sha256
+                && decision.evidence_manifest_sha256 == approval.evidence_manifest_sha256,
+            "evidence manifest hash mismatch",
+        ),
+        (
+            approval_not_expired(&decision.expires_at),
+            "release decision expired",
+        ),
+    ];
+    let missing: Vec<_> = required
+        .into_iter()
+        .filter_map(|(ok, reason)| (!ok).then_some(reason))
+        .collect();
+    if !missing.is_empty() {
+        return Err(OfficialSdkAdapterError::SafetyGate(format!(
+            "real funds canary blocked by release decision gate: {}",
+            missing.join("; ")
+        )));
+    }
+    Ok(())
+}
+
 pub fn build_real_funds_canary_preconditions(
     input: BuildRealFundsCanaryPreconditionsInput<'_>,
 ) -> RealFundsCanaryPreconditions {
@@ -141,24 +195,95 @@ pub fn select_real_funds_canary_market(
     candidates: &[RealFundsCanaryMarketCandidate],
     max_notional_usd: &str,
 ) -> Result<RealFundsCanaryMarketSelection, OfficialSdkAdapterError> {
-    let candidate = candidates
-        .iter()
-        .filter(|candidate| market_candidate_is_safe(candidate, max_notional_usd))
-        .max_by_key(|candidate| candidate.liquidity_score)
+    select_real_funds_canary_market_with_diagnostics(candidates, max_notional_usd)
+        .selection
         .ok_or_else(|| {
             OfficialSdkAdapterError::SafetyGate(
                 "no high-liquidity market candidate satisfied real funds canary constraints".into(),
             )
-        })?;
-    Ok(RealFundsCanaryMarketSelection {
-        market_id: candidate.market_id.clone(),
-        token_id: candidate.token_id.clone(),
-        limit_price: candidate.best_ask.clone(),
-        size: max_notional_usd.to_string(),
-        notional_usd: max_notional_usd.to_string(),
-        selection_reason:
-            "highest liquidity candidate within active/accepting/spread/depth constraints".into(),
-    })
+        })
+}
+
+pub fn select_real_funds_canary_market_with_diagnostics(
+    candidates: &[RealFundsCanaryMarketCandidate],
+    max_notional_usd: &str,
+) -> RealFundsCanaryMarketDiscovery {
+    let diagnostics = diagnose_real_funds_canary_markets(candidates, max_notional_usd);
+    let selection = candidates
+        .iter()
+        .filter(|candidate| market_candidate_is_safe(candidate, max_notional_usd))
+        .max_by_key(|candidate| candidate.liquidity_score)
+        .map(|candidate| RealFundsCanaryMarketSelection {
+            market_id: candidate.market_id.clone(),
+            token_id: candidate.token_id.clone(),
+            limit_price: candidate.best_ask.clone(),
+            size: max_notional_usd.to_string(),
+            notional_usd: max_notional_usd.to_string(),
+            selection_reason:
+                "highest liquidity candidate within active/accepting/spread/depth constraints"
+                    .into(),
+        });
+    RealFundsCanaryMarketDiscovery {
+        selection,
+        diagnostics,
+    }
+}
+
+pub fn diagnose_real_funds_canary_markets(
+    candidates: &[RealFundsCanaryMarketCandidate],
+    max_notional_usd: &str,
+) -> RealFundsCanaryMarketDiagnostics {
+    let mut rejection_counts = RealFundsCanaryMarketRejectionCounts::default();
+    let mut safe_candidates = 0;
+    let mut max_ask_size: Option<f64> = None;
+    let mut min_spread_bps: Option<u64> = None;
+    let mut min_order_size_blocks = false;
+
+    for candidate in candidates {
+        if let Some(ask_size) = parse_decimal(&candidate.ask_size) {
+            max_ask_size = Some(max_ask_size.map_or(ask_size, |current| current.max(ask_size)));
+        }
+        min_spread_bps = Some(min_spread_bps.map_or(candidate.spread_bps, |current| {
+            current.min(candidate.spread_bps)
+        }));
+        if !candidate.active {
+            rejection_counts.inactive += 1;
+        }
+        if !candidate.accepting_orders {
+            rejection_counts.not_accepting_orders += 1;
+        }
+        if candidate.closed {
+            rejection_counts.closed += 1;
+        }
+        if candidate.archived {
+            rejection_counts.archived += 1;
+        }
+        if candidate.spread_bps > MAX_SPREAD_BPS {
+            rejection_counts.spread_too_wide += 1;
+        }
+        if !decimal_gt_zero(&candidate.best_ask) {
+            rejection_counts.missing_or_zero_best_ask += 1;
+        }
+        if !decimal_gte(&candidate.ask_size, max_notional_usd) {
+            rejection_counts.insufficient_ask_size += 1;
+        }
+        if !decimal_lte(&candidate.min_order_size, max_notional_usd) {
+            rejection_counts.min_order_above_cap += 1;
+            min_order_size_blocks = true;
+        }
+        if market_candidate_is_safe(candidate, max_notional_usd) {
+            safe_candidates += 1;
+        }
+    }
+
+    RealFundsCanaryMarketDiagnostics {
+        candidates_seen: candidates.len() as u64,
+        safe_candidates,
+        max_ask_size: max_ask_size.map(format_decimal_summary),
+        min_spread_bps,
+        min_order_size_blocks,
+        rejection_counts,
+    }
 }
 
 pub fn market_candidate_is_safe(
@@ -238,4 +363,12 @@ fn parse_decimal(value: &str) -> Option<f64> {
     }
     let parsed = trimmed.parse::<f64>().ok()?;
     parsed.is_finite().then_some(parsed)
+}
+
+fn format_decimal_summary(value: f64) -> String {
+    let formatted = format!("{value:.8}");
+    formatted
+        .trim_end_matches('0')
+        .trim_end_matches('.')
+        .to_string()
 }

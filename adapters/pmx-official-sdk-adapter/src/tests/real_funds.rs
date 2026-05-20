@@ -113,6 +113,54 @@ fn real_funds_canary_caps_fail_closed() {
 }
 
 #[test]
+fn real_funds_canary_release_decision_gate_fails_closed() {
+    let approval = approval_fixture();
+    let decision = ReviewedRealFundsCanaryReleaseDecision {
+        decision_id: "decision-1".into(),
+        scope: "REAL_FUNDS_CANARY".into(),
+        expires_at: "2099-01-01T00:00:00Z".into(),
+        artifact_sha256: approval.artifact_sha256.clone(),
+        evidence_manifest_sha256: approval.evidence_manifest_sha256.clone(),
+        allow_real_funds_canary: false,
+        reviewed_release_decision_present: true,
+        operator_identity_ref: "operator-release-review".into(),
+    };
+    let err = validate_reviewed_real_funds_canary_release_decision(
+        &decision,
+        &approval,
+        &approval.artifact_sha256,
+        &approval.evidence_manifest_sha256,
+    )
+    .expect_err("release decision must explicitly allow real-funds canary");
+    assert!(
+        err.to_string()
+            .contains("real-funds canary not allowed by release decision")
+    );
+}
+
+#[test]
+fn real_funds_canary_release_decision_binds_hashes() {
+    let approval = approval_fixture();
+    let decision = ReviewedRealFundsCanaryReleaseDecision {
+        decision_id: "decision-1".into(),
+        scope: "REAL_FUNDS_CANARY".into(),
+        expires_at: "2099-01-01T00:00:00Z".into(),
+        artifact_sha256: approval.artifact_sha256.clone(),
+        evidence_manifest_sha256: approval.evidence_manifest_sha256.clone(),
+        allow_real_funds_canary: true,
+        reviewed_release_decision_present: true,
+        operator_identity_ref: "operator-release-review".into(),
+    };
+    validate_reviewed_real_funds_canary_release_decision(
+        &decision,
+        &approval,
+        &approval.artifact_sha256,
+        &approval.evidence_manifest_sha256,
+    )
+    .expect("matching reviewed release decision should pass the release gate");
+}
+
+#[test]
 fn real_funds_canary_rejects_unsafe_market_candidates() {
     let candidates = vec![RealFundsCanaryMarketCandidate {
         market_id: "market-wide-spread".into(),
@@ -133,6 +181,59 @@ fn real_funds_canary_rejects_unsafe_market_candidates() {
         err.to_string()
             .contains("no high-liquidity market candidate")
     );
+}
+
+#[test]
+fn real_funds_market_diagnostics_are_aggregate_and_fail_closed() {
+    let candidates = vec![
+        RealFundsCanaryMarketCandidate {
+            market_id: "market-wide-spread".into(),
+            token_id: "123".into(),
+            active: true,
+            accepting_orders: true,
+            closed: false,
+            archived: false,
+            best_ask: "0.50".into(),
+            ask_size: "10".into(),
+            spread_bps: 251,
+            min_order_size: "1".into(),
+            liquidity_score: 999,
+        },
+        RealFundsCanaryMarketCandidate {
+            market_id: "market-min-order".into(),
+            token_id: "456".into(),
+            active: true,
+            accepting_orders: true,
+            closed: false,
+            archived: false,
+            best_ask: "0.49".into(),
+            ask_size: "0.25".into(),
+            spread_bps: 50,
+            min_order_size: "2".into(),
+            liquidity_score: 1,
+        },
+    ];
+    let discovery = select_real_funds_canary_market_with_diagnostics(&candidates, "1");
+    assert!(discovery.selection.is_none());
+    assert_eq!(discovery.diagnostics.candidates_seen, 2);
+    assert_eq!(discovery.diagnostics.safe_candidates, 0);
+    assert_eq!(discovery.diagnostics.max_ask_size.as_deref(), Some("10"));
+    assert_eq!(discovery.diagnostics.min_spread_bps, Some(50));
+    assert!(discovery.diagnostics.min_order_size_blocks);
+    assert_eq!(discovery.diagnostics.rejection_counts.spread_too_wide, 1);
+    assert_eq!(
+        discovery.diagnostics.rejection_counts.insufficient_ask_size,
+        1
+    );
+    assert_eq!(
+        discovery.diagnostics.rejection_counts.min_order_above_cap,
+        1
+    );
+
+    let rendered = serde_json::to_string(&discovery.diagnostics).expect("render diagnostics");
+    assert!(!rendered.contains("123"));
+    assert!(!rendered.contains("456"));
+    assert!(!rendered.contains("market-wide-spread"));
 }
 
 fn safe_market_candidates() -> Vec<RealFundsCanaryMarketCandidate> {

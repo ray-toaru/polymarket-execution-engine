@@ -27,6 +27,19 @@ pub struct RealFundsCanaryRiskLimits {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct ReviewedRealFundsCanaryReleaseDecision {
+    pub decision_id: String,
+    pub scope: String,
+    pub expires_at: String,
+    pub artifact_sha256: String,
+    pub evidence_manifest_sha256: String,
+    pub allow_real_funds_canary: bool,
+    pub reviewed_release_decision_present: bool,
+    pub operator_identity_ref: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct RealFundsCanaryMarketCandidate {
     pub market_id: String,
     pub token_id: String,
@@ -39,6 +52,37 @@ pub struct RealFundsCanaryMarketCandidate {
     pub spread_bps: u64,
     pub min_order_size: String,
     pub liquidity_score: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
+pub struct RealFundsCanaryMarketRejectionCounts {
+    pub inactive: u64,
+    pub not_accepting_orders: u64,
+    pub closed: u64,
+    pub archived: u64,
+    pub spread_too_wide: u64,
+    pub missing_or_zero_best_ask: u64,
+    pub insufficient_ask_size: u64,
+    pub min_order_above_cap: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RealFundsCanaryMarketDiagnostics {
+    pub candidates_seen: u64,
+    pub safe_candidates: u64,
+    pub max_ask_size: Option<String>,
+    pub min_spread_bps: Option<u64>,
+    pub min_order_size_blocks: bool,
+    pub rejection_counts: RealFundsCanaryMarketRejectionCounts,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RealFundsCanaryMarketDiscovery {
+    pub selection: Option<RealFundsCanaryMarketSelection>,
+    pub diagnostics: RealFundsCanaryMarketDiagnostics,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

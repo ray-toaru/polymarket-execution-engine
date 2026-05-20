@@ -1,7 +1,8 @@
 use crate::{
     OfficialSdkAdapterConfig, OfficialSdkAdapterError, RealFundsCanaryMarketCandidate,
-    RealFundsCanaryMarketSelection, RealFundsCanaryReceipt, RealFundsCanaryRequest,
-    select_real_funds_canary_market, validate_real_funds_canary_preconditions,
+    RealFundsCanaryMarketDiscovery, RealFundsCanaryMarketSelection, RealFundsCanaryReceipt,
+    RealFundsCanaryRequest, select_real_funds_canary_market_with_diagnostics,
+    validate_real_funds_canary_preconditions,
 };
 
 use super::shared::{authenticated_sdk_client, sdk_call_timeout, signer_from_env};
@@ -80,6 +81,20 @@ pub async fn discover_real_funds_canary_market(
     config: &OfficialSdkAdapterConfig,
     max_notional_usd: &str,
 ) -> anyhow::Result<RealFundsCanaryMarketSelection> {
+    let discovery =
+        discover_real_funds_canary_market_with_diagnostics(config, max_notional_usd).await?;
+    discovery.selection.ok_or_else(|| {
+        OfficialSdkAdapterError::SafetyGate(
+            "no high-liquidity market candidate satisfied real funds canary constraints".into(),
+        )
+        .into()
+    })
+}
+
+pub async fn discover_real_funds_canary_market_with_diagnostics(
+    config: &OfficialSdkAdapterConfig,
+    max_notional_usd: &str,
+) -> anyhow::Result<RealFundsCanaryMarketDiscovery> {
     let client = SdkClient::new(
         &config.clob_host,
         polymarket_client_sdk_v2::clob::Config::builder()
@@ -142,7 +157,10 @@ pub async fn discover_real_funds_canary_market(
             });
         }
     }
-    select_real_funds_canary_market(&candidates, max_notional_usd).map_err(Into::into)
+    Ok(select_real_funds_canary_market_with_diagnostics(
+        &candidates,
+        max_notional_usd,
+    ))
 }
 
 fn decimal_to_bps(value: &str) -> Option<u64> {

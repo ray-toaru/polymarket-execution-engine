@@ -167,6 +167,9 @@ SECTIONS: dict[str, list[str]] = {
     "real_funds_canary_ready_validation": [
         "67-real-funds-canary-ready-drill.log",
     ],
+    "real_funds_canary_review_package_validation": [
+        "68-real-funds-canary-review-package.log",
+    ],
     "runtime_worker_status_validation": [
         "42-runtime-worker-status-query.log",
     ],
