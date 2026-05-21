@@ -81,6 +81,35 @@ async fn main() -> anyhow::Result<()> {
         &approval.max_order_notional_usd,
     )
     .await?;
+    if discovery.diagnostics.market_discovery_truncated {
+        let report = CanaryCliReport {
+            status: if args.armed {
+                "armed_blocked_market_discovery_truncated".into()
+            } else {
+                "dry_run_blocked_market_discovery_truncated".into()
+            },
+            dry_run: args.dry_run,
+            armed: args.armed,
+            selected_market_id_hash: None,
+            selected_token_id_hash: None,
+            limit_price: None,
+            size: None,
+            notional_usd: None,
+            market_diagnostics: discovery.diagnostics,
+            approval_hash: approval.approval_hash,
+            artifact_bound: approval.artifact_sha256 == args.artifact_sha256,
+            evidence_manifest_bound: approval.evidence_manifest_sha256
+                == args.evidence_manifest_sha256,
+            release_decision_bound,
+            live_submit_allowed: false,
+            real_funds_canary_allowed: false,
+            posted: false,
+            remote_side_effects: false,
+            raw_signed_order_exposed: false,
+        };
+        println!("{}", serde_json::to_string_pretty(&report)?);
+        return Ok(());
+    }
     let Some(market) = discovery.selection else {
         let report = CanaryCliReport {
             status: "dry_run_blocked_no_safe_market".into(),

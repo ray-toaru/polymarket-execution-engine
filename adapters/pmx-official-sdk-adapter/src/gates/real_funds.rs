@@ -281,6 +281,9 @@ pub fn diagnose_real_funds_canary_markets(
     }
 
     RealFundsCanaryMarketDiagnostics {
+        market_pages_scanned: 0,
+        market_discovery_complete: true,
+        market_discovery_truncated: false,
         candidates_seen: candidates.len() as u64,
         safe_candidates,
         max_ask_size: max_ask_size.map(format_decimal_summary),
