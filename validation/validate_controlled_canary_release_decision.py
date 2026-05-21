@@ -17,9 +17,9 @@ INVALID_MISMATCHED = CONFIG / "controlled-canary.release-decision.invalid-mismat
 EXPECTED_ARTIFACT_SHA256 = "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6"
 EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256 = "a67cff633141e1c619b4d422cbc6e09e427d004d9580996c4f00e31d7bebcafd"
 EXPECTED_RUN_IDS = {
-    "root_ci_run_id": "26218023692",
+    "root_ci_run_id": "26254755001",
     "hermes_ci_run_id": "26198048337",
-    "execution_engine_ci_run_id": "26216163754",
+    "execution_engine_ci_run_id": "26254745573",
     "credentialed_sdk_run_id": "local-current-gates-20260521",
 }
 AUTHORIZATION_FLAGS = [

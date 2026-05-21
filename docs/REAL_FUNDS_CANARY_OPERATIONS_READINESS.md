@@ -37,7 +37,9 @@ claim that every future local gate rerun must keep the same manifest file hash.
 External references can be staged from the template for local review:
 
 ```bash
-python validation/prepare_real_funds_canary_review.py --output-dir /tmp/pmx-canary-review
+python validation/prepare_real_funds_canary_review.py \
+  --artifact-sha256 <release-zip-sha256-from-sidecar> \
+  --output-dir /tmp/pmx-canary-review
 python validation/validate_controlled_canary_external_references.py \
   --file /tmp/pmx-canary-review/external-references.json \
   --allow-placeholders
@@ -65,6 +67,7 @@ python validation/validate_controlled_canary_external_references.py \
   --file /path/to/reviewed-external-references.json
 python validation/prepare_real_funds_canary_review.py \
   --external-references-file /path/to/reviewed-external-references.json \
+  --artifact-sha256 <release-zip-sha256-from-sidecar> \
   --output-dir /tmp/pmx-canary-review-reviewed
 ```
 

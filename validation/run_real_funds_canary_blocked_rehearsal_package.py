@@ -13,6 +13,7 @@ INTEGRATION_ROOT = ROOT.parent
 REVIEW_SCRIPT = ROOT / "validation" / "prepare_real_funds_canary_review.py"
 EXTERNAL_REFERENCES_EXAMPLE = ROOT / "config" / "controlled-canary.external-references.example.json"
 ADAPTER_MANIFEST = ROOT / "adapters" / "pmx-official-sdk-adapter" / "Cargo.toml"
+EXAMPLE_REVIEW_ARTIFACT_SHA256 = "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6"
 
 
 def load(path: Path) -> dict:
@@ -141,11 +142,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--external-references-file", type=Path, default=EXTERNAL_REFERENCES_EXAMPLE)
-    parser.add_argument("--artifact-sha256")
+    parser.add_argument("--artifact-sha256", default=EXAMPLE_REVIEW_ARTIFACT_SHA256)
     parser.add_argument("--evidence-manifest-sha256")
-    parser.add_argument("--root-ci-run-id", default="26218023692")
+    parser.add_argument("--root-ci-run-id", default="26254755001")
     parser.add_argument("--hermes-ci-run-id", default="26198048337")
-    parser.add_argument("--execution-engine-ci-run-id", default="26216163754")
+    parser.add_argument("--execution-engine-ci-run-id", default="26254745573")
     parser.add_argument("--credentialed-sdk-run-id", default="local-current-gates-20260521")
     parser.add_argument("--idempotency-key", default="blocked-rehearsal-idempotency")
     parser.add_argument("--execution-id", default="blocked-rehearsal-execution")

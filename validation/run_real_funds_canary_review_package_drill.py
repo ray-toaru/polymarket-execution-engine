@@ -18,6 +18,7 @@ EXTERNAL_REFERENCES_EXAMPLE = ROOT / "config" / "controlled-canary.external-refe
 EXTERNAL_REFERENCES_TEMPLATE = ROOT / "config" / "controlled-canary.external-references.template.json"
 DOC = ROOT / "docs" / "REAL_FUNDS_CANARY_OPERATIONS_READINESS.md"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
+EXAMPLE_REVIEW_ARTIFACT_SHA256 = "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6"
 
 
 def main() -> int:
@@ -123,7 +124,14 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         output_dir = Path(tmp) / "review"
         completed = subprocess.run(
-            ["python", str(SCRIPT), "--output-dir", str(output_dir)],
+            [
+                "python",
+                str(SCRIPT),
+                "--artifact-sha256",
+                EXAMPLE_REVIEW_ARTIFACT_SHA256,
+                "--output-dir",
+                str(output_dir),
+            ],
             cwd=ROOT,
             text=True,
             capture_output=True,
@@ -188,6 +196,8 @@ def main() -> int:
             [
                 "python",
                 str(SCRIPT),
+                "--artifact-sha256",
+                EXAMPLE_REVIEW_ARTIFACT_SHA256,
                 "--output-dir",
                 str(output_dir),
                 "--external-references-file",
