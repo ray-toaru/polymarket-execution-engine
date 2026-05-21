@@ -1,8 +1,8 @@
 use crate::{
     OfficialSdkAdapterConfig, OfficialSdkAdapterError, RealFundsCanaryMarketCandidate,
-    RealFundsCanaryMarketDiscovery, RealFundsCanaryMarketSelection, RealFundsCanaryReceipt,
-    RealFundsCanaryRequest, select_real_funds_canary_market_with_diagnostics,
-    validate_real_funds_canary_preconditions,
+    RealFundsCanaryMarketDiscovery, RealFundsCanaryMarketDiscoveryCursorTracker,
+    RealFundsCanaryMarketSelection, RealFundsCanaryReceipt, RealFundsCanaryRequest,
+    select_real_funds_canary_market_with_diagnostics, validate_real_funds_canary_preconditions,
 };
 
 use super::shared::{authenticated_sdk_client, sdk_call_timeout, signer_from_env};
@@ -14,7 +14,7 @@ use polymarket_client_sdk_v2::clob::types::{
     Amount as SdkAmount, OrderType as SdkOrderType, Side as SdkSide,
 };
 use polymarket_client_sdk_v2::types::{Decimal as SdkDecimal, U256 as SdkU256};
-use std::{cmp::Ordering, collections::HashSet, str::FromStr};
+use std::{cmp::Ordering, str::FromStr};
 use tokio::time;
 
 const TERMINAL_CURSOR: &str = "LTE=";
@@ -122,18 +122,15 @@ pub async fn discover_real_funds_canary_market_with_diagnostics(
     let max_pages = market_discovery_max_pages()?;
     let mut candidates = Vec::new();
     let mut cursor = None;
-    let mut pages_scanned = 0;
-    let mut terminal_reached = false;
-    let mut seen_cursors = HashSet::new();
+    let mut cursor_tracker = RealFundsCanaryMarketDiscoveryCursorTracker::new();
 
-    while pages_scanned < max_pages {
+    while cursor_tracker.pages_scanned() < max_pages {
         let page = time::timeout(timeout, client.simplified_markets(cursor.take()))
             .await
             .map_err(|_| {
                 anyhow::anyhow!("official SDK simplified_markets() timed out after {timeout:?}")
             })?
             .context("official SDK simplified_markets() failed")?;
-        pages_scanned += 1;
 
         for market in page.data.iter().filter(|market| {
             market.active && !market.closed && !market.archived && market.accepting_orders
@@ -188,21 +185,17 @@ pub async fn discover_real_funds_canary_market_with_diagnostics(
             }
         }
 
-        if page.next_cursor.is_empty() || page.next_cursor == TERMINAL_CURSOR {
-            terminal_reached = true;
+        cursor = cursor_tracker.observe_page(page.next_cursor, TERMINAL_CURSOR)?;
+        if cursor.is_none() {
             break;
         }
-        if !seen_cursors.insert(page.next_cursor.clone()) {
-            anyhow::bail!("official SDK simplified_markets() repeated cursor during discovery");
-        }
-        cursor = Some(page.next_cursor);
     }
 
     let mut discovery =
         select_real_funds_canary_market_with_diagnostics(&candidates, max_notional_usd);
-    discovery.diagnostics.market_pages_scanned = pages_scanned;
-    discovery.diagnostics.market_discovery_complete = terminal_reached;
-    discovery.diagnostics.market_discovery_truncated = !terminal_reached;
+    discovery.diagnostics.market_pages_scanned = cursor_tracker.pages_scanned();
+    discovery.diagnostics.market_discovery_complete = cursor_tracker.terminal_reached();
+    discovery.diagnostics.market_discovery_truncated = cursor_tracker.truncated();
     Ok(discovery)
 }
 

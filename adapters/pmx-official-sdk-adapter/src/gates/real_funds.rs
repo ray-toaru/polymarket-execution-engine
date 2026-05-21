@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use std::collections::HashSet;
 
 use crate::{
     ENV_ALLOW_REAL_FUNDS_CANARY, OfficialSdkAdapterConfig, OfficialSdkAdapterError,
@@ -12,6 +13,49 @@ use crate::{
 const REAL_FUNDS_CANARY_SCOPE: &str = "REAL_FUNDS_CANARY";
 const REAL_FUNDS_CANARY_EXECUTION_STYLE: &str = "FOK_LIMIT_FILL";
 const MAX_SPREAD_BPS: u64 = 250;
+
+#[derive(Debug, Default)]
+pub struct RealFundsCanaryMarketDiscoveryCursorTracker {
+    seen_cursors: HashSet<String>,
+    pages_scanned: u64,
+    terminal_reached: bool,
+}
+
+impl RealFundsCanaryMarketDiscoveryCursorTracker {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn observe_page(
+        &mut self,
+        next_cursor: String,
+        terminal_cursor: &str,
+    ) -> Result<Option<String>, OfficialSdkAdapterError> {
+        self.pages_scanned += 1;
+        if next_cursor.is_empty() || next_cursor == terminal_cursor {
+            self.terminal_reached = true;
+            return Ok(None);
+        }
+        if !self.seen_cursors.insert(next_cursor.clone()) {
+            return Err(OfficialSdkAdapterError::SafetyGate(
+                "real funds canary market discovery repeated cursor".into(),
+            ));
+        }
+        Ok(Some(next_cursor))
+    }
+
+    pub fn pages_scanned(&self) -> u64 {
+        self.pages_scanned
+    }
+
+    pub fn terminal_reached(&self) -> bool {
+        self.terminal_reached
+    }
+
+    pub fn truncated(&self) -> bool {
+        !self.terminal_reached
+    }
+}
 
 pub struct BuildRealFundsCanaryPreconditionsInput<'a> {
     pub approval: &'a RealFundsCanaryApproval,
