@@ -46,3 +46,24 @@ python validation/prepare_real_funds_canary_review.py \
   --external-references-file /path/to/reviewed-external-references.json \
   --output-dir /tmp/pmx-canary-review-reviewed
 ```
+
+## Current local review package boundary
+
+A local review package may use reference-only local custody and manual alert
+routing references for auditability, but that does not promote the release to
+live readiness. The current local pattern is:
+
+- secret custody reference: `pass` plus a passphrase-protected GPG key, with
+  `pass://polymarket-execution-engine/controlled-canary` as the local custody
+  path;
+- operator approval reference: a `no_go` approval record whose hash is recorded
+  as evidence;
+- alert routing reference: a private GitHub issue/manual operator route, not a
+  PagerDuty, Grafana, or production monitoring claim.
+
+Strict external-reference validation passing only means the review package has
+complete reference fields with no secret values and no unresolved placeholders.
+It still must report `live_submit_allowed=false`,
+`live_cancel_allowed=false`, `real_funds_canary_authorized=false`,
+`remote_side_effects=false`, and `secrets_included=false` unless a later
+reviewed release decision explicitly changes that boundary.
