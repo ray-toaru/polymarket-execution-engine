@@ -23,7 +23,7 @@
     "binding_note": "External sidecar manifest binds the final zip hash; the in-archive manifest remains source-candidate evidence and cannot self-bind its containing zip.",
     "name": "polymarket-execution-suite-v0.25.0.zip",
     "path": "dist/polymarket-execution-suite-v0.25.0.zip",
-    "sha256": "3740ddc9ddfacc053225504cb9b4a57fbe97f206b57ee98f2c20af779fdd1b74"
+    "sha256": "3ddd06c39d36046bd7d9ab833eb963786cb3c95a7ed94b99d9921dd474bf3e74"
   },
   "artifact_kind": "source_candidate",
   "canonical_evidence_dir": "polymarket-execution-engine/evidence/current",
@@ -82,7 +82,7 @@
     ],
     "status": "pass"
   },
-  "generated_at": "2026-05-21T11:16:34.132180+00:00",
+  "generated_at": "2026-05-21T13:36:55.020873+00:00",
   "live_canary_blocked_validation": {
     "logs": [
       {
@@ -298,7 +298,7 @@
         "bytes": 1076,
         "command": "PMX_RELEASE_ARTIFACT_PATH=\"${ARTIFACT_PATH}\" python validation/run_production_deployment_preflight_drill.py",
         "path": "polymarket-execution-engine/evidence/current/logs/50-production-deployment-preflight-drill.log",
-        "sha256": "7d61dc18cea1d1e7f5e7fb3f4e026bf8ee96e223ae301c157f831be5c11e73c8"
+        "sha256": "1fdc20084988f4bdf4558b5a9fd6dd1565cc4505ee5557b1d4eae36987573307"
       }
     ],
     "status": "pass"
@@ -652,6 +652,39 @@
         "command": "python validation/check_shadow_rollback_drills.py",
         "path": "polymarket-execution-engine/evidence/current/logs/44-shadow-rollback-drill-guard.log",
         "sha256": "745c9f47a486add10aa11ce1b5204dd084612f2f9147e263f84363f68340f5a9"
+      }
+    ],
+    "status": "pass"
+  },
+  "single_host_canary_candidate_validation": {
+    "logs": [
+      {
+        "bytes": 595,
+        "command": "python validation/run_single_host_canary_candidate_drill.py",
+        "path": "polymarket-execution-engine/evidence/current/logs/70-single-host-canary-candidate-drill.log",
+        "sha256": "3d8e7ba4c05cc3207389438b6be7137fa96a23d2d72400a2f8046141f968fe77"
+      }
+    ],
+    "status": "pass"
+  },
+  "single_host_deployment_validation": {
+    "logs": [
+      {
+        "bytes": 362,
+        "command": "python validation/run_single_host_deployment_drill.py",
+        "path": "polymarket-execution-engine/evidence/current/logs/69-single-host-deployment-drill.log",
+        "sha256": "744ddad0f9f405054824a152404ca3c1252ee74bc7e9548f47e10910c825fbc5"
+      }
+    ],
+    "status": "pass"
+  },
+  "single_host_go_candidate_validation": {
+    "logs": [
+      {
+        "bytes": 553,
+        "command": "python validation/run_single_host_go_candidate_drill.py",
+        "path": "polymarket-execution-engine/evidence/current/logs/71-single-host-go-candidate-drill.log",
+        "sha256": "0f035862ef60edbaab25b2994b8fc7ac87af79d8117283eded2e4b4cb9aeb078"
       }
     ],
     "status": "pass"

@@ -139,6 +139,9 @@ python validation/run_real_funds_canary_preflight_drill.py 2>&1 | tee "${EVIDENC
 python validation/run_real_funds_canary_lifecycle_drill.py 2>&1 | tee "${EVIDENCE_DIR}/66-real-funds-canary-lifecycle-drill.log"
 python validation/run_real_funds_canary_ready_drill.py 2>&1 | tee "${EVIDENCE_DIR}/67-real-funds-canary-ready-drill.log"
 python validation/run_real_funds_canary_review_package_drill.py 2>&1 | tee "${EVIDENCE_DIR}/68-real-funds-canary-review-package.log"
+python validation/run_single_host_deployment_drill.py 2>&1 | tee "${EVIDENCE_DIR}/69-single-host-deployment-drill.log"
+python validation/run_single_host_canary_candidate_drill.py 2>&1 | tee "${EVIDENCE_DIR}/70-single-host-canary-candidate-drill.log"
+python validation/run_single_host_go_candidate_drill.py 2>&1 | tee "${EVIDENCE_DIR}/71-single-host-go-candidate-drill.log"
 python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
 python validation/check_docs_evidence_governance.py 2>&1 | tee "${EVIDENCE_DIR}/30-docs-evidence-governance.log"
 python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null

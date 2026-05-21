@@ -1,0 +1,38 @@
+[Unit]
+Description=Polymarket real-funds canary dry-run (%i)
+Documentation=file:/opt/polymarket-execution-engine/deploy/single-host/README.md
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=pmx
+Group=pmx
+WorkingDirectory=/opt/polymarket-execution-engine
+EnvironmentFile=/etc/pmx/pmx-real-funds-canary.env
+EnvironmentFile=-/etc/pmx/canary/%i.env
+Environment=PMX_LIVE_SUBMIT_ENABLED=0
+Environment=PMX_LIVE_CANCEL_ENABLED=0
+Environment=PMX_PRODUCTION_DEPLOYMENT_ENABLED=0
+Environment=PMX_ALLOW_LIVE_SUBMIT=0
+Environment=PMX_ALLOW_LIVE_CANCEL=0
+Environment=PMX_ALLOW_REAL_FUNDS_CANARY=0
+ExecStart=/opt/polymarket-execution-engine/bin/pmx-real-funds-canary \
+  --dry-run \
+  --approval-file ${PMX_CANARY_APPROVAL_FILE} \
+  --release-decision-file ${PMX_CANARY_RELEASE_DECISION_FILE} \
+  --artifact-sha256 ${PMX_CANARY_ARTIFACT_SHA256} \
+  --evidence-manifest-sha256 ${PMX_CANARY_EVIDENCE_MANIFEST_SHA256} \
+  --idempotency-key ${PMX_CANARY_IDEMPOTENCY_KEY} \
+  --account-id ${PMX_CANARY_ACCOUNT_ID} \
+  --execution-id ${PMX_CANARY_EXECUTION_ID} \
+  --plan-hash ${PMX_CANARY_PLAN_HASH} \
+  --daily-used-notional-usd ${PMX_CANARY_DAILY_USED_NOTIONAL_USD}
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/pmx /var/log/pmx
+
+[Install]
+WantedBy=multi-user.target

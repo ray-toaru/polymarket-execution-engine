@@ -1,0 +1,29 @@
+[Unit]
+Description=Polymarket execution API (single-host limited)
+Documentation=file:/opt/polymarket-execution-engine/deploy/single-host/README.md
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pmx
+Group=pmx
+WorkingDirectory=/opt/polymarket-execution-engine
+EnvironmentFile=/etc/pmx/pmx-api.env
+Environment=PMX_LIVE_SUBMIT_ENABLED=0
+Environment=PMX_LIVE_CANCEL_ENABLED=0
+Environment=PMX_PRODUCTION_DEPLOYMENT_ENABLED=0
+Environment=PMX_ALLOW_LIVE_SUBMIT=0
+Environment=PMX_ALLOW_LIVE_CANCEL=0
+Environment=PMX_ALLOW_REAL_FUNDS_CANARY=0
+ExecStart=/opt/polymarket-execution-engine/bin/pmx-api
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/pmx /var/log/pmx
+
+[Install]
+WantedBy=multi-user.target

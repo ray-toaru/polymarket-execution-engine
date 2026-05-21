@@ -1,0 +1,16 @@
+{
+  "artifact_sha256": "3ddd06c39d36046bd7d9ab833eb963786cb3c95a7ed94b99d9921dd474bf3e74",
+  "evidence_manifest_bound": true,
+  "failures": [],
+  "go_candidate_committed": false,
+  "live_cancel_allowed": false,
+  "live_submit_allowed": false,
+  "missing_release_decision_blocks_armed": true,
+  "production_deployment_allowed": false,
+  "real_funds_canary_authorized": false,
+  "release_decision": "candidate_go_not_committed",
+  "remote_side_effects": false,
+  "secrets_included": false,
+  "status": "pass",
+  "temporary_go_candidate_generated": true
+}

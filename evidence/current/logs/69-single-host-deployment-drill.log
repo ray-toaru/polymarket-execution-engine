@@ -1,0 +1,13 @@
+{
+  "api_service_present": true,
+  "canary_runner_mode": "dry-run",
+  "deployment_profile": "single-host-limited",
+  "failures": [],
+  "live_cancel_allowed": false,
+  "live_submit_allowed": false,
+  "production_deployment_allowed": false,
+  "real_funds_canary_authorized": false,
+  "remote_side_effects": false,
+  "secrets_included": false,
+  "status": "pass"
+}

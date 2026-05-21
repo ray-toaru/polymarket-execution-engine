@@ -173,6 +173,15 @@ SECTIONS: dict[str, list[str]] = {
     "real_funds_canary_review_package_validation": [
         "68-real-funds-canary-review-package.log",
     ],
+    "single_host_deployment_validation": [
+        "69-single-host-deployment-drill.log",
+    ],
+    "single_host_canary_candidate_validation": [
+        "70-single-host-canary-candidate-drill.log",
+    ],
+    "single_host_go_candidate_validation": [
+        "71-single-host-go-candidate-drill.log",
+    ],
     "runtime_worker_status_validation": [
         "42-runtime-worker-status-query.log",
     ],
