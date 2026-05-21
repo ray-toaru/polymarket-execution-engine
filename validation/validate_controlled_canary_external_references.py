@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import argparse
 from pathlib import Path
 from typing import Any
 
@@ -99,6 +100,21 @@ def has_placeholder(value: object) -> bool:
     return False
 
 
+def placeholder_paths(value: object, path: str = "") -> list[str]:
+    paths: list[str] = []
+    if isinstance(value, str):
+        if has_placeholder(value):
+            paths.append(path)
+    elif isinstance(value, dict):
+        for key, child in value.items():
+            child_path = f"{path}.{key}" if path else str(key)
+            paths.extend(placeholder_paths(child, child_path))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            paths.extend(placeholder_paths(child, f"{path}[{index}]"))
+    return paths
+
+
 def is_sha256(value: object) -> bool:
     return isinstance(value, str) and len(value) == 64 and all(ch in "0123456789abcdefABCDEF" for ch in value)
 
@@ -156,6 +172,39 @@ def validate_shape(data: dict[str, Any], label: str, *, allow_placeholders: bool
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--file",
+        type=Path,
+        help="Validate an operator-supplied external reference candidate instead of built-in fixtures.",
+    )
+    parser.add_argument(
+        "--allow-placeholders",
+        action="store_true",
+        help="Allow REPLACE_WITH_* placeholders for generated local review material.",
+    )
+    args = parser.parse_args()
+
+    if args.file:
+        candidate = load(args.file)
+        failures = validate_shape(candidate, str(args.file), allow_placeholders=args.allow_placeholders)
+        placeholders = placeholder_paths(candidate)
+        result = {
+            "status": "fail" if failures else "pass",
+            "file": str(args.file),
+            "allow_placeholders": args.allow_placeholders,
+            "placeholders_remaining": placeholders,
+            "references_only_no_secret_values": candidate.get("references_only_no_secret_values") is True,
+            "live_submit_allowed": False,
+            "live_cancel_allowed": False,
+            "real_funds_canary_authorized": False,
+            "remote_side_effects": False,
+            "production_ready_claimed": False,
+            "failures": failures,
+        }
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 1 if failures else 0
+
     failures: list[str] = []
     for path in [TEMPLATE, EXAMPLE, INVALID_SENSITIVE]:
         if not path.exists():

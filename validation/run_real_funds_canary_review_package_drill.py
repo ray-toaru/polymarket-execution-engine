@@ -13,6 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "validation" / "prepare_real_funds_canary_review.py"
 DECISION_VALIDATOR = ROOT / "validation" / "validate_controlled_canary_release_decision.py"
 EXTERNAL_REFERENCES_VALIDATOR = ROOT / "validation" / "validate_controlled_canary_external_references.py"
+EXTERNAL_REFERENCES_EXAMPLE = ROOT / "config" / "controlled-canary.external-references.example.json"
+EXTERNAL_REFERENCES_TEMPLATE = ROOT / "config" / "controlled-canary.external-references.template.json"
 DOC = ROOT / "docs" / "REAL_FUNDS_CANARY_OPERATIONS_READINESS.md"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
 
@@ -67,6 +69,43 @@ def main() -> int:
     if references_validator.returncode != 0:
         failures.append(
             f"controlled canary external-reference validation failed: {references_validator.stderr.strip() or references_validator.stdout.strip()}"
+        )
+    concrete_references_validator = subprocess.run(
+        ["python", str(EXTERNAL_REFERENCES_VALIDATOR), "--file", str(EXTERNAL_REFERENCES_EXAMPLE)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if concrete_references_validator.returncode != 0:
+        failures.append(
+            f"controlled canary concrete external-reference validation failed: {concrete_references_validator.stderr.strip() or concrete_references_validator.stdout.strip()}"
+        )
+    placeholder_references_validator = subprocess.run(
+        ["python", str(EXTERNAL_REFERENCES_VALIDATOR), "--file", str(EXTERNAL_REFERENCES_TEMPLATE)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if placeholder_references_validator.returncode == 0:
+        failures.append("controlled canary external-reference file mode must reject unresolved placeholders")
+    placeholder_references_validator_allowed = subprocess.run(
+        [
+            "python",
+            str(EXTERNAL_REFERENCES_VALIDATOR),
+            "--file",
+            str(EXTERNAL_REFERENCES_TEMPLATE),
+            "--allow-placeholders",
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if placeholder_references_validator_allowed.returncode != 0:
+        failures.append(
+            f"controlled canary placeholder external-reference validation failed with allow-placeholders: {placeholder_references_validator_allowed.stderr.strip() or placeholder_references_validator_allowed.stdout.strip()}"
         )
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -130,6 +169,31 @@ def main() -> int:
             ]:
                 if references.get(key) is not False:
                     failures.append(f"review package external references must keep {key}=false")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        output_dir = Path(tmp) / "review-with-concrete-references"
+        completed = subprocess.run(
+            [
+                "python",
+                str(SCRIPT),
+                "--output-dir",
+                str(output_dir),
+                "--external-references-file",
+                str(EXTERNAL_REFERENCES_EXAMPLE),
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if completed.returncode != 0:
+            failures.append(f"review package script failed with concrete external references: {completed.stderr.strip()}")
+        if (output_dir / "review.json").exists():
+            review = json.loads((output_dir / "review.json").read_text())
+            if review.get("external_references_placeholders_remaining"):
+                failures.append("review package with concrete external references must not keep placeholders")
+            if review.get("live_submit_allowed") is not False:
+                failures.append("review package with concrete external references must still keep live submit disabled")
 
     result = {
         "status": "fail" if failures else "pass",

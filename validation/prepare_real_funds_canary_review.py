@@ -8,6 +8,12 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from validate_controlled_canary_external_references import (
+    has_placeholder,
+    placeholder_paths,
+    validate_shape as validate_external_references_shape,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_ROOT = ROOT.parent
 DEFAULT_MANIFEST = ROOT / "evidence" / "current" / "manifest.json"
@@ -34,6 +40,11 @@ def main() -> int:
     parser.add_argument("--approval-template", type=Path, default=DEFAULT_APPROVAL)
     parser.add_argument("--release-decision-template", type=Path, default=DEFAULT_RELEASE_DECISION)
     parser.add_argument("--external-references-template", type=Path, default=DEFAULT_EXTERNAL_REFERENCES)
+    parser.add_argument(
+        "--external-references-file",
+        type=Path,
+        help="Use a concrete reviewed reference-only external reference file. Placeholders are rejected.",
+    )
     parser.add_argument("--root-ci-run-id", default=DEFAULT_ROOT_CI_RUN_ID)
     parser.add_argument("--hermes-ci-run-id", default=DEFAULT_HERMES_CI_RUN_ID)
     parser.add_argument("--execution-engine-ci-run-id", default=DEFAULT_EXECUTION_ENGINE_CI_RUN_ID)
@@ -61,10 +72,23 @@ def main() -> int:
         "execution_engine_ci_run_id": args.execution_engine_ci_run_id,
         "credentialed_sdk_run_id": args.credentialed_sdk_run_id,
     }
-    external_references = json.loads(args.external_references_template.read_text())
+    external_references_source = args.external_references_file or args.external_references_template
+    external_references = json.loads(external_references_source.read_text())
     external_references["artifact_sha256"] = artifact_sha
     external_references["evidence_manifest_sha256"] = manifest_sha
     external_references["github_evidence"] = release_decision["github_evidence"]
+    external_reference_failures = validate_external_references_shape(
+        external_references,
+        str(external_references_source),
+        allow_placeholders=args.external_references_file is None,
+    )
+    if external_reference_failures:
+        raise SystemExit(
+            "external references validation failed: "
+            + "; ".join(external_reference_failures)
+        )
+    if args.external_references_file and has_placeholder(external_references):
+        raise SystemExit("external references file must not contain REPLACE_WITH_* placeholders")
     release_decision["external_references"] = {
         "secret_custody_ref": external_references.get("secret_custody", {}).get("provider_ref"),
         "operator_approval_ref": external_references.get("operator_approval", {}).get("ticket_ref"),
@@ -107,6 +131,8 @@ def main() -> int:
         "dry_run_command": " ".join(dry_run_command),
         "release_decision_json": "release-decision.json",
         "external_references_json": "external-references.json",
+        "external_references_source": str(external_references_source),
+        "external_references_placeholders_remaining": placeholder_paths(external_references),
         "required_before_armed": [
             "reviewed release decision JSON bound to artifact and evidence manifest",
             "complete external references with no placeholders and no secret values",

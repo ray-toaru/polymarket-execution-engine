@@ -24,3 +24,25 @@ must include `external-references.json` and `release-decision.json`, and report
 `live_submit_allowed=false`, `live_cancel_allowed=false`,
 `real_funds_canary_authorized=false`, `remote_side_effects=false`, and
 `secrets_included=false`.
+
+External references can be staged from the template for local review:
+
+```bash
+python validation/prepare_real_funds_canary_review.py --output-dir /tmp/pmx-canary-review
+python validation/validate_controlled_canary_external_references.py \
+  --file /tmp/pmx-canary-review/external-references.json \
+  --allow-placeholders
+```
+
+Before an operator-reviewed candidate can be used, every `REPLACE_WITH_*`
+placeholder must be replaced with an external reference only. Secret values,
+private keys, raw signatures, raw signed payloads, and signed order envelopes
+must not appear in the file. The stricter check is:
+
+```bash
+python validation/validate_controlled_canary_external_references.py \
+  --file /path/to/reviewed-external-references.json
+python validation/prepare_real_funds_canary_review.py \
+  --external-references-file /path/to/reviewed-external-references.json \
+  --output-dir /tmp/pmx-canary-review-reviewed
+```
