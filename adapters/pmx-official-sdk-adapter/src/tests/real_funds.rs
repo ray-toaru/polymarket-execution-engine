@@ -81,9 +81,45 @@ fn real_funds_market_selector_picks_highest_safe_liquidity_candidate() {
         .expect("selector should choose a safe high-liquidity market");
     assert_eq!(selected.market_id, "market-safe-high");
     assert_eq!(selected.limit_price, "0.50");
+    // The canary FOK BUY path submits this as a USDC market-order amount.
     assert_eq!(selected.size, "1");
     assert_eq!(selected.notional_usd, "1");
     assert!(selected.selection_reason.contains("highest liquidity"));
+}
+
+#[test]
+fn real_funds_market_selector_uses_price_times_ask_size_for_depth() {
+    let candidates = vec![
+        RealFundsCanaryMarketCandidate {
+            market_id: "market-shares-not-enough-notional".into(),
+            token_id: "123".into(),
+            active: true,
+            accepting_orders: true,
+            closed: false,
+            archived: false,
+            best_ask: "0.20".into(),
+            ask_size: "2".into(),
+            spread_bps: 10,
+            min_order_size: "1".into(),
+            liquidity_score: 999,
+        },
+        RealFundsCanaryMarketCandidate {
+            market_id: "market-enough-notional".into(),
+            token_id: "456".into(),
+            active: true,
+            accepting_orders: true,
+            closed: false,
+            archived: false,
+            best_ask: "0.20".into(),
+            ask_size: "5".into(),
+            spread_bps: 10,
+            min_order_size: "1".into(),
+            liquidity_score: 1,
+        },
+    ];
+    let selected = select_real_funds_canary_market(&candidates, "1")
+        .expect("second candidate has enough ask notional");
+    assert_eq!(selected.market_id, "market-enough-notional");
 }
 
 #[test]

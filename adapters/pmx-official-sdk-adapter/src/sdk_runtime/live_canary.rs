@@ -10,9 +10,11 @@ use super::shared::{authenticated_sdk_client, sdk_call_timeout, signer_from_env}
 use anyhow::Context;
 use polymarket_client_sdk_v2::clob::Client as SdkClient;
 use polymarket_client_sdk_v2::clob::types::request::{OrderBookSummaryRequest, SpreadRequest};
-use polymarket_client_sdk_v2::clob::types::{OrderType as SdkOrderType, Side as SdkSide};
+use polymarket_client_sdk_v2::clob::types::{
+    Amount as SdkAmount, OrderType as SdkOrderType, Side as SdkSide,
+};
 use polymarket_client_sdk_v2::types::{Decimal as SdkDecimal, U256 as SdkU256};
-use std::str::FromStr;
+use std::{cmp::Ordering, str::FromStr};
 use tokio::time;
 
 pub async fn run_real_funds_canary_fok_fill(
@@ -30,23 +32,27 @@ pub async fn run_real_funds_canary_fok_fill(
     let price = SdkDecimal::from_str(&request.market.limit_price).map_err(|e| {
         OfficialSdkAdapterError::InvalidInput(format!("invalid canary limit_price: {e}"))
     })?;
-    let size = SdkDecimal::from_str(&request.market.size)
-        .map_err(|e| OfficialSdkAdapterError::InvalidInput(format!("invalid canary size: {e}")))?;
+    let notional_usd = SdkDecimal::from_str(&request.market.notional_usd).map_err(|e| {
+        OfficialSdkAdapterError::InvalidInput(format!("invalid canary notional_usd: {e}"))
+    })?;
 
     let signable = time::timeout(
         timeout,
         client
-            .limit_order()
+            .market_order()
             .token_id(token_id)
             .price(price)
-            .size(size)
+            .amount(SdkAmount::usdc(notional_usd).map_err(|e| {
+                OfficialSdkAdapterError::InvalidInput(format!("invalid canary USDC amount: {e}"))
+            })?)
             .side(SdkSide::Buy)
             .order_type(SdkOrderType::FOK)
-            .post_only(false)
             .build(),
     )
     .await
-    .map_err(|_| anyhow::anyhow!("official SDK canary order build timed out after {timeout:?}"))?
+    .map_err(|_| {
+        anyhow::anyhow!("official SDK canary market order build timed out after {timeout:?}")
+    })?
     .context("official SDK canary order build failed")?;
 
     let signed = time::timeout(timeout, client.sign(&signer, signable))
@@ -137,7 +143,11 @@ pub async fn discover_real_funds_canary_market_with_diagnostics(
             .map_err(|_| anyhow::anyhow!("official SDK spread() timed out after {timeout:?}"))?
             .context("official SDK spread() failed during canary market discovery")?;
 
-            let Some(best_ask) = order_book.asks.first() else {
+            let Some(best_ask) = order_book.asks.iter().min_by(|left, right| {
+                decimal_for_sort(&left.price.to_string())
+                    .partial_cmp(&decimal_for_sort(&right.price.to_string()))
+                    .unwrap_or(Ordering::Equal)
+            }) else {
                 continue;
             };
             let spread_bps = decimal_to_bps(&spread.spread.to_string()).unwrap_or(u64::MAX);
@@ -175,4 +185,8 @@ fn decimal_scaled_u64(value: &str) -> Option<u64> {
     parsed
         .is_finite()
         .then_some((parsed * 1_000_000.0).round() as u64)
+}
+
+fn decimal_for_sort(value: &str) -> f64 {
+    value.parse::<f64>().unwrap_or(f64::INFINITY)
 }

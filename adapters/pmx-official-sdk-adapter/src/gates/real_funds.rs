@@ -217,10 +217,14 @@ pub fn select_real_funds_canary_market_with_diagnostics(
             market_id: candidate.market_id.clone(),
             token_id: candidate.token_id.clone(),
             limit_price: candidate.best_ask.clone(),
+            // For the live FOK BUY path this value is the SDK market-order USDC
+            // amount. It is kept in `size` for API compatibility with the
+            // existing selection model, while `notional_usd` is the governing
+            // risk value.
             size: max_notional_usd.to_string(),
             notional_usd: max_notional_usd.to_string(),
             selection_reason:
-                "highest liquidity candidate within active/accepting/spread/depth constraints"
+                "highest liquidity candidate within active/accepting/spread/min-order/notional-depth constraints"
                     .into(),
         });
     RealFundsCanaryMarketDiscovery {
@@ -264,7 +268,7 @@ pub fn diagnose_real_funds_canary_markets(
         if !decimal_gt_zero(&candidate.best_ask) {
             rejection_counts.missing_or_zero_best_ask += 1;
         }
-        if !decimal_gte(&candidate.ask_size, max_notional_usd) {
+        if !best_ask_notional_gte(candidate, max_notional_usd) {
             rejection_counts.insufficient_ask_size += 1;
         }
         if !decimal_lte(&candidate.min_order_size, max_notional_usd) {
@@ -296,7 +300,7 @@ pub fn market_candidate_is_safe(
         && !candidate.archived
         && candidate.spread_bps <= MAX_SPREAD_BPS
         && decimal_gt_zero(&candidate.best_ask)
-        && decimal_gte(&candidate.ask_size, max_notional_usd)
+        && best_ask_notional_gte(candidate, max_notional_usd)
         && decimal_lte(&candidate.min_order_size, max_notional_usd)
 }
 
@@ -334,9 +338,13 @@ fn decimal_lte(left: &str, right: &str) -> bool {
     }
 }
 
-fn decimal_gte(left: &str, right: &str) -> bool {
-    match (parse_decimal(left), parse_decimal(right)) {
-        (Some(left), Some(right)) => left >= right,
+fn best_ask_notional_gte(candidate: &RealFundsCanaryMarketCandidate, cap: &str) -> bool {
+    match (
+        parse_decimal(&candidate.best_ask),
+        parse_decimal(&candidate.ask_size),
+        parse_decimal(cap),
+    ) {
+        (Some(price), Some(size), Some(cap)) => price * size >= cap,
         _ => false,
     }
 }
