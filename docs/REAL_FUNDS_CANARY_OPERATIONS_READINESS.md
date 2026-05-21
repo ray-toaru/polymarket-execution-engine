@@ -47,6 +47,17 @@ python validation/prepare_real_funds_canary_review.py \
   --output-dir /tmp/pmx-canary-review-reviewed
 ```
 
+When the final release zip hash is bound by an external sidecar rather than the
+source-candidate manifest, pass the reviewed hash explicitly:
+
+```bash
+python validation/prepare_real_funds_canary_review.py \
+  --external-references-file /path/to/reviewed-external-references.json \
+  --artifact-sha256 <final-release-zip-sha256> \
+  --evidence-manifest-sha256 <current-evidence-manifest-sha256> \
+  --output-dir /tmp/pmx-canary-review-reviewed
+```
+
 ## Current local review package boundary
 
 A local review package may use reference-only local custody and manual alert
@@ -73,3 +84,6 @@ boundary by generating a complete review package, invoking the real-funds
 canary CLI with `--armed` and local allow-config flags, and proving a `no_go`
 adapter release decision blocks execution at the release-decision gate before
 posting, cancelling, raw signed order exposure, or remote side effects.
+Use `--output-dir`, `--external-references-file`, `--artifact-sha256`, and
+`--evidence-manifest-sha256` to persist an auditable local no-go rehearsal
+package bound to the current release evidence without hand-editing JSON files.

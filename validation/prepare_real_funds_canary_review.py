@@ -26,6 +26,21 @@ DEFAULT_EXECUTION_ENGINE_CI_RUN_ID = "26174564854"
 DEFAULT_CREDENTIALED_SDK_RUN_ID = "26175786984"
 
 
+def require_sha256(value: str, label: str) -> str:
+    if len(value) != 64 or any(ch not in "0123456789abcdefABCDEF" for ch in value):
+        raise SystemExit(f"{label} must be a 64-character SHA-256 hex digest")
+    return value.lower()
+
+
+def resolve_input_path(path: Path) -> Path:
+    if path.is_absolute() or path.exists():
+        return path
+    integration_path = INTEGRATION_ROOT / path
+    if integration_path.exists():
+        return integration_path
+    return path
+
+
 def sha256(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as fh:
@@ -49,21 +64,47 @@ def main() -> int:
     parser.add_argument("--hermes-ci-run-id", default=DEFAULT_HERMES_CI_RUN_ID)
     parser.add_argument("--execution-engine-ci-run-id", default=DEFAULT_EXECUTION_ENGINE_CI_RUN_ID)
     parser.add_argument("--credentialed-sdk-run-id", default=DEFAULT_CREDENTIALED_SDK_RUN_ID)
+    parser.add_argument(
+        "--artifact-sha256",
+        help=(
+            "Override the artifact hash recorded in the review package. Use this when "
+            "the canonical manifest contains source-candidate evidence but an external "
+            "release sidecar binds the final zip hash."
+        ),
+    )
+    parser.add_argument(
+        "--evidence-manifest-sha256",
+        help="Override the evidence manifest hash recorded in the review package.",
+    )
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
 
-    manifest = json.loads(args.manifest.read_text())
+    manifest_path = resolve_input_path(args.manifest)
+    approval_template = resolve_input_path(args.approval_template)
+    release_decision_template = resolve_input_path(args.release_decision_template)
+    external_references_template = resolve_input_path(args.external_references_template)
+    external_references_file = (
+        resolve_input_path(args.external_references_file)
+        if args.external_references_file
+        else None
+    )
+
+    manifest = json.loads(manifest_path.read_text())
     artifact = manifest.get("artifact", {})
-    artifact_sha = artifact.get("sha256")
+    artifact_sha = args.artifact_sha256 or artifact.get("sha256")
     if not artifact_sha:
         raise SystemExit("current manifest does not bind an artifact sha256")
-    manifest_sha = sha256(args.manifest)
+    artifact_sha = require_sha256(artifact_sha, "artifact sha256")
+    manifest_sha = require_sha256(
+        args.evidence_manifest_sha256 or sha256(manifest_path),
+        "evidence manifest sha256",
+    )
 
-    approval = json.loads(args.approval_template.read_text())
+    approval = json.loads(approval_template.read_text())
     approval["artifact_sha256"] = artifact_sha
     approval["evidence_manifest_sha256"] = manifest_sha
 
-    release_decision = json.loads(args.release_decision_template.read_text())
+    release_decision = json.loads(release_decision_template.read_text())
     release_decision["artifact_sha256"] = artifact_sha
     release_decision["evidence_manifest_sha256"] = manifest_sha
     release_decision["github_evidence"] = {
@@ -72,7 +113,7 @@ def main() -> int:
         "execution_engine_ci_run_id": args.execution_engine_ci_run_id,
         "credentialed_sdk_run_id": args.credentialed_sdk_run_id,
     }
-    external_references_source = args.external_references_file or args.external_references_template
+    external_references_source = external_references_file or external_references_template
     external_references = json.loads(external_references_source.read_text())
     external_references["artifact_sha256"] = artifact_sha
     external_references["evidence_manifest_sha256"] = manifest_sha
@@ -80,14 +121,14 @@ def main() -> int:
     external_reference_failures = validate_external_references_shape(
         external_references,
         str(external_references_source),
-        allow_placeholders=args.external_references_file is None,
+        allow_placeholders=external_references_file is None,
     )
     if external_reference_failures:
         raise SystemExit(
             "external references validation failed: "
             + "; ".join(external_reference_failures)
         )
-    if args.external_references_file and has_placeholder(external_references):
+    if external_references_file and has_placeholder(external_references):
         raise SystemExit("external references file must not contain REPLACE_WITH_* placeholders")
     release_decision["external_references"] = {
         "secret_custody_ref": external_references.get("secret_custody", {}).get("provider_ref"),

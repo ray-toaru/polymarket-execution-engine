@@ -2,12 +2,14 @@
 """Prove a complete review package still blocks armed canary under no-go."""
 from __future__ import annotations
 
+import argparse
 import json
 import subprocess
 import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+INTEGRATION_ROOT = ROOT.parent
 REVIEW_SCRIPT = ROOT / "validation" / "prepare_real_funds_canary_review.py"
 EXTERNAL_REFERENCES_EXAMPLE = ROOT / "config" / "controlled-canary.external-references.example.json"
 ADAPTER_MANIFEST = ROOT / "adapters" / "pmx-official-sdk-adapter" / "Cargo.toml"
@@ -17,93 +19,145 @@ def load(path: Path) -> dict:
     return json.loads(path.read_text())
 
 
-def main() -> int:
+def resolve_input_path(path: Path) -> Path:
+    if path.is_absolute() or path.exists():
+        return path
+    integration_path = INTEGRATION_ROOT / path
+    if integration_path.exists():
+        return integration_path
+    return path
+
+
+def run_rehearsal(output_dir: Path, args: argparse.Namespace) -> tuple[list[str], int | None]:
     failures: list[str] = []
-    with tempfile.TemporaryDirectory() as tmp:
-        output_dir = Path(tmp) / "review"
-        completed = subprocess.run(
-            [
-                "python",
-                str(REVIEW_SCRIPT),
-                "--output-dir",
-                str(output_dir),
-                "--external-references-file",
-                str(EXTERNAL_REFERENCES_EXAMPLE),
-            ],
-            cwd=ROOT,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        if completed.returncode != 0:
-            failures.append(f"review package generation failed: {completed.stderr.strip()}")
-        review = load(output_dir / "review.json") if (output_dir / "review.json").exists() else {}
-        approval = load(output_dir / "approval.json") if (output_dir / "approval.json").exists() else {}
-        if review.get("live_submit_allowed") is not False:
-            failures.append("review package must keep live_submit_allowed=false")
-        if review.get("real_funds_canary_authorized") is not False:
-            failures.append("review package must keep real_funds_canary_authorized=false")
+    external_references_file = resolve_input_path(args.external_references_file)
+    review_command = [
+        "python",
+        str(REVIEW_SCRIPT),
+        "--output-dir",
+        str(output_dir),
+        "--external-references-file",
+        str(external_references_file),
+        "--root-ci-run-id",
+        args.root_ci_run_id,
+        "--hermes-ci-run-id",
+        args.hermes_ci_run_id,
+        "--execution-engine-ci-run-id",
+        args.execution_engine_ci_run_id,
+        "--credentialed-sdk-run-id",
+        args.credentialed_sdk_run_id,
+    ]
+    if args.artifact_sha256:
+        review_command.extend(["--artifact-sha256", args.artifact_sha256])
+    if args.evidence_manifest_sha256:
+        review_command.extend(["--evidence-manifest-sha256", args.evidence_manifest_sha256])
+    completed = subprocess.run(
+        review_command,
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        failures.append(f"review package generation failed: {completed.stderr.strip()}")
+        return failures, None
+    review = load(output_dir / "review.json") if (output_dir / "review.json").exists() else {}
+    approval = load(output_dir / "approval.json") if (output_dir / "approval.json").exists() else {}
+    if review.get("live_submit_allowed") is not False:
+        failures.append("review package must keep live_submit_allowed=false")
+    if review.get("real_funds_canary_authorized") is not False:
+        failures.append("review package must keep real_funds_canary_authorized=false")
 
-        no_go_decision = {
-            "decision_id": "blocked-rehearsal-no-go",
-            "scope": "REAL_FUNDS_CANARY",
-            "expires_at": "2099-01-01T00:00:00Z",
-            "artifact_sha256": approval.get("artifact_sha256"),
-            "evidence_manifest_sha256": approval.get("evidence_manifest_sha256"),
-            "allow_real_funds_canary": False,
-            "reviewed_release_decision_present": True,
-            "operator_identity_ref": "local-blocked-rehearsal-operator",
-        }
-        decision_path = output_dir / "adapter-release-decision.no-go.json"
-        decision_path.write_text(json.dumps(no_go_decision, indent=2, sort_keys=True) + "\n")
+    no_go_decision = {
+        "decision_id": "blocked-rehearsal-no-go",
+        "scope": "REAL_FUNDS_CANARY",
+        "expires_at": "2099-01-01T00:00:00Z",
+        "artifact_sha256": approval.get("artifact_sha256"),
+        "evidence_manifest_sha256": approval.get("evidence_manifest_sha256"),
+        "allow_real_funds_canary": False,
+        "reviewed_release_decision_present": True,
+        "operator_identity_ref": "local-blocked-rehearsal-operator",
+    }
+    decision_path = output_dir / "adapter-release-decision.no-go.json"
+    decision_path.write_text(json.dumps(no_go_decision, indent=2, sort_keys=True) + "\n")
 
-        command = [
-            "cargo",
-            "run",
-            "--manifest-path",
-            str(ADAPTER_MANIFEST.relative_to(ROOT)),
-            "--features",
-            "live-submit",
-            "--bin",
-            "pmx-real-funds-canary",
-            "--",
-            "--armed",
-            "--approval-file",
-            str(output_dir / "approval.json"),
-            "--release-decision-file",
-            str(decision_path),
-            "--artifact-sha256",
-            str(approval.get("artifact_sha256")),
-            "--evidence-manifest-sha256",
-            str(approval.get("evidence_manifest_sha256")),
-            "--idempotency-key",
-            "blocked-rehearsal-idempotency",
-            "--account-id",
-            approval.get("account_id", "acct-canary"),
-            "--execution-id",
-            "blocked-rehearsal-execution",
-            "--plan-hash",
-            "blocked-rehearsal-plan-hash",
-            "--allow-live-submit-config",
-            "--allow-real-funds-canary-config",
-        ]
-        rehearsal = subprocess.run(
-            command,
-            cwd=ROOT,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        expected_error = "real-funds canary not allowed by release decision"
-        if rehearsal.returncode == 0:
-            failures.append("armed no-go rehearsal must fail before posting")
-        if expected_error not in rehearsal.stderr:
-            failures.append("armed no-go rehearsal missing release-decision block reason")
-        forbidden = ["posted\": true", "remote_side_effects\": true", "raw_signed_order_exposed\": true"]
-        combined_output = rehearsal.stdout + "\n" + rehearsal.stderr
-        for token in forbidden:
-            if token in combined_output:
-                failures.append(f"armed no-go rehearsal emitted forbidden token: {token}")
+    command = [
+        "cargo",
+        "run",
+        "--manifest-path",
+        str(ADAPTER_MANIFEST.relative_to(ROOT)),
+        "--features",
+        "live-submit",
+        "--bin",
+        "pmx-real-funds-canary",
+        "--",
+        "--armed",
+        "--approval-file",
+        str(output_dir / "approval.json"),
+        "--release-decision-file",
+        str(decision_path),
+        "--artifact-sha256",
+        str(approval.get("artifact_sha256")),
+        "--evidence-manifest-sha256",
+        str(approval.get("evidence_manifest_sha256")),
+        "--idempotency-key",
+        args.idempotency_key,
+        "--account-id",
+        approval.get("account_id", "acct-canary"),
+        "--execution-id",
+        args.execution_id,
+        "--plan-hash",
+        args.plan_hash,
+        "--allow-live-submit-config",
+        "--allow-real-funds-canary-config",
+    ]
+    rehearsal = subprocess.run(
+        command,
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    (output_dir / "blocked-rehearsal.stdout").write_text(rehearsal.stdout)
+    (output_dir / "blocked-rehearsal.stderr").write_text(rehearsal.stderr)
+    (output_dir / "blocked-rehearsal.exit-code").write_text(f"{rehearsal.returncode}\n")
+
+    expected_error = "real-funds canary not allowed by release decision"
+    if rehearsal.returncode == 0:
+        failures.append("armed no-go rehearsal must fail before posting")
+    if expected_error not in rehearsal.stderr:
+        failures.append("armed no-go rehearsal missing release-decision block reason")
+    forbidden = ["posted\": true", "remote_side_effects\": true", "raw_signed_order_exposed\": true"]
+    combined_output = rehearsal.stdout + "\n" + rehearsal.stderr
+    for token in forbidden:
+        if token in combined_output:
+            failures.append(f"armed no-go rehearsal emitted forbidden token: {token}")
+    return failures, rehearsal.returncode
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--external-references-file", type=Path, default=EXTERNAL_REFERENCES_EXAMPLE)
+    parser.add_argument("--artifact-sha256")
+    parser.add_argument("--evidence-manifest-sha256")
+    parser.add_argument("--root-ci-run-id", default="26176061318")
+    parser.add_argument("--hermes-ci-run-id", default="26174554396")
+    parser.add_argument("--execution-engine-ci-run-id", default="26174564854")
+    parser.add_argument("--credentialed-sdk-run-id", default="26175786984")
+    parser.add_argument("--idempotency-key", default="blocked-rehearsal-idempotency")
+    parser.add_argument("--execution-id", default="blocked-rehearsal-execution")
+    parser.add_argument("--plan-hash", default="blocked-rehearsal-plan-hash")
+    args = parser.parse_args()
+
+    if args.output_dir:
+        output_dir = args.output_dir if args.output_dir.is_absolute() else INTEGRATION_ROOT / args.output_dir
+        output_dir.mkdir(parents=True, exist_ok=True)
+        failures, observed_exit_code = run_rehearsal(output_dir, args)
+    else:
+        with tempfile.TemporaryDirectory() as tmp:
+            output_dir = Path(tmp) / "review"
+            failures, observed_exit_code = run_rehearsal(output_dir, args)
 
     result = {
         "status": "fail" if failures else "pass",
@@ -112,7 +166,7 @@ def main() -> int:
         "allow_live_submit_config": True,
         "allow_real_funds_canary_config": True,
         "expected_exit_code": 1,
-        "observed_exit_code": rehearsal.returncode if "rehearsal" in locals() else None,
+        "observed_exit_code": observed_exit_code,
         "blocked_at": "release_decision_gate",
         "blocked_reason": "real-funds canary not allowed by release decision",
         "posted": False,
@@ -123,8 +177,15 @@ def main() -> int:
         "remote_side_effects": False,
         "raw_signed_order_exposed": False,
         "secrets_included": False,
+        "output_dir": str(output_dir),
+        "stdout_log": str(output_dir / "blocked-rehearsal.stdout"),
+        "stderr_log": str(output_dir / "blocked-rehearsal.stderr"),
         "failures": failures,
     }
+    if args.output_dir:
+        (output_dir / "blocked-rehearsal.report.json").write_text(
+            json.dumps(result, indent=2, sort_keys=True) + "\n"
+        )
     print(json.dumps(result, indent=2, sort_keys=True))
     return 1 if failures else 0
 
