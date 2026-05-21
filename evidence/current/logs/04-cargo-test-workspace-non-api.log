@@ -1,83 +1,6 @@
-   Compiling libc v0.2.186
-   Compiling typenum v1.20.0
-   Compiling serde_core v1.0.228
-   Compiling cfg-if v1.0.4
-   Compiling serde v1.0.228
-   Compiling serde_json v1.0.149
-   Compiling rand_core v0.10.1
-   Compiling memchr v2.8.0
-   Compiling zmij v1.0.21
-   Compiling itoa v1.0.18
-   Compiling getrandom v0.4.2
-   Compiling generic-array v0.14.7
-   Compiling thiserror v1.0.69
-   Compiling num-traits v0.2.19
-   Compiling iana-time-zone v0.1.65
-   Compiling chrono v0.4.44
-   Compiling crypto-common v0.1.7
-   Compiling block-buffer v0.10.4
-   Compiling digest v0.10.7
-   Compiling cpufeatures v0.2.17
-   Compiling sha2 v0.10.9
-   Compiling uuid v1.23.1
-   Compiling pmx-core v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
-   Compiling bytes v1.11.1
-   Compiling hybrid-array v0.4.12
-   Compiling errno v0.3.14
-   Compiling pin-project-lite v0.2.17
-   Compiling signal-hook-registry v1.4.8
-   Compiling socket2 v0.6.3
-   Compiling mio v1.2.0
-   Compiling cmov v0.5.3
-   Compiling ctutils v0.4.2
-   Compiling tokio v1.52.3
-   Compiling block-buffer v0.12.0
-   Compiling crypto-common v0.2.1
-   Compiling const-oid v0.10.2
-   Compiling digest v0.11.3
-   Compiling tinyvec_macros v0.1.1
-   Compiling cpufeatures v0.3.0
-   Compiling tinyvec v1.11.0
-   Compiling unicode-normalization v0.1.25
-   Compiling chacha20 v0.10.0
-   Compiling unicode-bidi v0.3.18
-   Compiling unicode-properties v0.1.4
-   Compiling futures-core v0.3.32
-   Compiling futures-sink v0.3.32
-   Compiling stringprep v0.1.5
-   Compiling rand v0.10.1
-   Compiling sha2 v0.11.0
-   Compiling md-5 v0.11.0
-   Compiling hmac v0.13.0
-   Compiling base64 v0.22.1
-   Compiling scopeguard v1.2.0
-   Compiling fallible-iterator v0.2.0
-   Compiling siphasher v1.0.3
-   Compiling smallvec v1.15.1
-   Compiling byteorder v1.5.0
-   Compiling postgres-protocol v0.6.11
-   Compiling parking_lot_core v0.9.12
-   Compiling phf_shared v0.13.1
-   Compiling lock_api v0.4.14
-   Compiling futures-task v0.3.32
-   Compiling futures-util v0.3.32
-   Compiling parking_lot v0.12.5
-   Compiling phf v0.13.1
-   Compiling postgres-types v0.2.13
-   Compiling tokio-util v0.7.18
-   Compiling futures-channel v0.3.32
-   Compiling whoami v2.1.2
-   Compiling log v0.4.29
-   Compiling percent-encoding v2.3.2
-   Compiling tokio-postgres v0.7.17
    Compiling pmx-store v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
-   Compiling pmx-runtime v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
-   Compiling pmx-policy v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
    Compiling pmx-service v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
-   Compiling pmx-gateway v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
-   Compiling pmx-authz v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-authz)
-   Compiling pmx-release v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-release)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 02s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 20.54s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-604ea22cf138d17e)
 
 running 2 tests
@@ -204,7 +127,7 @@ test service::tests::sign_only::standard::service_derives_standard_sign_only_ref
 test service::tests::sign_only::standard::service_records_standard_sign_only_construction_without_raw_payload ... ok
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 
-test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.49s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-ad3acbdc89aeb574)
 
@@ -257,7 +180,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 47 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.77s
+test result: ok. 47 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.11s
 
    Doc-tests pmx_authz
 

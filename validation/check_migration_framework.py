@@ -28,6 +28,7 @@ def main() -> int:
     migration_0002 = MIGRATIONS / "0002_migration_framework.sql"
     migration_0003 = MIGRATIONS / "0003_order_event_trace.sql"
     migration_0004 = MIGRATIONS / "0004_real_funds_canary.sql"
+    migration_0005 = MIGRATIONS / "0005_constraint_decision_snapshot_nullable.sql"
     postgres = read_rust_sources(POSTGRES)
     manifest = MANIFEST_WRITER.read_text()
     drift_dry_run = DRIFT_DRY_RUN.read_text()
@@ -44,6 +45,11 @@ def main() -> int:
     require("0002_migration_framework" in postgres, "SCHEMA_MIGRATIONS must include 0002_migration_framework", failures)
     require("0003_order_event_trace" in postgres, "SCHEMA_MIGRATIONS must include 0003_order_event_trace", failures)
     require("0004_real_funds_canary" in postgres, "SCHEMA_MIGRATIONS must include 0004_real_funds_canary", failures)
+    require(
+        "0005_constraint_decision_snapshot_nullable" in postgres,
+        "SCHEMA_MIGRATIONS must include 0005_constraint_decision_snapshot_nullable",
+        failures,
+    )
     require(migration_0003.exists(), "missing migrations/0003_order_event_trace.sql", failures)
     if migration_0003.exists():
         migration_sql = migration_0003.read_text()
@@ -55,6 +61,18 @@ def main() -> int:
         require("CREATE TABLE IF NOT EXISTS real_funds_canary_runs" in migration_sql, "0004 must create real_funds_canary_runs", failures)
         require("UNIQUE (account_id, idempotency_key)" in migration_sql, "0004 must enforce canary idempotency", failures)
         require("real_funds_canary_no_raw_signed_order" in migration_sql, "0004 must forbid raw signed order exposure", failures)
+    require(
+        migration_0005.exists(),
+        "missing migrations/0005_constraint_decision_snapshot_nullable.sql",
+        failures,
+    )
+    if migration_0005.exists():
+        migration_sql = migration_0005.read_text()
+        require(
+            "ALTER COLUMN snapshot_id DROP NOT NULL" in migration_sql,
+            "0005 must align upgraded constraint_decisions.snapshot_id nullability",
+            failures,
+        )
     require("record_applied_migration" in postgres, "apply_schema must record applied migrations", failures)
     require("schema migration checksum mismatch" in postgres, "migration checksum drift must fail closed", failures)
     require("applied_schema_migrations" in postgres, "store must expose applied migration evidence for PG tests", failures)
@@ -64,6 +82,11 @@ def main() -> int:
     require("bad checksum fixture" in drift_dry_run, "migration dry-run must include checksum drift fixture", failures)
     require("0003_order_event_trace" in drift_dry_run, "migration dry-run must include 0003_order_event_trace", failures)
     require("0004_real_funds_canary" in drift_dry_run, "migration dry-run must include 0004_real_funds_canary", failures)
+    require(
+        "0005_constraint_decision_snapshot_nullable" in drift_dry_run,
+        "migration dry-run must include 0005_constraint_decision_snapshot_nullable",
+        failures,
+    )
 
     require_current_gate_log("33-migration-framework-guard.log", "migration framework guard", failures)
     require_current_gate_log("34-migration-drift-dry-run.log", "migration drift dry-run", failures)

@@ -20,4 +20,8 @@ pub const SCHEMA_MIGRATIONS: &[SchemaMigration] = &[
         version: "0004_real_funds_canary",
         sql: include_str!("../../../../migrations/0004_real_funds_canary.sql"),
     },
+    SchemaMigration {
+        version: "0005_constraint_decision_snapshot_nullable",
+        sql: include_str!("../../../../migrations/0005_constraint_decision_snapshot_nullable.sql"),
+    },
 ];

@@ -22,6 +22,10 @@ MIGRATIONS = [
     ("0002_migration_framework", ROOT / "migrations" / "0002_migration_framework.sql"),
     ("0003_order_event_trace", ROOT / "migrations" / "0003_order_event_trace.sql"),
     ("0004_real_funds_canary", ROOT / "migrations" / "0004_real_funds_canary.sql"),
+    (
+        "0005_constraint_decision_snapshot_nullable",
+        ROOT / "migrations" / "0005_constraint_decision_snapshot_nullable.sql",
+    ),
 ]
 
 
@@ -88,13 +92,18 @@ def main() -> int:
                         "0002_migration_framework",
                         "0003_order_event_trace",
                         "0004_real_funds_canary",
+                        "0005_constraint_decision_snapshot_nullable",
                     ]
                 ),
             )
             + record_sql("0001_initial", checksums["0001_initial"])
             + record_sql("0002_migration_framework", checksums["0002_migration_framework"])
             + record_sql("0003_order_event_trace", checksums["0003_order_event_trace"])
-            + record_sql("0004_real_funds_canary", checksums["0004_real_funds_canary"]),
+            + record_sql("0004_real_funds_canary", checksums["0004_real_funds_canary"])
+            + record_sql(
+                "0005_constraint_decision_snapshot_nullable",
+                checksums["0005_constraint_decision_snapshot_nullable"],
+            ),
         )
         run_psql(
             database_url,
@@ -102,10 +111,15 @@ def main() -> int:
             + migration_body(["0002_migration_framework"])
             + migration_body(["0003_order_event_trace"])
             + migration_body(["0004_real_funds_canary"])
+            + migration_body(["0005_constraint_decision_snapshot_nullable"])
             + record_sql("0001_initial", checksums["0001_initial"])
             + record_sql("0002_migration_framework", checksums["0002_migration_framework"])
             + record_sql("0003_order_event_trace", checksums["0003_order_event_trace"])
-            + record_sql("0004_real_funds_canary", checksums["0004_real_funds_canary"]),
+            + record_sql("0004_real_funds_canary", checksums["0004_real_funds_canary"])
+            + record_sql(
+                "0005_constraint_decision_snapshot_nullable",
+                checksums["0005_constraint_decision_snapshot_nullable"],
+            ),
         )
         run_psql(
             database_url,

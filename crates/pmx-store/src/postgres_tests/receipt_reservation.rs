@@ -9,7 +9,9 @@ async fn remote_unknown_is_persisted_conservatively() {
     let Some(store) = test_store().await else {
         return;
     };
+    let account = unique("acct");
     let execution = unique("exec");
+    seed_execution_plan(&store, &account, &execution).await;
     let receipt = SubmitReceipt {
         execution_id: execution.clone(),
         receipt_id: unique("receipt"),

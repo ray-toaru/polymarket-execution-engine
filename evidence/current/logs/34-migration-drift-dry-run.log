@@ -3,20 +3,22 @@
     "0001_initial": "543b02a2c91e150ce96332b33f5ff19310044583cfdf23ec24b48a3f2905cc0f",
     "0002_migration_framework": "19f1cb732190ff3ce8292128b3a6959ec2748818265cd90073f7d79e538e6fbf",
     "0003_order_event_trace": "c051dc6820acf727b85b77a411aa9f2c11426e6cc65abbc29206f83e0d95e51b",
-    "0004_real_funds_canary": "78c2c7d21bb9ee4421f93946bc5c9166b459b90489e1e506e1293e363ca8e2a7"
+    "0004_real_funds_canary": "78c2c7d21bb9ee4421f93946bc5c9166b459b90489e1e506e1293e363ca8e2a7",
+    "0005_constraint_decision_snapshot_nullable": "7607891e3a9d396b13887db66296e460fa64f7661cdf207d9b9e650d037b0c37"
   },
   "migration_order": [
     "0001_initial",
     "0002_migration_framework",
     "0003_order_event_trace",
-    "0004_real_funds_canary"
+    "0004_real_funds_canary",
+    "0005_constraint_decision_snapshot_nullable"
   ],
   "postgres_dry_run": {
     "drift_detection": "bad checksum fixture created; production runner must fail closed on mismatch",
-    "drift_schema": "pmx_migration_drift_1779253964440_351349",
-    "fresh_schema": "pmx_migration_fresh_1779253964440_351349",
+    "drift_schema": "pmx_migration_drift_1779339045672_77779",
+    "fresh_schema": "pmx_migration_fresh_1779339045672_77779",
     "status": "pass",
-    "upgraded_schema": "pmx_migration_upgraded_1779253964440_351349"
+    "upgraded_schema": "pmx_migration_upgraded_1779339045672_77779"
   },
   "status": "pass"
 }
