@@ -1,8 +1,9 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.87s
+   Compiling pmx-official-sdk-adapter v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.35s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-adapter/target/debug/deps/pmx_official_sdk_adapter-7a12e853fc4fab5b)
 
 running 1 test
 test tests::feature_gated::sign_only_dry_run_executes_when_enabled ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 48 filtered out; finished in 2.78s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 48 filtered out; finished in 10.23s
 

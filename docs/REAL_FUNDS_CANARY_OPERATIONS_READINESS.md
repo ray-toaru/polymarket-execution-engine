@@ -25,6 +25,11 @@ must include `external-references.json` and `release-decision.json`, and report
 `real_funds_canary_authorized=false`, `remote_side_effects=false`, and
 `secrets_included=false`.
 
+By default the generated package binds the current
+`evidence/current/manifest.json` file hash. Source-controlled example fixtures
+under `config/controlled-canary.*.example.json` are reviewed examples, not a
+claim that every future local gate rerun must keep the same manifest file hash.
+
 External references can be staged from the template for local review:
 
 ```bash

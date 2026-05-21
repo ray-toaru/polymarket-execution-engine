@@ -15,11 +15,11 @@ INVALID_PARTIAL = CONFIG / "controlled-canary.release-decision.invalid-partial.f
 INVALID_MISMATCHED = CONFIG / "controlled-canary.release-decision.invalid-mismatched.fixture.json"
 
 EXPECTED_ARTIFACT_SHA256 = "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6"
-EXPECTED_MANIFEST_SHA256 = "4c53dd9b7abf14184df37932ba5eb645c942f75f075d31f40b587c8b612c7ffa"
+EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256 = "a67cff633141e1c619b4d422cbc6e09e427d004d9580996c4f00e31d7bebcafd"
 EXPECTED_RUN_IDS = {
-    "root_ci_run_id": "26212663156",
-    "hermes_ci_run_id": "26174554396",
-    "execution_engine_ci_run_id": "26210917113",
+    "root_ci_run_id": "26218023692",
+    "hermes_ci_run_id": "26198048337",
+    "execution_engine_ci_run_id": "26216163754",
     "credentialed_sdk_run_id": "local-current-gates-20260521",
 }
 AUTHORIZATION_FLAGS = [
@@ -158,8 +158,11 @@ def validate_decision(data: dict[str, Any], label: str) -> list[str]:
             failures.append(f"{label}: go decision requires concrete evidence_manifest_sha256")
         if data.get("source_release") == "v0.25.0" and data.get("artifact_sha256") != EXPECTED_ARTIFACT_SHA256:
             failures.append(f"{label}: go decision artifact hash does not match reviewed v0.25.0 artifact")
-        if data.get("source_release") == "v0.25.0" and data.get("evidence_manifest_sha256") != EXPECTED_MANIFEST_SHA256:
-            failures.append(f"{label}: go decision evidence manifest hash does not match reviewed v0.25.0 manifest")
+        if (
+            data.get("source_release") == "v0.25.0"
+            and data.get("evidence_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256
+        ):
+            failures.append(f"{label}: go decision evidence manifest hash does not match reviewed v0.25.0 example manifest")
         missing_refs = [key for key in REQUIRED_EXTERNAL_REFS if not refs.get(key) or has_placeholder(refs.get(key))]
         if missing_refs:
             failures.append(f"{label}: go decision missing external references: {', '.join(missing_refs)}")
@@ -198,8 +201,8 @@ def main() -> int:
     failures.extend(validate_decision(example, "example"))
     if example.get("artifact_sha256") != EXPECTED_ARTIFACT_SHA256:
         failures.append("example must bind the v0.25.0 release artifact hash")
-    if example.get("evidence_manifest_sha256") != EXPECTED_MANIFEST_SHA256:
-        failures.append("example must bind the v0.25.0 current evidence manifest hash")
+    if example.get("evidence_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256:
+        failures.append("example must bind the reviewed v0.25.0 example evidence manifest hash")
     for key, expected in EXPECTED_RUN_IDS.items():
         if example.get("github_evidence", {}).get(key) != expected:
             failures.append(f"example must bind GitHub evidence run {key}")

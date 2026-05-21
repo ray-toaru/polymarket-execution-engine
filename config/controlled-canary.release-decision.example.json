@@ -8,11 +8,11 @@
   "scope": "REAL_FUNDS_CANARY",
   "execution_style": "FOK_LIMIT_FILL",
   "artifact_sha256": "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6",
-  "evidence_manifest_sha256": "4c53dd9b7abf14184df37932ba5eb645c942f75f075d31f40b587c8b612c7ffa",
+  "evidence_manifest_sha256": "a67cff633141e1c619b4d422cbc6e09e427d004d9580996c4f00e31d7bebcafd",
   "github_evidence": {
-    "root_ci_run_id": "26212663156",
-    "hermes_ci_run_id": "26174554396",
-    "execution_engine_ci_run_id": "26210917113",
+    "root_ci_run_id": "26218023692",
+    "hermes_ci_run_id": "26198048337",
+    "execution_engine_ci_run_id": "26216163754",
     "credentialed_sdk_run_id": "local-current-gates-20260521"
   },
   "external_references": {

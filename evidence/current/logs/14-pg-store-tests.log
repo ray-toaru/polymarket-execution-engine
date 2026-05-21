@@ -1,4 +1,4 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.21s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.28s
      Running unittests src/lib.rs (target/debug/deps/pmx_store-ad3acbdc89aeb574)
 
 running 0 tests
