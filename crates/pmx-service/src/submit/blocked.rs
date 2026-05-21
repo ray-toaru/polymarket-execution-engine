@@ -18,9 +18,7 @@ where
             account_id: plan.account_id.clone(),
             execution_id: ExecutionId(plan.execution_id.clone()),
             internal_order_id: None,
-            quantity_bound: QuantityBound::WorstCaseQuoteNotional(DecimalString(
-                "0.00000001".into(),
-            )),
+            quantity_bound: QuantityBound::WorstCaseQuoteNotional(plan.max_exposure.clone()),
             state: ReservationState::Pending,
         };
         store.save_order_reservation(&reservation).await?;

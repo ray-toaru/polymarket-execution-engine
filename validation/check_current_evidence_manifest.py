@@ -7,6 +7,7 @@ canonical evidence location.
 from __future__ import annotations
 
 import json
+import re
 import sys
 import tomllib
 from pathlib import Path
@@ -26,6 +27,23 @@ REQUIRED_SECTIONS = [
     "credentialed_non_trading_validation",
 ]
 VALID_STATUSES = {"pending", "pass", "fail", "skipped", "not_run"}
+TEST_LOG_RULES = {
+    "16-authenticated-smoke.log": {
+        "min_passed": 1,
+        "required_token": "authenticated_non_trading_smoke_executes_when_enabled",
+        "forbidden_token": "skipping",
+    },
+    "17-sign-only-dry-run.log": {
+        "min_passed": 1,
+        "required_token": "sign_only_dry_run_executes_when_enabled",
+        "forbidden_token": "skipping sign-only dry-run test",
+    },
+    "14-pg-store-tests.log": {
+        "min_passed": 23,
+        "required_token": "postgres::postgres_tests::",
+        "forbidden_token": "PMX_TEST_DATABASE_URL not set",
+    },
+}
 
 
 def fail(message: str) -> int:
@@ -77,7 +95,55 @@ def validate(path: Path) -> int:
             return fail("validated_release=true requires artifact_kind=validated_release")
         if not artifact.get("sha256"):
             return fail("validated_release=true requires artifact.sha256")
+    for section in REQUIRED_SECTIONS:
+        block = data.get(section, {})
+        if not isinstance(block, dict):
+            continue
+        for entry in block.get("logs", []) or []:
+            if not isinstance(entry, dict):
+                continue
+            rel = entry.get("path")
+            if not isinstance(rel, str):
+                continue
+            log_path = ROOT.parent / rel
+            if not log_path.exists() and rel.startswith("polymarket-execution-engine/"):
+                log_path = ROOT / rel.removeprefix("polymarket-execution-engine/")
+            rc = validate_test_log_semantics(log_path)
+            if rc:
+                return fail(rc)
     return 0
+
+
+def validate_test_log_semantics(path: Path) -> str | None:
+    rule = TEST_LOG_RULES.get(path.name)
+    if not rule:
+        return None
+    if not path.exists():
+        return f"test log not found for semantic check: {path}"
+    text = path.read_text(errors="replace")
+    if "running 0 tests" in text:
+        return f"{path.name} must not report running 0 tests"
+    summary = re.search(
+        r"test result: ok\. (\d+) passed; (\d+) failed; (\d+) ignored; "
+        r"(\d+) measured; (\d+) filtered out;",
+        text,
+    )
+    if not summary:
+        return f"{path.name} missing cargo test summary"
+    passed = int(summary.group(1))
+    failed = int(summary.group(2))
+    min_passed = int(rule["min_passed"])
+    required_token = str(rule["required_token"])
+    forbidden_token = str(rule.get("forbidden_token", ""))
+    if passed < min_passed:
+        return f"{path.name} passed {passed} tests, expected at least {min_passed}"
+    if failed != 0:
+        return f"{path.name} must have failed=0; got failed={failed}"
+    if required_token not in text:
+        return f"{path.name} missing expected test module token {required_token}"
+    if forbidden_token and forbidden_token in text:
+        return f"{path.name} contains forbidden skip token {forbidden_token}"
+    return None
 
 
 def main(argv: list[str]) -> int:

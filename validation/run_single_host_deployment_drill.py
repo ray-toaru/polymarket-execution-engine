@@ -83,6 +83,8 @@ def main() -> int:
     for token in [
         "single-host limited deployment",
         "not production-ready evidence",
+        "scaffold/startup check only",
+        "exits without binding an HTTP listener",
         "PMX_LIVE_SUBMIT_ENABLED=0",
         "PMX_ALLOW_REAL_FUNDS_CANARY=0",
         "pass://polymarket-execution-engine/controlled-canary",
@@ -102,8 +104,16 @@ def main() -> int:
             if flag not in text:
                 failures.append(f"{label} missing fail-closed flag {flag}")
 
+    if "Description=Polymarket execution API scaffold check" not in api_service:
+        failures.append("api systemd unit must identify itself as a scaffold check")
+    if "Type=oneshot" not in api_service:
+        failures.append("api systemd unit must be oneshot because pmx-api does not bind a listener")
+    if "Restart=no" not in api_service:
+        failures.append("api systemd unit must not restart the non-listening scaffold binary")
     if "ExecStart=/opt/polymarket-execution-engine/bin/pmx-api" not in api_service:
-        failures.append("api systemd unit must start pmx-api binary")
+        failures.append("api systemd unit must run the pmx-api scaffold binary")
+    if "Restart=on-failure" in api_service or "Type=simple" in api_service:
+        failures.append("api systemd unit must not look like a long-running API listener")
     if "ExecStart=/opt/polymarket-execution-engine/bin/pmx-real-funds-canary" not in canary_service:
         failures.append("canary systemd unit must start pmx-real-funds-canary binary")
     if "--dry-run" not in canary_service:

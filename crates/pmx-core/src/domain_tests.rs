@@ -27,3 +27,6 @@ mod lifecycle;
 
 #[path = "domain_tests/divergence.rs"]
 mod divergence;
+
+#[path = "domain_tests/hash_value.rs"]
+mod hash_value;

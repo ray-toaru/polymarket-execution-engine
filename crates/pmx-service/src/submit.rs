@@ -1,6 +1,6 @@
 use pmx_core::{
-    DecimalString, ExecutionId, OrderReservation, QuantityBound, ReservationState, SubmitReceipt,
-    SubmitStatus, canonical_json_sha256,
+    ExecutionId, OrderReservation, QuantityBound, ReservationState, SubmitReceipt, SubmitStatus,
+    canonical_json_sha256,
 };
 use pmx_store::{
     ExecutionLifecycleEvent, ExecutionLifecycleStore, ExecutionStore, IdempotencyAction,

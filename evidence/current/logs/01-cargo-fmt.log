@@ -1,0 +1,1 @@
+passed: cargo fmt --check produced no output

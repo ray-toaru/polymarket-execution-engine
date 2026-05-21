@@ -9,19 +9,19 @@
    Compiling autocfg v1.5.0
    Compiling libc v0.2.186
    Compiling num-traits v0.2.19
+   Compiling zmij v1.0.21
    Compiling serde v1.0.228
    Compiling getrandom v0.4.2
    Compiling cfg-if v1.0.4
-   Compiling zmij v1.0.21
    Compiling block-buffer v0.10.4
    Compiling crypto-common v0.1.7
    Compiling serde_derive v1.0.228
-   Compiling serde_json v1.0.149
    Compiling thiserror v1.0.69
+   Compiling serde_json v1.0.149
    Compiling digest v0.10.7
    Compiling thiserror-impl v1.0.69
-   Compiling itoa v1.0.18
    Compiling cpufeatures v0.2.17
+   Compiling itoa v1.0.18
    Compiling iana-time-zone v0.1.65
    Compiling memchr v2.8.0
    Compiling chrono v0.4.44
@@ -35,7 +35,7 @@
    Compiling pin-project-lite v0.2.17
    Compiling tokio v1.52.3
    Compiling pmx-official-sdk-spike v0.0.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-spike)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 37.65s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 39.91s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-spike/target/debug/deps/pmx_official_sdk_spike-89316341ec332cb8)
 
 running 1 test

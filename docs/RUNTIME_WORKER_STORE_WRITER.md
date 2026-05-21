@@ -16,7 +16,7 @@ Implemented:
   provider bridge. It is covered by in-memory and PostgreSQL-backed service
   tests.
 
-Not implemented yet:
+Intentional non-live gaps before production promotion:
 
 - Actual WebSocket readers.
 - Actual geoblock HTTP provider.

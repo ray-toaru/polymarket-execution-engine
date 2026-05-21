@@ -219,6 +219,23 @@ PASS_MARKERS = (
 )
 FAIL_MARKERS = ("FAIL:", "error:", "test result: FAILED", "could not compile", "panicked at")
 SKIP_MARKERS = ("skipped", "skipping", "not set")
+TEST_LOG_RULES = {
+    "16-authenticated-smoke.log": {
+        "min_passed": 1,
+        "required_token": "authenticated_non_trading_smoke_executes_when_enabled",
+        "forbidden_token": "skipping",
+    },
+    "17-sign-only-dry-run.log": {
+        "min_passed": 1,
+        "required_token": "sign_only_dry_run_executes_when_enabled",
+        "forbidden_token": "skipping sign-only dry-run test",
+    },
+    "14-pg-store-tests.log": {
+        "min_passed": 23,
+        "required_token": "postgres::postgres_tests::",
+        "forbidden_token": "PMX_TEST_DATABASE_URL not set",
+    },
+}
 
 
 def sha256(path: Path) -> str:
@@ -279,10 +296,38 @@ def log_passed(path: Path) -> bool:
     text = path.read_text(errors="replace")
     if any(marker in text for marker in FAIL_MARKERS):
         return False
+    if not cargo_test_semantics_ok(path, text):
+        return False
     if path.stat().st_size == 0:
         # cargo fmt and rustfmt success can produce an empty log.
         return path.name in {"01-cargo-fmt.log", "08-sdk-adapter-fmt.log"}
     return any(marker in text for marker in PASS_MARKERS) or path.name.endswith("-guard.log")
+
+
+def cargo_test_semantics_ok(path: Path, text: str) -> bool:
+    rule = TEST_LOG_RULES.get(path.name)
+    if not rule:
+        return True
+    if "running 0 tests" in text:
+        return False
+    summary = re.search(
+        r"test result: ok\. (\d+) passed; (\d+) failed; (\d+) ignored; "
+        r"(\d+) measured; (\d+) filtered out;",
+        text,
+    )
+    if not summary:
+        return False
+    passed = int(summary.group(1))
+    failed = int(summary.group(2))
+    min_passed = int(rule["min_passed"])
+    required_token = str(rule["required_token"])
+    forbidden_token = str(rule.get("forbidden_token", ""))
+    return (
+        passed >= min_passed
+        and failed == 0
+        and required_token in text
+        and (not forbidden_token or forbidden_token not in text)
+    )
 
 
 def build_section(log_dir: Path, names: list[str], *, optional: bool = False) -> dict:
@@ -330,10 +375,18 @@ def main(argv: list[str]) -> int:
             "note": "External Rust/SDK/PostgreSQL logs must be regenerated for the exact final artifact before release promotion.",
         },
         "artifact": {
+            "name": None,
+            "path": None,
+            "sha256": None,
+            "binding_note": "The canonical manifest is source-candidate evidence and does not self-bind a containing zip. Release artifacts are bound by external .zip.sha256 and .zip.evidence.json sidecars.",
+        },
+        "external_artifact_sidecar": {
             "name": artifact_path.name if artifact_path else None,
             "path": display_path(artifact_path) if artifact_path else None,
-            "sha256": sha256(artifact_path) if artifact_path and artifact_path.exists() else None,
-            "binding_note": "External sidecar manifest binds the final zip hash; the in-archive manifest remains source-candidate evidence and cannot self-bind its containing zip.",
+            "sha256": None,
+            "sha256_sidecar": f"{artifact_path.name}.sha256" if artifact_path else None,
+            "evidence_sidecar": f"{artifact_path.name}.evidence.json" if artifact_path else None,
+            "binding_note": "Informational pointer only; verify the artifact with the external sidecars generated after packaging.",
         },
         "environment": log_entry(ENVIRONMENT) if ENVIRONMENT.exists() else None,
     }

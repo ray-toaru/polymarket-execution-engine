@@ -54,6 +54,7 @@ mod tests {
             }),
         );
         assert_eq!(decision.status, DecisionStatus::Block);
+        assert!(decision.decision_hash.is_sha256_hex());
         assert!(decision.reasons.contains(&BlockReason::GeoblockUnknown));
     }
 

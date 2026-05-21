@@ -23,7 +23,17 @@ export PMX_SDK_CALL_TIMEOUT_SECS="${PMX_SDK_CALL_TIMEOUT_SECS:-30}"
 
 cd "${ROOT}"
 
-cargo fmt --check 2>&1 | tee "${EVIDENCE_DIR}/01-cargo-fmt.log"
+run_with_empty_ok() {
+  local output_path="$1"
+  local empty_message="$2"
+  shift 2
+  "$@" 2>&1 | tee "${output_path}"
+  if [[ ! -s "${output_path}" ]]; then
+    printf 'passed: %s\n' "${empty_message}" > "${output_path}"
+  fi
+}
+
+run_with_empty_ok "${EVIDENCE_DIR}/01-cargo-fmt.log" "cargo fmt --check produced no output" cargo fmt --check
 cargo check --workspace --locked 2>&1 | tee "${EVIDENCE_DIR}/02-cargo-check.log"
 cargo clippy --workspace --all-targets --all-features --locked -- -D warnings 2>&1 | tee "${EVIDENCE_DIR}/03-cargo-clippy.log"
 
@@ -37,7 +47,7 @@ cargo test -p pmx-api --test http_and_fake_e2e --locked -- --test-threads=1 2>&1
 cargo test --manifest-path adapters/pmx-official-sdk-spike/Cargo.toml --locked 2>&1 | tee "${EVIDENCE_DIR}/06-sdk-spike-no-features.log"
 cargo test --manifest-path adapters/pmx-official-sdk-spike/Cargo.toml --features sdk-typecheck --locked 2>&1 | tee "${EVIDENCE_DIR}/07-sdk-spike-typecheck.log"
 
-cargo fmt --check --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml 2>&1 | tee "${EVIDENCE_DIR}/08-sdk-adapter-fmt.log"
+run_with_empty_ok "${EVIDENCE_DIR}/08-sdk-adapter-fmt.log" "SDK adapter cargo fmt --check produced no output" cargo fmt --check --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml
 cargo check --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --locked 2>&1 | tee "${EVIDENCE_DIR}/09-sdk-adapter-check.log"
 cargo clippy --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --all-targets --all-features --locked -- -D warnings 2>&1 | tee "${EVIDENCE_DIR}/10-sdk-adapter-clippy.log"
 cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --locked 2>&1 | tee "${EVIDENCE_DIR}/11-sdk-adapter-test.log"
@@ -45,7 +55,7 @@ cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --featur
 
 if [[ -n "${PMX_TEST_DATABASE_URL:-}" ]]; then
   psql "${PMX_TEST_DATABASE_URL}" -f migrations/0001_initial.sql 2>&1 | tee "${EVIDENCE_DIR}/13-pg-migration.log"
-  cargo test -p pmx-store postgres::tests --locked -- --nocapture --test-threads=1 2>&1 | tee "${EVIDENCE_DIR}/14-pg-store-tests.log"
+  cargo test -p pmx-store postgres::postgres_tests --locked -- --nocapture --test-threads=1 2>&1 | tee "${EVIDENCE_DIR}/14-pg-store-tests.log"
   cargo test -p pmx-api --test http_postgres_e2e --locked -- --nocapture --test-threads=1 2>&1 | tee "${EVIDENCE_DIR}/15-http-postgres-e2e.log"
 else
   echo "PMX_TEST_DATABASE_URL not set; PostgreSQL repository/API proof skipped" | tee "${EVIDENCE_DIR}/13-pg-skipped.log"

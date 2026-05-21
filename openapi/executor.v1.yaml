@@ -322,6 +322,10 @@ paths:
   /v1/admin/cancel-order:
     post:
       operationId: cancelOrder
+      description: >
+        Non-live cancel scaffold. Records local audit/lifecycle intent and
+        returns a reconcile-required receipt; it does not call Polymarket CLOB
+        cancel APIs or claim remote cancellation.
       security:
         - AdminToken: []
       requestBody:
@@ -331,13 +335,17 @@ paths:
             schema: { $ref: '#/components/schemas/CancelOrderRequest' }
       responses:
         '202':
-          description: Cancel request accepted into pending/reconcile-required state machine
+          description: Non-live cancel request accepted into pending/reconcile-required state machine
           content:
             application/json:
               schema: { $ref: '#/components/schemas/CancelReceipt' }
   /v1/admin/reconcile:
     post:
       operationId: reconcile
+      description: >
+        Non-live reconcile scaffold. Records local reconcile/audit context and
+        optional local order-lifecycle divergence; it does not perform remote
+        reconciliation reads or live cancel/submit side effects.
       security:
         - AdminToken: []
       requestBody:
@@ -347,7 +355,7 @@ paths:
             schema: { $ref: '#/components/schemas/ReconcileRequest' }
       responses:
         '202':
-          description: Reconcile request accepted
+          description: Non-live reconcile request accepted
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ReconcileReport' }

@@ -176,7 +176,7 @@ jobs:
         run: psql "$PMX_TEST_DATABASE_URL" -f migrations/0001_initial.sql
 
       - name: Run store PostgreSQL tests
-        run: cargo test -p pmx-store postgres::tests --locked -- --nocapture --test-threads=1
+        run: cargo test -p pmx-store postgres::postgres_tests --locked -- --nocapture --test-threads=1
 
       - name: Run API PostgreSQL e2e tests
         run: cargo test -p pmx-api --test http_postgres_e2e --locked -- --nocapture --test-threads=1

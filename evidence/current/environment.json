@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-05-21T10:46:33.474921+00:00",
+  "captured_at": "2026-05-21T22:59:33.722472+00:00",
   "dependency_locks": {
     "polymarket-execution-engine/Cargo.lock": {
       "exists": true,
@@ -18,32 +18,32 @@
     "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE": "1",
     "PMX_RUN_SIGN_ONLY_DRY_RUN": "1",
     "PMX_TEST_DATABASE_URL_set": true,
-    "python_executable": "/usr/local/python/current/bin/python",
+    "python_executable": "/workspaces/universal/rust/polymarket_dual_project/.venv/bin/python",
     "python_version": "3.14.2 (main, Jan 20 2026, 13:54:38) [GCC 13.3.0]"
   },
   "git": {
     "execution": {
       "branch": "v0.25-sdk-sign-only",
-      "head": "3be83cb53ead8a981a3829c7d538e747115e43f5",
+      "head": "76fdb3ee136b0350e4718fff60a1edcee1f67d03",
       "path": "polymarket-execution-engine",
       "status_clean": false,
-      "status_entry_count": 78
+      "status_entry_count": 95
     },
     "hermes": {
       "branch": "v0.25-sdk-sign-only",
       "head": "bb16582e299f9e6f8da6044226e33900c4e2459d",
       "path": "hermes-polymarket-control",
-      "status_clean": true,
-      "status_entry_count": 0
+      "status_clean": false,
+      "status_entry_count": 5
     },
     "integration": {
       "branch": "v0.25-sdk-sign-only",
-      "head": "722c0b785a54e3ce44ab055875b15b176c93cd77",
+      "head": "a562b9b6a04fd6c37f517e1d107ca5842c126e10",
       "path": ".",
       "status_clean": false,
-      "status_entry_count": 1
+      "status_entry_count": 21
     },
-    "submodules": "bb16582e299f9e6f8da6044226e33900c4e2459d hermes-polymarket-control (heads/v0.25-sdk-sign-only)\n 3be83cb53ead8a981a3829c7d538e747115e43f5 polymarket-execution-engine (heads/v0.25-sdk-sign-only)"
+    "submodules": "bb16582e299f9e6f8da6044226e33900c4e2459d hermes-polymarket-control (heads/v0.25-sdk-sign-only)\n 76fdb3ee136b0350e4718fff60a1edcee1f67d03 polymarket-execution-engine (heads/v0.25-sdk-sign-only)"
   },
   "integration_root": "/workspaces/universal/rust/polymarket_dual_project",
   "platform": {
@@ -65,6 +65,19 @@
       "stderr": "",
       "stdout": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)"
     },
+    "pip_freeze": {
+      "available": true,
+      "command": [
+        "/workspaces/universal/rust/polymarket_dual_project/.venv/bin/python",
+        "-m",
+        "pip",
+        "freeze",
+        "--all"
+      ],
+      "exit_status": 0,
+      "stderr": "",
+      "stdout": "annotated-types==0.7.0\nanyio==4.13.0\ncertifi==2026.5.20\nh11==0.16.0\n-e git+file:///workspaces/universal/rust/hermes-polymarket-control@bb16582e299f9e6f8da6044226e33900c4e2459d#egg=hermes_polymarket_control&subdirectory=../../hermes-polymarket-control\nhttpcore==1.0.9\nhttpx==0.28.1\nidna==3.15\niniconfig==2.3.0\npackaging==26.2\npip==26.1.1\npluggy==1.6.0\npydantic==2.13.4\npydantic_core==2.46.4\nPygments==2.20.0\npytest==9.0.3\nPyYAML==6.0.3\ntyping-inspection==0.4.2\ntyping_extensions==4.15.0"
+    },
     "psql": {
       "available": true,
       "command": [
@@ -78,7 +91,7 @@
     "python": {
       "available": true,
       "command": [
-        "/usr/local/python/current/bin/python",
+        "/workspaces/universal/rust/polymarket_dual_project/.venv/bin/python",
         "--version"
       ],
       "exit_status": 0,

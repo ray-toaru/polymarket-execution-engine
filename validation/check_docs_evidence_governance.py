@@ -57,11 +57,20 @@ def sha256(path: Path) -> str:
 
 def validate_root_docs(failures: list[str]) -> None:
     stale = []
+    historical_content = []
     for path in ROOT.glob("*.md"):
         if any(pattern.match(path.name) for pattern in STALE_ROOT_PATTERNS):
             stale.append(path.name)
+        first_line = path.read_text(errors="replace").splitlines()[:1]
+        if first_line and re.search(r"\bHistorical v0\.", first_line[0], re.IGNORECASE):
+            historical_content.append(path.name)
     if stale:
         failures.append("stale historical root docs must live in docs/archive: " + ", ".join(sorted(stale)))
+    if historical_content:
+        failures.append(
+            "historical version root docs must live in docs/archive: "
+            + ", ".join(sorted(historical_content))
+        )
     if not (ROOT / "DOC_STATUS.md").exists():
         failures.append("DOC_STATUS.md missing")
 

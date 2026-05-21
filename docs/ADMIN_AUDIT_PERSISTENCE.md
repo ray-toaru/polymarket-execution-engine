@@ -27,4 +27,9 @@ Query behavior:
 - operation, principal, result, and correlation-id filters are applied before
   cursor pagination.
 
-Current boundary: this is not yet a complete compliance audit subsystem. It does not persist unauthorized requests without a principal, and cancel/reconcile still remain scaffold operations.
+Current boundary: this is not yet a complete compliance audit subsystem. It
+does not persist unauthorized requests without a principal, and cancel/reconcile
+remain non-live scaffold operations. `/v1/admin/cancel-order` records local
+cancel intent and returns a reconcile-required receipt without calling a remote
+cancel API. `/v1/admin/reconcile` records local reconcile context and optional
+local order-lifecycle divergence without remote reconciliation reads.

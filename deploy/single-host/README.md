@@ -6,7 +6,11 @@ Status: limited deployment scaffold only. This is not production-ready evidence
 and does not authorize live submit, live cancel, production deployment, or a
 real-funds canary fill.
 
-This directory contains reference-only deployment templates for a single host:
+This directory contains reference-only deployment templates for a single host.
+The `pmx-api` unit is a scaffold/startup check only: the current `pmx-api`
+binary initializes the application graph and exits without binding an HTTP listener.
+It is intentionally not a runnable API service until a future reviewed deployment
+phase adds listener, healthcheck, and store/gateway wiring.
 
 - `systemd/pmx-api.service`
 - `systemd/pmx-real-funds-canary@.service`

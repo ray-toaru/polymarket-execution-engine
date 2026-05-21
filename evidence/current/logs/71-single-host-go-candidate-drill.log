@@ -1,5 +1,5 @@
 {
-  "artifact_sha256": "3ddd06c39d36046bd7d9ab833eb963786cb3c95a7ed94b99d9921dd474bf3e74",
+  "artifact_sha256": "1f60f7741b67ee056fcb053570f7808568ac59d8628da73be8e02c4de1a88b9b",
   "evidence_manifest_bound": true,
   "failures": [],
   "go_candidate_committed": false,

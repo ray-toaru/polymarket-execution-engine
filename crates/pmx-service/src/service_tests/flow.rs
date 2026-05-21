@@ -126,6 +126,7 @@ async fn static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks() 
         .await
         .expect("plan");
     assert_eq!(plan.status, PlanStatus::Ready);
+    assert_eq!(plan.max_exposure, DecimalString("1".into()));
     let outcome = service
         .submit_plan(SubmitPlanCommand {
             execution_id: plan.execution_id.clone(),

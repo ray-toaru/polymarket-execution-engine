@@ -23,6 +23,7 @@ def forbidden(path: str, *, dev_worktree: bool = False) -> bool:
             return False
     return (
         any(part in FORBIDDEN_PARTS for part in parts)
+        or any(part.endswith(".egg-info") for part in parts)
         or suffix in FORBIDDEN_SUFFIXES
         or name in forbidden_filenames
     )

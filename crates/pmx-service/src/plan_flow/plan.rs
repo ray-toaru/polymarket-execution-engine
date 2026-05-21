@@ -1,6 +1,6 @@
 use pmx_core::{
     ApprovalReceipt, ConstraintDecision, DecisionStatus, ExecutionPlanSummary, FeasibilitySnapshot,
-    HashValue, NormalizedIntent, PlanStatus, canonical_json_sha256,
+    HashValue, NormalizedIntent, PlanStatus, QuantityBound, canonical_json_sha256,
 };
 use pmx_store::ExecutionStore;
 
@@ -63,6 +63,12 @@ where
     } else {
         PlanStatus::Blocked
     };
+    let max_exposure = match &normalized.quantity_bound {
+        QuantityBound::WorstCaseQuoteNotional(value) => value.clone(),
+        QuantityBound::WorstCaseBaseShares(_) | QuantityBound::Unsupported(_) => {
+            pmx_core::DecimalString("0".into())
+        }
+    };
     let execution_id = format!("exec-{}", normalized.normalized_intent_id);
     let mut plan = ExecutionPlanSummary {
         execution_id,
@@ -72,9 +78,9 @@ where
         decision_id: decision.decision_id.clone(),
         plan_hash: HashValue("pending".into()),
         status,
-        max_exposure: pmx_core::DecimalString("0".into()),
+        max_exposure,
         explanation: vec![
-            "v0.15 server-authoritative ID-bound service with admin audit scaffold; live signing/posting remain disabled".into(),
+            "server-authoritative non-live plan; live signing/posting remain disabled".into(),
             format!("approval_id={}", approval.approval_id),
             format!("snapshot_id={}", snapshot.snapshot_id),
         ],

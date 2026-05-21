@@ -1,11 +1,11 @@
 [Unit]
-Description=Polymarket execution API (single-host limited)
+Description=Polymarket execution API scaffold check (single-host limited; no listener)
 Documentation=file:/opt/polymarket-execution-engine/deploy/single-host/README.md
 After=network-online.target postgresql.service
 Wants=network-online.target
 
 [Service]
-Type=simple
+Type=oneshot
 User=pmx
 Group=pmx
 WorkingDirectory=/opt/polymarket-execution-engine
@@ -17,8 +17,7 @@ Environment=PMX_ALLOW_LIVE_SUBMIT=0
 Environment=PMX_ALLOW_LIVE_CANCEL=0
 Environment=PMX_ALLOW_REAL_FUNDS_CANARY=0
 ExecStart=/opt/polymarket-execution-engine/bin/pmx-api
-Restart=on-failure
-RestartSec=5s
+Restart=no
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict

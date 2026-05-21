@@ -14,6 +14,8 @@ pub enum CoreError {
     InvalidQuantity(String),
     #[error("limit_price must be a canonical decimal in (0, 1]: {0}")]
     InvalidLimitPrice(String),
+    #[error("hash value must be a lowercase 64-character sha256 hex string: {0}")]
+    InvalidHashValue(String),
     #[error("unsupported quantity bound for side: {0}")]
     UnsupportedQuantityBound(String),
     #[error("canonical JSON serialization failed: {0}")]
