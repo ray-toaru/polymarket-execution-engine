@@ -108,6 +108,8 @@ def run_rehearsal(output_dir: Path, args: argparse.Namespace) -> tuple[list[str]
         args.execution_id,
         "--plan-hash",
         args.plan_hash,
+        "--market-file",
+        str(output_dir / "candidate-market.json"),
         "--allow-live-submit-config",
         "--allow-real-funds-canary-config",
     ]

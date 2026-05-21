@@ -195,7 +195,7 @@ def main() -> int:
         "required_before_armed": [
             "reviewed release decision JSON bound to artifact and evidence manifest",
             "complete external references with no placeholders and no secret values",
-            "externally selected candidate-market.json validated by execution-engine dry-run",
+            "externally selected candidate-market.json prepared from read-only release-prep tooling and validated by execution-engine dry-run",
             "balance and allowance check",
             "explicit --armed operator command",
         ],
@@ -223,6 +223,8 @@ def main() -> int:
                 "- external_references_json: `external-references.json`",
                 "- candidate_market_json: `candidate-market.json`",
                 "- candidate market discovery is outside the execution engine boundary",
+                "- from the integration repository root, replace the placeholder candidate with:",
+                "  `python scripts/prepare_canary_candidate_market.py --output /tmp/pmx-canary-review/candidate-market.json --audit-output /tmp/pmx-canary-review/candidate-market.audit.json`",
                 "",
             ]
         )

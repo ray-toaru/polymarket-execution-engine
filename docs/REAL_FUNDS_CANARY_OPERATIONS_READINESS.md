@@ -43,6 +43,18 @@ python validation/validate_controlled_canary_external_references.py \
   --allow-placeholders
 ```
 
+From the integration repository root, the placeholder `candidate-market.json`
+can be replaced with a read-only public API candidate and audit sidecar:
+
+```bash
+python scripts/prepare_canary_candidate_market.py \
+  --output /tmp/pmx-canary-review/candidate-market.json \
+  --audit-output /tmp/pmx-canary-review/candidate-market.audit.json
+```
+
+The helper does not approve live trading. The resulting candidate still must be
+reviewed and validated by the execution-engine dry-run command in the package.
+
 Before an operator-reviewed candidate can be used, every `REPLACE_WITH_*`
 placeholder must be replaced with an external reference only. Secret values,
 private keys, raw signatures, raw signed payloads, and signed order envelopes
