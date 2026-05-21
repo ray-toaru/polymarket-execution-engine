@@ -30,7 +30,8 @@ Canary scope:
 - `FOK_LIMIT_FILL`
 - `max_order_notional_usd = 1`
 - `max_daily_notional_usd = 5`
-- `auto_high_liquidity_market_selection = true`
+- `external_candidate_market_required = true`
+- `engine_market_discovery_allowed = false`
 - `max_spread_bps = 250`
 - `remote_unknown_freeze_clear = true`
 
@@ -56,4 +57,5 @@ Execution policy:
 
 - Normal validation runs only the preflight drill and must not call the SDK submit path.
 - A real canary run requires a fresh artifact hash, current evidence manifest hash, explicit local approval file, and all runtime gates.
+- Candidate market discovery is outside the execution engine boundary. The execution engine validates an externally reviewed candidate against CLOB book/spread and risk gates.
 - Recovery or availability improvements must not automatically enable live submit or real-funds canary.

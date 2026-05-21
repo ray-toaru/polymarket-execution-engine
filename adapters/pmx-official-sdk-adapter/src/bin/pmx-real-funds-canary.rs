@@ -1,10 +1,11 @@
 use pmx_core::{AccountId, ExecutionId, HashValue};
 use pmx_official_sdk_adapter::{
     BuildRealFundsCanaryPreconditionsInput, LiveCanaryPreconditions, OfficialSdkAdapterConfig,
-    RealFundsCanaryApproval, RealFundsCanaryMarketDiagnostics, RealFundsCanaryRequest,
-    RealFundsCanaryRiskLimits, ReviewedRealFundsCanaryReleaseDecision,
-    build_real_funds_canary_preconditions, discover_real_funds_canary_market_with_diagnostics,
-    run_real_funds_canary_fok_fill, validate_reviewed_real_funds_canary_release_decision,
+    RealFundsCanaryApproval, RealFundsCanaryMarketCandidate, RealFundsCanaryMarketDiagnostics,
+    RealFundsCanaryRequest, RealFundsCanaryRiskLimits, ReviewedRealFundsCanaryReleaseDecision,
+    build_real_funds_canary_preconditions, run_real_funds_canary_fok_fill,
+    validate_real_funds_canary_market_with_diagnostics,
+    validate_reviewed_real_funds_canary_release_decision,
 };
 use serde::Serialize;
 use std::collections::HashMap;
@@ -22,6 +23,7 @@ struct Args {
     execution_id: String,
     plan_hash: String,
     daily_used_notional_usd: String,
+    market_file: PathBuf,
     release_decision_file: Option<PathBuf>,
     dry_run: bool,
     armed: bool,
@@ -76,17 +78,20 @@ async fn main() -> anyhow::Result<()> {
     } else {
         false
     };
-    let discovery = discover_real_funds_canary_market_with_diagnostics(
+    let market_candidate: RealFundsCanaryMarketCandidate =
+        serde_json::from_str(&std::fs::read_to_string(&args.market_file)?)?;
+    let validation = validate_real_funds_canary_market_with_diagnostics(
         &config,
         &approval.max_order_notional_usd,
+        market_candidate,
     )
     .await?;
-    if discovery.diagnostics.market_discovery_truncated {
+    let Some(market) = validation.selection else {
         let report = CanaryCliReport {
             status: if args.armed {
-                "armed_blocked_market_discovery_truncated".into()
+                "armed_blocked_unsafe_market_candidate".into()
             } else {
-                "dry_run_blocked_market_discovery_truncated".into()
+                "dry_run_blocked_unsafe_market_candidate".into()
             },
             dry_run: args.dry_run,
             armed: args.armed,
@@ -95,32 +100,7 @@ async fn main() -> anyhow::Result<()> {
             limit_price: None,
             size: None,
             notional_usd: None,
-            market_diagnostics: discovery.diagnostics,
-            approval_hash: approval.approval_hash,
-            artifact_bound: approval.artifact_sha256 == args.artifact_sha256,
-            evidence_manifest_bound: approval.evidence_manifest_sha256
-                == args.evidence_manifest_sha256,
-            release_decision_bound,
-            live_submit_allowed: false,
-            real_funds_canary_allowed: false,
-            posted: false,
-            remote_side_effects: false,
-            raw_signed_order_exposed: false,
-        };
-        println!("{}", serde_json::to_string_pretty(&report)?);
-        return Ok(());
-    }
-    let Some(market) = discovery.selection else {
-        let report = CanaryCliReport {
-            status: "dry_run_blocked_no_safe_market".into(),
-            dry_run: true,
-            armed: false,
-            selected_market_id_hash: None,
-            selected_token_id_hash: None,
-            limit_price: None,
-            size: None,
-            notional_usd: None,
-            market_diagnostics: discovery.diagnostics,
+            market_diagnostics: validation.diagnostics,
             approval_hash: approval.approval_hash,
             artifact_bound: approval.artifact_sha256 == args.artifact_sha256,
             evidence_manifest_bound: approval.evidence_manifest_sha256
@@ -210,7 +190,7 @@ async fn main() -> anyhow::Result<()> {
         limit_price: Some(market.limit_price),
         size: Some(market.size),
         notional_usd: Some(market.notional_usd),
-        market_diagnostics: discovery.diagnostics,
+        market_diagnostics: validation.diagnostics,
         approval_hash: approval.approval_hash,
         artifact_bound: approval.artifact_sha256 == args.artifact_sha256,
         evidence_manifest_bound: approval.evidence_manifest_sha256 == args.evidence_manifest_sha256,
@@ -260,6 +240,7 @@ fn parse_args() -> anyhow::Result<Args> {
         account_id: required(&values, "--account-id")?,
         execution_id: required(&values, "--execution-id")?,
         plan_hash: required(&values, "--plan-hash")?,
+        market_file: required(&values, "--market-file")?.into(),
         release_decision_file: values.get("--release-decision-file").map(PathBuf::from),
         daily_used_notional_usd: values
             .get("--daily-used-notional-usd")

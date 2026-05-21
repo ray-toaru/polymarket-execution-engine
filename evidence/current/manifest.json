@@ -21,9 +21,9 @@
   ],
   "artifact": {
     "binding_note": "External sidecar manifest binds the final zip hash; the in-archive manifest remains source-candidate evidence and cannot self-bind its containing zip.",
-    "name": "polymarket-execution-suite-v0.25.0.zip",
-    "path": "dist/polymarket-execution-suite-v0.25.0.zip",
-    "sha256": "3ddd06c39d36046bd7d9ab833eb963786cb3c95a7ed94b99d9921dd474bf3e74"
+    "name": null,
+    "path": null,
+    "sha256": null
   },
   "artifact_kind": "source_candidate",
   "canonical_evidence_dir": "polymarket-execution-engine/evidence/current",
@@ -82,7 +82,7 @@
     ],
     "status": "pass"
   },
-  "generated_at": "2026-05-21T13:36:55.020873+00:00",
+  "generated_at": "2026-05-21T20:26:08.335186+00:00",
   "live_canary_blocked_validation": {
     "logs": [
       {
@@ -454,10 +454,10 @@
   "real_funds_canary_preflight_validation": {
     "logs": [
       {
-        "bytes": 596,
+        "bytes": 645,
         "command": "python validation/run_real_funds_canary_preflight_drill.py",
         "path": "polymarket-execution-engine/evidence/current/logs/65-real-funds-canary-preflight.log",
-        "sha256": "7a81d13f0319faea067dd5576df4b404f4257eff2559402d63345544f552037b"
+        "sha256": "d5890cfda68b3685f05dc48d58ef251d321ee12b3720d022962570063f250e0c"
       }
     ],
     "status": "pass"
@@ -465,10 +465,10 @@
   "real_funds_canary_ready_validation": {
     "logs": [
       {
-        "bytes": 295,
+        "bytes": 292,
         "command": "python validation/run_real_funds_canary_ready_drill.py",
         "path": "polymarket-execution-engine/evidence/current/logs/67-real-funds-canary-ready-drill.log",
-        "sha256": "bc330a7a00fefe7585a51acb04b60c23d34e152cce2dc465fe1e4d85839ee966"
+        "sha256": "4e2c196948d7f8201c18d22f761240bf7a45d8dfd00d08914106eb10e3b745dd"
       }
     ],
     "status": "pass"

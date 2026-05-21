@@ -1,8 +1,8 @@
 use crate::{
     OfficialSdkAdapterConfig, OfficialSdkAdapterError, RealFundsCanaryMarketCandidate,
-    RealFundsCanaryMarketDiscovery, RealFundsCanaryMarketDiscoveryCursorTracker,
-    RealFundsCanaryMarketSelection, RealFundsCanaryReceipt, RealFundsCanaryRequest,
-    select_real_funds_canary_market_with_diagnostics, validate_real_funds_canary_preconditions,
+    RealFundsCanaryMarketSelection, RealFundsCanaryMarketValidation, RealFundsCanaryReceipt,
+    RealFundsCanaryRequest, select_real_funds_canary_market_with_diagnostics,
+    validate_real_funds_canary_preconditions,
 };
 
 use super::shared::{authenticated_sdk_client, sdk_call_timeout, signer_from_env};
@@ -16,10 +16,6 @@ use polymarket_client_sdk_v2::clob::types::{
 use polymarket_client_sdk_v2::types::{Decimal as SdkDecimal, U256 as SdkU256};
 use std::{cmp::Ordering, str::FromStr};
 use tokio::time;
-
-const TERMINAL_CURSOR: &str = "LTE=";
-const DEFAULT_MARKET_DISCOVERY_MAX_PAGES: u64 = 100;
-const HARD_MARKET_DISCOVERY_MAX_PAGES: u64 = 250;
 
 pub async fn run_real_funds_canary_fok_fill(
     config: &OfficialSdkAdapterConfig,
@@ -87,134 +83,93 @@ pub async fn run_real_funds_canary_fok_fill(
     })
 }
 
-pub async fn discover_real_funds_canary_market(
+pub async fn validate_real_funds_canary_market(
     config: &OfficialSdkAdapterConfig,
     max_notional_usd: &str,
+    candidate: RealFundsCanaryMarketCandidate,
 ) -> anyhow::Result<RealFundsCanaryMarketSelection> {
-    let discovery =
-        discover_real_funds_canary_market_with_diagnostics(config, max_notional_usd).await?;
-    if discovery.diagnostics.market_discovery_truncated {
-        return Err(OfficialSdkAdapterError::SafetyGate(
-            "real funds canary market discovery was truncated before terminal cursor".into(),
-        )
-        .into());
-    }
-    discovery.selection.ok_or_else(|| {
+    let validation =
+        validate_real_funds_canary_market_with_diagnostics(config, max_notional_usd, candidate)
+            .await?;
+    validation.selection.ok_or_else(|| {
         OfficialSdkAdapterError::SafetyGate(
-            "no high-liquidity market candidate satisfied real funds canary constraints".into(),
+            "provided market candidate did not satisfy real funds canary constraints".into(),
         )
         .into()
     })
 }
 
-pub async fn discover_real_funds_canary_market_with_diagnostics(
+pub async fn validate_real_funds_canary_market_with_diagnostics(
     config: &OfficialSdkAdapterConfig,
     max_notional_usd: &str,
-) -> anyhow::Result<RealFundsCanaryMarketDiscovery> {
+    candidate: RealFundsCanaryMarketCandidate,
+) -> anyhow::Result<RealFundsCanaryMarketValidation> {
     let client = SdkClient::new(
         &config.clob_host,
         polymarket_client_sdk_v2::clob::Config::builder()
             .use_server_time(true)
             .build(),
     )
-    .context("creating public official SDK client for real-funds canary market discovery")?;
+    .context("creating public official SDK client for real-funds canary market validation")?;
     let timeout = sdk_call_timeout();
-    let max_pages = market_discovery_max_pages()?;
-    let mut candidates = Vec::new();
-    let mut cursor = None;
-    let mut cursor_tracker = RealFundsCanaryMarketDiscoveryCursorTracker::new();
 
-    while cursor_tracker.pages_scanned() < max_pages {
-        let page = time::timeout(timeout, client.simplified_markets(cursor.take()))
-            .await
-            .map_err(|_| {
-                anyhow::anyhow!("official SDK simplified_markets() timed out after {timeout:?}")
-            })?
-            .context("official SDK simplified_markets() failed")?;
+    let token_id = SdkU256::from_str(&candidate.token_id)
+        .map_err(|e| OfficialSdkAdapterError::InvalidInput(format!("invalid token_id: {e}")))?;
+    let order_book = time::timeout(
+        timeout,
+        client.order_book(
+            &OrderBookSummaryRequest::builder()
+                .token_id(token_id)
+                .build(),
+        ),
+    )
+    .await
+    .map_err(|_| anyhow::anyhow!("official SDK order_book() timed out after {timeout:?}"))?
+    .context("official SDK order_book() failed during canary market validation")?;
+    let spread = time::timeout(
+        timeout,
+        client.spread(&SpreadRequest::builder().token_id(token_id).build()),
+    )
+    .await
+    .map_err(|_| anyhow::anyhow!("official SDK spread() timed out after {timeout:?}"))?
+    .context("official SDK spread() failed during canary market validation")?;
 
-        for market in page.data.iter().filter(|market| {
-            market.active && !market.closed && !market.archived && market.accepting_orders
-        }) {
-            let Some(condition_id) = market.condition_id.as_ref() else {
-                continue;
-            };
-            for token in &market.tokens {
-                let order_book = time::timeout(
-                    timeout,
-                    client.order_book(
-                        &OrderBookSummaryRequest::builder()
-                            .token_id(token.token_id)
-                            .build(),
-                    ),
-                )
-                .await
-                .map_err(|_| {
-                    anyhow::anyhow!("official SDK order_book() timed out after {timeout:?}")
-                })?
-                .context("official SDK order_book() failed during canary market discovery")?;
-                let spread = time::timeout(
-                    timeout,
-                    client.spread(&SpreadRequest::builder().token_id(token.token_id).build()),
-                )
-                .await
-                .map_err(|_| anyhow::anyhow!("official SDK spread() timed out after {timeout:?}"))?
-                .context("official SDK spread() failed during canary market discovery")?;
-
-                let Some(best_ask) = order_book.asks.iter().min_by(|left, right| {
-                    decimal_for_sort(&left.price.to_string())
-                        .partial_cmp(&decimal_for_sort(&right.price.to_string()))
-                        .unwrap_or(Ordering::Equal)
-                }) else {
-                    continue;
-                };
-                let spread_bps = decimal_to_bps(&spread.spread.to_string()).unwrap_or(u64::MAX);
-                let liquidity_score = decimal_scaled_u64(&best_ask.size.to_string()).unwrap_or(0);
-                candidates.push(RealFundsCanaryMarketCandidate {
-                    market_id: condition_id.to_string(),
-                    token_id: token.token_id.to_string(),
-                    active: market.active,
-                    accepting_orders: market.accepting_orders,
-                    closed: market.closed,
-                    archived: market.archived,
-                    best_ask: best_ask.price.to_string(),
-                    ask_size: best_ask.size.to_string(),
-                    spread_bps,
-                    min_order_size: order_book.min_order_size.to_string(),
-                    liquidity_score,
-                });
-            }
-        }
-
-        cursor = cursor_tracker.observe_page(page.next_cursor, TERMINAL_CURSOR)?;
-        if cursor.is_none() {
-            break;
-        }
-    }
-
-    let mut discovery =
-        select_real_funds_canary_market_with_diagnostics(&candidates, max_notional_usd);
-    discovery.diagnostics.market_pages_scanned = cursor_tracker.pages_scanned();
-    discovery.diagnostics.market_discovery_complete = cursor_tracker.terminal_reached();
-    discovery.diagnostics.market_discovery_truncated = cursor_tracker.truncated();
-    Ok(discovery)
-}
-
-fn market_discovery_max_pages() -> anyhow::Result<u64> {
-    let Some(value) = std::env::var("PMX_REAL_FUNDS_MARKET_DISCOVERY_MAX_PAGES")
-        .ok()
-        .filter(|value| !value.trim().is_empty())
-    else {
-        return Ok(DEFAULT_MARKET_DISCOVERY_MAX_PAGES);
+    let refreshed_candidate = RealFundsCanaryMarketCandidate {
+        best_ask: order_book
+            .asks
+            .iter()
+            .min_by(|left, right| {
+                decimal_for_sort(&left.price.to_string())
+                    .partial_cmp(&decimal_for_sort(&right.price.to_string()))
+                    .unwrap_or(Ordering::Equal)
+            })
+            .map(|ask| ask.price.to_string())
+            .unwrap_or_default(),
+        ask_size: order_book
+            .asks
+            .iter()
+            .min_by(|left, right| {
+                decimal_for_sort(&left.price.to_string())
+                    .partial_cmp(&decimal_for_sort(&right.price.to_string()))
+                    .unwrap_or(Ordering::Equal)
+            })
+            .map(|ask| ask.size.to_string())
+            .unwrap_or_default(),
+        spread_bps: decimal_to_bps(&spread.spread.to_string()).unwrap_or(u64::MAX),
+        min_order_size: order_book.min_order_size.to_string(),
+        liquidity_score: order_book
+            .asks
+            .iter()
+            .map(|ask| decimal_scaled_u64(&ask.size.to_string()).unwrap_or(0))
+            .max()
+            .unwrap_or(0),
+        ..candidate
     };
-    let parsed = value.parse::<u64>().with_context(|| {
-        format!("invalid PMX_REAL_FUNDS_MARKET_DISCOVERY_MAX_PAGES value: {value}")
-    })?;
-    if parsed == 0 || parsed > HARD_MARKET_DISCOVERY_MAX_PAGES {
-        anyhow::bail!(
-            "PMX_REAL_FUNDS_MARKET_DISCOVERY_MAX_PAGES must be between 1 and {HARD_MARKET_DISCOVERY_MAX_PAGES}"
-        );
-    }
-    Ok(parsed)
+
+    Ok(select_real_funds_canary_market_with_diagnostics(
+        &[refreshed_candidate],
+        max_notional_usd,
+    ))
 }
 
 fn decimal_to_bps(value: &str) -> Option<u64> {

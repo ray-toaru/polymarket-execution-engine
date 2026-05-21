@@ -3,7 +3,7 @@
   "cli_defaults_to_dry_run": true,
   "entrypoint": "pmx-real-funds-canary",
   "failures": [],
-  "market_selection": "official-sdk-read-only-auto-selection",
+  "market_selection": "external-candidate-clob-validation",
   "posted": false,
   "program_ready": true,
   "remote_side_effects": false,

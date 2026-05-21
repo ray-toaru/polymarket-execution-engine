@@ -108,6 +108,10 @@ def main() -> int:
         failures.append("canary systemd unit must start pmx-real-funds-canary binary")
     if "--dry-run" not in canary_service:
         failures.append("canary systemd unit must run dry-run mode")
+    if "PMX_CANARY_MARKET_FILE" not in canary_env:
+        failures.append("canary env must require external candidate market file")
+    if "--market-file ${PMX_CANARY_MARKET_FILE}" not in canary_service:
+        failures.append("canary systemd unit must pass external candidate market file")
     for forbidden in ["--armed", "--allow-live-submit-config", "--allow-real-funds-canary-config"]:
         if forbidden in canary_service:
             failures.append(f"canary systemd unit must not include {forbidden}")

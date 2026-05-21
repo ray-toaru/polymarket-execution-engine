@@ -1,11 +1,10 @@
 use chrono::{DateTime, Utc};
-use std::collections::HashSet;
 
 use crate::{
     ENV_ALLOW_REAL_FUNDS_CANARY, OfficialSdkAdapterConfig, OfficialSdkAdapterError,
     RealFundsCanaryApproval, RealFundsCanaryMarketCandidate, RealFundsCanaryMarketDiagnostics,
-    RealFundsCanaryMarketDiscovery, RealFundsCanaryMarketRejectionCounts,
-    RealFundsCanaryMarketSelection, RealFundsCanaryPreconditions, RealFundsCanaryRequest,
+    RealFundsCanaryMarketRejectionCounts, RealFundsCanaryMarketSelection,
+    RealFundsCanaryMarketValidation, RealFundsCanaryPreconditions, RealFundsCanaryRequest,
     RealFundsCanaryRiskLimits, ReviewedRealFundsCanaryReleaseDecision, env_flag,
     validate_live_submit_canary_preconditions,
 };
@@ -13,49 +12,6 @@ use crate::{
 const REAL_FUNDS_CANARY_SCOPE: &str = "REAL_FUNDS_CANARY";
 const REAL_FUNDS_CANARY_EXECUTION_STYLE: &str = "FOK_LIMIT_FILL";
 const MAX_SPREAD_BPS: u64 = 250;
-
-#[derive(Debug, Default)]
-pub struct RealFundsCanaryMarketDiscoveryCursorTracker {
-    seen_cursors: HashSet<String>,
-    pages_scanned: u64,
-    terminal_reached: bool,
-}
-
-impl RealFundsCanaryMarketDiscoveryCursorTracker {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn observe_page(
-        &mut self,
-        next_cursor: String,
-        terminal_cursor: &str,
-    ) -> Result<Option<String>, OfficialSdkAdapterError> {
-        self.pages_scanned += 1;
-        if next_cursor.is_empty() || next_cursor == terminal_cursor {
-            self.terminal_reached = true;
-            return Ok(None);
-        }
-        if !self.seen_cursors.insert(next_cursor.clone()) {
-            return Err(OfficialSdkAdapterError::SafetyGate(
-                "real funds canary market discovery repeated cursor".into(),
-            ));
-        }
-        Ok(Some(next_cursor))
-    }
-
-    pub fn pages_scanned(&self) -> u64 {
-        self.pages_scanned
-    }
-
-    pub fn terminal_reached(&self) -> bool {
-        self.terminal_reached
-    }
-
-    pub fn truncated(&self) -> bool {
-        !self.terminal_reached
-    }
-}
 
 pub struct BuildRealFundsCanaryPreconditionsInput<'a> {
     pub approval: &'a RealFundsCanaryApproval,
@@ -251,7 +207,7 @@ pub fn select_real_funds_canary_market(
 pub fn select_real_funds_canary_market_with_diagnostics(
     candidates: &[RealFundsCanaryMarketCandidate],
     max_notional_usd: &str,
-) -> RealFundsCanaryMarketDiscovery {
+) -> RealFundsCanaryMarketValidation {
     let diagnostics = diagnose_real_funds_canary_markets(candidates, max_notional_usd);
     let selection = candidates
         .iter()
@@ -271,7 +227,7 @@ pub fn select_real_funds_canary_market_with_diagnostics(
                 "highest liquidity candidate within active/accepting/spread/min-order/notional-depth constraints"
                     .into(),
         });
-    RealFundsCanaryMarketDiscovery {
+    RealFundsCanaryMarketValidation {
         selection,
         diagnostics,
     }
@@ -325,9 +281,7 @@ pub fn diagnose_real_funds_canary_markets(
     }
 
     RealFundsCanaryMarketDiagnostics {
-        market_pages_scanned: 0,
-        market_discovery_complete: true,
-        market_discovery_truncated: false,
+        market_validation_complete: true,
         candidates_seen: candidates.len() as u64,
         safe_candidates,
         max_ask_size: max_ask_size.map(format_decimal_summary),

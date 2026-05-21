@@ -149,6 +149,22 @@ def main() -> int:
     (out / "release-decision.json").write_text(
         json.dumps(release_decision, indent=2, sort_keys=True) + "\n"
     )
+    candidate_market = {
+        "active": False,
+        "accepting_orders": False,
+        "archived": False,
+        "ask_size": "0",
+        "best_ask": "0",
+        "closed": True,
+        "liquidity_score": 0,
+        "market_id": "REPLACE_WITH_REVIEWED_CONDITION_ID",
+        "min_order_size": "0",
+        "spread_bps": 2**64 - 1,
+        "token_id": "REPLACE_WITH_REVIEWED_CLOB_TOKEN_ID",
+    }
+    (out / "candidate-market.json").write_text(
+        json.dumps(candidate_market, indent=2, sort_keys=True) + "\n"
+    )
 
     dry_run_command = [
         "cargo run --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml",
@@ -161,6 +177,7 @@ def main() -> int:
         "--account-id acct-canary",
         "--execution-id exec-canary-dry-run-<UTC_TIMESTAMP>",
         "--plan-hash plan-canary-dry-run-<UTC_TIMESTAMP>",
+        "--market-file candidate-market.json",
     ]
     review = {
         "schema_version": 1,
@@ -178,7 +195,7 @@ def main() -> int:
         "required_before_armed": [
             "reviewed release decision JSON bound to artifact and evidence manifest",
             "complete external references with no placeholders and no secret values",
-            "successful dry-run with a safe market candidate",
+            "externally selected candidate-market.json validated by execution-engine dry-run",
             "balance and allowance check",
             "explicit --armed operator command",
         ],
@@ -204,6 +221,8 @@ def main() -> int:
                 "- remote_side_effects: `false`",
                 "- secrets_included: `false`",
                 "- external_references_json: `external-references.json`",
+                "- candidate_market_json: `candidate-market.json`",
+                "- candidate market discovery is outside the execution engine boundary",
                 "",
             ]
         )

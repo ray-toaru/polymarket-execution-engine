@@ -123,47 +123,6 @@ fn real_funds_market_selector_uses_price_times_ask_size_for_depth() {
 }
 
 #[test]
-fn real_funds_market_discovery_cursor_tracker_marks_terminal_page_complete() {
-    let mut tracker = RealFundsCanaryMarketDiscoveryCursorTracker::new();
-    let next = tracker
-        .observe_page("cursor-2".into(), "terminal")
-        .expect("first non-terminal cursor should be accepted");
-    assert_eq!(next.as_deref(), Some("cursor-2"));
-
-    let next = tracker
-        .observe_page("terminal".into(), "terminal")
-        .expect("terminal cursor should complete discovery");
-    assert!(next.is_none());
-    assert_eq!(tracker.pages_scanned(), 2);
-    assert!(tracker.terminal_reached());
-    assert!(!tracker.truncated());
-}
-
-#[test]
-fn real_funds_market_discovery_cursor_tracker_marks_max_page_stop_truncated() {
-    let mut tracker = RealFundsCanaryMarketDiscoveryCursorTracker::new();
-    let next = tracker
-        .observe_page("cursor-2".into(), "terminal")
-        .expect("first non-terminal cursor should be accepted");
-    assert_eq!(next.as_deref(), Some("cursor-2"));
-    assert_eq!(tracker.pages_scanned(), 1);
-    assert!(!tracker.terminal_reached());
-    assert!(tracker.truncated());
-}
-
-#[test]
-fn real_funds_market_discovery_cursor_tracker_rejects_repeated_cursor() {
-    let mut tracker = RealFundsCanaryMarketDiscoveryCursorTracker::new();
-    tracker
-        .observe_page("cursor-2".into(), "terminal")
-        .expect("first cursor should be accepted");
-    let err = tracker
-        .observe_page("cursor-2".into(), "terminal")
-        .expect_err("repeated cursor must fail closed");
-    assert!(err.to_string().contains("repeated cursor"));
-}
-
-#[test]
 fn real_funds_canary_caps_fail_closed() {
     let approval = approval_fixture();
     let risk_limits = RealFundsCanaryRiskLimits {

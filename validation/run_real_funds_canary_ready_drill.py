@@ -52,13 +52,14 @@ def main() -> int:
     for token in [
         "--dry-run",
         "--armed",
+        "--market-file",
         "--release-decision-file",
         "run_real_funds_canary_fok_fill",
-        "discover_real_funds_canary_market_with_diagnostics",
+        "validate_real_funds_canary_market_with_diagnostics",
         "PMX_ALLOW_LIVE_SUBMIT",
         "PMX_ALLOW_REAL_FUNDS_CANARY",
         "PMX_BALANCE_ALLOWANCE_CHECKED",
-        "dry_run_blocked_no_safe_market",
+        "dry_run_blocked_unsafe_market_candidate",
         "release_decision_bound",
         "posted: false",
         "remote_side_effects: false",
@@ -71,13 +72,21 @@ def main() -> int:
 
     live = LIVE_CANARY.read_text() if LIVE_CANARY.exists() else ""
     for token in [
-        "simplified_markets(None)",
         "OrderBookSummaryRequest",
         "SpreadRequest",
-        "select_real_funds_canary_market",
+        "select_real_funds_canary_market_with_diagnostics",
     ]:
         if token not in live:
-            failures.append(f"live canary market discovery missing token: {token}")
+            failures.append(f"live canary market validation missing token: {token}")
+    forbidden_live_tokens = [
+        "simplified_markets",
+        "markets(",
+        "sampling_markets",
+        "sampling_simplified_markets",
+    ]
+    for token in forbidden_live_tokens:
+        if token in live:
+            failures.append(f"live canary runtime must not perform active market discovery: {token}")
     if len(re.findall(r"\.\s*post_order\s*\(", live)) != 1:
         failures.append("live canary SDK runtime must still contain exactly one post_order call")
 
@@ -89,7 +98,7 @@ def main() -> int:
         "remote_side_effects": False,
         "cli_defaults_to_dry_run": True,
         "entrypoint": "pmx-real-funds-canary",
-        "market_selection": "official-sdk-read-only-auto-selection",
+        "market_selection": "external-candidate-clob-validation",
         "failures": failures,
     }
     print(json.dumps(result, indent=2, sort_keys=True))

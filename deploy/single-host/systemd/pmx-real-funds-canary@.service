@@ -20,6 +20,7 @@ Environment=PMX_ALLOW_REAL_FUNDS_CANARY=0
 ExecStart=/opt/polymarket-execution-engine/bin/pmx-real-funds-canary \
   --dry-run \
   --approval-file ${PMX_CANARY_APPROVAL_FILE} \
+  --market-file ${PMX_CANARY_MARKET_FILE} \
   --release-decision-file ${PMX_CANARY_RELEASE_DECISION_FILE} \
   --artifact-sha256 ${PMX_CANARY_ARTIFACT_SHA256} \
   --evidence-manifest-sha256 ${PMX_CANARY_EVIDENCE_MANIFEST_SHA256} \

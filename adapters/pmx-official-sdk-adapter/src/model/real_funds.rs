@@ -70,9 +70,7 @@ pub struct RealFundsCanaryMarketRejectionCounts {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RealFundsCanaryMarketDiagnostics {
-    pub market_pages_scanned: u64,
-    pub market_discovery_complete: bool,
-    pub market_discovery_truncated: bool,
+    pub market_validation_complete: bool,
     pub candidates_seen: u64,
     pub safe_candidates: u64,
     pub max_ask_size: Option<String>,
@@ -83,7 +81,7 @@ pub struct RealFundsCanaryMarketDiagnostics {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct RealFundsCanaryMarketDiscovery {
+pub struct RealFundsCanaryMarketValidation {
     pub selection: Option<RealFundsCanaryMarketSelection>,
     pub diagnostics: RealFundsCanaryMarketDiagnostics,
 }
