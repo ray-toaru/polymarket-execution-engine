@@ -82,7 +82,7 @@
     ],
     "status": "pass"
   },
-  "generated_at": "2026-05-21T20:56:46.133317+00:00",
+  "generated_at": "2026-05-21T21:32:55.762022+00:00",
   "live_canary_blocked_validation": {
     "logs": [
       {
@@ -586,22 +586,22 @@
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       {
-        "bytes": 1478,
+        "bytes": 1258,
         "command": "cargo check --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --locked",
         "path": "polymarket-execution-engine/evidence/current/logs/09-sdk-adapter-check.log",
-        "sha256": "e3f7dc9c6f827914673f7e3a93f21cc1951c6f3fb230d686a4b4e0bb9868a05f"
+        "sha256": "d73d91832bd63d06383b039eb2c98787939b77b6d8d982887e3f0b9e94334aab"
       },
       {
-        "bytes": 8556,
+        "bytes": 7084,
         "command": "cargo clippy --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --all-targets --all-features --locked -- -D warnings",
         "path": "polymarket-execution-engine/evidence/current/logs/10-sdk-adapter-clippy.log",
-        "sha256": "20f6fff7f072cdb960a597a2bb05c7c01a084d4d4c90575be7391fa3f190b75a"
+        "sha256": "c46f62596dcd70364bd30c43976789773674d35f2c11cec9ba7ab9b7961a2bb5"
       },
       {
-        "bytes": 5105,
+        "bytes": 4706,
         "command": "cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --locked",
         "path": "polymarket-execution-engine/evidence/current/logs/11-sdk-adapter-test.log",
-        "sha256": "ad03ea5a456852d280429da941acbc7f6fead01b5d994562e64a484001c50312"
+        "sha256": "f79f1a9cdec43850d742f639e3cb5ace386cd630a67566550769127286ef1d9f"
       },
       {
         "bytes": 11254,

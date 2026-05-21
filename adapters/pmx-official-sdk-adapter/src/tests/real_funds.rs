@@ -123,6 +123,50 @@ fn real_funds_market_selector_uses_price_times_ask_size_for_depth() {
 }
 
 #[test]
+fn real_funds_market_selector_compares_min_order_to_implied_size_not_notional() {
+    let candidates = vec![
+        RealFundsCanaryMarketCandidate {
+            market_id: "market-low-price-safe-size".into(),
+            token_id: "123".into(),
+            active: true,
+            accepting_orders: true,
+            closed: false,
+            archived: false,
+            best_ask: "0.001".into(),
+            ask_size: "2000".into(),
+            spread_bps: 10,
+            min_order_size: "5".into(),
+            liquidity_score: 10,
+        },
+        RealFundsCanaryMarketCandidate {
+            market_id: "market-high-price-small-size".into(),
+            token_id: "456".into(),
+            active: true,
+            accepting_orders: true,
+            closed: false,
+            archived: false,
+            best_ask: "0.75".into(),
+            ask_size: "10".into(),
+            spread_bps: 10,
+            min_order_size: "2".into(),
+            liquidity_score: 999,
+        },
+    ];
+    let selected = select_real_funds_canary_market(&candidates, "1")
+        .expect("low-price candidate implies enough shares for the min order size");
+    assert_eq!(selected.market_id, "market-low-price-safe-size");
+
+    let diagnostics = select_real_funds_canary_market_with_diagnostics(&candidates, "1");
+    assert_eq!(
+        diagnostics
+            .diagnostics
+            .rejection_counts
+            .min_order_size_above_order_size,
+        1
+    );
+}
+
+#[test]
 fn real_funds_canary_caps_fail_closed() {
     let approval = approval_fixture();
     let risk_limits = RealFundsCanaryRiskLimits {
@@ -242,8 +286,8 @@ fn real_funds_market_diagnostics_are_aggregate_and_fail_closed() {
             accepting_orders: true,
             closed: false,
             archived: false,
-            best_ask: "0.49".into(),
-            ask_size: "0.25".into(),
+            best_ask: "0.75".into(),
+            ask_size: "10".into(),
             spread_bps: 50,
             min_order_size: "2".into(),
             liquidity_score: 1,
@@ -259,10 +303,13 @@ fn real_funds_market_diagnostics_are_aggregate_and_fail_closed() {
     assert_eq!(discovery.diagnostics.rejection_counts.spread_too_wide, 1);
     assert_eq!(
         discovery.diagnostics.rejection_counts.insufficient_ask_size,
-        1
+        0
     );
     assert_eq!(
-        discovery.diagnostics.rejection_counts.min_order_above_cap,
+        discovery
+            .diagnostics
+            .rejection_counts
+            .min_order_size_above_order_size,
         1
     );
 

@@ -64,7 +64,7 @@ pub struct RealFundsCanaryMarketRejectionCounts {
     pub spread_too_wide: u64,
     pub missing_or_zero_best_ask: u64,
     pub insufficient_ask_size: u64,
-    pub min_order_above_cap: u64,
+    pub min_order_size_above_order_size: u64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

@@ -271,8 +271,8 @@ pub fn diagnose_real_funds_canary_markets(
         if !best_ask_notional_gte(candidate, max_notional_usd) {
             rejection_counts.insufficient_ask_size += 1;
         }
-        if !decimal_lte(&candidate.min_order_size, max_notional_usd) {
-            rejection_counts.min_order_above_cap += 1;
+        if !min_order_size_lte_implied_order_size(candidate, max_notional_usd) {
+            rejection_counts.min_order_size_above_order_size += 1;
             min_order_size_blocks = true;
         }
         if market_candidate_is_safe(candidate, max_notional_usd) {
@@ -302,7 +302,7 @@ pub fn market_candidate_is_safe(
         && candidate.spread_bps <= MAX_SPREAD_BPS
         && decimal_gt_zero(&candidate.best_ask)
         && best_ask_notional_gte(candidate, max_notional_usd)
-        && decimal_lte(&candidate.min_order_size, max_notional_usd)
+        && min_order_size_lte_implied_order_size(candidate, max_notional_usd)
 }
 
 fn valid_approval(approval: &RealFundsCanaryApproval) -> bool {
@@ -346,6 +346,20 @@ fn best_ask_notional_gte(candidate: &RealFundsCanaryMarketCandidate, cap: &str) 
         parse_decimal(cap),
     ) {
         (Some(price), Some(size), Some(cap)) => price * size >= cap,
+        _ => false,
+    }
+}
+
+fn min_order_size_lte_implied_order_size(
+    candidate: &RealFundsCanaryMarketCandidate,
+    cap: &str,
+) -> bool {
+    match (
+        parse_decimal(&candidate.min_order_size),
+        parse_decimal(cap),
+        parse_decimal(&candidate.best_ask),
+    ) {
+        (Some(min_size), Some(cap), Some(price)) if price > 0.0 => min_size <= cap / price,
         _ => false,
     }
 }
