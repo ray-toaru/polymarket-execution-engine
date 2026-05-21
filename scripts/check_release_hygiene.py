@@ -9,6 +9,7 @@ FORBIDDEN_PARTS = {".venv", "venv", "__pycache__", ".pytest_cache", ".mypy_cache
 FORBIDDEN_SUFFIXES = {".pyc", ".pyo", ".sqlite", ".sqlite3", ".db"}
 FORBIDDEN_FILENAMES = {".env"}
 DEV_WORKTREE_ALLOWED_FILENAMES = {".env"}
+DEV_WORKTREE_ALLOWED_ROOT_DIRS = {".venv", "venv"}
 
 
 def forbidden(path: str, *, dev_worktree: bool = False) -> bool:
@@ -18,6 +19,8 @@ def forbidden(path: str, *, dev_worktree: bool = False) -> bool:
     forbidden_filenames = FORBIDDEN_FILENAMES
     if dev_worktree:
         forbidden_filenames = forbidden_filenames - DEV_WORKTREE_ALLOWED_FILENAMES
+        if parts and parts[0] in DEV_WORKTREE_ALLOWED_ROOT_DIRS:
+            return False
     return (
         any(part in FORBIDDEN_PARTS for part in parts)
         or suffix in FORBIDDEN_SUFFIXES
