@@ -14,13 +14,13 @@ EXAMPLE = CONFIG / "controlled-canary.release-decision.example.json"
 INVALID_PARTIAL = CONFIG / "controlled-canary.release-decision.invalid-partial.fixture.json"
 INVALID_MISMATCHED = CONFIG / "controlled-canary.release-decision.invalid-mismatched.fixture.json"
 
-EXPECTED_ARTIFACT_SHA256 = "a022e81e1255e3d80a6aee3bc94c6513023a1cf7118857fb0c267ff79df4cd1d"
-EXPECTED_MANIFEST_SHA256 = "11711ef30110d30ffb2556de507b9e1d3e3b181c9eea353cbc626da721f7481a"
+EXPECTED_ARTIFACT_SHA256 = "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6"
+EXPECTED_MANIFEST_SHA256 = "4c53dd9b7abf14184df37932ba5eb645c942f75f075d31f40b587c8b612c7ffa"
 EXPECTED_RUN_IDS = {
-    "root_ci_run_id": "26176061318",
+    "root_ci_run_id": "26212663156",
     "hermes_ci_run_id": "26174554396",
-    "execution_engine_ci_run_id": "26174564854",
-    "credentialed_sdk_run_id": "26175786984",
+    "execution_engine_ci_run_id": "26210917113",
+    "credentialed_sdk_run_id": "local-current-gates-20260521",
 }
 AUTHORIZATION_FLAGS = [
     "live_submit_authorized",

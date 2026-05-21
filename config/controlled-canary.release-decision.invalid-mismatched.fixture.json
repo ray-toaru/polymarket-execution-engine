@@ -10,10 +10,10 @@
   "artifact_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
   "evidence_manifest_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
   "github_evidence": {
-    "root_ci_run_id": "26176061318",
+    "root_ci_run_id": "26212663156",
     "hermes_ci_run_id": "26174554396",
-    "execution_engine_ci_run_id": "26174564854",
-    "credentialed_sdk_run_id": "26175786984"
+    "execution_engine_ci_run_id": "26210917113",
+    "credentialed_sdk_run_id": "local-current-gates-20260521"
   },
   "external_references": {
     "secret_custody_ref": "kms-review://example",

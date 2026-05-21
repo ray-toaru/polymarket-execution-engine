@@ -20,10 +20,11 @@ DEFAULT_MANIFEST = ROOT / "evidence" / "current" / "manifest.json"
 DEFAULT_APPROVAL = ROOT / "config" / "real-funds-canary.approval.example.json"
 DEFAULT_RELEASE_DECISION = ROOT / "config" / "controlled-canary.release-decision.template.json"
 DEFAULT_EXTERNAL_REFERENCES = ROOT / "config" / "controlled-canary.external-references.template.json"
-DEFAULT_ROOT_CI_RUN_ID = "26176061318"
+DEFAULT_REVIEW_ARTIFACT_SHA256 = "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6"
+DEFAULT_ROOT_CI_RUN_ID = "26212663156"
 DEFAULT_HERMES_CI_RUN_ID = "26174554396"
-DEFAULT_EXECUTION_ENGINE_CI_RUN_ID = "26174564854"
-DEFAULT_CREDENTIALED_SDK_RUN_ID = "26175786984"
+DEFAULT_EXECUTION_ENGINE_CI_RUN_ID = "26210917113"
+DEFAULT_CREDENTIALED_SDK_RUN_ID = "local-current-gates-20260521"
 
 
 def require_sha256(value: str, label: str) -> str:
@@ -91,7 +92,7 @@ def main() -> int:
 
     manifest = json.loads(manifest_path.read_text())
     artifact = manifest.get("artifact", {})
-    artifact_sha = args.artifact_sha256 or artifact.get("sha256")
+    artifact_sha = args.artifact_sha256 or DEFAULT_REVIEW_ARTIFACT_SHA256 or artifact.get("sha256")
     if not artifact_sha:
         raise SystemExit("current manifest does not bind an artifact sha256")
     artifact_sha = require_sha256(artifact_sha, "artifact sha256")

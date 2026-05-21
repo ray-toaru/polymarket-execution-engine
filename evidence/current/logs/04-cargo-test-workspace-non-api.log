@@ -3,9 +3,9 @@
    Compiling serde_core v1.0.228
    Compiling cfg-if v1.0.4
    Compiling serde v1.0.228
-   Compiling rand_core v0.10.1
-   Compiling serde_json v1.0.149
    Compiling memchr v2.8.0
+   Compiling serde_json v1.0.149
+   Compiling rand_core v0.10.1
    Compiling zmij v1.0.21
    Compiling itoa v1.0.18
    Compiling getrandom v0.4.2
@@ -26,8 +26,8 @@
    Compiling errno v0.3.14
    Compiling pin-project-lite v0.2.17
    Compiling signal-hook-registry v1.4.8
-   Compiling socket2 v0.6.3
    Compiling mio v1.2.0
+   Compiling socket2 v0.6.3
    Compiling cmov v0.5.3
    Compiling ctutils v0.4.2
    Compiling tokio v1.52.3
@@ -40,35 +40,35 @@
    Compiling tinyvec v1.11.0
    Compiling unicode-normalization v0.1.25
    Compiling chacha20 v0.10.0
-   Compiling unicode-properties v0.1.4
    Compiling unicode-bidi v0.3.18
+   Compiling unicode-properties v0.1.4
    Compiling futures-core v0.3.32
    Compiling futures-sink v0.3.32
    Compiling stringprep v0.1.5
    Compiling rand v0.10.1
    Compiling sha2 v0.11.0
-   Compiling hmac v0.13.0
    Compiling md-5 v0.11.0
-   Compiling byteorder v1.5.0
-   Compiling scopeguard v1.2.0
-   Compiling base64 v0.22.1
-   Compiling smallvec v1.15.1
+   Compiling hmac v0.13.0
    Compiling fallible-iterator v0.2.0
    Compiling siphasher v1.0.3
-   Compiling phf_shared v0.13.1
+   Compiling base64 v0.22.1
+   Compiling smallvec v1.15.1
+   Compiling byteorder v1.5.0
+   Compiling scopeguard v1.2.0
+   Compiling lock_api v0.4.14
    Compiling postgres-protocol v0.6.11
    Compiling parking_lot_core v0.9.12
-   Compiling lock_api v0.4.14
+   Compiling phf_shared v0.13.1
    Compiling futures-task v0.3.32
    Compiling futures-util v0.3.32
+   Compiling phf v0.13.1
    Compiling parking_lot v0.12.5
    Compiling postgres-types v0.2.13
-   Compiling phf v0.13.1
    Compiling futures-channel v0.3.32
    Compiling tokio-util v0.7.18
    Compiling whoami v2.1.2
-   Compiling log v0.4.29
    Compiling percent-encoding v2.3.2
+   Compiling log v0.4.29
    Compiling tokio-postgres v0.7.17
    Compiling pmx-store v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
    Compiling pmx-runtime v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
@@ -77,7 +77,7 @@
    Compiling pmx-gateway v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
    Compiling pmx-authz v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-authz)
    Compiling pmx-release v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-release)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 18s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 10s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-604ea22cf138d17e)
 
 running 2 tests
@@ -204,7 +204,7 @@ test service::tests::sign_only::standard::service_derives_standard_sign_only_ref
 test service::tests::sign_only::standard::service_records_standard_sign_only_construction_without_raw_payload ... ok
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 
-test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.09s
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.06s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-ad3acbdc89aeb574)
 
@@ -257,7 +257,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 47 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.53s
+test result: ok. 47 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.04s
 
    Doc-tests pmx_authz
 
