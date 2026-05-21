@@ -67,3 +67,9 @@ It still must report `live_submit_allowed=false`,
 `live_cancel_allowed=false`, `real_funds_canary_authorized=false`,
 `remote_side_effects=false`, and `secrets_included=false` unless a later
 reviewed release decision explicitly changes that boundary.
+
+`validation/run_real_funds_canary_blocked_rehearsal_package.py` exercises that
+boundary by generating a complete review package, invoking the real-funds
+canary CLI with `--armed` and local allow-config flags, and proving a `no_go`
+adapter release decision blocks execution at the release-decision gate before
+posting, cancelling, raw signed order exposure, or remote side effects.

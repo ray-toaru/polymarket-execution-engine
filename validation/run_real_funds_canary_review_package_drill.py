@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "validation" / "prepare_real_funds_canary_review.py"
 DECISION_VALIDATOR = ROOT / "validation" / "validate_controlled_canary_release_decision.py"
 EXTERNAL_REFERENCES_VALIDATOR = ROOT / "validation" / "validate_controlled_canary_external_references.py"
+BLOCKED_REHEARSAL = ROOT / "validation" / "run_real_funds_canary_blocked_rehearsal_package.py"
 EXTERNAL_REFERENCES_EXAMPLE = ROOT / "config" / "controlled-canary.external-references.example.json"
 EXTERNAL_REFERENCES_TEMPLATE = ROOT / "config" / "controlled-canary.external-references.template.json"
 DOC = ROOT / "docs" / "REAL_FUNDS_CANARY_OPERATIONS_READINESS.md"
@@ -69,6 +70,17 @@ def main() -> int:
     if references_validator.returncode != 0:
         failures.append(
             f"controlled canary external-reference validation failed: {references_validator.stderr.strip() or references_validator.stdout.strip()}"
+        )
+    blocked_rehearsal = subprocess.run(
+        ["python", str(BLOCKED_REHEARSAL)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if blocked_rehearsal.returncode != 0:
+        failures.append(
+            f"blocked real-funds canary rehearsal package failed: {blocked_rehearsal.stderr.strip() or blocked_rehearsal.stdout.strip()}"
         )
     concrete_references_validator = subprocess.run(
         ["python", str(EXTERNAL_REFERENCES_VALIDATOR), "--file", str(EXTERNAL_REFERENCES_EXAMPLE)],
