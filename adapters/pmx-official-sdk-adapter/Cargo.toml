@@ -11,6 +11,7 @@ sdk-typecheck = ["dep:polymarket_client_sdk_v2"]
 authenticated-smoke = ["sdk-typecheck", "dep:tokio", "dep:anyhow"]
 sign-only-dry-run = ["sdk-typecheck", "dep:tokio", "dep:anyhow"]
 live-submit = ["sdk-typecheck", "dep:tokio", "dep:anyhow"]
+data-readback = ["sdk-typecheck", "dep:tokio", "dep:anyhow", "polymarket_client_sdk_v2/data"]
 
 [[bin]]
 name = "pmx-real-funds-canary"
@@ -26,6 +27,11 @@ required-features = ["live-submit"]
 name = "pmx-query-trades"
 path = "src/bin/pmx-query-trades.rs"
 required-features = ["live-submit"]
+
+[[bin]]
+name = "pmx-query-account-activity"
+path = "src/bin/pmx-query-account-activity.rs"
+required-features = ["data-readback"]
 
 [dependencies]
 pmx-core = { path = "../../crates/pmx-core" }
