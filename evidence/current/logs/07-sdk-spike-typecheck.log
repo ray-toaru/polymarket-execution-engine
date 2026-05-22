@@ -1,27 +1,14 @@
-   Compiling httparse v1.10.1
-   Compiling icu_collections v2.2.0
-   Compiling icu_normalizer v2.2.0
-   Compiling icu_properties v2.2.0
-   Compiling idna_adapter v1.2.2
-   Compiling idna v1.1.0
-   Compiling hyper v1.9.0
-   Compiling hyper-util v0.1.20
-   Compiling url v2.5.8
-   Compiling tungstenite v0.29.0
-   Compiling tower-http v0.6.10
-   Compiling hyper-rustls v0.27.9
-   Compiling reqwest v0.13.3
-   Compiling tokio-tungstenite v0.29.0
-   Compiling polymarket_client_sdk_v2 v0.6.0-canary.1
+   Compiling pmx-core v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
+   Compiling pmx-gateway v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
    Compiling pmx-official-sdk-spike v0.0.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-spike)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 19.71s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.65s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-spike/target/debug/deps/pmx_official_sdk_spike-f25e455305249ea8)
 
 running 2 tests
 test tests::live_submit_is_disabled_by_default ... ok
 test tests::read_only_ok_smoke ... ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.67s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.06s
 
    Doc-tests pmx_official_sdk_spike
 

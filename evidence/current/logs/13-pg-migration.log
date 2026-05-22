@@ -1,3 +1,4 @@
+applying migrations/0001_initial.sql
 psql:migrations/0001_initial.sql:4: NOTICE:  table "plan_summaries" does not exist, skipping
 DROP TABLE
 psql:migrations/0001_initial.sql:12: NOTICE:  relation "runtime_accounts" already exists, skipping
@@ -86,3 +87,32 @@ psql:migrations/0001_initial.sql:256: NOTICE:  relation "idx_admin_audit_result_
 CREATE INDEX
 psql:migrations/0001_initial.sql:258: NOTICE:  relation "idx_admin_audit_correlation_id" already exists, skipping
 CREATE INDEX
+applying migrations/0002_migration_framework.sql
+psql:migrations/0002_migration_framework.sql:6: NOTICE:  relation "schema_migrations" already exists, skipping
+CREATE TABLE
+applying migrations/0003_order_event_trace.sql
+psql:migrations/0003_order_event_trace.sql:2: NOTICE:  column "correlation_id" of relation "order_events" already exists, skipping
+ALTER TABLE
+psql:migrations/0003_order_event_trace.sql:6: NOTICE:  relation "idx_order_events_order_correlation" already exists, skipping
+CREATE INDEX
+applying migrations/0004_real_funds_canary.sql
+psql:migrations/0004_real_funds_canary.sql:28: NOTICE:  relation "real_funds_canary_runs" already exists, skipping
+CREATE TABLE
+psql:migrations/0004_real_funds_canary.sql:31: NOTICE:  relation "idx_real_funds_canary_account_created" already exists, skipping
+CREATE INDEX
+psql:migrations/0004_real_funds_canary.sql:34: NOTICE:  relation "idx_real_funds_canary_execution" already exists, skipping
+CREATE INDEX
+applying migrations/0005_constraint_decision_snapshot_nullable.sql
+ALTER TABLE
+applying migrations/0006_runtime_kill_switch_scope.sql
+psql:migrations/0006_runtime_kill_switch_scope.sql:2: NOTICE:  column "kill_switch_version" of relation "runtime_accounts" already exists, skipping
+ALTER TABLE
+psql:migrations/0006_runtime_kill_switch_scope.sql:5: NOTICE:  column "kill_switch_reason" of relation "runtime_accounts" already exists, skipping
+ALTER TABLE
+psql:migrations/0006_runtime_kill_switch_scope.sql:8: NOTICE:  column "kill_switch_updated_at" of relation "runtime_accounts" already exists, skipping
+ALTER TABLE
+psql:migrations/0006_runtime_kill_switch_scope.sql:11: NOTICE:  relation "idx_runtime_accounts_kill_switch" already exists, skipping
+CREATE INDEX
+applying migrations/0007_runtime_global_kill_switch.sql
+psql:migrations/0007_runtime_global_kill_switch.sql:7: NOTICE:  relation "runtime_global_controls" already exists, skipping
+CREATE TABLE

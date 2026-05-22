@@ -1,4 +1,5 @@
 {
+  "api_bind_smoke": true,
   "api_service_present": true,
   "canary_runner_mode": "dry-run",
   "deployment_profile": "single-host-limited",
