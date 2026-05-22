@@ -13,12 +13,12 @@ TEMPLATE = CONFIG / "controlled-canary.external-references.template.json"
 EXAMPLE = CONFIG / "controlled-canary.external-references.example.json"
 INVALID_SENSITIVE = CONFIG / "controlled-canary.external-references.invalid-sensitive.fixture.json"
 
-EXPECTED_ARTIFACT_SHA256 = "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6"
-EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256 = "a67cff633141e1c619b4d422cbc6e09e427d004d9580996c4f00e31d7bebcafd"
+EXPECTED_ARTIFACT_SHA256 = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256 = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
 EXPECTED_RUN_IDS = {
-    "root_ci_run_id": "26254755001",
-    "hermes_ci_run_id": "26198048337",
-    "execution_engine_ci_run_id": "26254745573",
+    "root_ci_run_id": "26268697168",
+    "hermes_ci_run_id": "26267887116",
+    "execution_engine_ci_run_id": "26268276210",
     "credentialed_sdk_run_id": "local-current-gates-20260521",
 }
 REQUIRED_FIELDS = {
@@ -144,8 +144,8 @@ def validate_shape(data: dict[str, Any], label: str, *, allow_placeholders: bool
     failures: list[str] = []
     if data.get("schema_version") != 1:
         failures.append(f"{label}: schema_version must be 1")
-    if data.get("source_release") != "v0.25.0":
-        failures.append(f"{label}: source_release must be v0.25.0")
+    if data.get("source_release") != "v0.26.0":
+        failures.append(f"{label}: source_release must be v0.26.0")
     if data.get("references_only_no_secret_values") is not True:
         failures.append(f"{label}: references_only_no_secret_values must be true")
     for flag in AUTHORIZATION_FLAGS:
@@ -223,9 +223,9 @@ def main() -> int:
 
     failures.extend(validate_shape(example, "example", allow_placeholders=False))
     if example.get("artifact_sha256") != EXPECTED_ARTIFACT_SHA256:
-        failures.append("example must bind v0.25.0 artifact SHA-256")
+        failures.append("example must bind v0.26.0 artifact SHA-256")
     if example.get("evidence_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256:
-        failures.append("example must bind reviewed v0.25.0 example evidence manifest SHA-256")
+        failures.append("example must bind reviewed v0.26.0 example evidence manifest SHA-256")
     for key, expected in EXPECTED_RUN_IDS.items():
         if example.get("github_evidence", {}).get(key) != expected:
             failures.append(f"example must bind GitHub evidence {key}")

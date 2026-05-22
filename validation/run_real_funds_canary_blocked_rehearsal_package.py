@@ -29,6 +29,14 @@ def resolve_input_path(path: Path) -> Path:
     return path
 
 
+def adapter_source_release() -> str:
+    for line in ADAPTER_MANIFEST.read_text().splitlines():
+        stripped = line.strip()
+        if stripped.startswith("version = "):
+            return "v" + stripped.split("=", 1)[1].strip().strip('"')
+    raise SystemExit(f"could not read adapter package version from {ADAPTER_MANIFEST}")
+
+
 def run_rehearsal(output_dir: Path, args: argparse.Namespace) -> tuple[list[str], int | None]:
     failures: list[str] = []
     external_references_file = resolve_input_path(args.external_references_file)
@@ -64,20 +72,39 @@ def run_rehearsal(output_dir: Path, args: argparse.Namespace) -> tuple[list[str]
         return failures, None
     review = load(output_dir / "review.json") if (output_dir / "review.json").exists() else {}
     approval = load(output_dir / "approval.json") if (output_dir / "approval.json").exists() else {}
+    release_decision = load(output_dir / "release-decision.json") if (output_dir / "release-decision.json").exists() else {}
     if review.get("live_submit_allowed") is not False:
         failures.append("review package must keep live_submit_allowed=false")
     if review.get("real_funds_canary_authorized") is not False:
         failures.append("review package must keep real_funds_canary_authorized=false")
 
     no_go_decision = {
+        **release_decision,
+        "schema_version": 1,
         "decision_id": "blocked-rehearsal-no-go",
+        "status": "reviewed_no_go_blocked_rehearsal",
+        "source_release": adapter_source_release(),
+        "decision": "no_go",
+        "decision_reason": "Blocked rehearsal must prove an armed command fails before any remote side effect.",
         "scope": "REAL_FUNDS_CANARY",
+        "execution_style": "FOK_LIMIT_FILL",
         "expires_at": "2099-01-01T00:00:00Z",
         "artifact_sha256": approval.get("artifact_sha256"),
         "evidence_manifest_sha256": approval.get("evidence_manifest_sha256"),
+        "market_candidate_sha256": approval.get("market_candidate_sha256"),
+        "github_evidence": release_decision.get("github_evidence", {}),
+        "external_references": release_decision.get("external_references", {}),
+        "risk_limits": release_decision.get("risk_limits", {}),
+        "required_review_signals": release_decision.get("required_review_signals", {}),
+        "live_submit_authorized": False,
+        "live_cancel_authorized": False,
+        "production_deployment_authorized": False,
+        "real_funds_canary_authorized": False,
+        "remote_side_effects_authorized": False,
         "allow_real_funds_canary": False,
         "reviewed_release_decision_present": True,
-        "operator_identity_ref": "local-blocked-rehearsal-operator",
+        "operator_identity_ref": approval.get("operator_identity_ref"),
+        "secrets_included": False,
     }
     decision_path = output_dir / "adapter-release-decision.no-go.json"
     decision_path.write_text(json.dumps(no_go_decision, indent=2, sort_keys=True) + "\n")
@@ -144,9 +171,9 @@ def main() -> int:
     parser.add_argument("--external-references-file", type=Path, default=EXTERNAL_REFERENCES_EXAMPLE)
     parser.add_argument("--artifact-sha256", default=EXAMPLE_REVIEW_ARTIFACT_SHA256)
     parser.add_argument("--evidence-manifest-sha256")
-    parser.add_argument("--root-ci-run-id", default="26254755001")
-    parser.add_argument("--hermes-ci-run-id", default="26198048337")
-    parser.add_argument("--execution-engine-ci-run-id", default="26254745573")
+    parser.add_argument("--root-ci-run-id", default="26268697168")
+    parser.add_argument("--hermes-ci-run-id", default="26267887116")
+    parser.add_argument("--execution-engine-ci-run-id", default="26268276210")
     parser.add_argument("--credentialed-sdk-run-id", default="local-current-gates-20260521")
     parser.add_argument("--idempotency-key", default="blocked-rehearsal-idempotency")
     parser.add_argument("--execution-id", default="blocked-rehearsal-execution")

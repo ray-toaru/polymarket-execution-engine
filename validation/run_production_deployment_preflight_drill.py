@@ -156,7 +156,7 @@ def main() -> int:
         "status": "fail" if failures else "pass",
         "artifact": {
             "path": str(artifact_path),
-            "sha256": artifact_sha,
+            "sha256": "external-sidecar-only" if artifact_sha else None,
             "artifact_sha256_verified": artifact_sha is not None,
             "artifact_sidecar_verified": sidecar_ok,
             "evidence_sidecar_verified": evidence_sidecar_ok,

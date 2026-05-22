@@ -3,16 +3,17 @@
   "decision_id": "controlled-canary-invalid-mismatched",
   "status": "reviewed_go",
   "decision": "go",
-  "decision_reason": "Invalid fixture: claims authorization while artifact and evidence hashes do not match the reviewed v0.25.0 baseline.",
-  "source_release": "v0.25.0",
+  "decision_reason": "Invalid fixture: claims authorization while the artifact, evidence, and market-candidate hashes do not match the reviewed v0.26.0 baseline.",
+  "source_release": "v0.26.0",
   "scope": "REAL_FUNDS_CANARY",
   "execution_style": "FOK_LIMIT_FILL",
   "artifact_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
   "evidence_manifest_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "market_candidate_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
   "github_evidence": {
-    "root_ci_run_id": "26254755001",
-    "hermes_ci_run_id": "26198048337",
-    "execution_engine_ci_run_id": "26254745573",
+    "root_ci_run_id": "26268697168",
+    "hermes_ci_run_id": "26267887116",
+    "execution_engine_ci_run_id": "26268276210",
     "credentialed_sdk_run_id": "local-current-gates-20260521"
   },
   "external_references": {
@@ -30,6 +31,7 @@
   "required_review_signals": {
     "artifact_hash_reviewed": true,
     "evidence_manifest_hash_reviewed": true,
+    "market_candidate_reviewed": true,
     "operator_dual_control_reviewed": true,
     "secret_custody_reviewed": true,
     "alerting_reviewed": true,
@@ -43,5 +45,8 @@
   "production_deployment_authorized": false,
   "real_funds_canary_authorized": true,
   "remote_side_effects_authorized": true,
+  "allow_real_funds_canary": true,
+  "reviewed_release_decision_present": true,
+  "operator_identity_ref": "local-operator-approval-ref",
   "secrets_included": false
 }

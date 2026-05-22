@@ -1,49 +1,49 @@
 {
-  "captured_at": "2026-05-21T22:59:33.722472+00:00",
+  "captured_at": "2026-05-22T05:27:36.190413+00:00",
   "dependency_locks": {
     "polymarket-execution-engine/Cargo.lock": {
       "exists": true,
-      "sha256": "d315dcab7ec9574da5ea7745252350b230d300a0149e589e0419afe5331ec4b2"
+      "sha256": "2e0c8460dc1bc34f59f01290859560e84c98173ad4778d51c2df50fe8e1d4c2e"
     },
     "polymarket-execution-engine/adapters/pmx-official-sdk-adapter/Cargo.lock": {
       "exists": true,
-      "sha256": "a4e9f35aef0f95c362b8461d5ff891e991840b4f2290791088ceaf0d3e3c84ff"
+      "sha256": "04ec2c2b9de70e41ba6022865f4e11d26e9615882584757f738ea4d3aad7240b"
     },
     "polymarket-execution-engine/adapters/pmx-official-sdk-spike/Cargo.lock": {
       "exists": true,
-      "sha256": "2e01a22e9a4a675b05d6e78dc2c9f2e3b6f1f4376c38432f1dac150bb8be0567"
+      "sha256": "253d5bb9478402948fb60b861b2c5b8bbeca812b13cf13b2805258865ac37cf4"
     }
   },
   "environment": {
-    "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE": "1",
-    "PMX_RUN_SIGN_ONLY_DRY_RUN": "1",
+    "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE": null,
+    "PMX_RUN_SIGN_ONLY_DRY_RUN": null,
     "PMX_TEST_DATABASE_URL_set": true,
-    "python_executable": "/workspaces/universal/rust/polymarket_dual_project/.venv/bin/python",
+    "python_executable": "/usr/local/python/current/bin/python",
     "python_version": "3.14.2 (main, Jan 20 2026, 13:54:38) [GCC 13.3.0]"
   },
   "git": {
     "execution": {
       "branch": "v0.25-sdk-sign-only",
-      "head": "76fdb3ee136b0350e4718fff60a1edcee1f67d03",
+      "head": "776af54961e4b584dc11f2318266c1889d146c2c",
       "path": "polymarket-execution-engine",
       "status_clean": false,
-      "status_entry_count": 95
+      "status_entry_count": 98
     },
     "hermes": {
       "branch": "v0.25-sdk-sign-only",
-      "head": "bb16582e299f9e6f8da6044226e33900c4e2459d",
+      "head": "cd6491df9a3a07028996159788e0b1366a44c0d9",
       "path": "hermes-polymarket-control",
       "status_clean": false,
-      "status_entry_count": 5
+      "status_entry_count": 2
     },
     "integration": {
       "branch": "v0.25-sdk-sign-only",
-      "head": "a562b9b6a04fd6c37f517e1d107ca5842c126e10",
+      "head": "34d5be31239b20089991147814edac9c66ca62ed",
       "path": ".",
       "status_clean": false,
       "status_entry_count": 21
     },
-    "submodules": "bb16582e299f9e6f8da6044226e33900c4e2459d hermes-polymarket-control (heads/v0.25-sdk-sign-only)\n 76fdb3ee136b0350e4718fff60a1edcee1f67d03 polymarket-execution-engine (heads/v0.25-sdk-sign-only)"
+    "submodules": "cd6491df9a3a07028996159788e0b1366a44c0d9 hermes-polymarket-control (heads/v0.25-sdk-sign-only)\n 776af54961e4b584dc11f2318266c1889d146c2c polymarket-execution-engine (heads/v0.25-sdk-sign-only)"
   },
   "integration_root": "/workspaces/universal/rust/polymarket_dual_project",
   "platform": {
@@ -68,7 +68,7 @@
     "pip_freeze": {
       "available": true,
       "command": [
-        "/workspaces/universal/rust/polymarket_dual_project/.venv/bin/python",
+        "/usr/local/python/current/bin/python",
         "-m",
         "pip",
         "freeze",
@@ -76,7 +76,7 @@
       ],
       "exit_status": 0,
       "stderr": "",
-      "stdout": "annotated-types==0.7.0\nanyio==4.13.0\ncertifi==2026.5.20\nh11==0.16.0\n-e git+file:///workspaces/universal/rust/hermes-polymarket-control@bb16582e299f9e6f8da6044226e33900c4e2459d#egg=hermes_polymarket_control&subdirectory=../../hermes-polymarket-control\nhttpcore==1.0.9\nhttpx==0.28.1\nidna==3.15\niniconfig==2.3.0\npackaging==26.2\npip==26.1.1\npluggy==1.6.0\npydantic==2.13.4\npydantic_core==2.46.4\nPygments==2.20.0\npytest==9.0.3\nPyYAML==6.0.3\ntyping-inspection==0.4.2\ntyping_extensions==4.15.0"
+      "stdout": "annotated-types==0.7.0\nanyio==4.13.0\ncertifi==2026.4.22\nh11==0.16.0\nhttpcore==1.0.9\nhttpx==0.28.1\nidna==3.15\npip==25.3\npydantic==2.13.4\npydantic_core==2.46.4\nPyYAML==6.0.3\ntyping-inspection==0.4.2\ntyping_extensions==4.15.0"
     },
     "psql": {
       "available": true,
@@ -91,7 +91,7 @@
     "python": {
       "available": true,
       "command": [
-        "/workspaces/universal/rust/polymarket_dual_project/.venv/bin/python",
+        "/usr/local/python/current/bin/python",
         "--version"
       ],
       "exit_status": 0,

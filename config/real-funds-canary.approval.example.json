@@ -6,6 +6,7 @@
   "expires_at": "2099-01-01T00:00:00Z",
   "artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
   "evidence_manifest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "market_candidate_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
   "max_order_notional_usd": "1",
   "max_daily_notional_usd": "5",
   "execution_style": "FOK_LIMIT_FILL",

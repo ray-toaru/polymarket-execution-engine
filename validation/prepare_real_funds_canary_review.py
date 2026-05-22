@@ -20,9 +20,9 @@ DEFAULT_MANIFEST = ROOT / "evidence" / "current" / "manifest.json"
 DEFAULT_APPROVAL = ROOT / "config" / "real-funds-canary.approval.example.json"
 DEFAULT_RELEASE_DECISION = ROOT / "config" / "controlled-canary.release-decision.template.json"
 DEFAULT_EXTERNAL_REFERENCES = ROOT / "config" / "controlled-canary.external-references.template.json"
-DEFAULT_ROOT_CI_RUN_ID = "26254755001"
-DEFAULT_HERMES_CI_RUN_ID = "26198048337"
-DEFAULT_EXECUTION_ENGINE_CI_RUN_ID = "26254745573"
+DEFAULT_ROOT_CI_RUN_ID = "26268697168"
+DEFAULT_HERMES_CI_RUN_ID = "26267887116"
+DEFAULT_EXECUTION_ENGINE_CI_RUN_ID = "26268276210"
 DEFAULT_CREDENTIALED_SDK_RUN_ID = "local-current-gates-20260521"
 
 
@@ -103,13 +103,41 @@ def main() -> int:
         "evidence manifest sha256",
     )
 
+    candidate_market = {
+        "active": False,
+        "accepting_orders": False,
+        "archived": False,
+        "ask_size": "0",
+        "best_ask": "0",
+        "book_snapshot_timestamp": "2099-01-01T00:00:00Z",
+        "closed": True,
+        "human_review_ref": "REPLACE_WITH_OPERATOR_MARKET_REVIEW_REFERENCE",
+        "liquidity_score": 0,
+        "market_id": "REPLACE_WITH_REVIEWED_CONDITION_ID",
+        "min_order_size": "0",
+        "order_type": "FOK",
+        "side": "BUY",
+        "spread_bps": 2**64 - 1,
+        "token_id": "REPLACE_WITH_REVIEWED_CLOB_TOKEN_ID",
+    }
+    candidate_market_bytes = (
+        json.dumps(candidate_market, indent=2, sort_keys=True) + "\n"
+    ).encode()
+    candidate_market_sha = hashlib.sha256(candidate_market_bytes).hexdigest()
+
     approval = json.loads(approval_template.read_text())
     approval["artifact_sha256"] = artifact_sha
     approval["evidence_manifest_sha256"] = manifest_sha
+    approval["market_candidate_sha256"] = candidate_market_sha
 
     release_decision = json.loads(release_decision_template.read_text())
     release_decision["artifact_sha256"] = artifact_sha
     release_decision["evidence_manifest_sha256"] = manifest_sha
+    release_decision["market_candidate_sha256"] = candidate_market_sha
+    release_decision["operator_identity_ref"] = approval["operator_identity_ref"]
+    release_decision["allow_real_funds_canary"] = bool(
+        release_decision.get("real_funds_canary_authorized")
+    )
     release_decision["github_evidence"] = {
         "root_ci_run_id": args.root_ci_run_id,
         "hermes_ci_run_id": args.hermes_ci_run_id,
@@ -151,22 +179,7 @@ def main() -> int:
     (out / "release-decision.json").write_text(
         json.dumps(release_decision, indent=2, sort_keys=True) + "\n"
     )
-    candidate_market = {
-        "active": False,
-        "accepting_orders": False,
-        "archived": False,
-        "ask_size": "0",
-        "best_ask": "0",
-        "closed": True,
-        "liquidity_score": 0,
-        "market_id": "REPLACE_WITH_REVIEWED_CONDITION_ID",
-        "min_order_size": "0",
-        "spread_bps": 2**64 - 1,
-        "token_id": "REPLACE_WITH_REVIEWED_CLOB_TOKEN_ID",
-    }
-    (out / "candidate-market.json").write_text(
-        json.dumps(candidate_market, indent=2, sort_keys=True) + "\n"
-    )
+    (out / "candidate-market.json").write_bytes(candidate_market_bytes)
 
     dry_run_command = [
         "cargo run --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml",
@@ -187,6 +200,7 @@ def main() -> int:
         "status": "review_package_only_not_armed_approval",
         "artifact_sha256": artifact_sha,
         "evidence_manifest_sha256": manifest_sha,
+        "market_candidate_sha256": candidate_market_sha,
         "github_evidence": release_decision["github_evidence"],
         "canonical_evidence_manifest": "polymarket-execution-engine/evidence/current/manifest.json",
         "dry_run_command": " ".join(dry_run_command),
@@ -226,7 +240,7 @@ def main() -> int:
                 "- candidate_market_json: `candidate-market.json`",
                 "- candidate market discovery is outside the execution engine boundary",
                 "- from the integration repository root, replace the placeholder candidate with:",
-                "  `python scripts/prepare_canary_candidate_market.py --output /tmp/pmx-canary-review/candidate-market.json --audit-output /tmp/pmx-canary-review/candidate-market.audit.json`",
+                "  `python scripts/prepare_canary_candidate_market.py --output /tmp/pmx-canary-review/candidate-market.json --audit-output /tmp/pmx-canary-review/candidate-market.audit.json --human-review-ref change-ticket://reviewed-canary-market`",
                 "",
             ]
         )

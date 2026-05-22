@@ -1,14 +1,15 @@
 {
   "schema_version": 1,
-  "decision_id": "controlled-canary-release-decision-template",
+  "decision_id": "controlled-canary-v0.26.0-release-decision-template",
   "status": "template_not_reviewed",
   "decision": "no_go",
   "decision_reason": "Template only. A reviewed decision package must replace all placeholders before any future controlled canary can be considered.",
-  "source_release": "v0.25.0",
+  "source_release": "v0.26.0",
   "scope": "REAL_FUNDS_CANARY",
   "execution_style": "FOK_LIMIT_FILL",
   "artifact_sha256": "REPLACE_WITH_RELEASE_ARTIFACT_SHA256",
   "evidence_manifest_sha256": "REPLACE_WITH_EVIDENCE_MANIFEST_SHA256",
+  "market_candidate_sha256": "REPLACE_WITH_REVIEWED_MARKET_CANDIDATE_SHA256",
   "github_evidence": {
     "root_ci_run_id": "REPLACE_WITH_ROOT_CI_RUN_ID",
     "hermes_ci_run_id": "REPLACE_WITH_HERMES_CI_RUN_ID",
@@ -30,6 +31,7 @@
   "required_review_signals": {
     "artifact_hash_reviewed": false,
     "evidence_manifest_hash_reviewed": false,
+    "market_candidate_reviewed": false,
     "operator_dual_control_reviewed": false,
     "secret_custody_reviewed": false,
     "alerting_reviewed": false,
@@ -43,5 +45,8 @@
   "production_deployment_authorized": false,
   "real_funds_canary_authorized": false,
   "remote_side_effects_authorized": false,
+  "allow_real_funds_canary": false,
+  "reviewed_release_decision_present": false,
+  "operator_identity_ref": "REPLACE_WITH_OPERATOR_IDENTITY_REFERENCE",
   "secrets_included": false
 }

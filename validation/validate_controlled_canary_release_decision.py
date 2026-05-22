@@ -14,12 +14,13 @@ EXAMPLE = CONFIG / "controlled-canary.release-decision.example.json"
 INVALID_PARTIAL = CONFIG / "controlled-canary.release-decision.invalid-partial.fixture.json"
 INVALID_MISMATCHED = CONFIG / "controlled-canary.release-decision.invalid-mismatched.fixture.json"
 
-EXPECTED_ARTIFACT_SHA256 = "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6"
-EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256 = "a67cff633141e1c619b4d422cbc6e09e427d004d9580996c4f00e31d7bebcafd"
+EXPECTED_ARTIFACT_SHA256 = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256 = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+EXPECTED_MARKET_CANDIDATE_SHA256 = "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
 EXPECTED_RUN_IDS = {
-    "root_ci_run_id": "26254755001",
-    "hermes_ci_run_id": "26198048337",
-    "execution_engine_ci_run_id": "26254745573",
+    "root_ci_run_id": "26268697168",
+    "hermes_ci_run_id": "26267887116",
+    "execution_engine_ci_run_id": "26268276210",
     "credentialed_sdk_run_id": "local-current-gates-20260521",
 }
 AUTHORIZATION_FLAGS = [
@@ -40,6 +41,7 @@ REQUIRED_EXTERNAL_REFS = [
 REQUIRED_REVIEW_SIGNALS = [
     "artifact_hash_reviewed",
     "evidence_manifest_hash_reviewed",
+    "market_candidate_reviewed",
     "operator_dual_control_reviewed",
     "secret_custody_reviewed",
     "alerting_reviewed",
@@ -59,6 +61,20 @@ FORBIDDEN_TEXT_TOKENS = [
 
 def load(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text())
+
+
+def expected_source_release() -> str:
+    in_workspace_package = False
+    for line in (ROOT / "Cargo.toml").read_text().splitlines():
+        stripped = line.strip()
+        if stripped == "[workspace.package]":
+            in_workspace_package = True
+            continue
+        if stripped.startswith("[") and in_workspace_package:
+            break
+        if in_workspace_package and stripped.startswith("version = "):
+            return "v" + stripped.split("=", 1)[1].strip().strip('"')
+    raise SystemExit("could not read workspace package version from Cargo.toml")
 
 
 def is_sha256(value: object) -> bool:
@@ -92,8 +108,9 @@ def validate_shape(data: dict[str, Any], label: str) -> list[str]:
     failures: list[str] = []
     if data.get("schema_version") != 1:
         failures.append(f"{label}: schema_version must be 1")
-    if data.get("source_release") != "v0.25.0":
-        failures.append(f"{label}: source_release must bind v0.25.0")
+    source_release = expected_source_release()
+    if data.get("source_release") != source_release:
+        failures.append(f"{label}: source_release must bind {source_release}")
     if data.get("scope") != "REAL_FUNDS_CANARY":
         failures.append(f"{label}: scope must be REAL_FUNDS_CANARY")
     if data.get("execution_style") != "FOK_LIMIT_FILL":
@@ -108,6 +125,14 @@ def validate_shape(data: dict[str, Any], label: str) -> list[str]:
     for flag in AUTHORIZATION_FLAGS:
         if flag not in data:
             failures.append(f"{label}: missing {flag}")
+    if "allow_real_funds_canary" not in data:
+        failures.append(f"{label}: missing allow_real_funds_canary")
+    if "reviewed_release_decision_present" not in data:
+        failures.append(f"{label}: missing reviewed_release_decision_present")
+    if not data.get("operator_identity_ref"):
+        failures.append(f"{label}: operator_identity_ref must be concrete")
+    elif label != "template" and has_placeholder(data.get("operator_identity_ref")):
+        failures.append(f"{label}: operator_identity_ref must be concrete")
     refs = data.get("external_references")
     if not isinstance(refs, dict):
         failures.append(f"{label}: external_references must be an object")
@@ -143,7 +168,7 @@ def validate_decision(data: dict[str, Any], label: str) -> list[str]:
     if decision not in {"no_go", "go"}:
         failures.append(f"{label}: decision must be no_go or go")
     if decision == "no_go":
-        if authorized:
+        if authorized or data.get("allow_real_funds_canary") is True:
             failures.append(f"{label}: no_go decision must not authorize live or remote side effects")
         return failures
 
@@ -156,13 +181,12 @@ def validate_decision(data: dict[str, Any], label: str) -> list[str]:
             failures.append(f"{label}: go decision requires concrete artifact_sha256")
         if not is_sha256(data.get("evidence_manifest_sha256")):
             failures.append(f"{label}: go decision requires concrete evidence_manifest_sha256")
-        if data.get("source_release") == "v0.25.0" and data.get("artifact_sha256") != EXPECTED_ARTIFACT_SHA256:
-            failures.append(f"{label}: go decision artifact hash does not match reviewed v0.25.0 artifact")
-        if (
-            data.get("source_release") == "v0.25.0"
-            and data.get("evidence_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256
-        ):
-            failures.append(f"{label}: go decision evidence manifest hash does not match reviewed v0.25.0 example manifest")
+        if not is_sha256(data.get("market_candidate_sha256")):
+            failures.append(f"{label}: go decision requires concrete market_candidate_sha256")
+        if data.get("allow_real_funds_canary") is not True:
+            failures.append(f"{label}: go decision must set allow_real_funds_canary=true")
+        if data.get("reviewed_release_decision_present") is not True:
+            failures.append(f"{label}: go decision must set reviewed_release_decision_present=true")
         missing_refs = [key for key in REQUIRED_EXTERNAL_REFS if not refs.get(key) or has_placeholder(refs.get(key))]
         if missing_refs:
             failures.append(f"{label}: go decision missing external references: {', '.join(missing_refs)}")
@@ -195,14 +219,18 @@ def main() -> int:
         failures.append("template must default to template_not_reviewed no_go")
     if not has_placeholder(template.get("artifact_sha256")) or not has_placeholder(template.get("evidence_manifest_sha256")):
         failures.append("template must keep artifact/evidence hashes as placeholders")
+    if not has_placeholder(template.get("market_candidate_sha256")):
+        failures.append("template must keep market candidate hash as a placeholder")
     if any(template.get(flag) is not False for flag in AUTHORIZATION_FLAGS):
         failures.append("template must keep all authorization flags false")
 
     failures.extend(validate_decision(example, "example"))
     if example.get("artifact_sha256") != EXPECTED_ARTIFACT_SHA256:
-        failures.append("example must bind the v0.25.0 release artifact hash")
+        failures.append("example must bind the illustrative v0.26.0 example artifact hash")
     if example.get("evidence_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256:
-        failures.append("example must bind the reviewed v0.25.0 example evidence manifest hash")
+        failures.append("example must bind the illustrative v0.26.0 example evidence manifest hash")
+    if example.get("market_candidate_sha256") != EXPECTED_MARKET_CANDIDATE_SHA256:
+        failures.append("example must bind the illustrative v0.26.0 example market candidate hash")
     for key, expected in EXPECTED_RUN_IDS.items():
         if example.get("github_evidence", {}).get(key) != expected:
             failures.append(f"example must bind GitHub evidence run {key}")
@@ -217,10 +245,16 @@ def main() -> int:
             failures.append(f"invalid partial fixture rejection missing token: {token}")
 
     mismatched_failures = validate_decision(invalid_mismatched, "invalid_mismatched")
+    if invalid_mismatched.get("artifact_sha256") != EXPECTED_ARTIFACT_SHA256:
+        mismatched_failures.append("invalid_mismatched: artifact hash does not match reviewed fixture")
+    if invalid_mismatched.get("evidence_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256:
+        mismatched_failures.append("invalid_mismatched: evidence manifest hash does not match reviewed fixture")
+    if invalid_mismatched.get("market_candidate_sha256") != EXPECTED_MARKET_CANDIDATE_SHA256:
+        mismatched_failures.append("invalid_mismatched: market candidate hash does not match reviewed fixture")
     if not mismatched_failures:
         failures.append("invalid mismatched fixture must be rejected")
     mismatched_text = "\n".join(mismatched_failures)
-    for token in ["artifact hash does not match", "evidence manifest hash does not match"]:
+    for token in ["artifact hash does not match", "evidence manifest hash does not match", "market candidate hash does not match"]:
         if token not in mismatched_text:
             failures.append(f"invalid mismatched fixture rejection missing token: {token}")
 

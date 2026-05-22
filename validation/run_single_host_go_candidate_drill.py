@@ -59,6 +59,14 @@ def validate_go_candidate(candidate: dict, approval: dict, artifact_sha: str, ma
         "scope": "REAL_FUNDS_CANARY",
         "artifact_sha256": artifact_sha,
         "evidence_manifest_sha256": manifest_sha,
+        "market_candidate_sha256": approval.get("market_candidate_sha256"),
+        "decision": "go",
+        "source_release": f"v{VERSION}",
+        "live_submit_authorized": True,
+        "live_cancel_authorized": False,
+        "production_deployment_authorized": False,
+        "real_funds_canary_authorized": True,
+        "remote_side_effects_authorized": True,
         "allow_real_funds_canary": True,
         "reviewed_release_decision_present": True,
     }
@@ -69,6 +77,8 @@ def validate_go_candidate(candidate: dict, approval: dict, artifact_sha: str, ma
         failures.append("go candidate artifact hash must match approval")
     if candidate.get("evidence_manifest_sha256") != approval.get("evidence_manifest_sha256"):
         failures.append("go candidate evidence hash must match approval")
+    if candidate.get("market_candidate_sha256") != approval.get("market_candidate_sha256"):
+        failures.append("go candidate market candidate hash must match approval")
     if not str(candidate.get("decision_id", "")).startswith("candidate-go-"):
         failures.append("go candidate decision id must be clearly marked candidate-go")
     if not str(candidate.get("operator_identity_ref", "")).startswith("review-required://"):
@@ -98,7 +108,7 @@ def main() -> int:
     cli = CLI.read_text() if CLI.exists() else ""
     if "--release-decision-file is required with --armed" not in cli:
         failures.append("CLI must reject --armed without --release-decision-file")
-    if "validate_reviewed_release_decision(&args, &approval)?" not in cli:
+    if "validate_reviewed_release_decision(&args, &approval, &market_candidate_sha256)?" not in cli:
         failures.append("CLI must validate reviewed release decision before live canary execution")
 
     if failures:
@@ -134,15 +144,34 @@ def main() -> int:
             failures.append(f"go candidate source package generation failed: {generated.stderr.strip() or generated.stdout.strip()}")
         else:
             approval = load(output_dir / "approval.json")
+            release_decision = load(output_dir / "release-decision.json")
             go_candidate = {
+                **release_decision,
+                "schema_version": 1,
                 "decision_id": "candidate-go-single-host-real-funds-canary",
+                "status": "candidate_go_not_committed",
+                "source_release": f"v{VERSION}",
+                "decision": "go",
+                "decision_reason": "Temporary single-host go candidate drill; not committed and not reviewed for live use.",
                 "scope": "REAL_FUNDS_CANARY",
+                "execution_style": "FOK_LIMIT_FILL",
                 "expires_at": "2030-01-01T00:00:00Z",
                 "artifact_sha256": approval.get("artifact_sha256"),
                 "evidence_manifest_sha256": approval.get("evidence_manifest_sha256"),
+                "market_candidate_sha256": approval.get("market_candidate_sha256"),
+                "github_evidence": release_decision.get("github_evidence", {}),
+                "external_references": release_decision.get("external_references", {}),
+                "risk_limits": release_decision.get("risk_limits", {}),
+                "required_review_signals": release_decision.get("required_review_signals", {}),
+                "live_submit_authorized": True,
+                "live_cancel_authorized": False,
+                "production_deployment_authorized": False,
+                "real_funds_canary_authorized": True,
+                "remote_side_effects_authorized": True,
                 "allow_real_funds_canary": True,
                 "reviewed_release_decision_present": True,
                 "operator_identity_ref": "review-required://single-host-canary-operator",
+                "secrets_included": False,
             }
             candidate_path = output_dir / "adapter-release-decision.go-candidate.json"
             candidate_path.write_text(json.dumps(go_candidate, indent=2, sort_keys=True) + "\n")
@@ -162,7 +191,8 @@ def main() -> int:
         "go_candidate_committed": False,
         "missing_release_decision_blocks_armed": True,
         "release_decision": "candidate_go_not_committed",
-        "artifact_sha256": artifact_sha,
+        "artifact_sha256": "external-sidecar-only" if isinstance(artifact_sha, str) else None,
+        "artifact_sha256_verified": isinstance(artifact_sha, str) and len(artifact_sha) == 64,
         "evidence_manifest_bound": True,
         "live_submit_allowed": False,
         "live_cancel_allowed": False,

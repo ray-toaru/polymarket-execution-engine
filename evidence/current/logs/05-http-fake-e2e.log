@@ -1,27 +1,32 @@
    Compiling serde_core v1.0.228
    Compiling serde v1.0.228
+   Compiling digest v0.11.3
    Compiling serde_json v1.0.149
    Compiling smallvec v1.15.1
    Compiling chrono v0.4.44
-   Compiling futures-task v0.3.32
    Compiling slab v0.4.12
+   Compiling futures-task v0.3.32
    Compiling futures-util v0.3.32
    Compiling http v1.4.0
    Compiling http-body v1.0.1
+   Compiling sha2 v0.11.0
+   Compiling hmac v0.13.0
+   Compiling md-5 v0.11.0
    Compiling uuid v1.23.1
    Compiling once_cell v1.21.4
+   Compiling postgres-protocol v0.6.11
    Compiling tracing-core v0.1.36
-   Compiling pmx-core v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
+   Compiling pmx-core v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
    Compiling parking_lot_core v0.9.12
    Compiling tower-service v0.3.3
    Compiling parking_lot v0.12.5
-   Compiling httparse v1.10.1
    Compiling tracing v0.1.44
+   Compiling httparse v1.10.1
    Compiling postgres-types v0.2.13
-   Compiling atomic-waker v1.1.2
-   Compiling tower-layer v0.3.3
    Compiling sync_wrapper v1.0.2
    Compiling httpdate v1.0.3
+   Compiling tower-layer v0.3.3
+   Compiling atomic-waker v1.1.2
    Compiling hyper v1.9.0
    Compiling tokio-postgres v0.7.17
    Compiling http-body-util v0.1.3
@@ -30,19 +35,19 @@
    Compiling mime v0.3.17
    Compiling axum-core v0.4.5
    Compiling serde_urlencoded v0.7.1
-   Compiling pmx-store v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
+   Compiling pmx-store v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
    Compiling hyper-util v0.1.20
    Compiling tower v0.5.3
-   Compiling pmx-runtime v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
-   Compiling pmx-policy v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
+   Compiling pmx-policy v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
+   Compiling pmx-runtime v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
    Compiling serde_path_to_error v0.1.20
    Compiling matchit v0.7.3
    Compiling axum v0.7.9
-   Compiling pmx-service v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
-   Compiling pmx-authz v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-authz)
-   Compiling pmx-api v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 48.09s
-     Running tests/http_and_fake_e2e.rs (target/debug/deps/http_and_fake_e2e-ffba68797e2bce71)
+   Compiling pmx-service v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
+   Compiling pmx-authz v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-authz)
+   Compiling pmx-api v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 41.14s
+     Running tests/http_and_fake_e2e.rs (target/debug/deps/http_and_fake_e2e-db39045e2281bda7)
 
 running 4 tests
 test negative::equal_service_and_admin_tokens_fail_closed_at_app_construction ... ok

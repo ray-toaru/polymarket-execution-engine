@@ -11,6 +11,8 @@ use crate::{
 
 const REAL_FUNDS_CANARY_SCOPE: &str = "REAL_FUNDS_CANARY";
 const REAL_FUNDS_CANARY_EXECUTION_STYLE: &str = "FOK_LIMIT_FILL";
+const REAL_FUNDS_CANARY_SIDE: &str = "BUY";
+const REAL_FUNDS_CANARY_ORDER_TYPE: &str = "FOK";
 const MAX_SPREAD_BPS: u64 = 250;
 
 pub struct BuildRealFundsCanaryPreconditionsInput<'a> {
@@ -20,6 +22,7 @@ pub struct BuildRealFundsCanaryPreconditionsInput<'a> {
     pub live_canary: crate::LiveCanaryPreconditions,
     pub artifact_sha256: &'a str,
     pub evidence_manifest_sha256: &'a str,
+    pub market_candidate_sha256: &'a str,
     pub config_allow_real_funds_canary: bool,
     pub balance_allowance_checked: bool,
     pub selected_market_safe: bool,
@@ -65,6 +68,10 @@ pub fn validate_real_funds_canary_preconditions(
             "evidence manifest hash is not bound",
         ),
         (
+            request.preconditions.market_candidate_bound,
+            "market candidate hash is not bound",
+        ),
+        (
             request.preconditions.max_order_notional_ok,
             "per-order canary cap exceeded",
         ),
@@ -103,13 +110,67 @@ pub fn validate_reviewed_real_funds_canary_release_decision(
     approval: &RealFundsCanaryApproval,
     artifact_sha256: &str,
     evidence_manifest_sha256: &str,
+    market_candidate_sha256: &str,
 ) -> Result<(), OfficialSdkAdapterError> {
+    let source_release = format!("v{}", env!("CARGO_PKG_VERSION"));
     let required = [
+        (decision.schema_version == 1, "schema_version mismatch"),
         (
             !decision.decision_id.trim().is_empty(),
             "decision_id missing",
         ),
+        (!decision.status.trim().is_empty(), "status missing"),
+        (
+            !decision.decision_reason.trim().is_empty(),
+            "decision reason missing",
+        ),
+        (
+            decision.source_release == source_release,
+            "source release mismatch",
+        ),
+        (decision.decision == "go", "release decision is not go"),
         (decision.scope == REAL_FUNDS_CANARY_SCOPE, "scope mismatch"),
+        (
+            decision.execution_style == REAL_FUNDS_CANARY_EXECUTION_STYLE,
+            "execution style mismatch",
+        ),
+        (
+            !decision.github_evidence.is_null(),
+            "github evidence missing",
+        ),
+        (
+            !decision.external_references.is_null(),
+            "external references missing",
+        ),
+        (!decision.risk_limits.is_null(), "risk limits missing"),
+        (
+            !decision.required_review_signals.is_null(),
+            "review signals missing",
+        ),
+        (
+            !decision.secrets_included,
+            "decision must not include secrets",
+        ),
+        (
+            decision.live_submit_authorized,
+            "live submit not authorized by release decision",
+        ),
+        (
+            !decision.live_cancel_authorized,
+            "live cancel must remain unauthorized for canary",
+        ),
+        (
+            !decision.production_deployment_authorized,
+            "production deployment must remain unauthorized for canary",
+        ),
+        (
+            decision.real_funds_canary_authorized,
+            "real-funds canary flag is not authorized",
+        ),
+        (
+            decision.remote_side_effects_authorized,
+            "remote side effects not authorized by release decision",
+        ),
         (
             decision.allow_real_funds_canary,
             "real-funds canary not allowed by release decision",
@@ -123,6 +184,10 @@ pub fn validate_reviewed_real_funds_canary_release_decision(
             "operator identity ref missing",
         ),
         (
+            decision.operator_identity_ref == approval.operator_identity_ref,
+            "operator identity ref mismatch",
+        ),
+        (
             decision.artifact_sha256 == artifact_sha256
                 && decision.artifact_sha256 == approval.artifact_sha256,
             "artifact hash mismatch",
@@ -131,6 +196,11 @@ pub fn validate_reviewed_real_funds_canary_release_decision(
             decision.evidence_manifest_sha256 == evidence_manifest_sha256
                 && decision.evidence_manifest_sha256 == approval.evidence_manifest_sha256,
             "evidence manifest hash mismatch",
+        ),
+        (
+            decision.market_candidate_sha256 == market_candidate_sha256
+                && decision.market_candidate_sha256 == approval.market_candidate_sha256,
+            "market candidate hash mismatch",
         ),
         (
             approval_not_expired(&decision.expires_at),
@@ -175,6 +245,8 @@ pub fn build_real_funds_canary_preconditions(
             && input.approval.artifact_sha256 == input.artifact_sha256,
         evidence_manifest_bound: is_sha256(input.evidence_manifest_sha256)
             && input.approval.evidence_manifest_sha256 == input.evidence_manifest_sha256,
+        market_candidate_bound: is_sha256(input.market_candidate_sha256)
+            && input.approval.market_candidate_sha256 == input.market_candidate_sha256,
         max_order_notional_ok: notional_lte(
             &input.market.notional_usd,
             &input.risk_limits.max_order_notional_usd,
@@ -262,6 +334,18 @@ pub fn diagnose_real_funds_canary_markets(
         if candidate.archived {
             rejection_counts.archived += 1;
         }
+        if candidate.side != REAL_FUNDS_CANARY_SIDE {
+            rejection_counts.wrong_side += 1;
+        }
+        if candidate.order_type != REAL_FUNDS_CANARY_ORDER_TYPE {
+            rejection_counts.wrong_order_type += 1;
+        }
+        if !timestamp_is_rfc3339(&candidate.book_snapshot_timestamp) {
+            rejection_counts.missing_book_snapshot_timestamp += 1;
+        }
+        if !human_review_ref_present(&candidate.human_review_ref) {
+            rejection_counts.missing_human_review_ref += 1;
+        }
         if candidate.spread_bps > MAX_SPREAD_BPS {
             rejection_counts.spread_too_wide += 1;
         }
@@ -299,6 +383,10 @@ pub fn market_candidate_is_safe(
         && candidate.accepting_orders
         && !candidate.closed
         && !candidate.archived
+        && candidate.side == REAL_FUNDS_CANARY_SIDE
+        && candidate.order_type == REAL_FUNDS_CANARY_ORDER_TYPE
+        && timestamp_is_rfc3339(&candidate.book_snapshot_timestamp)
+        && human_review_ref_present(&candidate.human_review_ref)
         && candidate.spread_bps <= MAX_SPREAD_BPS
         && decimal_gt_zero(&candidate.best_ask)
         && best_ask_notional_gte(candidate, max_notional_usd)
@@ -313,9 +401,19 @@ fn valid_approval(approval: &RealFundsCanaryApproval) -> bool {
         && approval_not_expired(&approval.expires_at)
         && is_sha256(&approval.artifact_sha256)
         && is_sha256(&approval.evidence_manifest_sha256)
+        && is_sha256(&approval.market_candidate_sha256)
         && !approval.operator_identity_ref.trim().is_empty()
         && decimal_gt_zero(&approval.max_order_notional_usd)
         && decimal_gt_zero(&approval.max_daily_notional_usd)
+}
+
+fn timestamp_is_rfc3339(value: &str) -> bool {
+    DateTime::parse_from_rfc3339(value.trim()).is_ok()
+}
+
+fn human_review_ref_present(value: &str) -> bool {
+    let trimmed = value.trim();
+    !trimmed.is_empty() && !trimmed.contains("REPLACE_WITH")
 }
 
 fn approval_not_expired(expires_at: &str) -> bool {

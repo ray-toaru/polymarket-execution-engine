@@ -21,28 +21,28 @@
     Checking pin-project-lite v0.2.17
     Checking ff v0.13.1
     Checking hybrid-array v0.4.12
-    Checking base16ct v0.2.0
-   Compiling dunce v1.0.5
     Checking arrayvec v0.7.6
+   Compiling dunce v1.0.5
+    Checking base16ct v0.2.0
     Checking sec1 v0.7.3
     Checking group v0.13.0
     Checking sha2 v0.10.9
     Checking crypto-bigint v0.5.5
     Checking hmac v0.12.1
    Compiling alloy-rlp-derive v0.3.15
-   Compiling unicode-segmentation v1.13.2
     Checking once_cell v1.21.4
+   Compiling unicode-segmentation v1.13.2
    Compiling convert_case v0.10.0
     Checking alloy-rlp v0.3.15
     Checking rfc6979 v0.4.0
     Checking elliptic-curve v0.13.8
-    Checking crypto-common v0.2.1
     Checking block-buffer v0.12.0
+    Checking crypto-common v0.2.1
     Checking spki v0.7.3
     Checking signature v2.2.0
    Compiling ruint-macro v1.2.1
-   Compiling unicode-xid v0.2.6
     Checking memchr v2.8.0
+   Compiling unicode-xid v0.2.6
    Compiling derive_more-impl v2.1.1
     Checking ruint v1.17.2
     Checking ecdsa v0.16.9
@@ -66,9 +66,9 @@
    Compiling zerofrom-derive v0.1.7
     Checking tracing-core v0.1.36
    Compiling tracing-attributes v0.1.31
-    Checking futures-core v0.3.32
    Compiling shlex v1.3.0
    Compiling find-msvc-tools v0.1.9
+    Checking futures-core v0.3.32
    Compiling cc v1.2.62
     Checking tracing v0.1.44
     Checking zerofrom v0.1.8
@@ -84,9 +84,9 @@
    Compiling aws-lc-sys v0.41.0
    Compiling darling v0.23.0
    Compiling zerovec-derive v0.11.3
-    Checking futures-sink v0.3.32
-   Compiling heck v0.5.0
    Compiling cpufeatures v0.2.17
+   Compiling heck v0.5.0
+    Checking futures-sink v0.3.32
     Checking chrono v0.4.44
     Checking zerovec v0.11.6
    Compiling syn-solidity v1.6.0
@@ -101,11 +101,11 @@
    Compiling proc-macro-error2 v2.0.1
    Compiling alloy-sol-macro-input v1.6.0
     Checking either v1.15.0
-    Checking socket2 v0.6.3
     Checking mio v1.2.0
+    Checking socket2 v0.6.3
    Compiling tokio-macros v2.7.0
-    Checking crc-catalog v2.5.0
     Checking slab v0.4.12
+    Checking crc-catalog v2.5.0
    Compiling aws-lc-rs v1.17.0
     Checking crc v3.4.0
     Checking tokio v1.52.3
@@ -127,10 +127,10 @@
     Checking alloy-eip7928 v0.3.4
     Checking rustls-pki-types v1.14.1
    Compiling futures-macro v0.3.32
-    Checking writeable v0.6.3
     Checking futures-io v0.3.32
-    Checking futures-task v0.3.32
     Checking litemap v0.8.2
+    Checking futures-task v0.3.32
+    Checking writeable v0.6.3
     Checking icu_locale_core v2.2.0
     Checking futures-util v0.3.32
     Checking alloy-eips v1.6.3
@@ -139,33 +139,33 @@
    Compiling alloy-tx-macros v1.6.3
     Checking zerotrie v0.2.4
     Checking potential_utf v0.1.5
-   Compiling rustls v0.23.40
-    Checking utf8_iter v1.0.4
    Compiling httparse v1.10.1
+    Checking utf8_iter v1.0.4
+   Compiling rustls v0.23.40
    Compiling icu_normalizer_data v2.2.0
     Checking percent-encoding v2.3.2
-    Checking untrusted v0.9.0
    Compiling icu_properties_data v2.2.0
+    Checking untrusted v0.9.0
     Checking rustls-webpki v0.103.13
     Checking icu_collections v2.2.0
     Checking icu_provider v2.2.0
     Checking alloy-consensus v1.6.3
    Compiling getrandom v0.3.4
     Checking http-body v1.0.1
-   Compiling getrandom v0.4.2
     Checking rand_core v0.10.1
+   Compiling getrandom v0.4.2
     Checking icu_properties v2.2.0
     Checking icu_normalizer v2.2.0
-    Checking alloy-network-primitives v1.6.3
     Checking alloy-consensus-any v1.6.3
+    Checking alloy-network-primitives v1.6.3
     Checking form_urlencoded v1.2.2
     Checking tokio-util v0.7.18
     Checking itertools v0.14.0
    Compiling async-trait v0.1.89
+    Checking atomic-waker v1.1.2
     Checking try-lock v0.2.5
     Checking tower-service v0.3.3
     Checking winnow v1.0.3
-    Checking atomic-waker v1.1.2
     Checking h2 v0.4.14
     Checking alloy-sol-type-parser v1.6.0
     Checking want v0.3.1
@@ -190,17 +190,17 @@
     Checking tokio-rustls v0.26.4
     Checking alloy-json-rpc v1.6.3
     Checking sync_wrapper v1.0.2
-    Checking ipnet v2.12.0
-    Checking tower-layer v0.3.3
-   Compiling parking_lot_core v0.9.12
-    Checking futures-utils-wasm v0.1.0
-   Compiling crossbeam-utils v0.8.21
     Checking ryu v1.0.23
+   Compiling crossbeam-utils v0.8.21
+    Checking tower-layer v0.3.3
    Compiling fastrand v2.4.1
+    Checking ipnet v2.12.0
+   Compiling parking_lot_core v0.9.12
     Checking base64 v0.22.1
+    Checking futures-utils-wasm v0.1.0
+    Checking alloy-network v1.6.3
     Checking hyper-util v0.1.20
    Compiling phf_generator v0.13.1
-    Checking alloy-network v1.6.3
     Checking tower v0.5.3
     Checking alloy-dyn-abi v1.6.0
     Checking rand v0.9.4
@@ -208,50 +208,50 @@
     Checking uuid v1.23.1
     Checking sha1 v0.10.6
    Compiling thiserror-impl v1.0.69
-    Checking scopeguard v1.2.0
+    Checking cpufeatures v0.3.0
     Checking data-encoding v2.11.0
+    Checking scopeguard v1.2.0
     Checking bitflags v2.11.1
    Compiling rust_decimal v1.42.0
-    Checking cpufeatures v0.3.0
-    Checking chacha20 v0.10.0
     Checking tower-http v0.6.10
-    Checking tungstenite v0.29.0
     Checking lock_api v0.4.14
+    Checking tungstenite v0.29.0
+    Checking chacha20 v0.10.0
     Checking thiserror v1.0.69
    Compiling bon-macros v3.9.1
     Checking alloy-core v1.6.0
-    Checking alloy-signer-local v1.6.3
    Compiling phf_macros v0.13.1
     Checking hyper-rustls v0.27.9
+    Checking alloy-signer-local v1.6.3
     Checking serde_urlencoded v0.7.1
     Checking rustls-platform-verifier v0.7.0
     Checking http-body-util v0.1.3
     Checking futures-executor v0.3.32
-    Checking encoding_rs v0.8.35
     Checking instant v0.1.13
+    Checking encoding_rs v0.8.35
    Compiling async-stream-impl v0.3.6
-   Compiling anyhow v1.0.102
-    Checking mime v0.3.17
     Checking hashbrown v0.14.5
-    Checking dashmap v6.1.0
+    Checking mime v0.3.17
+   Compiling anyhow v1.0.102
     Checking reqwest v0.13.3
+    Checking dashmap v6.1.0
     Checking async-stream v0.3.6
     Checking backoff v0.4.0
     Checking futures v0.3.32
-    Checking phf v0.13.1
     Checking alloy v1.6.3
+    Checking phf v0.13.1
     Checking bon v3.9.1
-    Checking pmx-core v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
-    Checking tokio-tungstenite v0.29.0
+    Checking pmx-core v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
     Checking rand v0.10.1
+    Checking tokio-tungstenite v0.29.0
     Checking serde_html_form v0.4.0
    Compiling strum_macros v0.28.0
     Checking serde_path_to_error v0.1.20
     Checking secrecy v0.10.3
     Checking serde_ignored v0.1.14
-   Compiling rust_decimal_macros v1.40.0
    Compiling serde_repr v0.1.20
+   Compiling rust_decimal_macros v1.40.0
     Checking polymarket_client_sdk_v2 v0.6.0-canary.1
-    Checking pmx-gateway v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
-    Checking pmx-official-sdk-adapter v0.25.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4m 18s
+    Checking pmx-gateway v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
+    Checking pmx-official-sdk-adapter v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4m 05s

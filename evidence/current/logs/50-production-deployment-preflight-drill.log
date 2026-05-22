@@ -4,8 +4,8 @@
     "artifact_sidecar_verified": true,
     "evidence_manifest_sha256_bound": true,
     "evidence_sidecar_verified": true,
-    "path": "/workspaces/universal/rust/polymarket_dual_project/dist/polymarket-execution-suite-v0.25.0.zip",
-    "sha256": "1f60f7741b67ee056fcb053570f7808568ac59d8628da73be8e02c4de1a88b9b"
+    "path": "/workspaces/universal/rust/polymarket_dual_project/dist/polymarket-execution-suite-v0.26.0.zip",
+    "sha256": "external-sidecar-only"
   },
   "config_diff_review_evidence_verified": true,
   "config_diff_review_log": {

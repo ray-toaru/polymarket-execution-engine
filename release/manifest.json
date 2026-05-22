@@ -1,13 +1,13 @@
 {
   "project": "polymarket-execution-engine",
-  "version": "0.25.0",
+  "version": "0.26.0",
   "contract_version": "1.0.0-draft",
-  "status": "v0.25-shadow-ready-candidate-sdk-sign-only-not-production-not-live",
+  "status": "v0.26-controlled-real-funds-canary-source-candidate-not-production-not-live",
   "official_sdk_strategy": "sdk-first",
   "official_sdk_crate": "polymarket_client_sdk_v2",
   "official_sdk_version": "=0.6.0-canary.1",
   "rust_msrv": "1.88.0",
-  "evidence_status": "v0.25.0 shadow-ready SDK sign-only baseline: Rust, SDK, PostgreSQL, credentialed non-trading smoke, sign-only dry-run, shadow execution, reconciliation drift, rollback, observability, local static, contract, artifact, and governance gates passed in the recorded local environment; live submit/cancel remain blocked.",
+  "evidence_status": "v0.26.0 controlled real-funds canary candidate: code and governance are being advanced toward a one-time BUY/FOK canary path with $1 per-order and $5 daily caps; production deployment and live cancel remain blocked until current gates and a reviewed go decision pass.",
   "validated_gates_landed": [
     "cargo-fmt-v0.10",
     "cargo-check-v0.10",
@@ -62,6 +62,13 @@
     "guarded-real-funds-canary-preflight-scaffold",
     "real-funds-canary-approval-artifact-evidence-binding",
     "real-funds-canary-fok-limit-fill-code-path-behind-live-submit-feature"
+  ],
+  "v026_source_changes": [
+    "formal-release-decision-shape-consumed-by-real-funds-canary-cli",
+    "candidate-market-file-sha256-bound-to-approval-and-release-decision",
+    "candidate-market-buy-fok-human-review-required",
+    "armed-real-funds-canary-requires-one-time-approval-consumed-marker",
+    "external-read-only-market-prep-requires-human-review-reference"
   ],
   "v011_source_changes": [
     "api-server-authoritative-in-memory-store-scaffold",

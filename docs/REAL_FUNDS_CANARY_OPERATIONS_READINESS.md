@@ -16,8 +16,9 @@ Required references before any future armed canary:
   rate;
 - rollback runbook covering read-only, sign-only, and cancel-only fallback;
 - externally selected `candidate-market.json` reviewed outside the execution
-  engine; the execution engine only validates that candidate against CLOB
-  book/spread and risk gates;
+  engine; v0.26 binds its SHA-256 into approval and release-decision JSON, and
+  the execution engine only validates that candidate against BUY/FOK,
+  human-review, CLOB book/spread, and risk gates;
 - canary retry policy that waits for a reviewed candidate satisfying safe
   market conditions instead of weakening market-safety thresholds without
   review.
@@ -51,7 +52,8 @@ can be replaced with a read-only public API candidate and audit sidecar:
 ```bash
 python scripts/prepare_canary_candidate_market.py \
   --output /tmp/pmx-canary-review/candidate-market.json \
-  --audit-output /tmp/pmx-canary-review/candidate-market.audit.json
+  --audit-output /tmp/pmx-canary-review/candidate-market.audit.json \
+  --human-review-ref change-ticket://reviewed-canary-market
 ```
 
 The helper does not approve live trading. The resulting candidate still must be

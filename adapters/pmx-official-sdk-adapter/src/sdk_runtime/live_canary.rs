@@ -72,6 +72,7 @@ pub async fn run_real_funds_canary_fok_fill(
         execution_id: request.execution_id,
         plan_hash: request.plan_hash,
         approval_hash: request.approval.approval_hash,
+        market_candidate_sha256: request.market_candidate_sha256,
         idempotency_key: request.idempotency_key,
         remote_order_id: (!response.order_id.is_empty()).then_some(response.order_id),
         remote_status,

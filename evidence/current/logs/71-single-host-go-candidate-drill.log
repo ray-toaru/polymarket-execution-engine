@@ -1,5 +1,6 @@
 {
-  "artifact_sha256": "1f60f7741b67ee056fcb053570f7808568ac59d8628da73be8e02c4de1a88b9b",
+  "artifact_sha256": "external-sidecar-only",
+  "artifact_sha256_verified": true,
   "evidence_manifest_bound": true,
   "failures": [],
   "go_candidate_committed": false,

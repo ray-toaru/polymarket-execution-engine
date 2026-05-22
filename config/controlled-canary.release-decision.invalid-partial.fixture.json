@@ -3,16 +3,17 @@
   "decision_id": "controlled-canary-invalid-partial",
   "status": "reviewed_go",
   "decision": "go",
-  "decision_reason": "Invalid fixture: claims authorization while references are partial and expired.",
-  "source_release": "v0.25.0",
+  "decision_reason": "Invalid fixture: claims authorization while references are partial, market review is missing, and the decision is expired.",
+  "source_release": "v0.26.0",
   "scope": "REAL_FUNDS_CANARY",
   "execution_style": "FOK_LIMIT_FILL",
   "artifact_sha256": "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6",
   "evidence_manifest_sha256": "a67cff633141e1c619b4d422cbc6e09e427d004d9580996c4f00e31d7bebcafd",
+  "market_candidate_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
   "github_evidence": {
-    "root_ci_run_id": "26254755001",
-    "hermes_ci_run_id": "26198048337",
-    "execution_engine_ci_run_id": "26254745573",
+    "root_ci_run_id": "26268697168",
+    "hermes_ci_run_id": "26267887116",
+    "execution_engine_ci_run_id": "26268276210",
     "credentialed_sdk_run_id": "local-current-gates-20260521"
   },
   "external_references": {
@@ -30,6 +31,7 @@
   "required_review_signals": {
     "artifact_hash_reviewed": true,
     "evidence_manifest_hash_reviewed": true,
+    "market_candidate_reviewed": false,
     "operator_dual_control_reviewed": false,
     "secret_custody_reviewed": true,
     "alerting_reviewed": false,
@@ -43,5 +45,8 @@
   "production_deployment_authorized": false,
   "real_funds_canary_authorized": true,
   "remote_side_effects_authorized": true,
+  "allow_real_funds_canary": true,
+  "reviewed_release_decision_present": true,
+  "operator_identity_ref": "local-operator-approval-ref",
   "secrets_included": false
 }

@@ -386,7 +386,7 @@ def main(argv: list[str]) -> int:
             "sha256": None,
             "sha256_sidecar": f"{artifact_path.name}.sha256" if artifact_path else None,
             "evidence_sidecar": f"{artifact_path.name}.evidence.json" if artifact_path else None,
-            "binding_note": "Informational pointer only; verify the artifact with the external sidecars generated after packaging.",
+            "binding_note": "Informational pointer only. The final containing-archive hash is intentionally recorded only in external sidecars to avoid manifest/archive self-reference.",
         },
         "environment": log_entry(ENVIRONMENT) if ENVIRONMENT.exists() else None,
     }
@@ -416,20 +416,20 @@ def main(argv: list[str]) -> int:
     ]
     if skipped_sections:
         reason = (
-            "Shadow-ready SDK sign-only candidate local refresh. Current evidence binds source, "
-            "Rust, SDK, local static, drill, governance, and artifact checks, but does not refresh "
+            "Controlled real-funds canary source-candidate local refresh. Current evidence binds source, "
+            "Rust, PostgreSQL, SDK, local static, drill, governance, and artifact checks, but does not refresh "
             f"external sections skipped in this environment: {', '.join(skipped_sections)}. "
             "Production and live trading remain explicitly unapproved."
         )
     else:
         reason = (
-            "Shadow-ready SDK sign-only candidate. Required source, Rust, PostgreSQL, SDK, "
+            "Controlled real-funds canary source-candidate. Required source, Rust, PostgreSQL, SDK, "
             "credentialed smoke, sign-only dry-run, local static, drill, governance, and artifact "
             "checks are bound in current evidence; production and live trading remain explicitly unapproved."
         )
     data["release_decision"] = {
         "validated_release": False,
-        "status": "shadow-ready SDK sign-only candidate",
+        "status": "controlled real-funds canary source-candidate",
         "production_ready": False,
         "live_trading_ready": False,
         "reason": reason,

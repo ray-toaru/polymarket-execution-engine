@@ -4,12 +4,13 @@ use pmx_official_sdk_adapter::{
     RealFundsCanaryApproval, RealFundsCanaryMarketCandidate, RealFundsCanaryMarketDiagnostics,
     RealFundsCanaryRequest, RealFundsCanaryRiskLimits, ReviewedRealFundsCanaryReleaseDecision,
     build_real_funds_canary_preconditions, run_real_funds_canary_fok_fill,
-    validate_real_funds_canary_market_with_diagnostics,
+    validate_real_funds_canary_market_with_diagnostics, validate_real_funds_canary_preconditions,
     validate_reviewed_real_funds_canary_release_decision,
 };
 use serde::Serialize;
-use std::collections::HashMap;
-use std::path::PathBuf;
+use serde_json::json;
+use sha2::{Digest, Sha256};
+use std::{collections::HashMap, fs::OpenOptions, io::Write, path::PathBuf};
 
 const ENV_ALLOW_REAL_FUNDS_CANARY: &str = "PMX_ALLOW_REAL_FUNDS_CANARY";
 
@@ -25,6 +26,7 @@ struct Args {
     daily_used_notional_usd: String,
     market_file: PathBuf,
     release_decision_file: Option<PathBuf>,
+    approval_consumed_marker: Option<PathBuf>,
     dry_run: bool,
     armed: bool,
     allow_live_submit_config: bool,
@@ -45,6 +47,8 @@ struct CanaryCliReport {
     approval_hash: String,
     artifact_bound: bool,
     evidence_manifest_bound: bool,
+    market_candidate_sha256: String,
+    market_candidate_bound: bool,
     release_decision_bound: bool,
     live_submit_allowed: bool,
     real_funds_canary_allowed: bool,
@@ -73,13 +77,15 @@ async fn main() -> anyhow::Result<()> {
     };
     let real_funds_env_enabled =
         std::env::var(ENV_ALLOW_REAL_FUNDS_CANARY).ok().as_deref() == Some("1");
+    let market_candidate_bytes = std::fs::read(&args.market_file)?;
+    let market_candidate_sha256 = sha256_hex(&market_candidate_bytes);
     let release_decision_bound = if args.armed {
-        validate_reviewed_release_decision(&args, &approval)?
+        validate_reviewed_release_decision(&args, &approval, &market_candidate_sha256)?
     } else {
         false
     };
     let market_candidate: RealFundsCanaryMarketCandidate =
-        serde_json::from_str(&std::fs::read_to_string(&args.market_file)?)?;
+        serde_json::from_slice(&market_candidate_bytes)?;
     let validation = validate_real_funds_canary_market_with_diagnostics(
         &config,
         &approval.max_order_notional_usd,
@@ -105,6 +111,8 @@ async fn main() -> anyhow::Result<()> {
             artifact_bound: approval.artifact_sha256 == args.artifact_sha256,
             evidence_manifest_bound: approval.evidence_manifest_sha256
                 == args.evidence_manifest_sha256,
+            market_candidate_sha256: market_candidate_sha256.clone(),
+            market_candidate_bound: approval.market_candidate_sha256 == market_candidate_sha256,
             release_decision_bound,
             live_submit_allowed: false,
             real_funds_canary_allowed: false,
@@ -151,6 +159,7 @@ async fn main() -> anyhow::Result<()> {
             live_canary,
             artifact_sha256: &args.artifact_sha256,
             evidence_manifest_sha256: &args.evidence_manifest_sha256,
+            market_candidate_sha256: &market_candidate_sha256,
             config_allow_real_funds_canary: args.allow_real_funds_canary_config,
             balance_allowance_checked: std::env::var("PMX_BALANCE_ALLOWANCE_CHECKED")
                 .ok()
@@ -166,10 +175,13 @@ async fn main() -> anyhow::Result<()> {
         approval: approval.clone(),
         risk_limits,
         market: market.clone(),
+        market_candidate_sha256: market_candidate_sha256.clone(),
         preconditions,
     };
 
     if args.armed {
+        validate_real_funds_canary_preconditions(&config, &request)?;
+        create_approval_consumed_marker(&args, &approval, &market_candidate_sha256)?;
         let receipt = run_real_funds_canary_fok_fill(&config, request).await?;
         println!("{}", serde_json::to_string_pretty(&receipt)?);
         return Ok(());
@@ -194,9 +206,11 @@ async fn main() -> anyhow::Result<()> {
         approval_hash: approval.approval_hash,
         artifact_bound: approval.artifact_sha256 == args.artifact_sha256,
         evidence_manifest_bound: approval.evidence_manifest_sha256 == args.evidence_manifest_sha256,
+        market_candidate_sha256: market_candidate_sha256.clone(),
+        market_candidate_bound: approval.market_candidate_sha256 == market_candidate_sha256,
         release_decision_bound,
         live_submit_allowed: false,
-        real_funds_canary_allowed: args.armed && real_funds_env_enabled,
+        real_funds_canary_allowed: real_funds_env_enabled && args.allow_real_funds_canary_config,
         posted: false,
         remote_side_effects: false,
         raw_signed_order_exposed: false,
@@ -242,6 +256,7 @@ fn parse_args() -> anyhow::Result<Args> {
         plan_hash: required(&values, "--plan-hash")?,
         market_file: required(&values, "--market-file")?.into(),
         release_decision_file: values.get("--release-decision-file").map(PathBuf::from),
+        approval_consumed_marker: values.get("--approval-consumed-marker").map(PathBuf::from),
         daily_used_notional_usd: values
             .get("--daily-used-notional-usd")
             .cloned()
@@ -263,6 +278,7 @@ fn required(values: &HashMap<String, String>, key: &str) -> anyhow::Result<Strin
 fn validate_reviewed_release_decision(
     args: &Args,
     approval: &RealFundsCanaryApproval,
+    market_candidate_sha256: &str,
 ) -> anyhow::Result<bool> {
     let path = args
         .release_decision_file
@@ -275,8 +291,33 @@ fn validate_reviewed_release_decision(
         approval,
         &args.artifact_sha256,
         &args.evidence_manifest_sha256,
+        market_candidate_sha256,
     )?;
     Ok(true)
 }
 
-use sha2::Digest;
+fn create_approval_consumed_marker(
+    args: &Args,
+    approval: &RealFundsCanaryApproval,
+    market_candidate_sha256: &str,
+) -> anyhow::Result<()> {
+    let path = args.approval_consumed_marker.as_ref().ok_or_else(|| {
+        anyhow::anyhow!("--approval-consumed-marker is required for armed real-funds canary")
+    })?;
+    let mut file = OpenOptions::new().write(true).create_new(true).open(path)?;
+    let marker = json!({
+        "approval_id": &approval.approval_id,
+        "approval_hash": &approval.approval_hash,
+        "market_candidate_sha256": market_candidate_sha256,
+        "execution_id": &args.execution_id,
+        "idempotency_key": &args.idempotency_key,
+        "consumed_at": chrono::Utc::now().to_rfc3339(),
+    });
+    file.write_all(serde_json::to_string_pretty(&marker)?.as_bytes())?;
+    file.write_all(b"\n")?;
+    Ok(())
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    format!("{:x}", Sha256::digest(bytes))
+}

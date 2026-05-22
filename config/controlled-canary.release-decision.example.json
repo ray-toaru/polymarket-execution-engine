@@ -1,18 +1,19 @@
 {
   "schema_version": 1,
-  "decision_id": "controlled-canary-v0.25.0-no-go-example",
-  "status": "reviewed_no_go_example",
+  "decision_id": "controlled-canary-v0.26.0-no-go-example",
+  "status": "example_no_go_not_reviewed_for_live",
   "decision": "no_go",
-  "decision_reason": "Example decision package bound to the v0.25.0 prerelease evidence. External custody, approval, alerting, dashboard, rollback, and incident references are intentionally missing, so no live action is authorized.",
-  "source_release": "v0.25.0",
+  "decision_reason": "Example no-go decision shape for the v0.26.0 controlled real-funds canary path. It is illustrative and does not authorize live action.",
+  "source_release": "v0.26.0",
   "scope": "REAL_FUNDS_CANARY",
   "execution_style": "FOK_LIMIT_FILL",
-  "artifact_sha256": "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6",
-  "evidence_manifest_sha256": "a67cff633141e1c619b4d422cbc6e09e427d004d9580996c4f00e31d7bebcafd",
+  "artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "evidence_manifest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "market_candidate_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
   "github_evidence": {
-    "root_ci_run_id": "26254755001",
-    "hermes_ci_run_id": "26198048337",
-    "execution_engine_ci_run_id": "26254745573",
+    "root_ci_run_id": "26268697168",
+    "hermes_ci_run_id": "26267887116",
+    "execution_engine_ci_run_id": "26268276210",
     "credentialed_sdk_run_id": "local-current-gates-20260521"
   },
   "external_references": {
@@ -30,6 +31,7 @@
   "required_review_signals": {
     "artifact_hash_reviewed": true,
     "evidence_manifest_hash_reviewed": true,
+    "market_candidate_reviewed": false,
     "operator_dual_control_reviewed": false,
     "secret_custody_reviewed": false,
     "alerting_reviewed": false,
@@ -43,5 +45,8 @@
   "production_deployment_authorized": false,
   "real_funds_canary_authorized": false,
   "remote_side_effects_authorized": false,
+  "allow_real_funds_canary": false,
+  "reviewed_release_decision_present": false,
+  "operator_identity_ref": "local-operator-approval-ref",
   "secrets_included": false
 }

@@ -1,6 +1,7 @@
 {
-  "artifact_path": "/workspaces/universal/rust/polymarket_dual_project/dist/polymarket-execution-suite-v0.25.0.zip",
-  "artifact_sha256": "1f60f7741b67ee056fcb053570f7808568ac59d8628da73be8e02c4de1a88b9b",
+  "artifact_path": "/workspaces/universal/rust/polymarket_dual_project/dist/polymarket-execution-suite-v0.26.0.zip",
+  "artifact_sha256": "external-sidecar-only",
+  "artifact_sha256_verified": true,
   "canary_runner_mode": "dry-run",
   "candidate_package_generated": true,
   "evidence_manifest_bound": true,

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "template_not_reviewed",
-  "source_release": "v0.25.0",
+  "source_release": "v0.26.0",
   "artifact_sha256": "REPLACE_WITH_RELEASE_ARTIFACT_SHA256",
   "evidence_manifest_sha256": "REPLACE_WITH_EVIDENCE_MANIFEST_SHA256",
   "github_evidence": {
