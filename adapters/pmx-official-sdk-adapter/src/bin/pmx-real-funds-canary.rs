@@ -79,7 +79,7 @@ async fn main() -> anyhow::Result<()> {
         std::env::var(ENV_ALLOW_REAL_FUNDS_CANARY).ok().as_deref() == Some("1");
     let market_candidate_bytes = std::fs::read(&args.market_file)?;
     let market_candidate_sha256 = sha256_hex(&market_candidate_bytes);
-    let release_decision_bound = if args.armed {
+    let release_decision_bound = if args.armed || args.release_decision_file.is_some() {
         validate_reviewed_release_decision(&args, &approval, &market_candidate_sha256)?
     } else {
         false

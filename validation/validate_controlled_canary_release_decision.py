@@ -30,6 +30,33 @@ AUTHORIZATION_FLAGS = [
     "real_funds_canary_authorized",
     "remote_side_effects_authorized",
 ]
+ALLOWED_TOP_LEVEL_FIELDS = {
+    "schema_version",
+    "decision_id",
+    "status",
+    "source_release",
+    "decision",
+    "decision_reason",
+    "scope",
+    "execution_style",
+    "expires_at",
+    "artifact_sha256",
+    "evidence_manifest_sha256",
+    "market_candidate_sha256",
+    "github_evidence",
+    "external_references",
+    "risk_limits",
+    "required_review_signals",
+    "live_submit_authorized",
+    "live_cancel_authorized",
+    "production_deployment_authorized",
+    "real_funds_canary_authorized",
+    "remote_side_effects_authorized",
+    "allow_real_funds_canary",
+    "reviewed_release_decision_present",
+    "operator_identity_ref",
+    "secrets_included",
+}
 REQUIRED_EXTERNAL_REFS = [
     "secret_custody_ref",
     "operator_approval_ref",
@@ -106,6 +133,9 @@ def has_placeholder(value: object) -> bool:
 
 def validate_shape(data: dict[str, Any], label: str) -> list[str]:
     failures: list[str] = []
+    unknown_fields = sorted(set(data) - ALLOWED_TOP_LEVEL_FIELDS)
+    if unknown_fields:
+        failures.append(f"{label}: unknown fields not accepted by Rust model: {', '.join(unknown_fields)}")
     if data.get("schema_version") != 1:
         failures.append(f"{label}: schema_version must be 1")
     source_release = expected_source_release()
