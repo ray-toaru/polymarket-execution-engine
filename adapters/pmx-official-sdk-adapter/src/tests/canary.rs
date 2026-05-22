@@ -42,6 +42,32 @@ fn live_submit_preconditions_are_closed_by_default() {
 }
 
 #[test]
+fn legacy_live_submit_preconditions_cannot_bypass_structured_canary_gates() {
+    let config = OfficialSdkAdapterConfig {
+        allow_live_submit: true,
+        ..OfficialSdkAdapterConfig::default()
+    };
+    let err = validate_live_submit_preconditions(&config, true, true, true)
+        .expect_err("legacy bool gates must not be sufficient for live submit");
+    assert!(err.to_string().contains("runtime worker is not healthy"));
+    assert!(err.to_string().contains("geoblock is not allowed"));
+    assert!(err.to_string().contains("operator approval is missing"));
+}
+
+#[test]
+fn structured_live_submit_preconditions_detect_config_mismatch() {
+    let config = OfficialSdkAdapterConfig {
+        allow_live_submit: false,
+        ..OfficialSdkAdapterConfig::default()
+    };
+    let mut preconditions = all_live_canary_preconditions();
+    preconditions.config_allow_live_submit = true;
+    let err = validate_live_submit_preconditions_with_canary(&config, &preconditions)
+        .expect_err("precondition/config mismatch must fail closed");
+    assert!(err.to_string().contains("config mismatch"));
+}
+
+#[test]
 fn live_submit_canary_requires_every_gate() {
     let mut preconditions = all_live_canary_preconditions();
     validate_live_submit_canary_preconditions(&preconditions).expect("all gates set");

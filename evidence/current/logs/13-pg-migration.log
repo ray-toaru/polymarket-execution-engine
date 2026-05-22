@@ -122,3 +122,15 @@ psql:migrations/0008_idempotency_owner_lease.sql:3: NOTICE:  column "lease_expir
 ALTER TABLE
 psql:migrations/0008_idempotency_owner_lease.sql:6: NOTICE:  relation "idx_idempotency_owner_lease" already exists, skipping
 CREATE INDEX
+applying migrations/0009_runtime_scope_columns.sql
+psql:migrations/0009_runtime_scope_columns.sql:3: NOTICE:  column "account_id" of relation "collateral_profiles" already exists, skipping
+psql:migrations/0009_runtime_scope_columns.sql:3: NOTICE:  column "condition_id" of relation "collateral_profiles" already exists, skipping
+ALTER TABLE
+psql:migrations/0009_runtime_scope_columns.sql:6: NOTICE:  relation "idx_collateral_profiles_scope" already exists, skipping
+CREATE INDEX
+psql:migrations/0009_runtime_scope_columns.sql:11: NOTICE:  column "account_id" of relation "worker_health" already exists, skipping
+psql:migrations/0009_runtime_scope_columns.sql:11: NOTICE:  column "condition_id" of relation "worker_health" already exists, skipping
+psql:migrations/0009_runtime_scope_columns.sql:11: NOTICE:  column "worker_group" of relation "worker_health" already exists, skipping
+ALTER TABLE
+psql:migrations/0009_runtime_scope_columns.sql:14: NOTICE:  relation "idx_worker_health_scope_capability" already exists, skipping
+CREATE INDEX

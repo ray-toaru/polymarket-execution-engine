@@ -7,7 +7,8 @@
     "0005_constraint_decision_snapshot_nullable": "7607891e3a9d396b13887db66296e460fa64f7661cdf207d9b9e650d037b0c37",
     "0006_runtime_kill_switch_scope": "4240e6b3bdaa7a9ea584296336d81096553713e349642b03b174fcb645ba079c",
     "0007_runtime_global_kill_switch": "3427ab60573c81528302aa815538f641500a82150fcb4010bca77b5e82a249f6",
-    "0008_idempotency_owner_lease": "1f22cb25ef9e8199038a4abb1ed79bb05d874e7ab76d034562fb20729c3bcafd"
+    "0008_idempotency_owner_lease": "1f22cb25ef9e8199038a4abb1ed79bb05d874e7ab76d034562fb20729c3bcafd",
+    "0009_runtime_scope_columns": "d5c708b4f267b7f5aba93d7410837b971a92fc7377433bf32a3565d3d887ae5d"
   },
   "migration_order": [
     "0001_initial",
@@ -17,14 +18,15 @@
     "0005_constraint_decision_snapshot_nullable",
     "0006_runtime_kill_switch_scope",
     "0007_runtime_global_kill_switch",
-    "0008_idempotency_owner_lease"
+    "0008_idempotency_owner_lease",
+    "0009_runtime_scope_columns"
   ],
   "postgres_dry_run": {
     "drift_detection": "bad checksum fixture created; production runner must fail closed on mismatch",
-    "drift_schema": "pmx_migration_drift_1779448347330_2088955",
-    "fresh_schema": "pmx_migration_fresh_1779448347330_2088955",
+    "drift_schema": "pmx_migration_drift_1779452648092_2170521",
+    "fresh_schema": "pmx_migration_fresh_1779452648092_2170521",
     "status": "pass",
-    "upgraded_schema": "pmx_migration_upgraded_1779448347330_2088955"
+    "upgraded_schema": "pmx_migration_upgraded_1779452648092_2170521"
   },
   "status": "pass"
 }

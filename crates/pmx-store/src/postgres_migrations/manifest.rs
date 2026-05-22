@@ -36,4 +36,8 @@ pub const SCHEMA_MIGRATIONS: &[SchemaMigration] = &[
         version: "0008_idempotency_owner_lease",
         sql: include_str!("../../../../migrations/0008_idempotency_owner_lease.sql"),
     },
+    SchemaMigration {
+        version: "0009_runtime_scope_columns",
+        sql: include_str!("../../../../migrations/0009_runtime_scope_columns.sql"),
+    },
 ];

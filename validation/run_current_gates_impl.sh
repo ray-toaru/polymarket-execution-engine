@@ -110,6 +110,7 @@ python validation/check_plan_storage.py 2>&1 | tee "${EVIDENCE_DIR}/18-plan-stor
 python validation/check_live_submit_guard.py 2>&1 | tee "${EVIDENCE_DIR}/19-live-submit-static-guard.log"
 python validation/check_sign_only_lifecycle.py 2>&1 | tee "${EVIDENCE_DIR}/20-sign-only-lifecycle-guard.log"
 python validation/check_runtime_worker_models.py 2>&1 | tee "${EVIDENCE_DIR}/21-runtime-worker-model-guard.log"
+python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" >/dev/null
 python validation/check_current_evidence_manifest.py 2>&1 | tee "${EVIDENCE_DIR}/23-current-evidence-manifest-guard.log"
 python validation/check_migration_framework.py 2>&1 | tee "${EVIDENCE_DIR}/33-migration-framework-guard.log"
 python validation/run_migration_drift_dry_run.py 2>&1 | tee "${EVIDENCE_DIR}/34-migration-drift-dry-run.log"

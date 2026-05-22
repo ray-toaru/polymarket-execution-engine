@@ -52,7 +52,7 @@ impl RuntimeStateStore for PostgresStore {
             ];
         }
         let worker_rows =
-            worker_rows::load_worker_rows(&transaction, &required_capabilities).await?;
+            worker_rows::load_worker_rows(&transaction, query, &required_capabilities).await?;
         let base = RuntimeStateSummary {
             geoblock_status,
             worker_status: worker_status_from_rows(&worker_rows, required_capabilities.len()),

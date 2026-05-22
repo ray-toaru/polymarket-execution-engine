@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from zipfile import ZipFile
 
 from current_gate_chain import require_current_gate_log
 
@@ -28,6 +29,18 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: fh.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def archived_manifest_sha256(artifact_path: Path, manifest_rel: str) -> str | None:
+    version = (INTEGRATION_ROOT / "VERSION").read_text().strip()
+    archive_root = f"polymarket_execution_suite_v{version.replace('.', '_')}"
+    manifest_name = f"{archive_root}/{manifest_rel}"
+    try:
+        with ZipFile(artifact_path) as zf:
+            data = zf.read(manifest_name)
+    except (KeyError, OSError):
+        return None
+    return hashlib.sha256(data).hexdigest()
 
 
 def main() -> int:
@@ -103,10 +116,13 @@ def main() -> int:
                 failures.append("artifact evidence sidecar does not bind artifact hash")
             manifest_rel = evidence_sidecar.get("canonical_evidence", {}).get("manifest_path")
             manifest_sha = evidence_sidecar.get("canonical_evidence", {}).get("manifest_sha256")
-            manifest_path = INTEGRATION_ROOT / str(manifest_rel)
-            evidence_manifest_sha_ok = manifest_path.exists() and sha256(manifest_path) == manifest_sha
+            evidence_manifest_sha_ok = (
+                isinstance(manifest_rel, str)
+                and isinstance(manifest_sha, str)
+                and archived_manifest_sha256(artifact_path, manifest_rel) == manifest_sha
+            )
             if not evidence_manifest_sha_ok:
-                failures.append("artifact evidence sidecar does not bind current evidence manifest hash")
+                failures.append("artifact evidence sidecar does not bind archived evidence manifest hash")
 
     for log_name in [
         "13-pg-migration.log",

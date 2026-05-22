@@ -19,12 +19,10 @@ pub(crate) const L2_API_SECRET_VAR: &str = "POLY_API_SECRET";
 pub(crate) const L2_API_PASSPHRASE_VAR: &str = "POLY_API_PASSPHRASE";
 
 pub(crate) fn env_present(name: &str) -> bool {
-    std::env::var_os(name).is_some_and(|value| !value.is_empty())
+    std::env::var(name).is_ok_and(|value| !value.trim().is_empty())
 }
 
 pub(crate) fn env_flag(name: &str) -> bool {
-    matches!(
-        std::env::var(name).as_deref(),
-        Ok("1") | Ok("true") | Ok("TRUE")
-    )
+    std::env::var(name)
+        .is_ok_and(|value| matches!(value.trim().to_ascii_lowercase().as_str(), "1" | "true"))
 }

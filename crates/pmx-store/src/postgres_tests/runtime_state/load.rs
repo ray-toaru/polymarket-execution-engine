@@ -209,3 +209,83 @@ async fn postgres_runtime_worker_observations_degrade_runtime_state() {
             .contains(&"heartbeat-lease".into())
     );
 }
+
+#[tokio::test]
+async fn postgres_runtime_state_prefers_scoped_collateral_and_worker_rows() {
+    let Some(store) = test_store().await else {
+        return;
+    };
+    let account = unique("acct-runtime-scoped");
+    let other_account = unique("acct-runtime-scoped-other");
+    let condition = unique("cond-runtime-scoped");
+    let profile = unique("profile-runtime-scoped");
+    let client = store.client().await.expect("test postgres client");
+    client
+        .execute(
+            "INSERT INTO runtime_accounts (account_id, status, kill_switch_enabled) VALUES ($1, 'ACTIVE', false)",
+            &[&account],
+        )
+        .await
+        .expect("seed runtime account");
+    client
+        .execute(
+            "INSERT INTO runtime_markets (condition_id, status, is_sports) VALUES ($1, 'ACTIVE', false)",
+            &[&condition],
+        )
+        .await
+        .expect("seed runtime market");
+    client
+        .execute(
+            "INSERT INTO collateral_profiles (profile_id, status, quote_asset_symbol, quote_asset_address, allowance_target, decimals, profile_version, account_id, condition_id) \
+             VALUES ($1, 'RESOLVED', 'pUSD', '0x0000000000000000000000000000000000000003', '0x0000000000000000000000000000000000000004', 6, 'scoped', $2, $3)",
+            &[&profile, &account, &condition],
+        )
+        .await
+        .expect("seed scoped collateral profile");
+    client
+        .execute(
+            "INSERT INTO worker_health (worker_id, role, capability, status, last_heartbeat_at) \
+             VALUES ($1, 'test', 'reconcile-scoped', 'HEALTHY', now())",
+            &[&unique("worker-global-reconcile-scoped")],
+        )
+        .await
+        .expect("seed global worker health");
+    client
+        .execute(
+            "INSERT INTO worker_health (worker_id, role, capability, status, last_heartbeat_at, account_id, condition_id) \
+             VALUES ($1, 'test', 'reconcile-scoped', 'DEGRADED', now(), $2, $3)",
+            &[&unique("worker-account-reconcile-scoped"), &account, &condition],
+        )
+        .await
+        .expect("seed scoped worker health");
+
+    let scoped_state = store
+        .load_runtime_state(&RuntimeStateQuery {
+            account_id: account,
+            condition_id: condition.clone(),
+            collateral_profile_id: Some(profile.clone()),
+            required_capabilities: vec!["reconcile-scoped".into()],
+        })
+        .await
+        .expect("scoped runtime state");
+    assert_eq!(
+        scoped_state.collateral_profile_status,
+        CollateralProfileStatus::Resolved
+    );
+    assert_eq!(scoped_state.worker_status, WorkerStatus::Degraded);
+
+    let fallback_state = store
+        .load_runtime_state(&RuntimeStateQuery {
+            account_id: other_account,
+            condition_id: condition,
+            collateral_profile_id: Some(profile),
+            required_capabilities: vec!["reconcile-scoped".into()],
+        })
+        .await
+        .expect("fallback runtime state");
+    assert_eq!(
+        fallback_state.collateral_profile_status,
+        CollateralProfileStatus::ExplicitMissing
+    );
+    assert_eq!(fallback_state.worker_status, WorkerStatus::Healthy);
+}

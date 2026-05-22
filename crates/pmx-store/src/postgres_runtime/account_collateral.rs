@@ -103,8 +103,16 @@ pub async fn load_collateral_profile_status(
     if let Some(profile_id) = &query.collateral_profile_id {
         let row = client
             .query_opt(
-                "SELECT status FROM collateral_profiles WHERE profile_id = $1",
-                &[profile_id],
+                "SELECT status FROM collateral_profiles
+                 WHERE profile_id = $1
+                   AND (account_id IS NULL OR account_id = $2)
+                   AND (condition_id IS NULL OR condition_id = $3)
+                 ORDER BY
+                   CASE WHEN account_id = $2 THEN 0 ELSE 1 END,
+                   CASE WHEN condition_id = $3 THEN 0 ELSE 1 END,
+                   created_at DESC
+                 LIMIT 1",
+                &[profile_id, &query.account_id, &query.condition_id],
             )
             .await
             .map_err(map_db_error)?;
@@ -113,8 +121,16 @@ pub async fn load_collateral_profile_status(
     } else {
         let row = client
             .query_opt(
-                "SELECT status FROM collateral_profiles WHERE status IN ('DEFAULT', 'DEFAULT_RESOLVED', 'RESOLVED') ORDER BY created_at DESC LIMIT 1",
-                &[],
+                "SELECT status FROM collateral_profiles
+                 WHERE status IN ('DEFAULT', 'DEFAULT_RESOLVED', 'RESOLVED')
+                   AND (account_id IS NULL OR account_id = $1)
+                   AND (condition_id IS NULL OR condition_id = $2)
+                 ORDER BY
+                   CASE WHEN account_id = $1 THEN 0 ELSE 1 END,
+                   CASE WHEN condition_id = $2 THEN 0 ELSE 1 END,
+                   created_at DESC
+                 LIMIT 1",
+                &[&query.account_id, &query.condition_id],
             )
             .await
             .map_err(map_db_error)?;

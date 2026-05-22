@@ -1,9 +1,23 @@
-#[cfg(any(
-    feature = "sdk-typecheck",
-    feature = "authenticated-smoke",
-    feature = "sign-only-dry-run"
-))]
 use super::*;
+
+#[test]
+fn env_helpers_trim_values_and_accept_case_insensitive_true() {
+    const FLAG: &str = "PMX_TEST_ENV_FLAG_TRIM_TRUE";
+    const PRESENT: &str = "PMX_TEST_ENV_PRESENT_TRIM";
+    // SAFETY: these test-only variables are unique to this crate and are not
+    // read by production SDK code paths.
+    unsafe {
+        std::env::set_var(FLAG, " True ");
+        std::env::set_var(PRESENT, "   ");
+    }
+    assert!(env_flag(FLAG));
+    assert!(!env_present(PRESENT));
+    // SAFETY: see set_var safety note above.
+    unsafe {
+        std::env::remove_var(FLAG);
+        std::env::remove_var(PRESENT);
+    }
+}
 
 #[cfg(feature = "sdk-typecheck")]
 #[test]
