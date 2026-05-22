@@ -1,4 +1,11 @@
 {
+  "buy_size_rehearsal": {
+    "notional_rule": "limit_price * size",
+    "raw_signed_order_exposed": false,
+    "remote_side_effects": false,
+    "side": "BUY",
+    "size": "5"
+  },
   "cancelled": false,
   "failures": [],
   "posted": false,

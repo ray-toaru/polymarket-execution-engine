@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-05-22T13:18:48.281763+00:00",
+  "captured_at": "2026-05-22T14:01:10.469725+00:00",
   "dependency_locks": {
     "polymarket-execution-engine/Cargo.lock": {
       "exists": true,
@@ -24,10 +24,10 @@
   "git": {
     "execution": {
       "branch": "v0.26-controlled-canary",
-      "head": "8e6d75b4b0dfa8b8e6cddcca780e1513a851db9c",
+      "head": "84d2cb821c0bb348eaba6772a48f2f6f1c046b73",
       "path": "polymarket-execution-engine",
       "status_clean": false,
-      "status_entry_count": 72
+      "status_entry_count": 73
     },
     "hermes": {
       "branch": "v0.26-controlled-canary",
@@ -38,12 +38,12 @@
     },
     "integration": {
       "branch": "v0.26-controlled-canary",
-      "head": "f2a5797d40a6e054d2b2c0fa7b0c657f1a9ac994",
+      "head": "8eb827d76625a7385e4f0755aba2299913a419e9",
       "path": ".",
       "status_clean": false,
-      "status_entry_count": 1
+      "status_entry_count": 3
     },
-    "submodules": "f8e21ab974a60719d4f0fae6ac4f724e9488b025 hermes-polymarket-control (heads/v0.26-controlled-canary)\n+8e6d75b4b0dfa8b8e6cddcca780e1513a851db9c polymarket-execution-engine (heads/v0.26-controlled-canary)"
+    "submodules": "f8e21ab974a60719d4f0fae6ac4f724e9488b025 hermes-polymarket-control (heads/v0.26-controlled-canary)\n+84d2cb821c0bb348eaba6772a48f2f6f1c046b73 polymarket-execution-engine (heads/v0.26-controlled-canary)"
   },
   "integration_root": "/workspaces/universal/rust/polymarket_dual_project",
   "platform": {
