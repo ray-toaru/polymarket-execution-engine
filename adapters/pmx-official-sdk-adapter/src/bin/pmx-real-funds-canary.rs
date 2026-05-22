@@ -28,6 +28,7 @@ struct Args {
     release_decision_file: Option<PathBuf>,
     approval_consumed_marker: Option<PathBuf>,
     dry_run: bool,
+    preflight_only: bool,
     armed: bool,
     allow_live_submit_config: bool,
     allow_real_funds_canary_config: bool,
@@ -37,6 +38,7 @@ struct Args {
 struct CanaryCliReport {
     status: String,
     dry_run: bool,
+    preflight_only: bool,
     armed: bool,
     selected_market_id_hash: Option<String>,
     selected_token_id_hash: Option<String>,
@@ -62,6 +64,9 @@ async fn main() -> anyhow::Result<()> {
     let args = parse_args()?;
     if args.armed && args.dry_run {
         anyhow::bail!("--armed and --dry-run are mutually exclusive");
+    }
+    if args.armed && args.preflight_only {
+        anyhow::bail!("--armed and --preflight-only are mutually exclusive");
     }
     let approval: RealFundsCanaryApproval =
         serde_json::from_str(&std::fs::read_to_string(&args.approval_file)?)?;
@@ -100,6 +105,7 @@ async fn main() -> anyhow::Result<()> {
                 "dry_run_blocked_unsafe_market_candidate".into()
             },
             dry_run: args.dry_run,
+            preflight_only: args.preflight_only,
             armed: args.armed,
             selected_market_id_hash: None,
             selected_token_id_hash: None,
@@ -179,6 +185,43 @@ async fn main() -> anyhow::Result<()> {
         preconditions,
     };
 
+    if args.preflight_only {
+        validate_real_funds_canary_preconditions(&config, &request)?;
+        let report = CanaryCliReport {
+            status: "preflight_ready".into(),
+            dry_run: false,
+            preflight_only: true,
+            armed: false,
+            selected_market_id_hash: Some(format!(
+                "{:x}",
+                sha2::Sha256::digest(market.market_id.as_bytes())
+            )),
+            selected_token_id_hash: Some(format!(
+                "{:x}",
+                sha2::Sha256::digest(market.token_id.as_bytes())
+            )),
+            limit_price: Some(market.limit_price),
+            size: Some(market.size),
+            notional_usd: Some(market.notional_usd),
+            market_diagnostics: validation.diagnostics,
+            approval_hash: approval.approval_hash,
+            artifact_bound: approval.artifact_sha256 == args.artifact_sha256,
+            evidence_manifest_bound: approval.evidence_manifest_sha256
+                == args.evidence_manifest_sha256,
+            market_candidate_sha256: market_candidate_sha256.clone(),
+            market_candidate_bound: approval.market_candidate_sha256 == market_candidate_sha256,
+            release_decision_bound,
+            live_submit_allowed: true,
+            real_funds_canary_allowed: real_funds_env_enabled
+                && args.allow_real_funds_canary_config,
+            posted: false,
+            remote_side_effects: false,
+            raw_signed_order_exposed: false,
+        };
+        println!("{}", serde_json::to_string_pretty(&report)?);
+        return Ok(());
+    }
+
     if args.armed {
         validate_real_funds_canary_preconditions(&config, &request)?;
         create_approval_consumed_marker(&args, &approval, &market_candidate_sha256)?;
@@ -190,6 +233,7 @@ async fn main() -> anyhow::Result<()> {
     let report = CanaryCliReport {
         status: "dry_run_ready".into(),
         dry_run: true,
+        preflight_only: false,
         armed: false,
         selected_market_id_hash: Some(format!(
             "{:x}",
@@ -222,6 +266,7 @@ async fn main() -> anyhow::Result<()> {
 fn parse_args() -> anyhow::Result<Args> {
     let mut values = HashMap::<String, String>::new();
     let mut dry_run = true;
+    let mut preflight_only = false;
     let mut armed = false;
     let mut iter = std::env::args().skip(1);
     while let Some(arg) = iter.next() {
@@ -229,6 +274,10 @@ fn parse_args() -> anyhow::Result<Args> {
             "--dry-run" => dry_run = true,
             "--armed" => {
                 armed = true;
+                dry_run = false;
+            }
+            "--preflight-only" => {
+                preflight_only = true;
                 dry_run = false;
             }
             "--allow-live-submit-config" => {
@@ -262,6 +311,7 @@ fn parse_args() -> anyhow::Result<Args> {
             .cloned()
             .unwrap_or_else(|| "0".into()),
         dry_run,
+        preflight_only,
         armed,
         allow_live_submit_config: values.contains_key("--allow-live-submit-config"),
         allow_real_funds_canary_config: values.contains_key("--allow-real-funds-canary-config"),
