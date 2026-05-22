@@ -535,6 +535,10 @@ fn post_only_limit_terms_valid(candidate: &RealFundsCanaryMarketCandidate) -> bo
     }
     decimal_gt_zero(&candidate.limit_price)
         && decimal_lt(&candidate.limit_price, &candidate.best_ask)
+        && decimal_is_multiple_of(
+            &candidate.limit_price,
+            &candidate.exchange_rule_snapshot.min_tick_size,
+        )
 }
 
 fn candidate_notional_usd(candidate: &RealFundsCanaryMarketCandidate) -> Option<String> {
@@ -544,6 +548,28 @@ fn candidate_notional_usd(candidate: &RealFundsCanaryMarketCandidate) -> Option<
     ) {
         (Some(price), Some(size)) => price.mul(&size).map(|value| value.format_summary()),
         _ => None,
+    }
+}
+
+fn decimal_is_multiple_of(value: &str, step: &str) -> bool {
+    match (parse_decimal(value), parse_decimal(step)) {
+        (Some(value), Some(step)) if value.is_positive() && step.is_positive() => {
+            let scale = value.scale.max(step.scale);
+            let Some(left_factor) = pow10(scale - value.scale) else {
+                return false;
+            };
+            let Some(right_factor) = pow10(scale - step.scale) else {
+                return false;
+            };
+            let Some(left) = value.units.checked_mul(left_factor) else {
+                return false;
+            };
+            let Some(right) = step.units.checked_mul(right_factor) else {
+                return false;
+            };
+            right != 0 && left % right == 0
+        }
+        _ => false,
     }
 }
 

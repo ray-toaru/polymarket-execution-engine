@@ -333,6 +333,20 @@ fn real_funds_market_selector_rejects_crossing_post_only_buy_price() {
 }
 
 #[test]
+fn real_funds_market_selector_rejects_limit_price_off_tick_grid() {
+    let mut candidates = safe_market_candidates();
+    candidates[2].best_ask = "0.024".into();
+    candidates[2].limit_price = "0.014".into();
+    candidates[2].exchange_rule_snapshot.min_tick_size = "0.01".into();
+    let diagnostics = select_real_funds_canary_market_with_diagnostics(&candidates[2..3], "1");
+    assert!(diagnostics.selection.is_none());
+    assert_eq!(
+        diagnostics.diagnostics.rejection_counts.post_only_not_bound,
+        1
+    );
+}
+
+#[test]
 fn real_funds_market_selector_uses_fixed_decimal_for_notional_cap() {
     let candidates = vec![RealFundsCanaryMarketCandidate {
         market_id: "market-decimal-boundary".into(),
@@ -373,8 +387,8 @@ fn real_funds_market_selector_compares_min_order_to_target_size() {
             accepting_orders: true,
             closed: false,
             archived: false,
-            best_ask: "0.001".into(),
-            limit_price: "0.0009".into(),
+            best_ask: "0.006".into(),
+            limit_price: "0.005".into(),
             ask_size: "2000".into(),
             target_size: "5".into(),
             spread_bps: 10,
