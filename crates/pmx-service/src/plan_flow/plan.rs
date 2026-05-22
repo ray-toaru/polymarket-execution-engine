@@ -82,12 +82,7 @@ where
     } else {
         PlanStatus::Blocked
     };
-    let max_exposure = match &normalized.quantity_bound {
-        QuantityBound::WorstCaseQuoteNotional(value) => value.clone(),
-        QuantityBound::WorstCaseBaseShares(_) | QuantityBound::Unsupported(_) => {
-            pmx_core::DecimalString("0".into())
-        }
-    };
+    let max_exposure = max_quote_exposure(normalized)?;
     let mut plan = ExecutionPlanSummary {
         execution_id: "pending".into(),
         account_id: normalized.account_id.clone(),
@@ -129,6 +124,20 @@ where
     }
     store.save_plan_summary(&plan).await?;
     Ok(plan)
+}
+
+fn max_quote_exposure(
+    normalized: &NormalizedIntent,
+) -> Result<pmx_core::DecimalString, ServiceError> {
+    match (&normalized.side, &normalized.quantity_bound) {
+        (_, QuantityBound::WorstCaseQuoteNotional(value)) => Ok(value.clone()),
+        (pmx_core::Side::Buy, QuantityBound::WorstCaseBaseShares(value)) => normalized
+            .limit_price
+            .checked_mul(value)
+            .map_err(|err| ServiceError::Internal(err.to_string())),
+        (pmx_core::Side::Sell, QuantityBound::WorstCaseBaseShares(_))
+        | (_, QuantityBound::Unsupported(_)) => Ok(pmx_core::DecimalString("0".into())),
+    }
 }
 
 fn verify_approval_binding(

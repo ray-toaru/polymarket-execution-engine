@@ -266,6 +266,80 @@ async fn explicit_live_gateway_posts_and_records_remote_order_lifecycle() {
 }
 
 #[tokio::test]
+async fn explicit_live_gateway_posts_buy_size_and_records_quote_exposure() {
+    let service = ExecutorService::with_runtime_provider(
+        InMemoryStore::default(),
+        StaticRuntimeStateProvider::new(allow_runtime_state()),
+        "test-executor".into(),
+        DEFAULT_CONTRACT_VERSION.into(),
+    );
+    let normalized = service
+        .normalize(buy_base_share_intent())
+        .await
+        .expect("normalize");
+    assert!(matches!(
+        normalized.quantity_bound,
+        QuantityBound::WorstCaseBaseShares(_)
+    ));
+    let snapshot = service
+        .capture_snapshot(normalized.clone())
+        .await
+        .expect("snapshot");
+    let decision = service
+        .evaluate_decision_by_id(DecisionByIdRequest {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+        })
+        .await
+        .expect("decision");
+    assert_eq!(decision.status, DecisionStatus::Allow);
+    let plan = service
+        .compile_plan_by_id(CompilePlanByIdCommand {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+            decision_id: decision.decision_id.clone(),
+            approval: approval_for(&snapshot, &decision),
+        })
+        .await
+        .expect("plan");
+    assert_eq!(plan.status, PlanStatus::Ready);
+    assert_eq!(plan.max_exposure, DecimalString("2.5".into()));
+
+    let signer = pmx_gateway::DeterministicTestSignerProvider;
+    let gateway = pmx_gateway::FakeGateway::new();
+    let outcome = service
+        .submit_plan_with_gateway(
+            SubmitPlanCommand {
+                execution_id: plan.execution_id.clone(),
+                plan_hash: plan.plan_hash.0.clone(),
+                idempotency_key: "idem-live-buy-size-posted".into(),
+                mode: SubmitMode::Live,
+            },
+            &signer,
+            &gateway,
+        )
+        .await
+        .expect("live submit");
+    let receipt = match outcome {
+        SubmitOutcome::Accepted(receipt) => receipt,
+        SubmitOutcome::Replayed(_) => panic!("first submit cannot replay"),
+    };
+    assert_eq!(receipt.status, SubmitStatus::Posted);
+    let order_id = format!("test-order-{}", plan.execution_id);
+    let lifecycle = service
+        .store()
+        .load_order_lifecycle(&order_id)
+        .await
+        .expect("load order")
+        .expect("order lifecycle");
+    assert_eq!(lifecycle.side, "Buy");
+    assert_eq!(
+        lifecycle.remote_order_id,
+        Some(format!("remote-{order_id}"))
+    );
+}
+
+#[tokio::test]
 async fn explicit_live_gateway_remote_unknown_freezes_for_operator_review() {
     let service = ExecutorService::with_runtime_provider(
         InMemoryStore::default(),
@@ -453,6 +527,15 @@ async fn explicit_live_gateway_blocks_unsupported_quote_notional_without_stuck_i
 fn sell_base_share_intent() -> TradeIntent {
     let mut intent = intent();
     intent.side = Side::Sell;
+    intent.quantity = QuantityIntent {
+        max_notional: None,
+        max_shares: Some(DecimalString("5".into())),
+    };
+    intent
+}
+
+fn buy_base_share_intent() -> TradeIntent {
+    let mut intent = intent();
     intent.quantity = QuantityIntent {
         max_notional: None,
         max_shares: Some(DecimalString("5".into())),

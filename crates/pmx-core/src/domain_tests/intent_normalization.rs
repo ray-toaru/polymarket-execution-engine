@@ -12,6 +12,28 @@ fn decimal_rejects_scientific_padding_and_trailing_dot() {
 }
 
 #[test]
+fn decimal_multiplication_preserves_canonical_fixed_point() {
+    assert_eq!(
+        DecimalString("0.5".into())
+            .checked_mul(&DecimalString("5".into()))
+            .unwrap(),
+        DecimalString("2.5".into())
+    );
+    assert_eq!(
+        DecimalString("0.01".into())
+            .checked_mul(&DecimalString("5".into()))
+            .unwrap(),
+        DecimalString("0.05".into())
+    );
+    assert_eq!(
+        DecimalString("1.20".into())
+            .checked_mul(&DecimalString("3.00".into()))
+            .unwrap(),
+        DecimalString("3.6".into())
+    );
+}
+
+#[test]
 fn limit_price_is_executor_authoritative() {
     for bad in ["0", "0.0", "1.01", "2", "1.0001"] {
         let mut intent = base_intent(
@@ -101,12 +123,28 @@ fn sell_shares_canonicalizes_to_base_bound() {
 }
 
 #[test]
-fn unsupported_cross_quantity_is_explicit() {
+fn buy_shares_canonicalizes_to_base_bound() {
     let n = normalize_intent(base_intent(
         Side::Buy,
         QuantityIntent {
             max_notional: None,
             max_shares: Some(DecimalString("7".into())),
+        },
+    ))
+    .unwrap();
+    assert!(matches!(
+        n.quantity_bound,
+        QuantityBound::WorstCaseBaseShares(_)
+    ));
+}
+
+#[test]
+fn sell_notional_remains_unsupported_without_base_conversion_rule() {
+    let n = normalize_intent(base_intent(
+        Side::Sell,
+        QuantityIntent {
+            max_notional: Some(DecimalString("7".into())),
+            max_shares: None,
         },
     ))
     .unwrap();

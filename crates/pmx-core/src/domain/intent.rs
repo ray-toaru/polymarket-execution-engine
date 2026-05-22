@@ -50,10 +50,7 @@ impl QuantityIntent {
         match (side, &self.max_notional, &self.max_shares) {
             (Side::Buy, Some(v), None) => Ok(QuantityBound::WorstCaseQuoteNotional(v.clone())),
             (Side::Sell, None, Some(v)) => Ok(QuantityBound::WorstCaseBaseShares(v.clone())),
-            (Side::Buy, None, Some(v)) => Ok(QuantityBound::Unsupported(format!(
-                "BUY max_shares requires an explicit quote conversion rule: {}",
-                v.0
-            ))),
+            (Side::Buy, None, Some(v)) => Ok(QuantityBound::WorstCaseBaseShares(v.clone())),
             (Side::Sell, Some(v), None) => Ok(QuantityBound::Unsupported(format!(
                 "SELL max_notional requires an explicit base conversion rule: {}",
                 v.0
