@@ -5,11 +5,17 @@ use anyhow::Context;
 use polymarket_client_sdk_v2::auth::{
     Credentials as SdkCredentials, LocalSigner, Signer as _, Uuid,
 };
+use polymarket_client_sdk_v2::clob::types::SignatureType;
 use polymarket_client_sdk_v2::clob::{Client as SdkClient, Config as SdkConfig};
+use polymarket_client_sdk_v2::types::Address;
 use polymarket_client_sdk_v2::{POLYGON, PRIVATE_KEY_VAR};
 use std::str::FromStr;
 use std::time::Duration;
 use tokio::time;
+
+const ENV_CLOB_FUNDER: &str = "PMX_CLOB_FUNDER";
+const ENV_ACCT_A_CLOB_FUNDER: &str = "PMX_ACCT_A_CLOB_FUNDER";
+const ENV_CLOB_SIGNATURE_TYPE: &str = "PMX_CLOB_SIGNATURE_TYPE";
 
 pub(super) fn sdk_call_timeout() -> Duration {
     let parsed = std::env::var(ENV_SDK_CALL_TIMEOUT_SECS)
@@ -46,6 +52,48 @@ fn sdk_credentials_from_env() -> anyhow::Result<Option<SdkCredentials>> {
     }
 }
 
+fn clob_funder_from_env() -> anyhow::Result<Option<Address>> {
+    let raw = std::env::var(ENV_CLOB_FUNDER)
+        .ok()
+        .filter(|value| !value.trim().is_empty())
+        .or_else(|| {
+            std::env::var(ENV_ACCT_A_CLOB_FUNDER)
+                .ok()
+                .filter(|value| !value.trim().is_empty())
+        });
+    raw.map(|value| {
+        Address::from_str(value.trim())
+            .with_context(|| format!("invalid {ENV_CLOB_FUNDER}/{ENV_ACCT_A_CLOB_FUNDER} address"))
+    })
+    .transpose()
+}
+
+fn clob_signature_type_from_env(has_funder: bool) -> anyhow::Result<SignatureType> {
+    let Some(raw) = std::env::var(ENV_CLOB_SIGNATURE_TYPE)
+        .ok()
+        .filter(|value| !value.trim().is_empty())
+    else {
+        return Ok(if has_funder {
+            SignatureType::Poly1271
+        } else {
+            SignatureType::Eoa
+        });
+    };
+    parse_signature_type(&raw)
+}
+
+fn parse_signature_type(raw: &str) -> anyhow::Result<SignatureType> {
+    match raw.trim().to_ascii_uppercase().as_str() {
+        "EOA" | "0" => Ok(SignatureType::Eoa),
+        "PROXY" | "POLY_PROXY" | "1" => Ok(SignatureType::Proxy),
+        "GNOSIS_SAFE" | "GNOSISSAFE" | "POLY_GNOSIS_SAFE" | "2" => Ok(SignatureType::GnosisSafe),
+        "POLY_1271" | "POLY1271" | "DEPOSIT_WALLET" | "3" => Ok(SignatureType::Poly1271),
+        _ => Err(anyhow::anyhow!(
+            "unsupported {ENV_CLOB_SIGNATURE_TYPE} value"
+        )),
+    }
+}
+
 pub(super) async fn authenticated_sdk_client(
     config: &OfficialSdkAdapterConfig,
 ) -> anyhow::Result<
@@ -62,6 +110,13 @@ pub(super) async fn authenticated_sdk_client(
     )
     .context("creating official SDK client")?
     .authentication_builder(&signer);
+    if let Some(funder) = clob_funder_from_env()? {
+        builder = builder
+            .funder(funder)
+            .signature_type(clob_signature_type_from_env(true)?);
+    } else {
+        builder = builder.signature_type(clob_signature_type_from_env(false)?);
+    }
     if let Some(credentials) = sdk_credentials_from_env()? {
         builder = builder.credentials(credentials);
     }
@@ -76,4 +131,9 @@ pub(super) async fn authenticated_sdk_client(
 #[cfg(all(feature = "sign-only-dry-run", test))]
 pub(super) fn sdk_config() -> SdkConfig {
     SdkConfig::builder().use_server_time(true).build()
+}
+
+#[cfg(all(feature = "sdk-typecheck", test))]
+pub(crate) fn parse_signature_type_for_test(raw: &str) -> anyhow::Result<SignatureType> {
+    parse_signature_type(raw)
 }

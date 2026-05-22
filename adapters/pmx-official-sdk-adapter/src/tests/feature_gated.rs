@@ -33,6 +33,22 @@ fn sdk_error_normalization_covers_validation() {
 
 #[cfg(feature = "sdk-typecheck")]
 #[test]
+fn clob_signature_type_parser_supports_deposit_wallet_aliases() {
+    assert_eq!(
+        crate::sdk_runtime::parse_signature_type_for_test("POLY_1271")
+            .expect("poly 1271 signature type"),
+        polymarket_client_sdk_v2::clob::types::SignatureType::Poly1271
+    );
+    assert_eq!(
+        crate::sdk_runtime::parse_signature_type_for_test("deposit_wallet")
+            .expect("deposit wallet alias"),
+        polymarket_client_sdk_v2::clob::types::SignatureType::Poly1271
+    );
+    assert!(crate::sdk_runtime::parse_signature_type_for_test("unknown-signature-type").is_err());
+}
+
+#[cfg(feature = "sdk-typecheck")]
+#[test]
 fn geoblock_status_maps_to_core_status() {
     assert_eq!(geoblock_status_from_sdk(true), GeoblockStatus::Blocked);
     assert_eq!(geoblock_status_from_sdk(false), GeoblockStatus::Allowed);

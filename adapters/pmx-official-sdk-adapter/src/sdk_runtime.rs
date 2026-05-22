@@ -25,5 +25,7 @@ pub use live_canary::{
 #[cfg(feature = "sign-only-dry-run")]
 pub use sign_only::run_sign_only_dry_run;
 
+#[cfg(all(feature = "sdk-typecheck", test))]
+pub(crate) use shared::parse_signature_type_for_test;
 #[cfg(all(feature = "sign-only-dry-run", test))]
 pub(crate) use sign_only::discover_active_token_id;
