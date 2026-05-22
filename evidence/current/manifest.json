@@ -78,7 +78,7 @@
     "evidence_sidecar": "polymarket-execution-suite-v0.26.0.zip.evidence.json",
     "name": "polymarket-execution-suite-v0.26.0.zip",
     "path": "dist/polymarket-execution-suite-v0.26.0.zip",
-    "sha256": "5593cc2d43c33aa7afdb373f63cb0dfbdc5e287d6ba69be304df877c9cb44a52",
+    "sha256": "48c35b130d82f881812df44ef782bac7f39e040009d5cb97a271171a252c2c85",
     "sha256_sidecar": "polymarket-execution-suite-v0.26.0.zip.sha256"
   },
   "external_operator_approval_preflight_validation": {
@@ -103,7 +103,7 @@
     ],
     "status": "pass"
   },
-  "generated_at": "2026-05-22T11:30:25.724057+00:00",
+  "generated_at": "2026-05-22T11:33:14.841550+00:00",
   "live_canary_blocked_validation": {
     "logs": [
       {
