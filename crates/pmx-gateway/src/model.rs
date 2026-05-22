@@ -7,8 +7,10 @@ pub struct PlanOrder {
     pub execution_id: String,
     pub account_id: AccountId,
     pub token_id: TokenId,
+    pub side: String,
     pub limit_price: String,
     pub size: String,
+    pub time_in_force: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

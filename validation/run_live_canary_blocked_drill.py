@@ -14,6 +14,7 @@ ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
 MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 DOC = ROOT / "docs" / "LIVE_CANARY_BLOCKED_DRILL.md"
 ALLOWED_CANARY_POST_ORDER = ADAPTER / "sdk_runtime" / "live_canary.rs"
+ALLOWED_GATEWAY_POST_ORDER = ADAPTER / "sdk_runtime" / "gateway.rs"
 
 REQUIRED_TOKENS = [
     "prepare_live_canary_decision",
@@ -24,7 +25,6 @@ REQUIRED_TOKENS = [
 
 FORBIDDEN_CALLS = [
     re.compile(r"\.\s*post_orders\s*\("),
-    re.compile(r"\.\s*cancel_order\s*\("),
     re.compile(r"\.\s*cancel_orders\s*\("),
 ]
 POST_ORDER_CALL = re.compile(r"\.\s*post_order\s*\(")
@@ -62,7 +62,8 @@ def main() -> int:
         for source in rust_sources(ADAPTER)
         if POST_ORDER_CALL.search(strip_rust_comments(source.read_text()))
     ]
-    if post_order_call_sites != [ALLOWED_CANARY_POST_ORDER]:
+    allowed_post_order_sites = [ALLOWED_GATEWAY_POST_ORDER, ALLOWED_CANARY_POST_ORDER]
+    if post_order_call_sites != allowed_post_order_sites:
         display = ", ".join(str(path.relative_to(ADAPTER)) for path in post_order_call_sites) or "none"
         failures.append(
             "post_order call sites must be limited to guarded real-funds canary, "

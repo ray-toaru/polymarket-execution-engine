@@ -16,6 +16,7 @@ ADAPTER_SRC = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
 SERVICE_SRC = ROOT / "crates" / "pmx-service" / "src"
 PUBLIC_CONTRACT = ROOT / "openapi" / "executor.v1.yaml"
 
+ALLOWED_GATEWAY_POST_ORDER_FILE = ADAPTER_SRC / "sdk_runtime" / "gateway.rs"
 ALLOWED_POST_ORDER_FILE = ADAPTER_SRC / "sdk_runtime" / "live_canary.rs"
 ALLOWED_SERVICE_POST_ORDER_FILE = SERVICE_SRC / "submit" / "live.rs"
 FORBIDDEN_BULK_POST_ORDER = re.compile(r"\.\s*post_orders\s*\(")
@@ -76,7 +77,11 @@ def adapter_source_files() -> list[Path]:
 
 
 def service_source_files() -> list[Path]:
-    return sorted(SERVICE_SRC.rglob("*.rs"))
+    return [
+        path
+        for path in sorted(SERVICE_SRC.rglob("*.rs"))
+        if "service_tests" not in path.parts
+    ]
 
 
 def main() -> int:
@@ -90,7 +95,8 @@ def main() -> int:
         text = strip_rust_comments(path.read_text())
         if POST_ORDER_CALL.search(text):
             post_order_call_sites.append(path)
-    if post_order_call_sites != [ALLOWED_POST_ORDER_FILE]:
+    allowed_post_order_sites = [ALLOWED_GATEWAY_POST_ORDER_FILE, ALLOWED_POST_ORDER_FILE]
+    if post_order_call_sites != allowed_post_order_sites:
         display = ", ".join(str(path.relative_to(ADAPTER_SRC)) for path in post_order_call_sites) or "none"
         failures.append(f"official SDK adapter post_order call sites must be limited to sdk_runtime/live_canary.rs; found {display}")
     if ALLOWED_POST_ORDER_FILE.exists():

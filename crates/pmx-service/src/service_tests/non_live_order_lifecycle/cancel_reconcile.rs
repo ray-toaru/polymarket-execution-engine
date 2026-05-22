@@ -1,4 +1,5 @@
 use super::super::*;
+use pmx_gateway::{ClobGateway, SignerProvider};
 
 #[tokio::test]
 async fn service_records_non_live_cancel_and_reconcile_order_lifecycle() {
@@ -129,4 +130,87 @@ async fn service_records_non_live_cancel_and_reconcile_order_lifecycle() {
         "corr-reconcile"
     );
     assert_eq!(reconcile_events[0].payload["no_remote_side_effect"], true);
+}
+
+#[tokio::test]
+async fn service_live_cancel_gateway_records_remote_acceptance_and_unknown() {
+    let store = InMemoryStore::default();
+    let posted = order("order-live-cancel", OrderLifecycleState::Posted);
+    store
+        .upsert_order_lifecycle(&posted)
+        .await
+        .expect("upsert order");
+    let gateway = pmx_gateway::FakeGateway::new();
+    let signer = pmx_gateway::DeterministicTestSignerProvider;
+    let signed = signer
+        .signer_for_account(&AccountId("acct-1".into()))
+        .await
+        .expect("signer")
+        .sign_order(&pmx_gateway::PlanOrder {
+            execution_id: "exec-order-life".into(),
+            account_id: AccountId("acct-1".into()),
+            token_id: TokenId("token-1".into()),
+            side: "Buy".into(),
+            limit_price: "0.5".into(),
+            size: "5".into(),
+            time_in_force: "Fok".into(),
+        })
+        .await
+        .expect("sign");
+    let ack = gateway.post_order(&signed).await.expect("post fake order");
+    let mut posted_with_remote = posted.clone();
+    posted_with_remote.remote_order_id = Some(ack.remote_order_id.0);
+    store
+        .upsert_order_lifecycle(&posted_with_remote)
+        .await
+        .expect("upsert remote order id");
+    let service = ExecutorService::new(store.clone());
+
+    let accepted = service
+        .cancel_order_with_gateway(
+            LiveCancelCommand {
+                account_id: "acct-1".into(),
+                order_id: "order-live-cancel".into(),
+                reason: "operator cancel fallback".into(),
+                correlation_id: Some("corr-live-cancel".into()),
+            },
+            &gateway,
+        )
+        .await
+        .expect("live cancel accepted");
+    assert_eq!(
+        accepted.lifecycle_state,
+        OrderLifecycleState::CancelRemoteAccepted
+    );
+
+    store
+        .upsert_order_lifecycle(&order(
+            "order-live-cancel-unknown",
+            OrderLifecycleState::Posted,
+        ))
+        .await
+        .expect("upsert unknown order");
+    let mut unknown = store
+        .load_order_lifecycle("order-live-cancel-unknown")
+        .await
+        .expect("load")
+        .expect("order");
+    unknown.remote_order_id = Some("remote-missing-order".into());
+    store
+        .upsert_order_lifecycle(&unknown)
+        .await
+        .expect("upsert missing remote id");
+    let unknown = service
+        .cancel_order_with_gateway(
+            LiveCancelCommand {
+                account_id: "acct-1".into(),
+                order_id: "order-live-cancel-unknown".into(),
+                reason: "operator cancel fallback".into(),
+                correlation_id: Some("corr-live-cancel-unknown".into()),
+            },
+            &gateway,
+        )
+        .await
+        .expect("live cancel remote unknown");
+    assert_eq!(unknown.lifecycle_state, OrderLifecycleState::RemoteUnknown);
 }

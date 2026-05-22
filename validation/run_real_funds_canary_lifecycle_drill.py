@@ -54,6 +54,7 @@ def post_order_call_sites(root: Path) -> list[Path]:
     return [
         path
         for path in sorted(root.rglob("*.rs"))
+        if "service_tests" not in path.parts
         if "post_order(" in path.read_text() or "post_orders(" in path.read_text()
     ]
 

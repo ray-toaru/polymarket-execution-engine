@@ -6,8 +6,10 @@ fn sample_order() -> PlanOrder {
         execution_id: "exec-gateway-test".into(),
         account_id: pmx_core::AccountId("acct-gateway-test".into()),
         token_id: pmx_core::TokenId("token-gateway-test".into()),
+        side: "Buy".into(),
         limit_price: "0.5".into(),
         size: "10".into(),
+        time_in_force: "Gtc".into(),
     }
 }
 

@@ -88,7 +88,7 @@ def main() -> int:
         if token in live:
             failures.append(f"live canary runtime must not perform active market discovery: {token}")
     if len(re.findall(r"\.\s*post_order\s*\(", live)) != 1:
-        failures.append("live canary SDK runtime must still contain exactly one post_order call")
+        failures.append("live canary SDK runtime must still contain exactly one dedicated canary post_order call")
 
     result = {
         "status": "fail" if failures else "pass",

@@ -56,3 +56,12 @@ pub enum SubmitOutcome {
     Accepted(SubmitReceipt),
     Replayed(SubmitReceipt),
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LiveCancelCommand {
+    pub account_id: String,
+    pub order_id: String,
+    pub reason: String,
+    pub correlation_id: Option<String>,
+}

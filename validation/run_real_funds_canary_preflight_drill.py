@@ -130,8 +130,9 @@ def main() -> int:
     if ".market_order(" in live_canary_text:
         failures.append("real-funds canary must use limit order size semantics, not market_order amount semantics")
     post_order_occurrences = adapter_text.count(".post_order(")
-    if post_order_occurrences != 1 or ".post_order(signed)" not in live_canary_text:
-        failures.append("real-funds canary must be the only adapter post_order call site")
+    gateway_text = (ADAPTER_SRC / "sdk_runtime" / "gateway.rs").read_text() if (ADAPTER_SRC / "sdk_runtime" / "gateway.rs").exists() else ""
+    if post_order_occurrences != 2 or ".post_order(signed)" not in live_canary_text or ".post_order(signed)" not in gateway_text:
+        failures.append("adapter post_order call sites must be limited to guarded canary and explicit SDK gateway bridge")
 
     result = {
         "status": "fail" if failures else "pass",

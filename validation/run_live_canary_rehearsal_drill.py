@@ -11,9 +11,11 @@ from current_gate_chain import require_current_gate_log
 
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
+SERVICE_FLOW_TESTS = ROOT / "crates" / "pmx-service" / "src" / "service_tests" / "flow.rs"
 MANIFEST = ROOT / "validation" / "write_current_evidence_manifest.py"
 DOC = ROOT / "docs" / "LIVE_CANARY_REHEARSAL_DRILL.md"
 ALLOWED_CANARY_POST_ORDER = ADAPTER / "sdk_runtime" / "live_canary.rs"
+ALLOWED_GATEWAY_POST_ORDER = ADAPTER / "sdk_runtime" / "gateway.rs"
 
 REHEARSAL_STAGES = [
     "whitelist_check",
@@ -38,7 +40,6 @@ REQUIRED_TOKENS = [
 
 FORBIDDEN_CALLS = [
     re.compile(r"\.\s*post_orders\s*\("),
-    re.compile(r"\.\s*cancel_order\s*\("),
     re.compile(r"\.\s*cancel_orders\s*\("),
 ]
 POST_ORDER_CALL = re.compile(r"\.\s*post_order\s*\(")
@@ -76,7 +77,8 @@ def main() -> int:
         for source in rust_sources(ADAPTER)
         if POST_ORDER_CALL.search(strip_rust_comments(source.read_text()))
     ]
-    if post_order_call_sites != [ALLOWED_CANARY_POST_ORDER]:
+    allowed_post_order_sites = [ALLOWED_GATEWAY_POST_ORDER, ALLOWED_CANARY_POST_ORDER]
+    if post_order_call_sites != allowed_post_order_sites:
         display = ", ".join(str(path.relative_to(ADAPTER)) for path in post_order_call_sites) or "none"
         failures.append(
             "post_order call sites must be limited to guarded real-funds canary, "
@@ -91,6 +93,18 @@ def main() -> int:
         ]:
             if token not in canary:
                 failures.append(f"guarded canary post_order site missing token: {token}")
+    if not SERVICE_FLOW_TESTS.exists():
+        failures.append("pmx-service flow tests missing")
+    else:
+        service_flow = SERVICE_FLOW_TESTS.read_text()
+        for token in [
+            "explicit_live_gateway_posts_buy_size_and_records_quote_exposure",
+            "max_shares: Some(DecimalString(\"5\".into()))",
+            "assert_eq!(plan.max_exposure, DecimalString(\"2.5\".into()))",
+            "submit_plan_with_gateway",
+        ]:
+            if token not in service_flow:
+                failures.append(f"BUY size=5 service rehearsal test missing token: {token}")
     for env_name in [
         "PMX_ALLOW_LIVE_SUBMIT",
         "PMX_ALLOW_LIVE_CANCEL",
@@ -117,6 +131,13 @@ def main() -> int:
     result = {
         "status": "fail" if failures else "pass",
         "rehearsal_status": "blocked_dry_run",
+        "buy_size_rehearsal": {
+            "side": "BUY",
+            "size": "5",
+            "notional_rule": "limit_price * size",
+            "raw_signed_order_exposed": False,
+            "remote_side_effects": False,
+        },
         "stages": REHEARSAL_STAGES,
         "posted": False,
         "cancelled": False,

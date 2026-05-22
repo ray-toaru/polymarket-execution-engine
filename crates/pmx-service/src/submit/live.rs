@@ -239,8 +239,10 @@ fn plan_order(plan: &pmx_core::ExecutionPlanSummary) -> Result<PlanOrder, String
         execution_id: plan.execution_id.clone(),
         account_id: plan.account_id.clone(),
         token_id: plan.token_id.clone(),
+        side: format!("{:?}", plan.side),
         limit_price: plan.limit_price.0.clone(),
         size,
+        time_in_force: format!("{:?}", plan.time_in_force),
     })
 }
 

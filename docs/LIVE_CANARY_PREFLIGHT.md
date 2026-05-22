@@ -45,7 +45,14 @@ Current implementation boundary:
 - `ExecutorService::submit_plan` still rejects `SubmitMode::Live` by default.
 - `ExecutorService::submit_plan_with_gateway` is the explicit service-layer
   gateway pipeline for fake-gateway tests and future reviewed live wiring.
+- `pmx-official-sdk-adapter` provides an explicit official SDK gateway bridge
+  under the `live-submit` feature; raw signed SDK orders remain in process-local
+  memory behind a digest reference and are not written to logs, receipts, or
+  public API models.
 - The explicit gateway path performs runtime checks before signing and again
   before remote post, records remote-unknown as operator-required evidence, and
   does not expose raw signed payloads.
+- Cancel-only fallback is represented by an explicit service-layer gateway path
+  for remote-posted orders. Remote-unknown cancel outcomes remain
+  operator-required and do not auto-reopen live submit.
 - Production API/bootstrap does not wire a live gateway in this release state.

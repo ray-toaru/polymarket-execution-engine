@@ -1,4 +1,5 @@
 use pmx_core::{OrderEventKind, OrderLifecycleDivergence, RemoteOrderObservation};
+use pmx_gateway::ClobGateway;
 use pmx_store::{
     AdminAuditStore, ExecutionLifecycleStore, ExecutionStore, IdempotencyStore,
     OrderLifecycleRecord, OrderLifecycleStore, RuntimeWorkerStatusStore, SignOnlyLifecycleStore,
@@ -75,5 +76,16 @@ where
             correlation_id,
         )
         .await
+    }
+
+    pub async fn cancel_order_with_gateway<G>(
+        &self,
+        command: crate::LiveCancelCommand,
+        gateway: &G,
+    ) -> Result<OrderLifecycleRecord, ServiceError>
+    where
+        G: ClobGateway,
+    {
+        crate::order_lifecycle::cancel_order_with_gateway(&self.store, gateway, command).await
     }
 }

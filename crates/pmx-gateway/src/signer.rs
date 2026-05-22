@@ -53,7 +53,10 @@ impl Signer for DeterministicTestSigner {
         Ok(SignedOrderEnvelope {
             internal_order_id: InternalOrderId(format!("test-order-{}", order.execution_id)),
             account_id: order.account_id.clone(),
-            signer_fingerprint: "deterministic-test-signer".into(),
+            signer_fingerprint: format!(
+                "deterministic-test-signer:{}:{}",
+                order.side, order.time_in_force
+            ),
             signed_payload_ref: "test-only-no-real-signature".into(),
         })
     }

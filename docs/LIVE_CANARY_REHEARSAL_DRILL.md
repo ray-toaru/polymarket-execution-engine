@@ -16,6 +16,14 @@ The rehearsal walks the local decision sequence only:
 - cancel_unknown_escalation_check
 - cancel_only_fallback_check
 
+The current rehearsal also checks the service-layer BUY size path:
+
+- side = BUY
+- size = 5 shares
+- notional rule = limit_price * size
+- raw signed order is not exposed
+- no remote side effects occur during the rehearsal
+
 Expected output:
 
 ```text
