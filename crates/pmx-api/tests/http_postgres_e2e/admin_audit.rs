@@ -16,6 +16,18 @@ async fn http_postgres_admin_routes_record_audit_events() {
         .await
         .expect("postgres-backed app");
 
+    let seed_suffix = unique_suffix("audit");
+    let audit_execution_id = format!("exec-audit-{seed_suffix}");
+    seed_cancelable_order(
+        &database_url,
+        "acct-audit",
+        "order-audit",
+        &audit_execution_id,
+        "cond-audit",
+        "token-audit",
+    )
+    .await;
+
     let (status, receipt) = request_json(
         app.clone(),
         "POST",

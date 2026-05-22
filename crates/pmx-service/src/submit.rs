@@ -5,7 +5,7 @@ use pmx_store::{
 };
 use uuid::Uuid;
 
-use crate::{ServiceError, SubmitOutcome, SubmitPlanCommand};
+use crate::{ServiceError, SubmitMode, SubmitOutcome, SubmitPlanCommand};
 
 #[path = "submit/blocked.rs"]
 mod blocked;
@@ -38,6 +38,11 @@ where
         return Err(ServiceError::Conflict("plan status is invalid".into()));
     }
     let request_fingerprint = fingerprint::request_fingerprint(&req)?;
+    if matches!(req.mode, SubmitMode::Live) {
+        return Err(ServiceError::Conflict(
+            "LIVE submit mode is fail-closed until gateway posting is wired through the executor service".into(),
+        ));
+    }
     match store
         .begin_submit_attempt(
             &plan.account_id.0,
@@ -56,15 +61,21 @@ where
         IdempotencyAction::InProgress { retry_after_ms, .. } => {
             Err(ServiceError::InProgress { retry_after_ms })
         }
-        IdempotencyAction::Proceed { submit_attempt, .. } => {
+        IdempotencyAction::Proceed {
+            submit_attempt,
+            owner_token,
+        } => {
             blocked::blocked_submit_outcome(
                 store,
-                &plan,
-                &req.idempotency_key,
-                &request_fingerprint,
-                submit_attempt,
-                executor_version,
-                contract_version,
+                blocked::BlockedSubmitRequest {
+                    plan: &plan,
+                    idempotency_key: &req.idempotency_key,
+                    request_fingerprint: &request_fingerprint,
+                    submit_attempt,
+                    owner_token: &owner_token,
+                    executor_version,
+                    contract_version,
+                },
             )
             .await
         }

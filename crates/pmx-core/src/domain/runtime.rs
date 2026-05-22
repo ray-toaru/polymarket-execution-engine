@@ -51,10 +51,26 @@ pub struct FeasibilitySnapshot {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ApprovalScope {
+    Shadow,
+    ControlledCanary,
+    LiveSubmit,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ApprovalReceipt {
     pub approval_id: String,
     pub approved_by: String,
     pub approved_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
+    pub approval_scope: ApprovalScope,
     pub approval_hash: HashValue,
+    pub bound_artifact_sha256: HashValue,
+    pub bound_evidence_manifest_sha256: HashValue,
+    pub bound_snapshot_hash: HashValue,
+    pub bound_decision_hash: HashValue,
+    pub bound_plan_hash: Option<HashValue>,
+    pub operator_identity_ref: String,
 }

@@ -502,12 +502,23 @@ components:
     ApprovalReceipt:
       type: object
       additionalProperties: false
-      required: [approval_id, approved_by, approved_at, approval_hash]
+      required: [approval_id, approved_by, approved_at, expires_at, approval_scope, approval_hash, bound_artifact_sha256, bound_evidence_manifest_sha256, bound_snapshot_hash, bound_decision_hash, bound_plan_hash, operator_identity_ref]
       properties:
         approval_id: { type: string }
         approved_by: { type: string }
         approved_at: { type: string, format: date-time }
-        approval_hash: { type: string }
+        expires_at: { type: string, format: date-time }
+        approval_scope: { type: string, enum: [SHADOW, CONTROLLED_CANARY, LIVE_SUBMIT] }
+        approval_hash: { type: string, pattern: '^[0-9a-f]{64}$' }
+        bound_artifact_sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        bound_evidence_manifest_sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        bound_snapshot_hash: { type: string, pattern: '^[0-9a-f]{64}$' }
+        bound_decision_hash: { type: string, pattern: '^[0-9a-f]{64}$' }
+        bound_plan_hash:
+          oneOf:
+            - { type: string, pattern: '^[0-9a-f]{64}$' }
+            - { type: 'null' }
+        operator_identity_ref: { type: string }
     CompilePlanRequest:
       type: object
       additionalProperties: false
@@ -521,27 +532,44 @@ components:
     ExecutionPlanSummary:
       type: object
       additionalProperties: false
-      required: [execution_id, account_id, normalized_intent_id, snapshot_id, decision_id, plan_hash, status, max_exposure, explanation]
+      required: [execution_id, account_id, normalized_intent_id, snapshot_id, snapshot_hash, decision_id, decision_hash, approval_id, approval_hash, plan_hash, status, condition_id, token_id, side, quantity_bound, limit_price, time_in_force, collateral_profile_id, max_exposure, executor_version, contract_version, explanation]
       properties:
         execution_id: { type: string }
         account_id: { type: string }
         normalized_intent_id: { type: string }
         snapshot_id: { type: string }
+        snapshot_hash: { type: string, pattern: '^[0-9a-f]{64}$' }
         decision_id: { type: string }
-        plan_hash: { type: string }
+        decision_hash: { type: string, pattern: '^[0-9a-f]{64}$' }
+        approval_id: { type: string }
+        approval_hash: { type: string, pattern: '^[0-9a-f]{64}$' }
+        plan_hash: { type: string, pattern: '^[0-9a-f]{64}$' }
         status: { type: string, enum: [READY, BLOCKED] }
+        condition_id: { type: string }
+        token_id: { type: string }
+        side: { type: string, enum: [BUY, SELL] }
+        quantity_bound: { $ref: '#/components/schemas/QuantityBound' }
+        limit_price: { $ref: '#/components/schemas/CanonicalDecimal' }
+        time_in_force: { type: string, enum: [GTC, FOK, GTD, FAK] }
+        collateral_profile_id:
+          oneOf:
+            - { type: string }
+            - { type: 'null' }
         max_exposure: { $ref: '#/components/schemas/CanonicalDecimal' }
+        executor_version: { type: string }
+        contract_version: { type: string }
         explanation:
           type: array
           items: { type: string }
     SubmitRequest:
       type: object
       additionalProperties: false
-      required: [execution_id, plan_hash, idempotency_key]
+      required: [execution_id, plan_hash, idempotency_key, mode]
       properties:
         execution_id: { type: string }
-        plan_hash: { type: string }
+        plan_hash: { type: string, pattern: '^[0-9a-f]{64}$' }
         idempotency_key: { type: string }
+        mode: { type: string, enum: [BLOCKED_DRY_RUN, LIVE] }
       description: Idempotency identity is executor-resolved as account_id + execution_id + idempotency_key; submit_attempt is generated internally.
     SubmitReceipt:
       type: object

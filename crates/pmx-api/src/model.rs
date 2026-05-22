@@ -24,6 +24,7 @@ pub struct SubmitPlanRequest {
     pub execution_id: String,
     pub plan_hash: String,
     pub idempotency_key: String,
+    pub mode: pmx_service::SubmitMode,
 }
 
 #[derive(serde::Deserialize)]

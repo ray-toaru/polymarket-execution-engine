@@ -49,7 +49,20 @@ pub(super) async fn verify_public_queries(app: axum::Router, execution_id: &str)
     )
     .await;
     assert_eq!(status, StatusCode::OK, "order events: {order_events}");
-    assert!(order_events.as_array().unwrap().is_empty());
+    let order_event_types: Vec<_> = order_events
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|event| event["event"].as_str().unwrap().to_string())
+        .collect();
+    assert!(order_event_types.contains(&"CANCEL_REQUESTED".to_string()));
+    assert!(
+        order_events
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|event| event["payload"]["no_remote_side_effect"] == true)
+    );
 
     let (status, runtime_workers) = request_json(
         app.clone(),

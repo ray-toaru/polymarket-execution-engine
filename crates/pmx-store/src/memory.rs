@@ -1,5 +1,4 @@
-#[cfg(test)]
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 #[cfg(test)]
 use pmx_core::{CollateralProfileStatus, GeoblockStatus, WorkerStatus};
 use pmx_core::{
@@ -65,8 +64,17 @@ struct AccountKillSwitchState {
 struct IdempotencyRecord {
     submit_attempt: u32,
     request_fingerprint: String,
+    status: IdempotencyStatus,
+    owner_token: String,
+    lease_expires_at: DateTime<Utc>,
     response_fingerprint: Option<String>,
     response_json: Option<String>,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+enum IdempotencyStatus {
+    Proceeding,
+    Done,
 }
 
 fn identity(account_id: &str, execution_id: &str, idempotency_key: &str) -> String {

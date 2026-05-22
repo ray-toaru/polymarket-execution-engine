@@ -40,12 +40,7 @@ pub(super) async fn compile_blocked_plan(app: axum::Router) -> (String, String) 
             "normalized_intent_id": normalized["normalized_intent_id"],
             "snapshot_id": snapshot["snapshot_id"],
             "decision_id": decision["decision_id"],
-            "approval": {
-                "approval_id": "approval-v07-1",
-                "approved_by": "operator-v07",
-                "approved_at": "2026-05-14T00:00:00Z",
-                "approval_hash": "approval-hash-v07-1"
-            }
+            "approval": approval_json("approval-v07-1", &snapshot, &decision)
         })),
     )
     .await;

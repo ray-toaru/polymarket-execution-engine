@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use std::cmp::Ordering;
 
 use crate::{
     ENV_ALLOW_REAL_FUNDS_CANARY, OfficialSdkAdapterConfig, OfficialSdkAdapterError,
@@ -309,13 +310,19 @@ pub fn diagnose_real_funds_canary_markets(
 ) -> RealFundsCanaryMarketDiagnostics {
     let mut rejection_counts = RealFundsCanaryMarketRejectionCounts::default();
     let mut safe_candidates = 0;
-    let mut max_ask_size: Option<f64> = None;
+    let mut max_ask_size: Option<ParsedDecimal> = None;
     let mut min_spread_bps: Option<u64> = None;
     let mut min_order_size_blocks = false;
 
     for candidate in candidates {
         if let Some(ask_size) = parse_decimal(&candidate.ask_size) {
-            max_ask_size = Some(max_ask_size.map_or(ask_size, |current| current.max(ask_size)));
+            max_ask_size = Some(max_ask_size.map_or(ask_size.clone(), |current| {
+                if ask_size > current {
+                    ask_size
+                } else {
+                    current
+                }
+            }));
         }
         min_spread_bps = Some(min_spread_bps.map_or(candidate.spread_bps, |current| {
             current.min(candidate.spread_bps)
@@ -372,7 +379,7 @@ pub fn diagnose_real_funds_canary_markets(
         market_validation_complete: true,
         candidates_seen: candidates.len() as u64,
         safe_candidates,
-        max_ask_size: max_ask_size.map(format_decimal_summary),
+        max_ask_size: max_ask_size.map(|value| value.format_summary()),
         min_spread_bps,
         min_order_size_blocks,
         rejection_counts,
@@ -433,7 +440,7 @@ fn is_sha256(value: &str) -> bool {
 }
 
 fn decimal_gt_zero(value: &str) -> bool {
-    parse_decimal(value).is_some_and(|value| value > 0.0)
+    parse_decimal(value).is_some_and(|value| value.is_positive())
 }
 
 fn decimal_lte(left: &str, right: &str) -> bool {
@@ -472,7 +479,7 @@ fn candidate_notional_usd(candidate: &RealFundsCanaryMarketCandidate) -> Option<
         parse_decimal(&candidate.best_ask),
         parse_decimal(&candidate.target_size),
     ) {
-        (Some(price), Some(size)) => Some(format_decimal_summary(price * size)),
+        (Some(price), Some(size)) => price.mul(&size).map(|value| value.format_summary()),
         _ => None,
     }
 }
@@ -487,24 +494,94 @@ fn daily_notional_lte(used: &str, order: &str, cap: &str) -> bool {
         parse_decimal(order),
         parse_decimal(cap),
     ) {
-        (Some(used), Some(order), Some(cap)) => used + order <= cap,
+        (Some(used), Some(order), Some(cap)) => used.add(&order).is_some_and(|sum| sum <= cap),
         _ => false,
     }
 }
 
-fn parse_decimal(value: &str) -> Option<f64> {
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ParsedDecimal {
+    units: i128,
+    scale: u32,
+}
+
+impl ParsedDecimal {
+    fn is_positive(&self) -> bool {
+        self.units > 0
+    }
+
+    fn add(&self, other: &Self) -> Option<Self> {
+        let scale = self.scale.max(other.scale);
+        let left = self.units.checked_mul(pow10(scale - self.scale)?)?;
+        let right = other.units.checked_mul(pow10(scale - other.scale)?)?;
+        Some(Self {
+            units: left.checked_add(right)?,
+            scale,
+        })
+    }
+
+    fn mul(&self, other: &Self) -> Option<Self> {
+        Some(Self {
+            units: self.units.checked_mul(other.units)?,
+            scale: self.scale.checked_add(other.scale)?,
+        })
+    }
+
+    fn format_summary(&self) -> String {
+        if self.scale == 0 {
+            return self.units.to_string();
+        }
+        let divisor = pow10(self.scale).expect("validated scale must fit pow10");
+        let whole = self.units / divisor;
+        let fraction = (self.units % divisor).abs();
+        let mut fraction_text = format!("{:0width$}", fraction, width = self.scale as usize);
+        while fraction_text.ends_with('0') {
+            fraction_text.pop();
+        }
+        if fraction_text.is_empty() {
+            whole.to_string()
+        } else {
+            format!("{whole}.{fraction_text}")
+        }
+    }
+}
+
+impl PartialOrd for ParsedDecimal {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        let scale = self.scale.max(other.scale);
+        let left = self.units.checked_mul(pow10(scale - self.scale)?)?;
+        let right = other.units.checked_mul(pow10(scale - other.scale)?)?;
+        left.partial_cmp(&right)
+    }
+}
+
+fn parse_decimal(value: &str) -> Option<ParsedDecimal> {
     let trimmed = value.trim();
     if trimmed.is_empty() || trimmed != value || trimmed.starts_with('-') {
         return None;
     }
-    let parsed = trimmed.parse::<f64>().ok()?;
-    parsed.is_finite().then_some(parsed)
+    let (whole, fraction) = trimmed.split_once('.').unwrap_or((trimmed, ""));
+    if whole.is_empty() || !whole.chars().all(|c| c.is_ascii_digit()) {
+        return None;
+    }
+    if !fraction.is_empty() && !fraction.chars().all(|c| c.is_ascii_digit()) {
+        return None;
+    }
+    if fraction.len() > 12
+        || whole.len() > 18
+        || whole.len() + fraction.len() > 24
+        || (trimmed.contains('.') && fraction.is_empty())
+    {
+        return None;
+    }
+    let digits = format!("{whole}{fraction}");
+    let units = digits.parse::<i128>().ok()?;
+    Some(ParsedDecimal {
+        units,
+        scale: fraction.len() as u32,
+    })
 }
 
-fn format_decimal_summary(value: f64) -> String {
-    let formatted = format!("{value:.8}");
-    formatted
-        .trim_end_matches('0')
-        .trim_end_matches('.')
-        .to_string()
+fn pow10(scale: u32) -> Option<i128> {
+    10_i128.checked_pow(scale)
 }

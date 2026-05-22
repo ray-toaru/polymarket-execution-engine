@@ -84,11 +84,22 @@ pub struct RuntimeStateQuery {
 
 impl RuntimeStateQuery {
     pub fn key(&self) -> String {
+        self.key_for_capabilities(&self.required_capabilities)
+    }
+
+    pub fn state_scope_key(&self) -> String {
+        self.key_for_capabilities(&[])
+    }
+
+    fn key_for_capabilities(&self, capabilities: &[String]) -> String {
+        let mut required_capabilities = capabilities.to_vec();
+        required_capabilities.sort();
         format!(
-            "{}\u{1f}{}\u{1f}{}",
+            "{}\u{1f}{}\u{1f}{}\u{1f}{}",
             self.account_id,
             self.condition_id,
-            self.collateral_profile_id.as_deref().unwrap_or("<default>")
+            self.collateral_profile_id.as_deref().unwrap_or("<default>"),
+            required_capabilities.join(",")
         )
     }
 }

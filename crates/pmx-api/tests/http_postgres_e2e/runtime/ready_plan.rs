@@ -8,12 +8,11 @@ pub(super) async fn verify_ready_plan_and_blocked_submit(
     snapshot: Value,
     decision: Value,
 ) {
-    let approval = json!({
-        "approval_id": format!("approval-pg-runtime-{suffix}"),
-        "approved_by": "operator-pg-runtime",
-        "approved_at": "2026-05-15T00:00:00Z",
-        "approval_hash": format!("approval-hash-pg-runtime-{suffix}")
-    });
+    let approval = approval_json(
+        &format!("approval-pg-runtime-{suffix}"),
+        &snapshot,
+        &decision,
+    );
     let (status, plan) = request_json(
         app.clone(),
         "POST",
@@ -38,7 +37,8 @@ pub(super) async fn verify_ready_plan_and_blocked_submit(
         Some(json!({
             "execution_id": plan["execution_id"],
             "plan_hash": plan["plan_hash"],
-            "idempotency_key": format!("idem-pg-runtime-{suffix}")
+            "idempotency_key": format!("idem-pg-runtime-{suffix}"),
+            "mode": "BLOCKED_DRY_RUN"
         })),
     )
     .await;

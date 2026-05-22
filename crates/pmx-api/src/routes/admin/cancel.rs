@@ -52,7 +52,12 @@ pub(crate) async fn cancel_order_placeholder(
     };
     let order_lifecycle = state
         .service
-        .record_non_live_cancel_request(&order_id, &req.reason, Some(correlation_id.clone()))
+        .record_non_live_cancel_request(
+            &req.account_id,
+            &order_id,
+            &req.reason,
+            Some(correlation_id.clone()),
+        )
         .await
         .map_err(service_error)?;
     if let Some(execution_id) = execution_id {
@@ -71,9 +76,7 @@ pub(crate) async fn cancel_order_placeholder(
                         "cancel_id": receipt.cancel_id.clone(),
                         "order_id": order_id,
                         "cancel_state": format!("{:?}", receipt.state),
-                        "order_lifecycle_state": order_lifecycle
-                            .as_ref()
-                            .map(|order| format!("{:?}", order.lifecycle_state)),
+                        "order_lifecycle_state": format!("{:?}", order_lifecycle.lifecycle_state),
                         "no_remote_side_effect": true,
                     }),
                 ),

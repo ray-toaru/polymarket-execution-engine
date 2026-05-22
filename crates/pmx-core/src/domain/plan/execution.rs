@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{AccountId, DecimalString, HashValue};
+use crate::{
+    AccountId, ConditionId, DecimalString, HashValue, QuantityBound, Side, TimeInForce, TokenId,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -9,10 +11,23 @@ pub struct ExecutionPlanSummary {
     pub account_id: AccountId,
     pub normalized_intent_id: String,
     pub snapshot_id: String,
+    pub snapshot_hash: HashValue,
     pub decision_id: String,
+    pub decision_hash: HashValue,
+    pub approval_id: String,
+    pub approval_hash: HashValue,
     pub plan_hash: HashValue,
     pub status: PlanStatus,
+    pub condition_id: ConditionId,
+    pub token_id: TokenId,
+    pub side: Side,
+    pub quantity_bound: QuantityBound,
+    pub limit_price: DecimalString,
+    pub time_in_force: TimeInForce,
+    pub collateral_profile_id: Option<String>,
     pub max_exposure: DecimalString,
+    pub executor_version: String,
+    pub contract_version: String,
     pub explanation: Vec<String>,
 }
 

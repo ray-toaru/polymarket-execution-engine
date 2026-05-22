@@ -2,19 +2,20 @@ use super::*;
 
 pub(crate) async fn record_non_live_cancel_request(
     backend: &ServiceBackend,
+    account_id: &str,
     order_id: &str,
     reason: &str,
     correlation_id: Option<String>,
-) -> Result<Option<OrderLifecycleRecord>, ServiceError> {
+) -> Result<OrderLifecycleRecord, ServiceError> {
     match backend {
         ServiceBackend::InMemory(service) => {
             service
-                .record_non_live_cancel_request(order_id, reason, correlation_id)
+                .record_non_live_cancel_request(account_id, order_id, reason, correlation_id)
                 .await
         }
         ServiceBackend::Postgres(service) => {
             service
-                .record_non_live_cancel_request(order_id, reason, correlation_id)
+                .record_non_live_cancel_request(account_id, order_id, reason, correlation_id)
                 .await
         }
     }

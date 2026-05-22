@@ -4,13 +4,13 @@ use super::super::*;
 async fn service_records_standard_sign_only_construction_without_raw_payload() {
     let store = InMemoryStore::default();
     let service = ExecutorService::new(store.clone());
-    seed_test_plan(&store, "exec-sdk-standard", "acct-sdk-standard").await;
+    let plan_hash = seed_test_plan(&store, "exec-sdk-standard", "acct-sdk-standard").await;
 
     let receipt = service
         .record_standard_sign_only_construction(StandardSignOnlyConstructionRequest {
             execution_id: "exec-sdk-standard".into(),
             account_id: "acct-sdk-standard".into(),
-            plan_hash: "hash-exec-sdk-standard".into(),
+            plan_hash: plan_hash.clone(),
             signed_order_ref: Some("sign-only:digest-ref".into()),
             signed_order_digest: Some(
                 "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".into(),
@@ -45,7 +45,7 @@ async fn service_records_standard_sign_only_construction_without_raw_payload() {
 async fn service_derives_standard_sign_only_ref_and_digest_by_default() {
     let store = InMemoryStore::default();
     let service = ExecutorService::new(store.clone());
-    seed_test_plan(
+    let plan_hash = seed_test_plan(
         &store,
         "exec-sdk-standard-derived",
         "acct-sdk-standard-derived",
@@ -56,7 +56,7 @@ async fn service_derives_standard_sign_only_ref_and_digest_by_default() {
         .record_standard_sign_only_construction(StandardSignOnlyConstructionRequest {
             execution_id: "exec-sdk-standard-derived".into(),
             account_id: "acct-sdk-standard-derived".into(),
-            plan_hash: "hash-exec-sdk-standard-derived".into(),
+            plan_hash: plan_hash.clone(),
             signed_order_ref: None,
             signed_order_digest: None,
             no_remote_side_effect: true,
@@ -67,7 +67,7 @@ async fn service_derives_standard_sign_only_ref_and_digest_by_default() {
         .record_standard_sign_only_construction(StandardSignOnlyConstructionRequest {
             execution_id: "exec-sdk-standard-derived".into(),
             account_id: "acct-sdk-standard-derived".into(),
-            plan_hash: "hash-exec-sdk-standard-derived".into(),
+            plan_hash: plan_hash.clone(),
             signed_order_ref: None,
             signed_order_digest: None,
             no_remote_side_effect: true,
@@ -76,11 +76,9 @@ async fn service_derives_standard_sign_only_ref_and_digest_by_default() {
         .expect("replay derived standard sign-only construction");
 
     assert!(first.no_remote_side_effect);
-    assert!(
-        first.signed_order_ref.starts_with(
-            "sign-only:exec-sdk-standard-derived:hash-exec-sdk-standard-derived:digest-"
-        )
-    );
+    assert!(first.signed_order_ref.starts_with(&format!(
+        "sign-only:exec-sdk-standard-derived:{plan_hash}:digest-"
+    )));
     assert_eq!(first.signed_order_digest.as_ref().unwrap().len(), 64);
     assert_eq!(first.signed_order_ref, replay.signed_order_ref);
     assert_eq!(first.signed_order_digest, replay.signed_order_digest);
@@ -92,7 +90,7 @@ async fn service_derives_standard_sign_only_ref_and_digest_by_default() {
 async fn service_rejects_malformed_standard_sign_only_digest() {
     let store = InMemoryStore::default();
     let service = ExecutorService::new(store.clone());
-    seed_test_plan(
+    let plan_hash = seed_test_plan(
         &store,
         "exec-sdk-standard-bad-digest",
         "acct-sdk-standard-bad-digest",
@@ -103,7 +101,7 @@ async fn service_rejects_malformed_standard_sign_only_digest() {
         .record_standard_sign_only_construction(StandardSignOnlyConstructionRequest {
             execution_id: "exec-sdk-standard-bad-digest".into(),
             account_id: "acct-sdk-standard-bad-digest".into(),
-            plan_hash: "hash-exec-sdk-standard-bad-digest".into(),
+            plan_hash,
             signed_order_ref: Some("sign-only:digest-ref".into()),
             signed_order_digest: Some("not-a-sha256".into()),
             no_remote_side_effect: true,

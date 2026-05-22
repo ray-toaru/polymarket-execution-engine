@@ -15,15 +15,7 @@ pub(in crate::postgres_execution) async fn save_plan_summary(
             "INSERT INTO execution_plans \
              (execution_id, account_id, normalized_intent_id, snapshot_id, decision_id, plan_hash, status, summary_json) \
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8) \
-             ON CONFLICT (execution_id) DO UPDATE SET \
-               account_id = EXCLUDED.account_id, \
-               normalized_intent_id = EXCLUDED.normalized_intent_id, \
-               snapshot_id = EXCLUDED.snapshot_id, \
-               decision_id = EXCLUDED.decision_id, \
-               plan_hash = EXCLUDED.plan_hash, \
-               status = EXCLUDED.status, \
-               summary_json = EXCLUDED.summary_json, \
-               updated_at = now()",
+             ON CONFLICT (execution_id) DO NOTHING",
             &[
                 &plan.execution_id,
                 &plan.account_id.0,
@@ -37,6 +29,19 @@ pub(in crate::postgres_execution) async fn save_plan_summary(
         )
         .await
         .map_err(map_db_error)?;
+    let existing: serde_json::Value = load_json_payload(
+        &client,
+        "execution_plans",
+        "execution_id",
+        &plan.execution_id,
+        "summary_json",
+    )
+    .await?;
+    if existing != payload {
+        return Err(StoreError::Conflict(
+            "execution plan is immutable and cannot be overwritten".into(),
+        ));
+    }
     Ok(())
 }
 

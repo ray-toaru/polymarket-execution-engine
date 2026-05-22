@@ -1,23 +1,28 @@
 use super::*;
 
+pub struct BlockedSubmitRequest<'a> {
+    pub plan: &'a pmx_core::ExecutionPlanSummary,
+    pub idempotency_key: &'a str,
+    pub request_fingerprint: &'a str,
+    pub submit_attempt: u32,
+    pub owner_token: &'a str,
+    pub executor_version: &'a str,
+    pub contract_version: &'a str,
+}
+
 pub async fn blocked_submit_outcome<S>(
     store: &S,
-    plan: &pmx_core::ExecutionPlanSummary,
-    idempotency_key: &str,
-    request_fingerprint: &str,
-    submit_attempt: u32,
-    executor_version: &str,
-    contract_version: &str,
+    req: BlockedSubmitRequest<'_>,
 ) -> Result<SubmitOutcome, ServiceError>
 where
     S: ExecutionStore + IdempotencyStore + ExecutionLifecycleStore + Send + Sync,
 {
     let receipt = SubmitReceipt {
-        execution_id: plan.execution_id.clone(),
-        receipt_id: format!("receipt-blocked-{submit_attempt}-{}", Uuid::new_v4()),
+        execution_id: req.plan.execution_id.clone(),
+        receipt_id: format!("receipt-blocked-{}-{}", req.submit_attempt, Uuid::new_v4()),
         status: SubmitStatus::Blocked,
-        executor_version: executor_version.to_owned(),
-        contract_version: contract_version.to_owned(),
+        executor_version: req.executor_version.to_owned(),
+        contract_version: req.contract_version.to_owned(),
     };
     let response_json = serde_json::to_string(&receipt).map_err(|err| {
         ServiceError::Internal(format!("submit receipt serialization failed: {err}"))
@@ -26,13 +31,13 @@ where
     store
         .record_execution_lifecycle_event(&ExecutionLifecycleEvent {
             event_id: None,
-            execution_id: plan.execution_id.clone(),
-            account_id: plan.account_id.0.clone(),
+            execution_id: req.plan.execution_id.clone(),
+            account_id: req.plan.account_id.0.clone(),
             event_type: "SUBMIT_BLOCKED_BEFORE_REMOTE".into(),
             event_source: "pmx-service".into(),
             payload: serde_json::json!({
-                "submit_attempt": submit_attempt,
-                "plan_status": format!("{:?}", plan.status),
+                "submit_attempt": req.submit_attempt,
+                "plan_status": format!("{:?}", req.plan.status),
                 "no_remote_side_effect": true,
                 "reservation_written": false,
                 "receipt_id": receipt.receipt_id.clone(),
@@ -42,14 +47,15 @@ where
         .await?;
     store.record_submit_receipt(&receipt).await?;
     store
-        .finish_submit_attempt(
-            &plan.account_id.0,
-            &plan.execution_id,
-            idempotency_key,
-            request_fingerprint,
-            &response_fingerprint,
-            &response_json,
-        )
+        .finish_submit_attempt(pmx_store::FinishSubmitAttempt {
+            account_id: &req.plan.account_id.0,
+            execution_id: &req.plan.execution_id,
+            idempotency_key: req.idempotency_key,
+            request_fingerprint: req.request_fingerprint,
+            owner_token: req.owner_token,
+            response_fingerprint: &response_fingerprint,
+            response_json: &response_json,
+        })
         .await?;
     Ok(SubmitOutcome::Accepted(receipt))
 }

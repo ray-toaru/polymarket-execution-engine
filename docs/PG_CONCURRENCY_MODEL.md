@@ -12,6 +12,7 @@ Repository-level PostgreSQL tests now cover core local invariants:
 
 - same request replay for submit idempotency;
 - fingerprint mismatch conflict;
+- owner-token enforcement for finishing an in-progress submit attempt;
 - same resource reservation contention;
 - remote-unknown conservative persistence;
 - sign-only lifecycle `client_event_id` replay under concurrent writers;
@@ -27,7 +28,8 @@ BEGIN;
   read execution_plan / runtime state / idempotency record
   if matching idempotency response exists: replay response and COMMIT
   if matching identity but different request_fingerprint: return conflict and ROLLBACK
-  insert or continue idempotency_records row
+  insert or continue idempotency_records row with owner_token + lease_expires_at
+  only the current owner_token may finish the attempt
   reserve order-level resource
   record saga attempt state
 COMMIT;
@@ -51,6 +53,7 @@ saga state and reconcile handling.
 ```text
 same request replay
 fingerprint mismatch conflict
+finish requires current owner token
 same resource reservation contention
 remote-unknown conservative persistence
 sign-only lifecycle concurrent client_event_id replay

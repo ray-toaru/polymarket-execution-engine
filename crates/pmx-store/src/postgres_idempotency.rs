@@ -4,7 +4,7 @@ mod begin;
 mod finish;
 
 use crate::postgres::PostgresStore;
-use crate::{IdempotencyAction, IdempotencyStore, StoreError};
+use crate::{FinishSubmitAttempt, IdempotencyAction, IdempotencyStore, StoreError};
 
 #[async_trait]
 impl IdempotencyStore for PostgresStore {
@@ -27,22 +27,8 @@ impl IdempotencyStore for PostgresStore {
 
     async fn finish_submit_attempt(
         &self,
-        account_id: &str,
-        execution_id: &str,
-        idempotency_key: &str,
-        request_fingerprint: &str,
-        response_fingerprint: &str,
-        response_json: &str,
+        attempt: FinishSubmitAttempt<'_>,
     ) -> Result<(), StoreError> {
-        finish::finish_submit_attempt(
-            self,
-            account_id,
-            execution_id,
-            idempotency_key,
-            request_fingerprint,
-            response_fingerprint,
-            response_json,
-        )
-        .await
+        finish::finish_submit_attempt(self, attempt).await
     }
 }

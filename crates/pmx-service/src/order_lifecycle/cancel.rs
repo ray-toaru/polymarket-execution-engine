@@ -6,20 +6,27 @@ use crate::order_lifecycle::payload;
 
 pub async fn record_non_live_cancel_request<S>(
     store: &S,
+    account_id: &str,
     order_id: &str,
     reason: &str,
     correlation_id: Option<String>,
-) -> Result<Option<OrderLifecycleRecord>, ServiceError>
+) -> Result<OrderLifecycleRecord, ServiceError>
 where
     S: OrderLifecycleStore + Send + Sync,
 {
-    if order_id.trim().is_empty() || reason.trim().is_empty() {
+    if account_id.trim().is_empty() || order_id.trim().is_empty() || reason.trim().is_empty() {
         return Err(ServiceError::BadRequest(
-            "order_id and reason must be non-empty".into(),
+            "account_id, order_id and reason must be non-empty".into(),
         ));
     }
-    if store.load_order_lifecycle(order_id).await?.is_none() {
-        return Ok(None);
+    let existing = store
+        .load_order_lifecycle(order_id)
+        .await?
+        .ok_or_else(|| pmx_store::StoreError::NotFound(format!("order_id={order_id}")))?;
+    if existing.account_id != account_id {
+        return Err(ServiceError::Conflict(
+            "order_id does not belong to account_id".into(),
+        ));
     }
     let updated = store
         .record_order_lifecycle_event(&OrderLifecycleEventRecord {
@@ -32,5 +39,5 @@ where
             created_at: None,
         })
         .await?;
-    Ok(Some(updated))
+    Ok(updated)
 }

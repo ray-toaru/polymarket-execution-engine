@@ -18,9 +18,9 @@ async fn service_flow_persists_and_blocks_submit() {
     let plan = service
         .compile_plan(CompilePlanCommand {
             normalized_intent: normalized,
-            snapshot,
-            decision,
-            approval: approval(),
+            snapshot: snapshot.clone(),
+            decision: decision.clone(),
+            approval: approval_for(&snapshot, &decision),
         })
         .await
         .expect("plan");
@@ -29,6 +29,7 @@ async fn service_flow_persists_and_blocks_submit() {
             execution_id: plan.execution_id.clone(),
             plan_hash: plan.plan_hash.0.clone(),
             idempotency_key: "idem-1".into(),
+            mode: SubmitMode::BlockedDryRun,
         })
         .await
         .expect("submit");
@@ -71,7 +72,7 @@ async fn service_id_bound_flow_persists_and_blocks_submit() {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
             decision_id: decision.decision_id.clone(),
-            approval: approval(),
+            approval: approval_for(&snapshot, &decision),
         })
         .await
         .expect("plan by id");
@@ -80,6 +81,7 @@ async fn service_id_bound_flow_persists_and_blocks_submit() {
             execution_id: plan.execution_id.clone(),
             plan_hash: plan.plan_hash.0.clone(),
             idempotency_key: "idem-id-bound-1".into(),
+            mode: SubmitMode::BlockedDryRun,
         })
         .await
         .expect("submit");
@@ -134,7 +136,7 @@ async fn static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks() 
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
             decision_id: decision.decision_id.clone(),
-            approval: approval(),
+            approval: approval_for(&snapshot, &decision),
         })
         .await
         .expect("plan");
@@ -145,6 +147,7 @@ async fn static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks() 
             execution_id: plan.execution_id.clone(),
             plan_hash: plan.plan_hash.0.clone(),
             idempotency_key: "idem-ready-still-blocked".into(),
+            mode: SubmitMode::BlockedDryRun,
         })
         .await
         .expect("submit");
@@ -152,4 +155,45 @@ async fn static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks() 
         SubmitOutcome::Accepted(receipt) => assert_eq!(receipt.status, SubmitStatus::Blocked),
         SubmitOutcome::Replayed(_) => panic!("first submit cannot replay"),
     }
+}
+
+#[tokio::test]
+async fn live_submit_mode_fails_closed_until_gateway_is_wired() {
+    let service = ExecutorService::with_runtime_provider(
+        InMemoryStore::default(),
+        StaticRuntimeStateProvider::new(allow_runtime_state()),
+        "test-executor".into(),
+        DEFAULT_CONTRACT_VERSION.into(),
+    );
+    let normalized = service.normalize(intent()).await.expect("normalize");
+    let snapshot = service
+        .capture_snapshot(normalized.clone())
+        .await
+        .expect("snapshot");
+    let decision = service
+        .evaluate_decision_by_id(DecisionByIdRequest {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+        })
+        .await
+        .expect("decision");
+    let plan = service
+        .compile_plan_by_id(CompilePlanByIdCommand {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+            decision_id: decision.decision_id.clone(),
+            approval: approval_for(&snapshot, &decision),
+        })
+        .await
+        .expect("plan");
+    let err = service
+        .submit_plan(SubmitPlanCommand {
+            execution_id: plan.execution_id.clone(),
+            plan_hash: plan.plan_hash.0.clone(),
+            idempotency_key: "idem-live-fail-closed".into(),
+            mode: SubmitMode::Live,
+        })
+        .await
+        .expect_err("live mode must fail closed until gateway is wired");
+    assert!(matches!(err, ServiceError::Conflict(_)));
 }

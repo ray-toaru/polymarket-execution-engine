@@ -31,6 +31,7 @@ pub(crate) async fn submit_plan(
             execution_id: req.execution_id,
             plan_hash: req.plan_hash,
             idempotency_key: req.idempotency_key,
+            mode: req.mode,
         })
         .await
         .map_err(service_error)?;

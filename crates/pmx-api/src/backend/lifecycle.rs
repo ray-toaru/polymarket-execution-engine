@@ -35,12 +35,19 @@ impl ServiceBackend {
 
     pub(crate) async fn record_non_live_cancel_request(
         &self,
+        account_id: &str,
         order_id: &str,
         reason: &str,
         correlation_id: Option<String>,
-    ) -> Result<Option<OrderLifecycleRecord>, ServiceError> {
-        order_lifecycle::record_non_live_cancel_request(self, order_id, reason, correlation_id)
-            .await
+    ) -> Result<OrderLifecycleRecord, ServiceError> {
+        order_lifecycle::record_non_live_cancel_request(
+            self,
+            account_id,
+            order_id,
+            reason,
+            correlation_id,
+        )
+        .await
     }
 
     pub(crate) async fn reconcile_order_lifecycle_divergence(

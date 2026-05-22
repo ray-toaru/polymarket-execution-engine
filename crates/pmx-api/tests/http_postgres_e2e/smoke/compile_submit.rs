@@ -48,12 +48,7 @@ pub(super) async fn compile_and_submit_blocked_plan(
 
     let plan_normalized_id = normalized["normalized_intent_id"].clone();
     let plan_snapshot_id = snapshot["snapshot_id"].clone();
-    let approval = json!({
-        "approval_id": format!("approval-pg-e2e-{suffix}"),
-        "approved_by": "operator-pg-e2e",
-        "approved_at": "2026-05-15T00:00:00Z",
-        "approval_hash": format!("approval-hash-pg-e2e-{suffix}")
-    });
+    let approval = approval_json(&format!("approval-pg-e2e-{suffix}"), &snapshot, &decision);
     let (status, plan) = request_json(
         app.clone(),
         "POST",
@@ -77,7 +72,8 @@ pub(super) async fn compile_and_submit_blocked_plan(
     let submit_body = json!({
         "execution_id": execution_id.clone(),
         "plan_hash": plan_hash.clone(),
-        "idempotency_key": format!("idem-pg-e2e-{suffix}")
+        "idempotency_key": format!("idem-pg-e2e-{suffix}"),
+        "mode": "BLOCKED_DRY_RUN"
     });
     let (status, first_submit) = request_json(
         app.clone(),

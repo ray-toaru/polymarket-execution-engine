@@ -1,10 +1,4 @@
-   Compiling pmx-core v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
-   Compiling pmx-store v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
-   Compiling pmx-runtime v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
-   Compiling pmx-policy v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
-   Compiling pmx-service v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
-   Compiling pmx-gateway v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 24.82s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.24s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-b59f2ab4b350d559)
 
 running 2 tests
@@ -52,7 +46,7 @@ test tests::reconcile_reader::remote_reconcile_reader_rejects_side_effect_reques
 test tests::signer::disabled_signer_provider_refuses_to_materialize_signer ... ok
 test tests::signer::signer_provider_defaults_are_production_conservative ... ok
 
-test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_policy-fbac55dcc4960d1d)
 
@@ -99,9 +93,10 @@ test runtime_tests::evaluations::reconcile_websocket_geoblock::websocket_livenes
 
 test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_service-52b4197d5c3a4ebb)
+     Running unittests src/lib.rs (target/debug/deps/pmx_service-a347d7201cd5edd0)
 
-running 30 tests
+running 31 tests
+test service::tests::flow::live_submit_mode_fails_closed_until_gateway_is_wired ... ok
 test service::tests::flow::service_flow_persists_and_blocks_submit ... ok
 test service::tests::flow::service_id_bound_flow_persists_and_blocks_submit ... ok
 test service::tests::flow::service_rejects_object_graph_mismatch ... ok
@@ -133,11 +128,11 @@ test service::tests::sign_only::standard::service_derives_standard_sign_only_ref
 test service::tests::sign_only::standard::service_records_standard_sign_only_construction_without_raw_payload ... ok
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 
-test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.00s
+test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.93s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_store-68aa7a68e274242f)
+     Running unittests src/lib.rs (target/debug/deps/pmx_store-9a97aadec1c8f384)
 
-running 49 tests
+running 52 tests
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_paginates_and_filters_by_cursor ... ok
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_records_without_exposing_secrets ... ok
 test memory::memory_tests::admin_sign_only::sign_only::happy_path::in_memory_persists_sign_only_lifecycle_records ... ok
@@ -147,8 +142,10 @@ test memory::memory_tests::admin_sign_only::sign_only::rejects::in_memory_reject
 test memory::memory_tests::admin_sign_only::sign_only::rejects::in_memory_rejects_sign_only_remote_side_effect_records ... ok
 test memory::memory_tests::common::advisory_lock_key_is_deterministic_and_scoped ... ok
 test memory::memory_tests::common::idempotency_identity_is_documented_in_trait ... ok
+test memory::memory_tests::common::in_memory_finish_requires_current_owner_token ... ok
 test memory::memory_tests::common::in_memory_same_request_without_response_is_in_progress ... ok
 test memory::memory_tests::common::maps_plan_status_for_db ... ok
+test memory::memory_tests::common::runtime_state_query_key_includes_sorted_required_capabilities ... ok
 test memory::memory_tests::order_lifecycle::backlog::in_memory_lists_reconcile_backlog_orders ... ok
 test memory::memory_tests::order_lifecycle::cancel_requested::in_memory_order_lifecycle_records_cancel_requested ... ok
 test memory::memory_tests::order_lifecycle::rejects::in_memory_order_lifecycle_rejects_invalid_transition ... ok
@@ -168,6 +165,7 @@ test postgres::postgres_tests::admin_audit::postgres_records_admin_audit_event .
 test postgres::postgres_tests::execution_lifecycle::postgres_records_cancel_reconcile_lifecycle_events ... ok
 test postgres::postgres_tests::execution_lifecycle::postgres_records_execution_lifecycle_event ... ok
 test postgres::postgres_tests::idempotency::fingerprint_mismatch_is_conflict ... ok
+test postgres::postgres_tests::idempotency::finish_requires_current_owner_token ... ok
 test postgres::postgres_tests::idempotency::in_progress_replay_does_not_return_proceed ... ok
 test postgres::postgres_tests::idempotency::same_request_replay_is_persisted ... ok
 test postgres::postgres_tests::order_lifecycle::backlog::postgres_lists_reconcile_backlog_orders ... ok
@@ -188,7 +186,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 49 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.49s
+test result: ok. 52 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.64s
 
    Doc-tests pmx_authz
 

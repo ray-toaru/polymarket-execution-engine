@@ -41,6 +41,14 @@ pub struct SubmitPlanCommand {
     pub execution_id: String,
     pub plan_hash: String,
     pub idempotency_key: String,
+    pub mode: SubmitMode,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum SubmitMode {
+    BlockedDryRun,
+    Live,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

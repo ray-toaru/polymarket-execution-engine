@@ -63,7 +63,13 @@ where
         &self,
         req: CompilePlanCommand,
     ) -> Result<ExecutionPlanSummary, ServiceError> {
-        crate::plan_flow::compile_plan(&self.store, req).await
+        crate::plan_flow::compile_plan(
+            &self.store,
+            req,
+            &self.executor_version,
+            &self.contract_version,
+        )
+        .await
     }
 
     /// Compile a plan by loading all prior objects from the executor store.
@@ -73,6 +79,12 @@ where
         &self,
         req: CompilePlanByIdCommand,
     ) -> Result<ExecutionPlanSummary, ServiceError> {
-        crate::plan_flow::compile_plan_by_id(&self.store, req).await
+        crate::plan_flow::compile_plan_by_id(
+            &self.store,
+            req,
+            &self.executor_version,
+            &self.contract_version,
+        )
+        .await
     }
 }

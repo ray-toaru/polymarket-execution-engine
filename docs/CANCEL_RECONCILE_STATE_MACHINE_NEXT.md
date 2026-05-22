@@ -25,13 +25,14 @@ Current v0.25 progress:
 
 - `ExecutorService::record_non_live_cancel_request()` records
   `CancelRequested` into the local order lifecycle when the order already
-  exists.
+  exists and belongs to the supplied `account_id`; missing orders return
+  `NotFound`, and cross-account cancel attempts return `Conflict`.
 - `ExecutorService::record_non_live_reconcile_observation()` records local
   `ReconcileOpen` / `ReconcileMissing` / `ReconcileUnknown` observations for
   existing orders.
-- The admin cancel API now attempts the local order-lifecycle write while still
-  returning a reconcile-required non-live receipt and preserving the execution
-  lifecycle audit event.
+- The admin cancel API now requires that local order-lifecycle write to
+  succeed before returning a reconcile-required non-live receipt. Unknown
+  orders are not reported as accepted cancels.
 - `pmx-core::classify_order_lifecycle_divergence()` classifies local-vs-remote
   divergence for `OPEN`, `MISSING`, and `UNKNOWN` remote observations.
 - `ExecutorService::reconcile_order_lifecycle_divergence()` applies that

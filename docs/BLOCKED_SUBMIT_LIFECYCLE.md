@@ -5,6 +5,9 @@
 The current blocked submit path records a local execution lifecycle event without
 persisting an order reservation and without any remote side effect.
 
+Submit requests must declare `mode`. The only mode that reaches this path is
+`BLOCKED_DRY_RUN`; `LIVE` fails closed before idempotency ownership is opened.
+
 ## Purpose
 
 Before any remote side-effect path is introduced, submit attempts should already leave an auditable local trace. This prevents future work from adding sign/post behavior without first passing through a lifecycle recording boundary.
@@ -33,3 +36,4 @@ The event is written before/around the blocked receipt path only. It does not im
 
 - `postgres_records_execution_lifecycle_event`
 - `http_postgres_runtime_rows_can_reach_ready_plan_but_submit_still_blocks`
+- `live_submit_mode_fails_closed_until_gateway_is_wired`

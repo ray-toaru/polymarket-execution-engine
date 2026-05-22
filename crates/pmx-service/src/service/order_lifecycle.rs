@@ -25,12 +25,14 @@ where
 {
     pub async fn record_non_live_cancel_request(
         &self,
+        account_id: &str,
         order_id: &str,
         reason: &str,
         correlation_id: Option<String>,
-    ) -> Result<Option<OrderLifecycleRecord>, ServiceError> {
+    ) -> Result<OrderLifecycleRecord, ServiceError> {
         crate::order_lifecycle::record_non_live_cancel_request(
             &self.store,
+            account_id,
             order_id,
             reason,
             correlation_id,

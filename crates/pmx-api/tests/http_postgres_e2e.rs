@@ -73,6 +73,29 @@ fn unique_suffix(prefix: &str) -> String {
     format!("{prefix}-{nanos}")
 }
 
+fn test_hash(label: &str) -> String {
+    pmx_core::canonical_json_sha256(&format!("api-pg-test-{label}"))
+        .expect("test hash")
+        .0
+}
+
+fn approval_json(approval_id: &str, snapshot: &Value, decision: &Value) -> Value {
+    json!({
+        "approval_id": approval_id,
+        "approved_by": "operator-pg-e2e",
+        "approved_at": "2026-05-15T00:00:00Z",
+        "expires_at": "2030-01-01T00:00:00Z",
+        "approval_scope": "SHADOW",
+        "approval_hash": test_hash(approval_id),
+        "bound_artifact_sha256": test_hash("artifact"),
+        "bound_evidence_manifest_sha256": test_hash("evidence-manifest"),
+        "bound_snapshot_hash": snapshot["snapshot_hash"],
+        "bound_decision_hash": decision["decision_hash"],
+        "bound_plan_hash": null,
+        "operator_identity_ref": "local-pg-e2e-operator"
+    })
+}
+
 async fn seed_allow_runtime(
     database_url: &str,
     account_id: &str,
@@ -157,6 +180,107 @@ async fn seed_runtime_worker_observation(
         )
         .await
         .expect("seed worker observation");
+}
+
+async fn seed_cancelable_order(
+    database_url: &str,
+    account_id: &str,
+    order_id: &str,
+    execution_id: &str,
+    condition_id: &str,
+    token_id: &str,
+) {
+    let (client, connection) = tokio_postgres::connect(database_url, tokio_postgres::NoTls)
+        .await
+        .expect("connect for cancelable order seed");
+    tokio::spawn(async move {
+        let _ = connection.await;
+    });
+
+    let suffix = unique_suffix("cancel-seed");
+    let normalized_intent_id = format!("norm-{suffix}");
+    let snapshot_id = format!("snap-{suffix}");
+    let decision_id = format!("decision-{suffix}");
+    let intent_hash = format!("intent-hash-{suffix}");
+    let snapshot_hash = format!("snapshot-hash-{suffix}");
+    let decision_hash = format!("decision-hash-{suffix}");
+    let plan_hash = format!("plan-hash-{suffix}");
+
+    client
+        .execute(
+            "INSERT INTO normalized_intents (normalized_intent_id, intent_hash, account_id, payload) \
+             VALUES ($1, $2, $3, '{}'::jsonb)",
+            &[&normalized_intent_id, &intent_hash, &account_id],
+        )
+        .await
+        .expect("seed cancel normalized intent");
+    client
+        .execute(
+            "INSERT INTO feasibility_snapshots (snapshot_id, snapshot_hash, normalized_intent_id, payload, captured_at) \
+             VALUES ($1, $2, $3, '{}'::jsonb, now())",
+            &[&snapshot_id, &snapshot_hash, &normalized_intent_id],
+        )
+        .await
+        .expect("seed cancel snapshot");
+    client
+        .execute(
+            "INSERT INTO constraint_decisions (decision_id, decision_hash, snapshot_id, status, reasons, payload) \
+             VALUES ($1, $2, $3, 'ALLOW', '[]'::jsonb, '{}'::jsonb)",
+            &[&decision_id, &decision_hash, &snapshot_id],
+        )
+        .await
+        .expect("seed cancel decision");
+    client
+        .execute(
+            "INSERT INTO execution_plans (execution_id, account_id, normalized_intent_id, snapshot_id, decision_id, plan_hash, status, summary_json) \
+             VALUES ($1, $2, $3, $4, $5, $6, 'READY', '{}'::jsonb) \
+             ON CONFLICT (execution_id) DO UPDATE SET \
+               account_id = EXCLUDED.account_id, \
+               normalized_intent_id = EXCLUDED.normalized_intent_id, \
+               snapshot_id = EXCLUDED.snapshot_id, \
+               decision_id = EXCLUDED.decision_id, \
+               plan_hash = EXCLUDED.plan_hash, \
+               status = EXCLUDED.status, \
+               summary_json = EXCLUDED.summary_json, \
+               updated_at = now()",
+            &[
+                &execution_id,
+                &account_id,
+                &normalized_intent_id,
+                &snapshot_id,
+                &decision_id,
+                &plan_hash,
+            ],
+        )
+        .await
+        .expect("seed cancel execution plan");
+    let remote_order_id = format!("remote-{order_id}");
+    client
+        .execute(
+            "INSERT INTO orders \
+             (order_id, execution_id, account_id, condition_id, token_id, side, lifecycle_state, remote_order_id, remote_state, updated_at) \
+             VALUES ($1, $2, $3, $4, $5, 'BUY', 'POSTED', $6, 'OPEN', now()) \
+             ON CONFLICT (order_id) DO UPDATE SET \
+               execution_id = EXCLUDED.execution_id, \
+               account_id = EXCLUDED.account_id, \
+               condition_id = EXCLUDED.condition_id, \
+               token_id = EXCLUDED.token_id, \
+               side = EXCLUDED.side, \
+               lifecycle_state = EXCLUDED.lifecycle_state, \
+               remote_order_id = EXCLUDED.remote_order_id, \
+               remote_state = EXCLUDED.remote_state, \
+               updated_at = now()",
+            &[
+                &order_id,
+                &execution_id,
+                &account_id,
+                &condition_id,
+                &token_id,
+                &remote_order_id,
+            ],
+        )
+        .await
+        .expect("seed cancelable order");
 }
 
 #[path = "http_postgres_e2e/admin_audit.rs"]

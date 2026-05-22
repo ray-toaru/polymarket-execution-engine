@@ -25,7 +25,7 @@ async fn http_postgres_backed_e2e_smoke() {
     }
 
     let suffix = unique_suffix("smoke");
-    let app = pmx_api::try_postgres_app(database_url, true)
+    let app = pmx_api::try_postgres_app(database_url.clone(), true)
         .await
         .expect("postgres-backed app");
     let intent = sample_intent_variant(&suffix);
@@ -33,6 +33,12 @@ async fn http_postgres_backed_e2e_smoke() {
     let (execution_id, plan_hash) =
         compile_submit::compile_and_submit_blocked_plan(app.clone(), intent, &suffix).await;
     sign_only::verify_sign_only_flow(app.clone(), &execution_id, &plan_hash, &suffix).await;
-    admin_lifecycle::verify_admin_cancel_and_reconcile(app.clone(), &execution_id, &suffix).await;
+    admin_lifecycle::verify_admin_cancel_and_reconcile(
+        app.clone(),
+        &database_url,
+        &execution_id,
+        &suffix,
+    )
+    .await;
     public_queries::verify_public_queries(app, &execution_id, &suffix).await;
 }

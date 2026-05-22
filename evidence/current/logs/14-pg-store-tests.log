@@ -1,12 +1,13 @@
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.21s
-     Running unittests src/lib.rs (target/debug/deps/pmx_store-68aa7a68e274242f)
+     Running unittests src/lib.rs (target/debug/deps/pmx_store-9a97aadec1c8f384)
 
-running 24 tests
+running 25 tests
 test postgres::postgres_tests::admin_audit::postgres_admin_audit_paginates_and_filters_by_cursor ... ok
 test postgres::postgres_tests::admin_audit::postgres_records_admin_audit_event ... ok
 test postgres::postgres_tests::execution_lifecycle::postgres_records_cancel_reconcile_lifecycle_events ... ok
 test postgres::postgres_tests::execution_lifecycle::postgres_records_execution_lifecycle_event ... ok
 test postgres::postgres_tests::idempotency::fingerprint_mismatch_is_conflict ... ok
+test postgres::postgres_tests::idempotency::finish_requires_current_owner_token ... ok
 test postgres::postgres_tests::idempotency::in_progress_replay_does_not_return_proceed ... ok
 test postgres::postgres_tests::idempotency::same_request_replay_is_persisted ... ok
 test postgres::postgres_tests::order_lifecycle::backlog::postgres_lists_reconcile_backlog_orders ... ok
@@ -27,5 +28,5 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 9.98s
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 27 filtered out; finished in 10.59s
 

@@ -37,6 +37,12 @@ impl AppState {
         }
     }
 
+    pub fn in_memory_with_store(store: InMemoryStore) -> Self {
+        Self {
+            service: ServiceBackend::InMemory(ExecutorService::new(store)),
+        }
+    }
+
     pub fn postgres(store: PostgresStore) -> Self {
         let provider = StoreBackedRuntimeStateProvider::new(store.clone());
         Self {

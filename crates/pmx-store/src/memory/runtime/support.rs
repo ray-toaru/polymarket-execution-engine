@@ -21,7 +21,7 @@ impl InMemoryStore {
             .lock()
             .expect("in-memory store mutex poisoned")
             .runtime_states
-            .insert(query.key(), runtime_state);
+            .insert(query.state_scope_key(), runtime_state);
     }
 
     pub(crate) fn observations_for_account(

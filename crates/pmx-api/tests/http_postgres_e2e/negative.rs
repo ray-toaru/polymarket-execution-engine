@@ -84,12 +84,7 @@ async fn http_postgres_rejects_cross_object_graph_and_bad_plan_hash() {
     .await;
     assert_eq!(status, StatusCode::OK, "decision A response: {decision_a}");
 
-    let approval = json!({
-        "approval_id": "approval-pg-negative-1",
-        "approved_by": "operator-pg-negative",
-        "approved_at": "2026-05-15T00:00:00Z",
-        "approval_hash": "approval-hash-pg-negative-1"
-    });
+    let approval = approval_json("approval-pg-negative-1", &snapshot_a, &decision_a);
     let (status, plan) = request_json(
         app.clone(),
         "POST",
@@ -113,7 +108,8 @@ async fn http_postgres_rejects_cross_object_graph_and_bad_plan_hash() {
         Some(json!({
             "execution_id": plan["execution_id"],
             "plan_hash": "wrong-plan-hash",
-            "idempotency_key": "idem-pg-negative-1"
+            "idempotency_key": "idem-pg-negative-1",
+            "mode": "BLOCKED_DRY_RUN"
         })),
     )
     .await;

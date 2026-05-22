@@ -1,11 +1,6 @@
-   Compiling pmx-core v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
-   Compiling pmx-store v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
-   Compiling pmx-policy v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
-   Compiling pmx-runtime v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
-   Compiling pmx-service v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
    Compiling pmx-api v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 18.17s
-     Running tests/http_and_fake_e2e.rs (target/debug/deps/http_and_fake_e2e-db39045e2281bda7)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.43s
+     Running tests/http_and_fake_e2e.rs (target/debug/deps/http_and_fake_e2e-d98c3c5bbd2ca57a)
 
 running 4 tests
 test negative::equal_service_and_admin_tokens_fail_closed_at_app_construction ... ok

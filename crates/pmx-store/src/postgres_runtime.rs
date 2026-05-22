@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use chrono::Utc;
 use pmx_core::RuntimeStateSummary;
+use tokio_postgres::IsolationLevel;
 
 use crate::postgres::PostgresStore;
 use crate::postgres_support::{
@@ -28,13 +29,19 @@ impl RuntimeStateStore for PostgresStore {
         &self,
         query: &RuntimeStateQuery,
     ) -> Result<RuntimeStateSummary, StoreError> {
-        let client = self.client().await?;
+        let mut client = self.client().await?;
+        let transaction = client
+            .build_transaction()
+            .isolation_level(IsolationLevel::RepeatableRead)
+            .start()
+            .await
+            .map_err(map_db_error)?;
         let (geoblock_status, account_kill_switch_enabled) =
-            account_collateral::load_account_state(&client, query).await?;
+            account_collateral::load_account_state(&transaction, query).await?;
         let global_kill_switch_enabled =
-            account_collateral::load_global_kill_switch_enabled(&client).await?;
+            account_collateral::load_global_kill_switch_enabled(&transaction).await?;
         let collateral_profile_status =
-            account_collateral::load_collateral_profile_status(&client, query).await?;
+            account_collateral::load_collateral_profile_status(&transaction, query).await?;
 
         let mut required_capabilities = query.required_capabilities.clone();
         if required_capabilities.is_empty() {
@@ -44,7 +51,8 @@ impl RuntimeStateStore for PostgresStore {
                 "resource-refresh".into(),
             ];
         }
-        let worker_rows = worker_rows::load_worker_rows(&client, &required_capabilities).await?;
+        let worker_rows =
+            worker_rows::load_worker_rows(&transaction, &required_capabilities).await?;
         let base = RuntimeStateSummary {
             geoblock_status,
             worker_status: worker_status_from_rows(&worker_rows, required_capabilities.len()),
@@ -52,7 +60,9 @@ impl RuntimeStateStore for PostgresStore {
             kill_switch_enabled: account_kill_switch_enabled || global_kill_switch_enabled,
             required_capabilities,
         };
-        let observations = observations::load_runtime_worker_observations(&client, query).await?;
+        let observations =
+            observations::load_runtime_worker_observations(&transaction, query).await?;
+        transaction.commit().await.map_err(map_db_error)?;
         Ok(apply_runtime_worker_observations(base, &observations))
     }
 }

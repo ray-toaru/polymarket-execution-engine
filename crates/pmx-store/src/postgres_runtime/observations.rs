@@ -1,8 +1,8 @@
 use super::*;
-use tokio_postgres::{Client, types::ToSql};
+use tokio_postgres::{GenericClient, types::ToSql};
 
 pub async fn load_runtime_worker_observations(
-    client: &Client,
+    client: &(impl GenericClient + Sync),
     query: &RuntimeStateQuery,
 ) -> Result<Vec<RuntimeWorkerObservation>, StoreError> {
     let observation_ttl_seconds: i32 = runtime_observation_ttl_seconds() as i32;

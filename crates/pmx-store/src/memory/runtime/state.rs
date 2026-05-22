@@ -16,31 +16,33 @@ impl RuntimeStateStore for InMemoryStore {
         &self,
         query: &RuntimeStateQuery,
     ) -> Result<RuntimeStateSummary, StoreError> {
-        let mut base =
+        let mut base = {
+            let state = self.inner.lock().expect("in-memory store mutex poisoned");
+            let mut base = state
+                .runtime_states
+                .get(&query.key())
+                .or_else(|| state.runtime_states.get(&query.state_scope_key()))
+                .cloned()
+                .unwrap_or(RuntimeStateSummary {
+                    geoblock_status: GeoblockStatus::Unknown,
+                    worker_status: WorkerStatus::Unknown,
+                    collateral_profile_status: CollateralProfileStatus::Unknown,
+                    kill_switch_enabled: true,
+                    required_capabilities: query.required_capabilities.clone(),
+                });
+            if let Some(kill_switch) = state.account_kill_switches.get(&query.account_id) {
+                base.kill_switch_enabled = kill_switch.enabled;
+            }
+            if state
+                .global_kill_switch
+                .as_ref()
+                .map(|kill_switch| kill_switch.enabled)
+                .unwrap_or(false)
             {
-                let state = self.inner.lock().expect("in-memory store mutex poisoned");
-                let mut base = state.runtime_states.get(&query.key()).cloned().unwrap_or(
-                    RuntimeStateSummary {
-                        geoblock_status: GeoblockStatus::Unknown,
-                        worker_status: WorkerStatus::Unknown,
-                        collateral_profile_status: CollateralProfileStatus::Unknown,
-                        kill_switch_enabled: true,
-                        required_capabilities: query.required_capabilities.clone(),
-                    },
-                );
-                if let Some(kill_switch) = state.account_kill_switches.get(&query.account_id) {
-                    base.kill_switch_enabled = kill_switch.enabled;
-                }
-                if state
-                    .global_kill_switch
-                    .as_ref()
-                    .map(|kill_switch| kill_switch.enabled)
-                    .unwrap_or(false)
-                {
-                    base.kill_switch_enabled = true;
-                }
-                base
-            };
+                base.kill_switch_enabled = true;
+            }
+            base
+        };
         let mut required_capabilities = query.required_capabilities.clone();
         if required_capabilities.is_empty() {
             required_capabilities = base.required_capabilities.clone();

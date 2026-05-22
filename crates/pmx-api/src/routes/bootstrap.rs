@@ -53,6 +53,11 @@ pub fn try_app() -> Result<Router, String> {
     Ok(router_with_state(AppState::default()))
 }
 
+pub fn try_in_memory_app_with_store(store: InMemoryStore) -> Result<Router, String> {
+    validate_auth_config_from_env()?;
+    Ok(router_with_state(AppState::in_memory_with_store(store)))
+}
+
 pub fn app() -> Router {
     try_app().expect("PM_EXEC_SERVICE_TOKEN and PM_EXEC_ADMIN_TOKEN must be non-empty and distinct")
 }

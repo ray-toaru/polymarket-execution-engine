@@ -7,6 +7,7 @@ canonical evidence location.
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 import sys
 import tomllib
@@ -51,6 +52,23 @@ def fail(message: str) -> int:
     return 1
 
 
+def sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def resolve_manifest_path(rel: str) -> Path:
+    path = Path(rel)
+    if path.is_absolute():
+        return path
+    if rel.startswith("polymarket-execution-engine/"):
+        return ROOT / rel.removeprefix("polymarket-execution-engine/")
+    return ROOT.parent / path
+
+
 def expected_version() -> str:
     for path in VERSION_PATHS:
         if path.exists():
@@ -71,6 +89,21 @@ def validate(path: Path, *, allow_missing_semantic_logs: bool = False) -> int:
     artifact = data.get("artifact")
     if not isinstance(artifact, dict):
         return fail("missing artifact block")
+    external_artifact = data.get("external_artifact_sidecar")
+    if not isinstance(external_artifact, dict):
+        return fail("missing external_artifact_sidecar block")
+    external_path = external_artifact.get("path")
+    external_sha = external_artifact.get("sha256")
+    if external_sha is not None:
+        if not isinstance(external_sha, str) or not re.fullmatch(r"[0-9a-f]{64}", external_sha):
+            return fail("external_artifact_sidecar.sha256 must be lowercase sha256 hex when present")
+        if not isinstance(external_path, str) or not external_path:
+            return fail("external_artifact_sidecar.path is required when sha256 is present")
+        artifact_path = resolve_manifest_path(external_path)
+        if not artifact_path.exists():
+            return fail(f"external artifact not found: {external_path}")
+        if sha256(artifact_path) != external_sha:
+            return fail("external_artifact_sidecar.sha256 does not match artifact file")
     for section in REQUIRED_SECTIONS:
         block = data.get(section)
         if not isinstance(block, dict):

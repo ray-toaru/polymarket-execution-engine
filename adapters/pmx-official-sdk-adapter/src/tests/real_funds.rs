@@ -201,6 +201,31 @@ fn real_funds_market_selector_derives_notional_from_price_times_target_size() {
 }
 
 #[test]
+fn real_funds_market_selector_uses_fixed_decimal_for_notional_cap() {
+    let candidates = vec![RealFundsCanaryMarketCandidate {
+        market_id: "market-decimal-boundary".into(),
+        token_id: "123".into(),
+        side: "BUY".into(),
+        order_type: "FOK".into(),
+        active: true,
+        accepting_orders: true,
+        closed: false,
+        archived: false,
+        best_ask: "0.1".into(),
+        ask_size: "1".into(),
+        target_size: "0.2".into(),
+        spread_bps: 10,
+        min_order_size: "0.1".into(),
+        liquidity_score: 999,
+        book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
+        human_review_ref: "review://operator/market-decimal-boundary".into(),
+    }];
+    let selected = select_real_funds_canary_market(&candidates, "0.02")
+        .expect("0.1 * 0.2 should equal the exact cap without binary float drift");
+    assert_eq!(selected.notional_usd, "0.02");
+}
+
+#[test]
 fn real_funds_market_selector_compares_min_order_to_target_size() {
     let candidates = vec![
         RealFundsCanaryMarketCandidate {

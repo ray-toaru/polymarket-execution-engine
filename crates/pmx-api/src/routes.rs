@@ -6,7 +6,7 @@ use axum::{
     http::{HeaderMap, StatusCode},
 };
 use pmx_authz::Operation;
-use pmx_store::PostgresStore;
+use pmx_store::{InMemoryStore, PostgresStore};
 
 mod admin;
 mod flow;
@@ -26,6 +26,10 @@ pub fn try_app() -> Result<Router, String> {
 
 pub fn app() -> Router {
     bootstrap::app()
+}
+
+pub fn try_in_memory_app_with_store(store: InMemoryStore) -> Result<Router, String> {
+    bootstrap::try_in_memory_app_with_store(store)
 }
 
 pub async fn try_postgres_app(

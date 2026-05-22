@@ -4,12 +4,16 @@ pub fn save_plan_summary(
     store: &InMemoryStore,
     plan: &ExecutionPlanSummary,
 ) -> Result<(), StoreError> {
-    store
-        .inner
-        .lock()
-        .expect("in-memory store mutex poisoned")
-        .plans
-        .insert(plan.execution_id.clone(), plan.clone());
+    let mut state = store.inner.lock().expect("in-memory store mutex poisoned");
+    if let Some(existing) = state.plans.get(&plan.execution_id) {
+        if existing == plan {
+            return Ok(());
+        }
+        return Err(StoreError::Conflict(
+            "execution plan is immutable and cannot be overwritten".into(),
+        ));
+    }
+    state.plans.insert(plan.execution_id.clone(), plan.clone());
     Ok(())
 }
 

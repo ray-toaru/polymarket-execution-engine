@@ -62,4 +62,5 @@ Execution policy:
 - Normal validation runs only the preflight drill and must not call the SDK submit path.
 - A real canary run requires a fresh artifact hash, current evidence manifest hash, explicit local approval file, and all runtime gates.
 - Candidate market discovery is outside the execution engine boundary. The execution engine validates an externally reviewed candidate against CLOB book/spread and risk gates. The reviewed candidate supplies the share `target_size`; `notional_usd` is only the derived `limit_price * target_size` risk value.
+- Risk cap comparisons use fixed decimal parsing/comparison/multiplication, not binary floating point. Invalid precision, whitespace, negative values, exponent notation, or overflow fail closed.
 - Recovery or availability improvements must not automatically enable live submit or real-funds canary.

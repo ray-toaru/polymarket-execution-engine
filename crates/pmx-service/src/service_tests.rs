@@ -1,7 +1,7 @@
 use super::*;
 use crate::*;
 use crate::{StaticRuntimeStateProvider, StoreBackedRuntimeStateProvider};
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use pmx_policy::evaluate_constraints;
 use pmx_runtime::{HeartbeatLeaseCandidate, RuntimeSignal};
 use pmx_store::{
@@ -41,12 +41,24 @@ fn allow_runtime_state() -> RuntimeStateSummary {
     }
 }
 
-fn approval() -> ApprovalReceipt {
+fn hash_value(label: &str) -> HashValue {
+    canonical_json_sha256(&format!("test-{label}")).expect("test hash")
+}
+
+fn approval_for(snapshot: &FeasibilitySnapshot, decision: &ConstraintDecision) -> ApprovalReceipt {
     ApprovalReceipt {
-        approval_id: "approval-1".into(),
+        approval_id: format!("approval-{}", snapshot.snapshot_id),
         approved_by: "operator".into(),
-        approved_at: Utc::now(),
-        approval_hash: HashValue("approval-hash".into()),
+        approved_at: Utc::now() - Duration::seconds(1),
+        expires_at: Utc::now() + Duration::hours(1),
+        approval_scope: ApprovalScope::Shadow,
+        approval_hash: hash_value(&format!("approval-{}", snapshot.snapshot_id)),
+        bound_artifact_sha256: hash_value("artifact"),
+        bound_evidence_manifest_sha256: hash_value("evidence-manifest"),
+        bound_snapshot_hash: snapshot.snapshot_hash.clone(),
+        bound_decision_hash: decision.decision_hash.clone(),
+        bound_plan_hash: None,
+        operator_identity_ref: "local-test-operator".into(),
     }
 }
 
@@ -66,21 +78,36 @@ fn order(order_id: &str, lifecycle_state: OrderLifecycleState) -> OrderLifecycle
     }
 }
 
-async fn seed_test_plan(store: &InMemoryStore, execution_id: &str, account_id: &str) {
+async fn seed_test_plan(store: &InMemoryStore, execution_id: &str, account_id: &str) -> String {
+    let plan_hash = hash_value(&format!("plan-{execution_id}"));
     store
         .save_plan_summary(&ExecutionPlanSummary {
             execution_id: execution_id.into(),
             account_id: AccountId(account_id.into()),
             normalized_intent_id: format!("norm-{execution_id}"),
             snapshot_id: format!("snap-{execution_id}"),
+            snapshot_hash: hash_value(&format!("snap-{execution_id}")),
             decision_id: format!("decision-{execution_id}"),
-            plan_hash: HashValue(format!("hash-{execution_id}")),
+            decision_hash: hash_value(&format!("decision-{execution_id}")),
+            approval_id: format!("approval-{execution_id}"),
+            approval_hash: hash_value(&format!("approval-{execution_id}")),
+            plan_hash: plan_hash.clone(),
             status: PlanStatus::Ready,
+            condition_id: ConditionId("cond-1".into()),
+            token_id: TokenId("token-1".into()),
+            side: Side::Buy,
+            quantity_bound: QuantityBound::WorstCaseQuoteNotional(DecimalString("1".into())),
+            limit_price: DecimalString("0.5".into()),
+            time_in_force: TimeInForce::Gtc,
+            collateral_profile_id: None,
             max_exposure: DecimalString("0".into()),
+            executor_version: "test-executor".into(),
+            contract_version: DEFAULT_CONTRACT_VERSION.into(),
             explanation: vec!["test plan for sign-only lifecycle FK parity".into()],
         })
         .await
         .expect("seed execution plan");
+    plan_hash.0
 }
 
 #[path = "service_tests/flow.rs"]

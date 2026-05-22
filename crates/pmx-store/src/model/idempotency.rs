@@ -19,13 +19,19 @@ pub trait IdempotencyStore: Send + Sync {
 
     async fn finish_submit_attempt(
         &self,
-        account_id: &str,
-        execution_id: &str,
-        idempotency_key: &str,
-        request_fingerprint: &str,
-        response_fingerprint: &str,
-        response_json: &str,
+        attempt: FinishSubmitAttempt<'_>,
     ) -> Result<(), StoreError>;
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct FinishSubmitAttempt<'a> {
+    pub account_id: &'a str,
+    pub execution_id: &'a str,
+    pub idempotency_key: &'a str,
+    pub request_fingerprint: &'a str,
+    pub owner_token: &'a str,
+    pub response_fingerprint: &'a str,
+    pub response_json: &'a str,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -1,8 +1,8 @@
 use super::*;
-use tokio_postgres::Client;
+use tokio_postgres::GenericClient;
 
 pub async fn load_worker_rows(
-    client: &Client,
+    client: &(impl GenericClient + Sync),
     required_capabilities: &[String],
 ) -> Result<Vec<(String, chrono::DateTime<Utc>)>, StoreError> {
     let mut worker_rows = Vec::new();

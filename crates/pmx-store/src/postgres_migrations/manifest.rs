@@ -32,4 +32,8 @@ pub const SCHEMA_MIGRATIONS: &[SchemaMigration] = &[
         version: "0007_runtime_global_kill_switch",
         sql: include_str!("../../../../migrations/0007_runtime_global_kill_switch.sql"),
     },
+    SchemaMigration {
+        version: "0008_idempotency_owner_lease",
+        sql: include_str!("../../../../migrations/0008_idempotency_owner_lease.sql"),
+    },
 ];

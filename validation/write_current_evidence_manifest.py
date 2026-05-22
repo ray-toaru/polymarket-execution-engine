@@ -363,6 +363,7 @@ def build_section(log_dir: Path, names: list[str], *, optional: bool = False) ->
 def main(argv: list[str]) -> int:
     log_dir = (Path(argv[1]) if len(argv) > 1 else DEFAULT_LOG_DIR).resolve()
     artifact_path = Path(argv[2]).resolve() if len(argv) > 2 and argv[2] else None
+    artifact_sha256 = sha256(artifact_path) if artifact_path and artifact_path.exists() else None
     CURRENT_DIR.mkdir(parents=True, exist_ok=True)
     data = {
         "version": VERSION,
@@ -383,10 +384,10 @@ def main(argv: list[str]) -> int:
         "external_artifact_sidecar": {
             "name": artifact_path.name if artifact_path else None,
             "path": display_path(artifact_path) if artifact_path else None,
-            "sha256": None,
+            "sha256": artifact_sha256,
             "sha256_sidecar": f"{artifact_path.name}.sha256" if artifact_path else None,
             "evidence_sidecar": f"{artifact_path.name}.evidence.json" if artifact_path else None,
-            "binding_note": "Informational pointer only. The final containing-archive hash is intentionally recorded only in external sidecars to avoid manifest/archive self-reference.",
+            "binding_note": "Current workspace evidence binds the final release artifact here. When this manifest is archived inside the artifact, package_release.py normalizes this volatile hash to null to avoid archive self-reference.",
         },
         "environment": log_entry(ENVIRONMENT) if ENVIRONMENT.exists() else None,
     }

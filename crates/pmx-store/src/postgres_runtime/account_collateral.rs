@@ -1,8 +1,8 @@
 use super::*;
-use tokio_postgres::Client;
+use tokio_postgres::GenericClient;
 
 pub async fn load_account_state(
-    client: &Client,
+    client: &(impl GenericClient + Sync),
     query: &RuntimeStateQuery,
 ) -> Result<(pmx_core::GeoblockStatus, bool), StoreError> {
     let account_row = client
@@ -23,7 +23,9 @@ pub async fn load_account_state(
     ))
 }
 
-pub async fn load_global_kill_switch_enabled(client: &Client) -> Result<bool, StoreError> {
+pub async fn load_global_kill_switch_enabled(
+    client: &(impl GenericClient + Sync),
+) -> Result<bool, StoreError> {
     let row = client
         .query_opt(
             "SELECT enabled FROM runtime_global_controls WHERE control_key = 'kill_switch'",
@@ -35,7 +37,7 @@ pub async fn load_global_kill_switch_enabled(client: &Client) -> Result<bool, St
 }
 
 pub async fn set_account_kill_switch(
-    client: &Client,
+    client: &(impl GenericClient + Sync),
     account_id: &pmx_core::AccountId,
     enabled: bool,
     reason: &str,
@@ -66,7 +68,7 @@ pub async fn set_account_kill_switch(
 }
 
 pub async fn set_global_kill_switch(
-    client: &Client,
+    client: &(impl GenericClient + Sync),
     enabled: bool,
     reason: &str,
 ) -> Result<KillSwitchStateChange, StoreError> {
@@ -95,7 +97,7 @@ pub async fn set_global_kill_switch(
 }
 
 pub async fn load_collateral_profile_status(
-    client: &Client,
+    client: &(impl GenericClient + Sync),
     query: &RuntimeStateQuery,
 ) -> Result<pmx_core::CollateralProfileStatus, StoreError> {
     if let Some(profile_id) = &query.collateral_profile_id {

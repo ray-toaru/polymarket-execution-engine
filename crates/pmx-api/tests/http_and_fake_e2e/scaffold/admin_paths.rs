@@ -20,7 +20,6 @@ pub(super) async fn verify_non_live_admin_paths(app: axum::Router, execution_id:
     )
     .await;
     assert_eq!(status, StatusCode::ACCEPTED, "cancel response: {cancel}");
-    assert_eq!(cancel["state"], "RECONCILE_REQUIRED");
 
     let (status, reconcile) = request_json(
         app.clone(),

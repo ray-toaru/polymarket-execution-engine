@@ -13,7 +13,8 @@ pub(super) async fn verify_submit_and_sign_only(
         Some(json!({
             "execution_id": execution_id,
             "plan_hash": plan_hash,
-            "idempotency_key": "idem-v07-1"
+            "idempotency_key": "idem-v07-1",
+            "mode": "BLOCKED_DRY_RUN"
         })),
     )
     .await;

@@ -11,26 +11,26 @@ async fn service_records_non_live_cancel_and_reconcile_order_lifecycle() {
 
     let canceled = service
         .record_non_live_cancel_request(
+            "acct-1",
             "order-non-live-cancel",
             "operator requested cancel",
             Some("corr-cancel".into()),
         )
         .await
-        .expect("record cancel")
-        .expect("existing order");
+        .expect("record cancel");
     assert_eq!(
         canceled.lifecycle_state,
         OrderLifecycleState::CancelRequested
     );
     let cancel_replay = service
         .record_non_live_cancel_request(
+            "acct-1",
             "order-non-live-cancel",
             "operator requested cancel",
             Some("corr-cancel".into()),
         )
         .await
-        .expect("replay cancel")
-        .expect("existing order");
+        .expect("replay cancel");
     assert_eq!(
         cancel_replay.lifecycle_state,
         OrderLifecycleState::CancelRequested
@@ -80,10 +80,18 @@ async fn service_records_non_live_cancel_and_reconcile_order_lifecycle() {
     );
 
     let missing = service
-        .record_non_live_cancel_request("missing-order", "operator requested cancel", None)
+        .record_non_live_cancel_request(
+            "acct-1",
+            "missing-order",
+            "operator requested cancel",
+            None,
+        )
         .await
-        .expect("missing order is non-fatal");
-    assert!(missing.is_none());
+        .expect_err("missing order must be explicit");
+    assert!(matches!(
+        missing,
+        ServiceError::Store(StoreError::NotFound(_))
+    ));
 
     let cancel_events = store
         .list_order_lifecycle_events(&pmx_store::OrderLifecycleEventQuery {

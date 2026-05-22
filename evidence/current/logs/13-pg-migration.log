@@ -116,3 +116,9 @@ CREATE INDEX
 applying migrations/0007_runtime_global_kill_switch.sql
 psql:migrations/0007_runtime_global_kill_switch.sql:7: NOTICE:  relation "runtime_global_controls" already exists, skipping
 CREATE TABLE
+applying migrations/0008_idempotency_owner_lease.sql
+psql:migrations/0008_idempotency_owner_lease.sql:3: NOTICE:  column "owner_token" of relation "idempotency_records" already exists, skipping
+psql:migrations/0008_idempotency_owner_lease.sql:3: NOTICE:  column "lease_expires_at" of relation "idempotency_records" already exists, skipping
+ALTER TABLE
+psql:migrations/0008_idempotency_owner_lease.sql:6: NOTICE:  relation "idx_idempotency_owner_lease" already exists, skipping
+CREATE INDEX
