@@ -59,7 +59,7 @@ def expected_version() -> str:
     return cargo["workspace"]["package"]["version"]
 
 
-def validate(path: Path) -> int:
+def validate(path: Path, *, allow_missing_semantic_logs: bool = False) -> int:
     data = json.loads(path.read_text())
     expected = expected_version()
     if data.get("version") != expected:
@@ -108,17 +108,22 @@ def validate(path: Path) -> int:
             log_path = ROOT.parent / rel
             if not log_path.exists() and rel.startswith("polymarket-execution-engine/"):
                 log_path = ROOT / rel.removeprefix("polymarket-execution-engine/")
-            rc = validate_test_log_semantics(log_path)
+            rc = validate_test_log_semantics(
+                log_path,
+                allow_missing=allow_missing_semantic_logs,
+            )
             if rc:
                 return fail(rc)
     return 0
 
 
-def validate_test_log_semantics(path: Path) -> str | None:
+def validate_test_log_semantics(path: Path, *, allow_missing: bool = False) -> str | None:
     rule = TEST_LOG_RULES.get(path.name)
     if not rule:
         return None
     if not path.exists():
+        if allow_missing:
+            return None
         return f"test log not found for semantic check: {path}"
     text = path.read_text(errors="replace")
     if "running 0 tests" in text:
@@ -148,9 +153,9 @@ def validate_test_log_semantics(path: Path) -> str | None:
 
 def main(argv: list[str]) -> int:
     if len(argv) > 1:
-        paths = [Path(arg) for arg in argv[1:]]
+        paths = [(Path(arg), False) for arg in argv[1:]]
     else:
-        paths = [TEMPLATE]
+        paths = [(TEMPLATE, False)]
         # During a version-promotion gate, evidence/current can still contain the
         # previous manifest until write_current_evidence_manifest.py regenerates it.
         # The full gate validates the regenerated current manifest later via the
@@ -158,11 +163,11 @@ def main(argv: list[str]) -> int:
         if CURRENT.exists():
             current = json.loads(CURRENT.read_text())
             if current.get("version") == expected_version():
-                paths.append(CURRENT)
-    for path in paths:
+                paths.append((CURRENT, True))
+    for path, allow_missing_semantic_logs in paths:
         if not path.exists():
             return fail(f"manifest not found: {path}")
-        rc = validate(path)
+        rc = validate(path, allow_missing_semantic_logs=allow_missing_semantic_logs)
         if rc != 0:
             return rc
     print(f"v{expected_version()} evidence manifest guard passed")
