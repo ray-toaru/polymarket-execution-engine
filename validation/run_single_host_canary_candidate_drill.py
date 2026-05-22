@@ -14,7 +14,10 @@ from current_gate_chain import require_current_gate_log
 ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_ROOT = ROOT.parent
 MANIFEST = ROOT / "evidence" / "current" / "manifest.json"
-VERSION = (INTEGRATION_ROOT / "VERSION").read_text().strip() if (INTEGRATION_ROOT / "VERSION").exists() else "0.25.0"
+VERSION_FILE = INTEGRATION_ROOT / "VERSION"
+if not VERSION_FILE.exists():
+    raise SystemExit("VERSION file missing; cannot resolve current release artifact")
+VERSION = VERSION_FILE.read_text().strip()
 DEFAULT_RELEASE_ARTIFACT = INTEGRATION_ROOT / "dist" / f"polymarket-execution-suite-v{VERSION}.zip"
 EXTERNAL_REFERENCES = ROOT / "config" / "controlled-canary.external-references.example.json"
 PREPARE_REVIEW = ROOT / "validation" / "prepare_real_funds_canary_review.py"

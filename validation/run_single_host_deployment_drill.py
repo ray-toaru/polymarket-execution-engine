@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 import json
+import os
+import socket
+import subprocess
+import time
+from http.client import HTTPConnection
 from pathlib import Path
 
 from current_gate_chain import require_current_gate_log
@@ -50,6 +55,71 @@ FORBIDDEN_VALUE_FRAGMENTS = [
 ]
 
 
+def free_local_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return int(sock.getsockname()[1])
+
+
+def run_api_bind_smoke(failures: list[str]) -> bool:
+    port = free_local_port()
+    env = os.environ.copy()
+    env.update(
+        {
+            "PMX_API_BIND_ADDR": f"127.0.0.1:{port}",
+            "PMX_API_PROFILE": "local",
+            "PMX_API_STORAGE": "in_memory_scaffold",
+            "PM_EXEC_SERVICE_TOKEN": "single-host-smoke-service-token",
+            "PM_EXEC_ADMIN_TOKEN": "single-host-smoke-admin-token",
+            "PMX_ALLOW_LIVE_SUBMIT": "0",
+            "PMX_ALLOW_LIVE_CANCEL": "0",
+            "PMX_ALLOW_REAL_FUNDS_CANARY": "0",
+        }
+    )
+    proc = subprocess.Popen(
+        ["cargo", "run", "-p", "pmx-api", "--locked"],
+        cwd=ROOT,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        deadline = time.monotonic() + 35
+        last_error = ""
+        while time.monotonic() < deadline:
+            if proc.poll() is not None:
+                stderr = (proc.stderr.read() if proc.stderr else "")[-2000:]
+                failures.append(f"pmx-api bind smoke exited early code={proc.returncode}: {stderr}")
+                return False
+            try:
+                conn = HTTPConnection("127.0.0.1", port, timeout=1)
+                conn.request(
+                    "GET",
+                    "/v1/health",
+                    headers={"Authorization": "Bearer single-host-smoke-service-token"},
+                )
+                response = conn.getresponse()
+                body = response.read().decode("utf-8", errors="replace")
+                conn.close()
+                if response.status == 200 and "in_memory_scaffold" in body:
+                    return True
+                last_error = f"status={response.status} body={body[:200]}"
+            except OSError as exc:
+                last_error = str(exc)
+            time.sleep(0.5)
+        failures.append(f"pmx-api bind smoke did not become healthy: {last_error}")
+        return False
+    finally:
+        if proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait(timeout=5)
+
+
 def read(path: Path) -> str:
     return path.read_text()
 
@@ -83,8 +153,8 @@ def main() -> int:
     for token in [
         "single-host limited deployment",
         "not production-ready evidence",
-        "scaffold/startup check only",
-        "exits without binding an HTTP listener",
+        "long-running HTTP listener",
+        "non-live API smoke",
         "PMX_LIVE_SUBMIT_ENABLED=0",
         "PMX_ALLOW_REAL_FUNDS_CANARY=0",
         "pass://polymarket-execution-engine/controlled-canary",
@@ -104,16 +174,14 @@ def main() -> int:
             if flag not in text:
                 failures.append(f"{label} missing fail-closed flag {flag}")
 
-    if "Description=Polymarket execution API scaffold check" not in api_service:
-        failures.append("api systemd unit must identify itself as a scaffold check")
-    if "Type=oneshot" not in api_service:
-        failures.append("api systemd unit must be oneshot because pmx-api does not bind a listener")
-    if "Restart=no" not in api_service:
-        failures.append("api systemd unit must not restart the non-listening scaffold binary")
+    if "Description=Polymarket execution API (single-host limited; non-live)" not in api_service:
+        failures.append("api systemd unit must identify itself as a non-live API listener")
+    if "Type=simple" not in api_service:
+        failures.append("api systemd unit must be a long-running simple service")
+    if "Restart=on-failure" not in api_service:
+        failures.append("api systemd unit must restart the API listener on failure")
     if "ExecStart=/opt/polymarket-execution-engine/bin/pmx-api" not in api_service:
-        failures.append("api systemd unit must run the pmx-api scaffold binary")
-    if "Restart=on-failure" in api_service or "Type=simple" in api_service:
-        failures.append("api systemd unit must not look like a long-running API listener")
+        failures.append("api systemd unit must run the pmx-api binary")
     if "ExecStart=/opt/polymarket-execution-engine/bin/pmx-real-funds-canary" not in canary_service:
         failures.append("canary systemd unit must start pmx-real-funds-canary binary")
     if "--dry-run" not in canary_service:
@@ -133,6 +201,13 @@ def main() -> int:
     ]:
         if guard not in preflight:
             failures.append(f"single-host preflight missing guard {guard}")
+    for token in [
+        "PM_EXEC_SERVICE_TOKEN",
+        "PM_EXEC_ADMIN_TOKEN",
+        "PMX_API_STORAGE must be postgres",
+    ]:
+        if token not in preflight:
+            failures.append(f"single-host preflight missing runtime config check: {token}")
     for token in [
         'PMX_LIVE_SUBMIT_ENABLED:-0}" == "1"',
         'PMX_ALLOW_LIVE_SUBMIT:-0}" == "1"',
@@ -172,10 +247,15 @@ def main() -> int:
     if "70-single-host-canary-candidate-drill.log" not in writer:
         failures.append("evidence manifest must capture single-host canary candidate log")
 
+    api_bind_smoke = False
+    if not failures:
+        api_bind_smoke = run_api_bind_smoke(failures)
+
     result = {
         "status": "fail" if failures else "pass",
         "deployment_profile": "single-host-limited",
         "api_service_present": API_SERVICE.exists(),
+        "api_bind_smoke": api_bind_smoke,
         "canary_runner_mode": "dry-run",
         "live_submit_allowed": False,
         "live_cancel_allowed": False,

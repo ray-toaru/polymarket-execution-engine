@@ -1,8 +1,9 @@
 # Blocked submit lifecycle event
 
-> Status: current v0.25.0 shadow-ready SDK sign-only baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+> Status: current v0.26.0 controlled real-funds canary source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
-v0.17 adds a local execution lifecycle event around blocked submit attempts.
+The current blocked submit path records a local execution lifecycle event without
+persisting an order reservation and without any remote side effect.
 
 ## Purpose
 
@@ -20,6 +21,7 @@ Payload includes:
 submit_attempt
 plan_status
 no_remote_side_effect=true
+reservation_written=false
 receipt_id
 ```
 

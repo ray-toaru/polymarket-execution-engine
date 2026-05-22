@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use pmx_core::RuntimeStateSummary;
+use pmx_core::{AccountId, KillSwitchScope, RuntimeStateSummary};
 use serde::{Deserialize, Serialize};
 
 use super::StoreError;
@@ -103,4 +103,30 @@ pub trait RuntimeStateStore: Send + Sync {
         &self,
         query: &RuntimeStateQuery,
     ) -> Result<RuntimeStateSummary, StoreError>;
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct KillSwitchStateChange {
+    pub scope: KillSwitchScope,
+    pub account_id: Option<AccountId>,
+    pub enabled: bool,
+    pub state_version: i64,
+    pub effective_at: DateTime<Utc>,
+}
+
+#[async_trait]
+pub trait RuntimeControlStore: Send + Sync {
+    async fn set_account_kill_switch(
+        &self,
+        account_id: &AccountId,
+        enabled: bool,
+        reason: &str,
+    ) -> Result<KillSwitchStateChange, StoreError>;
+
+    async fn set_global_kill_switch(
+        &self,
+        enabled: bool,
+        reason: &str,
+    ) -> Result<KillSwitchStateChange, StoreError>;
 }

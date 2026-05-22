@@ -43,8 +43,18 @@ pub struct OrderReservation {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum KillSwitchScope {
+    Account,
+    Global,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct KillSwitchRequest {
+    pub scope: KillSwitchScope,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub account_id: Option<AccountId>,
     pub enabled: bool,
     pub reason: String,
 }
@@ -52,8 +62,14 @@ pub struct KillSwitchRequest {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct KillSwitchReceipt {
+    pub scope: KillSwitchScope,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub account_id: Option<AccountId>,
     pub enabled: bool,
     pub changed_at: chrono::DateTime<chrono::Utc>,
+    pub effective_at: chrono::DateTime<chrono::Utc>,
+    pub state_version: i64,
+    pub persisted: bool,
     pub reason: String,
 }
 

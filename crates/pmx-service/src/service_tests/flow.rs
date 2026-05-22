@@ -36,6 +36,19 @@ async fn service_flow_persists_and_blocks_submit() {
         SubmitOutcome::Accepted(receipt) => assert_eq!(receipt.status, SubmitStatus::Blocked),
         SubmitOutcome::Replayed(_) => panic!("first submit cannot replay"),
     }
+    let events = service
+        .list_execution_lifecycle_events(pmx_store::ExecutionLifecycleQuery {
+            execution_id: plan.execution_id.clone(),
+            limit: 10,
+            before_event_id: None,
+        })
+        .await
+        .expect("lifecycle events");
+    let blocked = events
+        .iter()
+        .find(|event| event.event_type == "SUBMIT_BLOCKED_BEFORE_REMOTE")
+        .expect("blocked event");
+    assert_eq!(blocked.payload["reservation_written"], false);
 }
 
 #[tokio::test]

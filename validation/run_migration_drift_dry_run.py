@@ -17,16 +17,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MIGRATIONS = [
-    ("0001_initial", ROOT / "migrations" / "0001_initial.sql"),
-    ("0002_migration_framework", ROOT / "migrations" / "0002_migration_framework.sql"),
-    ("0003_order_event_trace", ROOT / "migrations" / "0003_order_event_trace.sql"),
-    ("0004_real_funds_canary", ROOT / "migrations" / "0004_real_funds_canary.sql"),
-    (
-        "0005_constraint_decision_snapshot_nullable",
-        ROOT / "migrations" / "0005_constraint_decision_snapshot_nullable.sql",
-    ),
-]
+MIGRATIONS = [(path.stem, path) for path in sorted((ROOT / "migrations").glob("[0-9]*.sql"))]
 
 
 def sha256(path: Path) -> str:
@@ -51,6 +42,14 @@ def schema_sql(schema: str, body: str) -> str:
 def migration_body(names: list[str]) -> str:
     by_name = {name: path for name, path in MIGRATIONS}
     return "\n".join(by_name[name].read_text() for name in names)
+
+
+def migration_names() -> list[str]:
+    return [name for name, _ in MIGRATIONS]
+
+
+def record_all_sql(checksums: dict[str, str]) -> str:
+    return "".join(record_sql(name, checksums[name]) for name in migration_names())
 
 
 def record_sql(version: str, checksum: str) -> str:
@@ -87,39 +86,16 @@ def main() -> int:
             schema_sql(
                 fresh,
                 migration_body(
-                    [
-                        "0001_initial",
-                        "0002_migration_framework",
-                        "0003_order_event_trace",
-                        "0004_real_funds_canary",
-                        "0005_constraint_decision_snapshot_nullable",
-                    ]
+                    migration_names()
                 ),
             )
-            + record_sql("0001_initial", checksums["0001_initial"])
-            + record_sql("0002_migration_framework", checksums["0002_migration_framework"])
-            + record_sql("0003_order_event_trace", checksums["0003_order_event_trace"])
-            + record_sql("0004_real_funds_canary", checksums["0004_real_funds_canary"])
-            + record_sql(
-                "0005_constraint_decision_snapshot_nullable",
-                checksums["0005_constraint_decision_snapshot_nullable"],
-            ),
+            + record_all_sql(checksums),
         )
         run_psql(
             database_url,
             schema_sql(upgraded, migration_body(["0001_initial"]))
-            + migration_body(["0002_migration_framework"])
-            + migration_body(["0003_order_event_trace"])
-            + migration_body(["0004_real_funds_canary"])
-            + migration_body(["0005_constraint_decision_snapshot_nullable"])
-            + record_sql("0001_initial", checksums["0001_initial"])
-            + record_sql("0002_migration_framework", checksums["0002_migration_framework"])
-            + record_sql("0003_order_event_trace", checksums["0003_order_event_trace"])
-            + record_sql("0004_real_funds_canary", checksums["0004_real_funds_canary"])
-            + record_sql(
-                "0005_constraint_decision_snapshot_nullable",
-                checksums["0005_constraint_decision_snapshot_nullable"],
-            ),
+            + migration_body(migration_names()[1:])
+            + record_all_sql(checksums),
         )
         run_psql(
             database_url,

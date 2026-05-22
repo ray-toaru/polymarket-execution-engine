@@ -40,6 +40,8 @@ struct InMemoryState {
     admin_audit: Vec<AdminAuditEvent>,
     admin_audit_counter: i64,
     runtime_states: HashMap<String, RuntimeStateSummary>,
+    global_kill_switch: Option<AccountKillSwitchState>,
+    account_kill_switches: HashMap<String, AccountKillSwitchState>,
     lifecycle_events: Vec<ExecutionLifecycleEvent>,
     lifecycle_event_counter: i64,
     sign_only_lifecycle_events: Vec<SignOnlyLifecycleRecord>,
@@ -51,6 +53,12 @@ struct InMemoryState {
     order_event_counter: i64,
     real_funds_canary_runs: HashMap<String, RealFundsCanaryRunRecord>,
     real_funds_canary_idempotency: HashMap<String, String>,
+}
+
+#[derive(Clone)]
+struct AccountKillSwitchState {
+    enabled: bool,
+    state_version: i64,
 }
 
 #[derive(Clone)]

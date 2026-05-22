@@ -1,8 +1,8 @@
 # Execution-engine document status
 
-> Status: current v0.25.0 shadow-ready SDK sign-only baseline source-candidate documentation.
+> Status: current v0.26.0 controlled real-funds canary source-candidate documentation.
 
-`../AGENTS.md` contains execution-engine-specific agent rules. Current documents in this directory describe the v0.25.0 shadow-ready SDK sign-only baseline source-candidate state. Historical continuation, review, and gate-confirmation notes live under `docs/archive/` and are excluded from normal release packaging.
+`../AGENTS.md` contains execution-engine-specific agent rules. Current documents in this directory describe the v0.26.0 controlled real-funds canary source-candidate state. Historical continuation, review, and gate-confirmation notes live under `docs/archive/` and are excluded from normal release packaging.
 
 Current validation entrypoint:
 

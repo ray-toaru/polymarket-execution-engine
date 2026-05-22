@@ -33,6 +33,13 @@ run_with_empty_ok() {
   fi
 }
 
+apply_all_pg_migrations() {
+  for migration in migrations/[0-9]*.sql; do
+    printf 'applying %s\n' "${migration}"
+    psql "${PMX_TEST_DATABASE_URL}" -f "${migration}"
+  done
+}
+
 run_with_empty_ok "${EVIDENCE_DIR}/01-cargo-fmt.log" "cargo fmt --check produced no output" cargo fmt --check
 cargo check --workspace --locked 2>&1 | tee "${EVIDENCE_DIR}/02-cargo-check.log"
 cargo clippy --workspace --all-targets --all-features --locked -- -D warnings 2>&1 | tee "${EVIDENCE_DIR}/03-cargo-clippy.log"
@@ -54,7 +61,7 @@ cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --locked
 cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --features sdk-typecheck --locked 2>&1 | tee "${EVIDENCE_DIR}/12-sdk-adapter-typecheck.log"
 
 if [[ -n "${PMX_TEST_DATABASE_URL:-}" ]]; then
-  psql "${PMX_TEST_DATABASE_URL}" -f migrations/0001_initial.sql 2>&1 | tee "${EVIDENCE_DIR}/13-pg-migration.log"
+  apply_all_pg_migrations 2>&1 | tee "${EVIDENCE_DIR}/13-pg-migration.log"
   cargo test -p pmx-store postgres::postgres_tests --locked -- --nocapture --test-threads=1 2>&1 | tee "${EVIDENCE_DIR}/14-pg-store-tests.log"
   cargo test -p pmx-api --test http_postgres_e2e --locked -- --nocapture --test-threads=1 2>&1 | tee "${EVIDENCE_DIR}/15-http-postgres-e2e.log"
 else

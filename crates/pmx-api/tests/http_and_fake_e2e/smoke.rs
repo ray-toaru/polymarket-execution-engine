@@ -59,17 +59,17 @@ async fn http_auth_and_fake_e2e_smoke() {
         "POST",
         "/v1/admin/kill-switch",
         Some("service-token-test"),
-        Some(json!({"enabled": true, "reason": "negative auth test"})),
+        Some(json!({"scope": "ACCOUNT", "account_id": "acct-http-e2e-1", "enabled": true, "reason": "negative auth test"})),
     )
     .await;
     assert_eq!(status, StatusCode::FORBIDDEN);
 
     let (status, kill_switch) = request_json(
-        app,
+        app.clone(),
         "POST",
         "/v1/admin/kill-switch",
         Some("admin-token-test"),
-        Some(json!({"enabled": true, "reason": "admin auth test"})),
+        Some(json!({"scope": "ACCOUNT", "account_id": "acct-http-e2e-1", "enabled": true, "reason": "admin auth test"})),
     )
     .await;
     assert_eq!(
@@ -78,4 +78,27 @@ async fn http_auth_and_fake_e2e_smoke() {
         "kill-switch response: {kill_switch}"
     );
     assert_eq!(kill_switch["enabled"], true);
+    assert_eq!(kill_switch["scope"], "ACCOUNT");
+    assert_eq!(kill_switch["account_id"], "acct-http-e2e-1");
+    assert_eq!(kill_switch["persisted"], true);
+    assert_eq!(kill_switch["state_version"], 1);
+
+    let (status, global_kill_switch) = request_json(
+        app,
+        "POST",
+        "/v1/admin/kill-switch",
+        Some("admin-token-test"),
+        Some(json!({"scope": "GLOBAL", "enabled": true, "reason": "global admin auth test"})),
+    )
+    .await;
+    assert_eq!(
+        status,
+        StatusCode::ACCEPTED,
+        "global kill-switch response: {global_kill_switch}"
+    );
+    assert_eq!(global_kill_switch["enabled"], true);
+    assert_eq!(global_kill_switch["scope"], "GLOBAL");
+    assert!(global_kill_switch["account_id"].is_null());
+    assert_eq!(global_kill_switch["persisted"], true);
+    assert_eq!(global_kill_switch["state_version"], 1);
 }

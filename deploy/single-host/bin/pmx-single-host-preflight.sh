@@ -19,6 +19,21 @@ if [[ "${PMX_PRODUCTION_DEPLOYMENT_ENABLED:-0}" == "1" ]]; then
   exit 1
 fi
 
+if [[ -z "${PM_EXEC_SERVICE_TOKEN:-}" || -z "${PM_EXEC_ADMIN_TOKEN:-}" ]]; then
+  echo "single-host preflight refused: PM_EXEC_SERVICE_TOKEN and PM_EXEC_ADMIN_TOKEN are required" >&2
+  exit 1
+fi
+
+if [[ "${PM_EXEC_SERVICE_TOKEN}" == "${PM_EXEC_ADMIN_TOKEN}" ]]; then
+  echo "single-host preflight refused: service/admin tokens must be distinct" >&2
+  exit 1
+fi
+
+if [[ "${PMX_API_STORAGE:-postgres}" != "postgres" ]]; then
+  echo "single-host preflight refused: PMX_API_STORAGE must be postgres" >&2
+  exit 1
+fi
+
 python validation/check_live_submit_guard.py
 python validation/check_production_readiness_guard.py
 python validation/check_docs_evidence_governance.py

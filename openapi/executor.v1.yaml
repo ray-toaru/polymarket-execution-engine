@@ -773,17 +773,30 @@ components:
     KillSwitchRequest:
       type: object
       additionalProperties: false
-      required: [enabled, reason]
+      required: [scope, enabled, reason]
       properties:
+        scope:
+          type: string
+          enum: [ACCOUNT, GLOBAL]
+        account_id:
+          type: [string, 'null']
+          description: Required for ACCOUNT scope and omitted for GLOBAL scope.
         enabled: { type: boolean }
         reason: { type: string }
     KillSwitchReceipt:
       type: object
       additionalProperties: false
-      required: [enabled, changed_at, reason]
+      required: [scope, enabled, changed_at, effective_at, state_version, persisted, reason]
       properties:
+        scope:
+          type: string
+          enum: [ACCOUNT, GLOBAL]
+        account_id: { type: [string, 'null'] }
         enabled: { type: boolean }
         changed_at: { type: string, format: date-time }
+        effective_at: { type: string, format: date-time }
+        state_version: { type: integer, format: int64 }
+        persisted: { type: boolean }
         reason: { type: string }
     ReconcileRequest:
       type: object

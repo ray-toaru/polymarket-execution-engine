@@ -1,6 +1,6 @@
 # Execution Engine Attack-Defense Notes
 
-> Status: current v0.25.0 shadow-ready SDK sign-only baseline documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+> Status: current v0.26.0 controlled real-funds canary source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
 ## Round 1
 

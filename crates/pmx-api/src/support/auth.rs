@@ -13,8 +13,14 @@ pub struct AuthTokenConfig {
 }
 
 pub fn validate_auth_config_from_env() -> Result<AuthTokenConfig, String> {
-    let admin_token = std::env::var("PM_EXEC_ADMIN_TOKEN").unwrap_or_default();
-    let service_token = std::env::var("PM_EXEC_SERVICE_TOKEN").unwrap_or_default();
+    let admin_token = std::env::var("PM_EXEC_ADMIN_TOKEN")
+        .unwrap_or_default()
+        .trim()
+        .to_owned();
+    let service_token = std::env::var("PM_EXEC_SERVICE_TOKEN")
+        .unwrap_or_default()
+        .trim()
+        .to_owned();
     if service_token.is_empty() {
         return Err("PM_EXEC_SERVICE_TOKEN must be set".into());
     }
@@ -58,13 +64,13 @@ pub(crate) fn principal_from_headers(
         ));
     };
 
-    if token == auth_config.admin_token {
+    if constant_time_eq(token.as_bytes(), auth_config.admin_token.as_bytes()) {
         return Ok(Principal {
             subject: "admin-token".into(),
             scopes: vec![Scope::Admin],
         });
     }
-    if token == auth_config.service_token {
+    if constant_time_eq(token.as_bytes(), auth_config.service_token.as_bytes()) {
         return Ok(Principal {
             subject: "service-token".into(),
             scopes: vec![Scope::Service],
@@ -90,4 +96,15 @@ pub(crate) fn require(
         )
     })?;
     Ok(principal)
+}
+
+fn constant_time_eq(left: &[u8], right: &[u8]) -> bool {
+    let mut diff = if left.len() == right.len() { 0 } else { 1 };
+    let max_len = left.len().max(right.len());
+    for idx in 0..max_len {
+        let left_byte = left.get(idx).copied().unwrap_or(0);
+        let right_byte = right.get(idx).copied().unwrap_or(0);
+        diff |= left_byte ^ right_byte;
+    }
+    diff == 0
 }

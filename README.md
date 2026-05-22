@@ -1,14 +1,22 @@
-# polymarket-execution-engine v0.25.0 shadow-ready SDK sign-only candidate
+# polymarket-execution-engine v0.26.0 controlled canary source-candidate
 
-Standalone Rust execution plane for Polymarket. This package is a **shadow-ready SDK sign-only candidate**, not a production or live-trading release.
+Standalone Rust execution plane for Polymarket. This package is a
+**controlled real-funds canary source-candidate**, not a production or
+live-trading release.
 
-## v0.25 scope
+## v0.26 scope
 
 - Server-authoritative planning and blocked submit receipt path remain in place.
 - Sign-only lifecycle append/list APIs exist with local state-machine validation, PG advisory-lock scaffolding, server-assigned metadata, and `client_event_id` replay/conflict semantics.
 - Execution lifecycle and admin audit query APIs expose bounded cursor-style reads.
 - Runtime worker observations are aggregated into runtime state with configurable TTL via `PMX_RUNTIME_OBSERVATION_TTL_SECONDS`.
+- `pmx-api` now binds a non-live HTTP listener for local/API smoke and
+  control-plane integration when explicit auth tokens are configured.
+- Account-scoped kill switch updates persist into runtime truth and return an
+  effective state version.
 - Cancel/reconcile endpoints remain non-live and may write local lifecycle events when an `execution_id` is supplied.
+- Controlled real-funds canary tooling binds externally reviewed
+  `candidate-market.json` input; it does not authorize live submit.
 - Evidence manifest scaffolding prevents claiming production or live readiness before required Rust/PG/SDK/credentialed evidence and a later release decision are present.
 
 ## Safety boundary

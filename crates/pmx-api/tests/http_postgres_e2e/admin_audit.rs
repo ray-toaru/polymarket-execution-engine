@@ -21,7 +21,7 @@ async fn http_postgres_admin_routes_record_audit_events() {
         "POST",
         "/v1/admin/kill-switch",
         Some("admin-token-pg-audit"),
-        Some(json!({"enabled": true, "reason": "audit e2e"})),
+        Some(json!({"scope": "ACCOUNT", "account_id": "acct-audit", "enabled": true, "reason": "audit e2e"})),
     )
     .await;
     assert_eq!(
@@ -29,6 +29,7 @@ async fn http_postgres_admin_routes_record_audit_events() {
         StatusCode::ACCEPTED,
         "kill-switch response: {receipt}"
     );
+    assert_eq!(receipt["persisted"], true);
 
     let (status, cancel) = request_json(
         app.clone(),
@@ -71,6 +72,52 @@ async fn http_postgres_admin_routes_record_audit_events() {
     assert!(
         count >= 2,
         "expected at least two admin audit events, got {count}"
+    );
+    let runtime_row = client
+        .query_one(
+            "SELECT kill_switch_enabled, kill_switch_version FROM runtime_accounts WHERE account_id = 'acct-audit'",
+            &[],
+        )
+        .await
+        .expect("query persisted kill switch");
+    assert!(runtime_row.get::<_, bool>(0));
+    assert!(runtime_row.get::<_, i64>(1) >= 1);
+    let (status, global_receipt) = request_json(
+        app.clone(),
+        "POST",
+        "/v1/admin/kill-switch",
+        Some("admin-token-pg-audit"),
+        Some(json!({"scope": "GLOBAL", "enabled": true, "reason": "global audit e2e"})),
+    )
+    .await;
+    assert_eq!(
+        status,
+        StatusCode::ACCEPTED,
+        "global kill-switch response: {global_receipt}"
+    );
+    assert_eq!(global_receipt["scope"], "GLOBAL");
+    assert!(global_receipt["account_id"].is_null());
+    let global_row = client
+        .query_one(
+            "SELECT enabled, control_version FROM runtime_global_controls WHERE control_key = 'kill_switch'",
+            &[],
+        )
+        .await
+        .expect("query persisted global kill switch");
+    assert!(global_row.get::<_, bool>(0));
+    assert!(global_row.get::<_, i64>(1) >= 1);
+    let (status, reset_global_receipt) = request_json(
+        app.clone(),
+        "POST",
+        "/v1/admin/kill-switch",
+        Some("admin-token-pg-audit"),
+        Some(json!({"scope": "GLOBAL", "enabled": false, "reason": "reset global audit e2e"})),
+    )
+    .await;
+    assert_eq!(
+        status,
+        StatusCode::ACCEPTED,
+        "global reset response: {reset_global_receipt}"
     );
     let rejected_row = client
         .query_one(

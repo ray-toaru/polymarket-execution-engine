@@ -12,17 +12,6 @@ pub async fn blocked_submit_outcome<S>(
 where
     S: ExecutionStore + IdempotencyStore + ExecutionLifecycleStore + Send + Sync,
 {
-    if matches!(plan.status, pmx_core::PlanStatus::Ready) {
-        let reservation = OrderReservation {
-            reservation_id: format!("res-{}-{submit_attempt}", plan.execution_id),
-            account_id: plan.account_id.clone(),
-            execution_id: ExecutionId(plan.execution_id.clone()),
-            internal_order_id: None,
-            quantity_bound: QuantityBound::WorstCaseQuoteNotional(plan.max_exposure.clone()),
-            state: ReservationState::Pending,
-        };
-        store.save_order_reservation(&reservation).await?;
-    }
     let receipt = SubmitReceipt {
         execution_id: plan.execution_id.clone(),
         receipt_id: format!("receipt-blocked-{submit_attempt}-{}", Uuid::new_v4()),
@@ -45,6 +34,7 @@ where
                 "submit_attempt": submit_attempt,
                 "plan_status": format!("{:?}", plan.status),
                 "no_remote_side_effect": true,
+                "reservation_written": false,
                 "receipt_id": receipt.receipt_id.clone(),
             }),
             created_at: None,

@@ -8,8 +8,9 @@ use crate::postgres_support::{
     worker_status_from_rows,
 };
 use crate::{
-    RuntimeStateQuery, RuntimeStateStore, RuntimeWorkerObservation, StoreError,
-    apply_runtime_worker_observations, runtime_observation_ttl_seconds,
+    KillSwitchStateChange, RuntimeControlStore, RuntimeStateQuery, RuntimeStateStore,
+    RuntimeWorkerObservation, StoreError, apply_runtime_worker_observations,
+    runtime_observation_ttl_seconds,
 };
 
 #[path = "postgres_runtime/account_collateral.rs"]
@@ -28,8 +29,10 @@ impl RuntimeStateStore for PostgresStore {
         query: &RuntimeStateQuery,
     ) -> Result<RuntimeStateSummary, StoreError> {
         let client = self.client().await?;
-        let (geoblock_status, kill_switch_enabled) =
+        let (geoblock_status, account_kill_switch_enabled) =
             account_collateral::load_account_state(&client, query).await?;
+        let global_kill_switch_enabled =
+            account_collateral::load_global_kill_switch_enabled(&client).await?;
         let collateral_profile_status =
             account_collateral::load_collateral_profile_status(&client, query).await?;
 
@@ -46,10 +49,32 @@ impl RuntimeStateStore for PostgresStore {
             geoblock_status,
             worker_status: worker_status_from_rows(&worker_rows, required_capabilities.len()),
             collateral_profile_status,
-            kill_switch_enabled,
+            kill_switch_enabled: account_kill_switch_enabled || global_kill_switch_enabled,
             required_capabilities,
         };
         let observations = observations::load_runtime_worker_observations(&client, query).await?;
         Ok(apply_runtime_worker_observations(base, &observations))
+    }
+}
+
+#[async_trait]
+impl RuntimeControlStore for PostgresStore {
+    async fn set_account_kill_switch(
+        &self,
+        account_id: &pmx_core::AccountId,
+        enabled: bool,
+        reason: &str,
+    ) -> Result<KillSwitchStateChange, StoreError> {
+        let client = self.client().await?;
+        account_collateral::set_account_kill_switch(&client, account_id, enabled, reason).await
+    }
+
+    async fn set_global_kill_switch(
+        &self,
+        enabled: bool,
+        reason: &str,
+    ) -> Result<KillSwitchStateChange, StoreError> {
+        let client = self.client().await?;
+        account_collateral::set_global_kill_switch(&client, enabled, reason).await
     }
 }

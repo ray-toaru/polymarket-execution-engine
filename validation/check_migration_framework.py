@@ -29,6 +29,9 @@ def main() -> int:
     migration_0003 = MIGRATIONS / "0003_order_event_trace.sql"
     migration_0004 = MIGRATIONS / "0004_real_funds_canary.sql"
     migration_0005 = MIGRATIONS / "0005_constraint_decision_snapshot_nullable.sql"
+    migration_0006 = MIGRATIONS / "0006_runtime_kill_switch_scope.sql"
+    migration_0007 = MIGRATIONS / "0007_runtime_global_kill_switch.sql"
+    migration_names = [path.stem for path in sorted(MIGRATIONS.glob("[0-9]*.sql"))]
     postgres = read_rust_sources(POSTGRES)
     manifest = MANIFEST_WRITER.read_text()
     drift_dry_run = DRIFT_DRY_RUN.read_text()
@@ -50,6 +53,12 @@ def main() -> int:
         "SCHEMA_MIGRATIONS must include 0005_constraint_decision_snapshot_nullable",
         failures,
     )
+    for migration_name in migration_names:
+        require(
+            migration_name in postgres,
+            f"SCHEMA_MIGRATIONS must include {migration_name}",
+            failures,
+        )
     require(migration_0003.exists(), "missing migrations/0003_order_event_trace.sql", failures)
     if migration_0003.exists():
         migration_sql = migration_0003.read_text()
@@ -73,6 +82,16 @@ def main() -> int:
             "0005 must align upgraded constraint_decisions.snapshot_id nullability",
             failures,
         )
+    require(migration_0006.exists(), "missing migrations/0006_runtime_kill_switch_scope.sql", failures)
+    if migration_0006.exists():
+        migration_sql = migration_0006.read_text()
+        require("ADD COLUMN IF NOT EXISTS kill_switch_version" in migration_sql, "0006 must add account kill-switch version", failures)
+        require("idx_runtime_accounts_kill_switch" in migration_sql, "0006 must index account kill-switch lookup", failures)
+    require(migration_0007.exists(), "missing migrations/0007_runtime_global_kill_switch.sql", failures)
+    if migration_0007.exists():
+        migration_sql = migration_0007.read_text()
+        require("CREATE TABLE IF NOT EXISTS runtime_global_controls" in migration_sql, "0007 must create runtime_global_controls", failures)
+        require("control_key = 'kill_switch'" in migration_sql, "0007 must key the global kill switch control", failures)
     require("record_applied_migration" in postgres, "apply_schema must record applied migrations", failures)
     require("schema migration checksum mismatch" in postgres, "migration checksum drift must fail closed", failures)
     require("applied_schema_migrations" in postgres, "store must expose applied migration evidence for PG tests", failures)
@@ -80,13 +99,9 @@ def main() -> int:
     require("PMX_TEST_DATABASE_URL" in drift_dry_run, "migration dry-run must support PG validation env", failures)
     require("fresh_schema" in drift_dry_run and "upgraded_schema" in drift_dry_run, "migration dry-run must cover fresh and upgraded schemas", failures)
     require("bad checksum fixture" in drift_dry_run, "migration dry-run must include checksum drift fixture", failures)
-    require("0003_order_event_trace" in drift_dry_run, "migration dry-run must include 0003_order_event_trace", failures)
-    require("0004_real_funds_canary" in drift_dry_run, "migration dry-run must include 0004_real_funds_canary", failures)
-    require(
-        "0005_constraint_decision_snapshot_nullable" in drift_dry_run,
-        "migration dry-run must include 0005_constraint_decision_snapshot_nullable",
-        failures,
-    )
+    require("glob(\"[0-9]*.sql\")" in drift_dry_run, "migration dry-run must discover all numbered migrations", failures)
+    require("migration_names()" in drift_dry_run, "migration dry-run must apply the discovered migration list", failures)
+    require("record_all_sql" in drift_dry_run, "migration dry-run must record all discovered checksums", failures)
 
     require_current_gate_log("33-migration-framework-guard.log", "migration framework guard", failures)
     require_current_gate_log("34-migration-drift-dry-run.log", "migration drift dry-run", failures)

@@ -24,4 +24,12 @@ pub const SCHEMA_MIGRATIONS: &[SchemaMigration] = &[
         version: "0005_constraint_decision_snapshot_nullable",
         sql: include_str!("../../../../migrations/0005_constraint_decision_snapshot_nullable.sql"),
     },
+    SchemaMigration {
+        version: "0006_runtime_kill_switch_scope",
+        sql: include_str!("../../../../migrations/0006_runtime_kill_switch_scope.sql"),
+    },
+    SchemaMigration {
+        version: "0007_runtime_global_kill_switch",
+        sql: include_str!("../../../../migrations/0007_runtime_global_kill_switch.sql"),
+    },
 ];
