@@ -11,10 +11,10 @@ use crate::{
 };
 
 const REAL_FUNDS_CANARY_SCOPE: &str = "REAL_FUNDS_CANARY";
-const REAL_FUNDS_CANARY_EXECUTION_STYLE: &str = "FOK_LIMIT_FILL";
-const REAL_FUNDS_CANARY_ORDER_MODE: &str = "immediate_fill";
+const REAL_FUNDS_CANARY_EXECUTION_STYLE: &str = "GTC_LIMIT_POST_ONLY_CANCEL";
+const REAL_FUNDS_CANARY_ORDER_MODE: &str = "post_only_limit";
 const REAL_FUNDS_CANARY_SIDE: &str = "BUY";
-const REAL_FUNDS_CANARY_ORDER_TYPE: &str = "FOK";
+const REAL_FUNDS_CANARY_ORDER_TYPE: &str = "GTC";
 const REAL_FUNDS_CANARY_TARGET_SIZE_SEMANTICS: &str = "outcome_shares";
 const MAX_SPREAD_BPS: u64 = 250;
 
@@ -83,8 +83,8 @@ pub fn validate_real_funds_canary_preconditions(
             "daily canary cap exceeded",
         ),
         (
-            request.preconditions.execution_style_fok_limit_fill,
-            "execution style is not FOK limit fill",
+            request.preconditions.execution_style_gtc_post_only_cancel,
+            "execution style is not GTC post-only cancel",
         ),
         (
             request.preconditions.balance_allowance_checked,
@@ -166,8 +166,8 @@ pub fn validate_reviewed_real_funds_canary_release_decision(
             "live submit not authorized by release decision",
         ),
         (
-            !decision.live_cancel_authorized,
-            "live cancel must remain unauthorized for canary",
+            decision.live_cancel_authorized,
+            "canary cancel not authorized by release decision",
         ),
         (
             !decision.production_deployment_authorized,
@@ -266,7 +266,7 @@ pub fn build_real_funds_canary_preconditions(
             &input.market.notional_usd,
             &input.risk_limits.max_daily_notional_usd,
         ),
-        execution_style_fok_limit_fill: input.approval.execution_style
+        execution_style_gtc_post_only_cancel: input.approval.execution_style
             == REAL_FUNDS_CANARY_EXECUTION_STYLE,
         balance_allowance_checked: input.balance_allowance_checked,
         selected_market_safe: input.selected_market_safe,
@@ -298,13 +298,13 @@ pub fn select_real_funds_canary_market_with_diagnostics(
         .map(|candidate| RealFundsCanaryMarketSelection {
             market_id: candidate.market_id.clone(),
             token_id: candidate.token_id.clone(),
-            limit_price: candidate.best_ask.clone(),
-            // For the live FOK BUY path this is the share size, not the USDC
-            // amount. The governing risk value is price * size in notional_usd.
+            limit_price: candidate.limit_price.clone(),
+            // For the live GTC post-only BUY path this is the share size, not
+            // the USDC amount. The risk value is limit_price * size.
             size: candidate.target_size.clone(),
             notional_usd: candidate_notional_usd(candidate).unwrap_or_default(),
             selection_reason:
-                "highest liquidity candidate within active/accepting/spread/min-order/marketable-buy-notional/notional-depth constraints"
+                "highest liquidity candidate within active/accepting/spread/min-order/post-only/notional-depth constraints"
                     .into(),
         });
     RealFundsCanaryMarketValidation {
@@ -383,8 +383,8 @@ pub fn diagnose_real_funds_canary_markets(
         if !rule_snapshot_valid {
             rejection_counts.exchange_rule_snapshot_invalid += 1;
         }
-        if rule_snapshot_valid && !marketable_buy_notional_floor_ok(candidate) {
-            rejection_counts.marketable_buy_notional_below_floor += 1;
+        if !post_only_limit_terms_valid(candidate) {
+            rejection_counts.post_only_not_bound += 1;
         }
         if market_candidate_is_safe(candidate, max_notional_usd) {
             safe_candidates += 1;
@@ -421,7 +421,7 @@ pub fn market_candidate_is_safe(
         && target_notional_lte(candidate, max_notional_usd)
         && min_order_size_lte_target_size(candidate)
         && exchange_rule_snapshot_valid(candidate)
-        && marketable_buy_notional_floor_ok(candidate)
+        && post_only_limit_terms_valid(candidate)
 }
 
 fn valid_approval(approval: &RealFundsCanaryApproval) -> bool {
@@ -468,9 +468,9 @@ fn decimal_lte(left: &str, right: &str) -> bool {
     }
 }
 
-fn decimal_gte(left: &str, right: &str) -> bool {
+fn decimal_lt(left: &str, right: &str) -> bool {
     match (parse_decimal(left), parse_decimal(right)) {
-        (Some(left), Some(right)) => left >= right,
+        (Some(left), Some(right)) => left < right,
         _ => false,
     }
 }
@@ -510,7 +510,6 @@ fn exchange_rule_snapshot_valid(candidate: &RealFundsCanaryMarketCandidate) -> b
         && snapshot.side == REAL_FUNDS_CANARY_SIDE
         && snapshot.target_size_semantics == REAL_FUNDS_CANARY_TARGET_SIZE_SEMANTICS
         && decimal_gt_zero(&snapshot.min_share_size)
-        && decimal_gt_zero(&snapshot.marketable_buy_min_notional_usd)
         && decimal_gt_zero(&snapshot.min_tick_size)
         && decimal_lte(&snapshot.min_share_size, &candidate.target_size)
         && timestamp_is_rfc3339(&snapshot.captured_at)
@@ -527,22 +526,20 @@ fn rule_source_present(snapshot: &ExchangeRuleSnapshot) -> bool {
         && !evidence_ref.contains("REPLACE_WITH")
 }
 
-fn marketable_buy_notional_floor_ok(candidate: &RealFundsCanaryMarketCandidate) -> bool {
+fn post_only_limit_terms_valid(candidate: &RealFundsCanaryMarketCandidate) -> bool {
     if candidate.side != REAL_FUNDS_CANARY_SIDE
         || candidate.order_type != REAL_FUNDS_CANARY_ORDER_TYPE
+        || !candidate.post_only
     {
         return false;
     }
-    let floor = &candidate
-        .exchange_rule_snapshot
-        .marketable_buy_min_notional_usd;
-    exchange_rule_snapshot_valid(candidate)
-        && candidate_notional_usd(candidate).is_some_and(|notional| decimal_gte(&notional, floor))
+    decimal_gt_zero(&candidate.limit_price)
+        && decimal_lt(&candidate.limit_price, &candidate.best_ask)
 }
 
 fn candidate_notional_usd(candidate: &RealFundsCanaryMarketCandidate) -> Option<String> {
     match (
-        parse_decimal(&candidate.best_ask),
+        parse_decimal(&candidate.limit_price),
         parse_decimal(&candidate.target_size),
     ) {
         (Some(price), Some(size)) => price.mul(&size).map(|value| value.format_summary()),

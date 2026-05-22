@@ -87,7 +87,7 @@ def run_rehearsal(output_dir: Path, args: argparse.Namespace) -> tuple[list[str]
         "decision": "no_go",
         "decision_reason": "Blocked rehearsal must prove an armed command fails before any remote side effect.",
         "scope": "REAL_FUNDS_CANARY",
-        "execution_style": "FOK_LIMIT_FILL",
+        "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
         "expires_at": "2099-01-01T00:00:00Z",
         "artifact_sha256": approval.get("artifact_sha256"),
         "evidence_manifest_sha256": approval.get("evidence_manifest_sha256"),

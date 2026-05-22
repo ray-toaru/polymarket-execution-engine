@@ -40,4 +40,8 @@ pub const SCHEMA_MIGRATIONS: &[SchemaMigration] = &[
         version: "0009_runtime_scope_columns",
         sql: include_str!("../../../../migrations/0009_runtime_scope_columns.sql"),
     },
+    SchemaMigration {
+        version: "0010_real_funds_canary_gtc_post_only",
+        sql: include_str!("../../../../migrations/0010_real_funds_canary_gtc_post_only.sql"),
+    },
 ];

@@ -27,7 +27,7 @@ FORBIDDEN_APPROVAL_TERMS = [
 
 DOC_TOKENS = [
     "REAL_FUNDS_CANARY",
-    "FOK_LIMIT_FILL",
+    "GTC_LIMIT_POST_ONLY_CANCEL",
     "PMX_ALLOW_REAL_FUNDS_CANARY",
     "allow_real_funds_canary = true",
     "approval_file_required = true",
@@ -101,8 +101,8 @@ def main() -> int:
                 failures.append(f"approval example contains forbidden sensitive term: {term}")
         if approval.get("scope") != "REAL_FUNDS_CANARY":
             failures.append("approval example must use REAL_FUNDS_CANARY scope")
-        if approval.get("execution_style") != "FOK_LIMIT_FILL":
-            failures.append("approval example must use FOK_LIMIT_FILL")
+        if approval.get("execution_style") != "GTC_LIMIT_POST_ONLY_CANCEL":
+            failures.append("approval example must use GTC_LIMIT_POST_ONLY_CANCEL")
         if approval.get("max_order_notional_usd") != "1":
             failures.append("approval example must cap each order at 1 USD")
         if approval.get("max_daily_notional_usd") != "5":
@@ -116,10 +116,10 @@ def main() -> int:
         "RealFundsCanaryPreconditions",
         "ENV_ALLOW_REAL_FUNDS_CANARY",
         "validate_real_funds_canary_preconditions",
-        "run_real_funds_canary_fok_fill",
+        "run_real_funds_canary_gtc_post_only_cancel",
         "limit_order()",
         "size(size)",
-        "SdkOrderType::FOK",
+        "SdkOrderType::GTC",
         "raw_signed_order_exposed: false",
     ]:
         if token not in adapter_text:
@@ -146,7 +146,7 @@ def main() -> int:
         "target_size_is_reviewed_candidate_input": True,
         "notional_usd_is_price_times_size": True,
         "limit_order_size_driven": True,
-        "execution_style": "FOK_LIMIT_FILL",
+        "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
         "approval_file_required": True,
         "artifact_hash_required": True,
         "evidence_manifest_hash_required": True,

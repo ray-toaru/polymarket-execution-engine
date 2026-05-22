@@ -144,8 +144,8 @@ def validate_shape(data: dict[str, Any], label: str) -> list[str]:
         failures.append(f"{label}: source_release must bind {source_release}")
     if data.get("scope") != "REAL_FUNDS_CANARY":
         failures.append(f"{label}: scope must be REAL_FUNDS_CANARY")
-    if data.get("execution_style") != "FOK_LIMIT_FILL":
-        failures.append(f"{label}: execution_style must be FOK_LIMIT_FILL")
+    if data.get("execution_style") != "GTC_LIMIT_POST_ONLY_CANCEL":
+        failures.append(f"{label}: execution_style must be GTC_LIMIT_POST_ONLY_CANCEL")
     limits = data.get("risk_limits", {})
     if limits.get("max_order_notional_usd") != "1":
         failures.append(f"{label}: max_order_notional_usd must be 1")
@@ -206,10 +206,10 @@ def validate_decision(data: dict[str, Any], label: str) -> list[str]:
     if decision == "go":
         if data.get("status") != "reviewed_go":
             failures.append(f"{label}: go decision requires status=reviewed_go")
-        if not all(data.get(flag) is True for flag in ["live_submit_authorized", "real_funds_canary_authorized", "remote_side_effects_authorized"]):
+        if not all(data.get(flag) is True for flag in ["live_submit_authorized", "live_cancel_authorized", "real_funds_canary_authorized", "remote_side_effects_authorized"]):
             failures.append(f"{label}: go decision must explicitly authorize the controlled canary side-effect flags")
-        if data.get("live_cancel_authorized") is True or data.get("production_deployment_authorized") is True:
-            failures.append(f"{label}: go decision must not authorize live cancel or production deployment")
+        if data.get("production_deployment_authorized") is True:
+            failures.append(f"{label}: go decision must not authorize production deployment")
         if not is_sha256(data.get("artifact_sha256")):
             failures.append(f"{label}: go decision requires concrete artifact_sha256")
         if not is_sha256(data.get("evidence_manifest_sha256")):

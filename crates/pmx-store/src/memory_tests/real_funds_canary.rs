@@ -23,7 +23,7 @@ fn record(run_id: &str) -> RealFundsCanaryRunRecord {
         max_order_notional_usd: DecimalString("1.00".into()),
         max_daily_notional_usd: DecimalString("2.00".into()),
         order_notional_usd: DecimalString("0.50".into()),
-        execution_style: "FOK_LIMIT_FILL".into(),
+        execution_style: "GTC_LIMIT_POST_ONLY_CANCEL".into(),
         remote_order_id: None,
         remote_status: None,
         lifecycle_state: RealFundsCanaryLifecycleState::PreflightReady,

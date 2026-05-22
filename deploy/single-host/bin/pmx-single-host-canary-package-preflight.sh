@@ -113,8 +113,12 @@ for key in ["market_candidate_sha256"]:
     if not isinstance(value, str) or len(value) != 64:
         failures.append(f"{key} must be a concrete 64-hex digest")
 
-if candidate_market.get("side") != "BUY" or candidate_market.get("order_type") != "FOK":
-    failures.append("candidate market must be BUY/FOK")
+if (
+    candidate_market.get("side") != "BUY"
+    or candidate_market.get("order_type") != "GTC"
+    or candidate_market.get("post_only") is not True
+):
+    failures.append("candidate market must be BUY/GTC post-only")
 if not isinstance(candidate_market.get("target_size"), str) or not candidate_market["target_size"].strip():
     failures.append("candidate market must carry reviewed target_size share quantity")
 

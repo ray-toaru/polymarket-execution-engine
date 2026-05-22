@@ -19,7 +19,7 @@ pub use authenticated::run_authenticated_non_trading_sdk_smoke;
 pub use gateway::{OfficialSdkGateway, OfficialSdkSignerProvider, official_sdk_gateway_pair};
 #[cfg(feature = "live-submit")]
 pub use live_canary::{
-    run_real_funds_canary_fok_fill, validate_real_funds_canary_market,
+    run_real_funds_canary_gtc_post_only_cancel, validate_real_funds_canary_market,
     validate_real_funds_canary_market_with_diagnostics,
 };
 #[cfg(feature = "sign-only-dry-run")]

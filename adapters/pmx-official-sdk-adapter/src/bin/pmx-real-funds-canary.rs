@@ -3,7 +3,7 @@ use pmx_official_sdk_adapter::{
     BuildRealFundsCanaryPreconditionsInput, LiveCanaryPreconditions, OfficialSdkAdapterConfig,
     RealFundsCanaryApproval, RealFundsCanaryMarketCandidate, RealFundsCanaryMarketDiagnostics,
     RealFundsCanaryRequest, RealFundsCanaryRiskLimits, ReviewedRealFundsCanaryReleaseDecision,
-    build_real_funds_canary_preconditions, run_real_funds_canary_fok_fill,
+    build_real_funds_canary_preconditions, run_real_funds_canary_gtc_post_only_cancel,
     validate_real_funds_canary_market_with_diagnostics, validate_real_funds_canary_preconditions,
     validate_reviewed_real_funds_canary_release_decision,
 };
@@ -225,7 +225,7 @@ async fn main() -> anyhow::Result<()> {
     if args.armed {
         validate_real_funds_canary_preconditions(&config, &request)?;
         create_approval_consumed_marker(&args, &approval, &market_candidate_sha256)?;
-        let receipt = run_real_funds_canary_fok_fill(&config, request).await?;
+        let receipt = run_real_funds_canary_gtc_post_only_cancel(&config, request).await?;
         println!("{}", serde_json::to_string_pretty(&receipt)?);
         return Ok(());
     }

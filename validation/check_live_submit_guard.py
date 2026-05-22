@@ -54,8 +54,8 @@ REQUIRED_CANARY_TOKENS = [
     "RealFundsCanaryPreconditions",
     "ENV_ALLOW_REAL_FUNDS_CANARY",
     "validate_real_funds_canary_preconditions",
-    "run_real_funds_canary_fok_fill",
-    "SdkOrderType::FOK",
+    "run_real_funds_canary_gtc_post_only_cancel",
+    "SdkOrderType::GTC",
     "raw_signed_order_exposed: false",
 ]
 
@@ -109,7 +109,7 @@ def main() -> int:
             "validate_real_funds_canary_preconditions",
             "limit_order()",
             "size(size)",
-            "SdkOrderType::FOK",
+            "SdkOrderType::GTC",
             "raw_signed_order_exposed: false",
         ]:
             if token not in allowed_text:

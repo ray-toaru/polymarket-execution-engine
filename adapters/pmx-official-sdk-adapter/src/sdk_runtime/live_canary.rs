@@ -15,7 +15,7 @@ use polymarket_client_sdk_v2::types::{Decimal as SdkDecimal, U256 as SdkU256};
 use std::{cmp::Ordering, str::FromStr};
 use tokio::time;
 
-pub async fn run_real_funds_canary_fok_fill(
+pub async fn run_real_funds_canary_gtc_post_only_cancel(
     config: &OfficialSdkAdapterConfig,
     request: RealFundsCanaryRequest,
 ) -> anyhow::Result<RealFundsCanaryReceipt> {
@@ -41,7 +41,8 @@ pub async fn run_real_funds_canary_fok_fill(
             .price(price)
             .size(size)
             .side(SdkSide::Buy)
-            .order_type(SdkOrderType::FOK)
+            .order_type(SdkOrderType::GTC)
+            .post_only(true)
             .build(),
     )
     .await
@@ -62,6 +63,33 @@ pub async fn run_real_funds_canary_fok_fill(
 
     let remote_status = format!("{:?}", response.status);
     let filled_or_matched = remote_status == "Matched";
+    if filled_or_matched {
+        return Err(OfficialSdkAdapterError::SafetyGate(
+            "GTC post-only canary order unexpectedly matched".into(),
+        )
+        .into());
+    }
+    let order_id = response.order_id;
+    if !response.success || order_id.is_empty() {
+        return Err(OfficialSdkAdapterError::SafetyGate(
+            "GTC post-only canary post_order did not return an accepted order id".into(),
+        )
+        .into());
+    }
+
+    let cancel = time::timeout(timeout, client.cancel_order(&order_id))
+        .await
+        .map_err(|_| anyhow::anyhow!("official SDK cancel_order timed out after {timeout:?}"))?
+        .context("official SDK canary cancel_order failed")?;
+    let cancelled = cancel.canceled.iter().any(|canceled| canceled == &order_id)
+        && !cancel.not_canceled.contains_key(&order_id);
+    if !cancelled {
+        return Err(OfficialSdkAdapterError::SafetyGate(
+            "GTC post-only canary order was posted but cancel confirmation failed".into(),
+        )
+        .into());
+    }
+
     Ok(RealFundsCanaryReceipt {
         account_id: request.account_id,
         execution_id: request.execution_id,
@@ -69,11 +97,11 @@ pub async fn run_real_funds_canary_fok_fill(
         approval_hash: request.approval.approval_hash,
         market_candidate_sha256: request.market_candidate_sha256,
         idempotency_key: request.idempotency_key,
-        remote_order_id: (!response.order_id.is_empty()).then_some(response.order_id),
+        remote_order_id: Some(order_id),
         remote_status,
-        posted: response.success,
+        posted: true,
         filled_or_matched,
-        cancelled: false,
+        cancelled,
         remote_side_effects: true,
         raw_signed_order_exposed: false,
     })
@@ -141,6 +169,7 @@ pub async fn validate_real_funds_canary_market_with_diagnostics(
             })
             .map(|ask| ask.price.to_string())
             .unwrap_or_default(),
+        limit_price: candidate.limit_price,
         ask_size: order_book
             .asks
             .iter()

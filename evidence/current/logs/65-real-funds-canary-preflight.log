@@ -4,7 +4,7 @@
   "artifact_hash_required": true,
   "engine_market_discovery_allowed": false,
   "evidence_manifest_hash_required": true,
-  "execution_style": "FOK_LIMIT_FILL",
+  "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
   "external_candidate_market_required": true,
   "failures": [],
   "limit_order_size_driven": true,

@@ -16,7 +16,7 @@ fn approval_fixture() -> RealFundsCanaryApproval {
         market_candidate_sha256: sha256_fixture('d'),
         max_order_notional_usd: "1".into(),
         max_daily_notional_usd: "5".into(),
-        execution_style: "FOK_LIMIT_FILL".into(),
+        execution_style: "GTC_LIMIT_POST_ONLY_CANCEL".into(),
         operator_identity_ref: "operator-local-approval".into(),
     }
 }
@@ -29,19 +29,15 @@ fn risk_limits_fixture() -> RealFundsCanaryRiskLimits {
     }
 }
 
-fn exchange_rule_snapshot_fixture(
-    min_share_size: &str,
-    marketable_buy_min: &str,
-) -> ExchangeRuleSnapshot {
+fn exchange_rule_snapshot_fixture(min_share_size: &str) -> ExchangeRuleSnapshot {
     ExchangeRuleSnapshot {
         schema_version: 1,
         venue: "polymarket_clob".into(),
-        order_mode: "immediate_fill".into(),
-        order_type: "FOK".into(),
+        order_mode: "post_only_limit".into(),
+        order_type: "GTC".into(),
         side: "BUY".into(),
         target_size_semantics: "outcome_shares".into(),
         min_share_size: min_share_size.into(),
-        marketable_buy_min_notional_usd: marketable_buy_min.into(),
         min_tick_size: "0.001".into(),
         source: "unit-test-rule-snapshot".into(),
         captured_at: "2099-01-01T00:00:00Z".into(),
@@ -61,7 +57,7 @@ fn reviewed_decision_fixture(
         decision: "go".into(),
         decision_reason: "unit test reviewed canary decision".into(),
         scope: "REAL_FUNDS_CANARY".into(),
-        execution_style: "FOK_LIMIT_FILL".into(),
+        execution_style: "GTC_LIMIT_POST_ONLY_CANCEL".into(),
         expires_at: "2099-01-01T00:00:00Z".into(),
         artifact_sha256: approval.artifact_sha256.clone(),
         evidence_manifest_sha256: approval.evidence_manifest_sha256.clone(),
@@ -75,7 +71,7 @@ fn reviewed_decision_fixture(
         }),
         required_review_signals: serde_json::json!({"artifact_hash_reviewed": true}),
         live_submit_authorized: true,
-        live_cancel_authorized: false,
+        live_cancel_authorized: true,
         production_deployment_authorized: false,
         real_funds_canary_authorized: true,
         remote_side_effects_authorized: true,
@@ -173,9 +169,9 @@ fn real_funds_market_selector_picks_highest_safe_liquidity_candidate() {
     let selected = select_real_funds_canary_market(&safe_market_candidates(), "1")
         .expect("selector should choose a safe high-liquidity market");
     assert_eq!(selected.market_id, "market-safe-high");
-    assert_eq!(selected.limit_price, "0.20");
+    assert_eq!(selected.limit_price, "0.19");
     assert_eq!(selected.size, "5");
-    assert_eq!(selected.notional_usd, "1");
+    assert_eq!(selected.notional_usd, "0.95");
     assert!(selected.selection_reason.contains("highest liquidity"));
 }
 
@@ -186,17 +182,19 @@ fn real_funds_market_selector_requires_target_size_at_top_ask() {
             market_id: "market-shares-not-enough-notional".into(),
             token_id: "123".into(),
             side: "BUY".into(),
-            order_type: "FOK".into(),
+            order_type: "GTC".into(),
+            post_only: true,
             active: true,
             accepting_orders: true,
             closed: false,
             archived: false,
             best_ask: "0.20".into(),
+            limit_price: "0.19".into(),
             ask_size: "2".into(),
             target_size: "5".into(),
             spread_bps: 10,
             min_order_size: "1".into(),
-            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1", "1"),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1"),
             liquidity_score: 999,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-shares-not-enough-notional".into(),
@@ -205,17 +203,19 @@ fn real_funds_market_selector_requires_target_size_at_top_ask() {
             market_id: "market-enough-notional".into(),
             token_id: "456".into(),
             side: "BUY".into(),
-            order_type: "FOK".into(),
+            order_type: "GTC".into(),
+            post_only: true,
             active: true,
             accepting_orders: true,
             closed: false,
             archived: false,
             best_ask: "0.20".into(),
+            limit_price: "0.19".into(),
             ask_size: "5".into(),
             target_size: "5".into(),
             spread_bps: 10,
             min_order_size: "1".into(),
-            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1", "1"),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1"),
             liquidity_score: 1,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-enough-notional".into(),
@@ -225,7 +225,7 @@ fn real_funds_market_selector_requires_target_size_at_top_ask() {
         .expect("second candidate has enough ask size");
     assert_eq!(selected.market_id, "market-enough-notional");
     assert_eq!(selected.size, "5");
-    assert_eq!(selected.notional_usd, "1");
+    assert_eq!(selected.notional_usd, "0.95");
 }
 
 #[test]
@@ -234,17 +234,19 @@ fn real_funds_market_selector_derives_notional_from_price_times_target_size() {
         market_id: "market-over-cap".into(),
         token_id: "123".into(),
         side: "BUY".into(),
-        order_type: "FOK".into(),
+        order_type: "GTC".into(),
+        post_only: true,
         active: true,
         accepting_orders: true,
         closed: false,
         archived: false,
         best_ask: "0.30".into(),
+        limit_price: "0.29".into(),
         ask_size: "10".into(),
         target_size: "5".into(),
         spread_bps: 10,
         min_order_size: "5".into(),
-        exchange_rule_snapshot: exchange_rule_snapshot_fixture("5", "1"),
+        exchange_rule_snapshot: exchange_rule_snapshot_fixture("5"),
         liquidity_score: 999,
         book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
         human_review_ref: "review://operator/market-over-cap".into(),
@@ -258,37 +260,37 @@ fn real_funds_market_selector_derives_notional_from_price_times_target_size() {
 }
 
 #[test]
-fn real_funds_market_selector_rejects_fok_buy_below_marketable_notional_floor() {
+fn real_funds_market_selector_allows_gtc_post_only_size_five_below_one_dollar() {
     let candidates = vec![RealFundsCanaryMarketCandidate {
         market_id: "market-web-limit-size-ok-but-fok-buy-notional-too-low".into(),
         token_id: "123".into(),
         side: "BUY".into(),
-        order_type: "FOK".into(),
+        order_type: "GTC".into(),
+        post_only: true,
         active: true,
         accepting_orders: true,
         closed: false,
         archived: false,
         best_ask: "0.024".into(),
+        limit_price: "0.023".into(),
         ask_size: "1386.16".into(),
         target_size: "5".into(),
         spread_bps: 10,
         min_order_size: "5".into(),
-        exchange_rule_snapshot: exchange_rule_snapshot_fixture("5", "1"),
+        exchange_rule_snapshot: exchange_rule_snapshot_fixture("5"),
         liquidity_score: 999,
         book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
         human_review_ref: "review://operator/web-limit-size-ok-fok-buy-notional-too-low".into(),
     }];
+    let selected = select_real_funds_canary_market(&candidates, "1")
+        .expect("GTC post-only canary should be governed by size and notional cap, not FOK floor");
+    assert_eq!(selected.size, "5");
+    assert_eq!(selected.limit_price, "0.023");
+    assert_eq!(selected.notional_usd, "0.115");
     let diagnostics = select_real_funds_canary_market_with_diagnostics(&candidates, "1");
-    assert!(
-        diagnostics.selection.is_none(),
-        "FOK BUY must not reuse Web/GTC minimum-share semantics"
-    );
     assert_eq!(
-        diagnostics
-            .diagnostics
-            .rejection_counts
-            .marketable_buy_notional_below_floor,
-        1
+        diagnostics.diagnostics.rejection_counts.post_only_not_bound,
+        0
     );
     assert_eq!(
         diagnostics.diagnostics.rejection_counts.notional_over_cap,
@@ -319,29 +321,43 @@ fn real_funds_market_selector_rejects_missing_or_stale_rule_snapshot() {
 }
 
 #[test]
+fn real_funds_market_selector_rejects_crossing_post_only_buy_price() {
+    let mut candidates = safe_market_candidates();
+    candidates[2].limit_price = candidates[2].best_ask.clone();
+    let diagnostics = select_real_funds_canary_market_with_diagnostics(&candidates[2..3], "1");
+    assert!(diagnostics.selection.is_none());
+    assert_eq!(
+        diagnostics.diagnostics.rejection_counts.post_only_not_bound,
+        1
+    );
+}
+
+#[test]
 fn real_funds_market_selector_uses_fixed_decimal_for_notional_cap() {
     let candidates = vec![RealFundsCanaryMarketCandidate {
         market_id: "market-decimal-boundary".into(),
         token_id: "123".into(),
         side: "BUY".into(),
-        order_type: "FOK".into(),
+        order_type: "GTC".into(),
+        post_only: true,
         active: true,
         accepting_orders: true,
         closed: false,
         archived: false,
         best_ask: "0.1".into(),
+        limit_price: "0.09".into(),
         ask_size: "1".into(),
         target_size: "0.2".into(),
         spread_bps: 10,
         min_order_size: "0.1".into(),
-        exchange_rule_snapshot: exchange_rule_snapshot_fixture("0.1", "0.02"),
+        exchange_rule_snapshot: exchange_rule_snapshot_fixture("0.1"),
         liquidity_score: 999,
         book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
         human_review_ref: "review://operator/market-decimal-boundary".into(),
     }];
     let selected = select_real_funds_canary_market(&candidates, "0.02")
         .expect("0.1 * 0.2 should equal the exact cap without binary float drift");
-    assert_eq!(selected.notional_usd, "0.02");
+    assert_eq!(selected.notional_usd, "0.018");
 }
 
 #[test]
@@ -351,17 +367,19 @@ fn real_funds_market_selector_compares_min_order_to_target_size() {
             market_id: "market-low-price-safe-size".into(),
             token_id: "123".into(),
             side: "BUY".into(),
-            order_type: "FOK".into(),
+            order_type: "GTC".into(),
+            post_only: true,
             active: true,
             accepting_orders: true,
             closed: false,
             archived: false,
             best_ask: "0.001".into(),
+            limit_price: "0.0009".into(),
             ask_size: "2000".into(),
             target_size: "5".into(),
             spread_bps: 10,
             min_order_size: "5".into(),
-            exchange_rule_snapshot: exchange_rule_snapshot_fixture("5", "1"),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("5"),
             liquidity_score: 10,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-low-price-safe-size".into(),
@@ -370,24 +388,32 @@ fn real_funds_market_selector_compares_min_order_to_target_size() {
             market_id: "market-high-price-small-size".into(),
             token_id: "456".into(),
             side: "BUY".into(),
-            order_type: "FOK".into(),
+            order_type: "GTC".into(),
+            post_only: true,
             active: true,
             accepting_orders: true,
             closed: false,
             archived: false,
             best_ask: "0.20".into(),
+            limit_price: "0.19".into(),
             ask_size: "10".into(),
             target_size: "5".into(),
             spread_bps: 10,
             min_order_size: "6".into(),
-            exchange_rule_snapshot: exchange_rule_snapshot_fixture("6", "1"),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("6"),
             liquidity_score: 999,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-high-price-small-size".into(),
         },
     ];
     let diagnostics = select_real_funds_canary_market_with_diagnostics(&candidates, "1");
-    assert!(diagnostics.selection.is_none());
+    assert_eq!(
+        diagnostics
+            .selection
+            .as_ref()
+            .map(|selection| selection.market_id.as_str()),
+        Some("market-low-price-safe-size")
+    );
     assert_eq!(
         diagnostics
             .diagnostics
@@ -396,11 +422,8 @@ fn real_funds_market_selector_compares_min_order_to_target_size() {
         1
     );
     assert_eq!(
-        diagnostics
-            .diagnostics
-            .rejection_counts
-            .marketable_buy_notional_below_floor,
-        1
+        diagnostics.diagnostics.rejection_counts.post_only_not_bound,
+        0
     );
 }
 
@@ -505,17 +528,19 @@ fn real_funds_canary_rejects_unsafe_market_candidates() {
         market_id: "market-wide-spread".into(),
         token_id: "123".into(),
         side: "BUY".into(),
-        order_type: "FOK".into(),
+        order_type: "GTC".into(),
+        post_only: true,
         active: true,
         accepting_orders: true,
         closed: false,
         archived: false,
         best_ask: "0.10".into(),
+        limit_price: "0.09".into(),
         ask_size: "10".into(),
         target_size: "5".into(),
         spread_bps: 251,
         min_order_size: "1".into(),
-        exchange_rule_snapshot: exchange_rule_snapshot_fixture("1", "1"),
+        exchange_rule_snapshot: exchange_rule_snapshot_fixture("1"),
         liquidity_score: 999,
         book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
         human_review_ref: "review://operator/market-wide-spread".into(),
@@ -535,17 +560,19 @@ fn real_funds_market_diagnostics_are_aggregate_and_fail_closed() {
             market_id: "market-wide-spread".into(),
             token_id: "123".into(),
             side: "BUY".into(),
-            order_type: "FOK".into(),
+            order_type: "GTC".into(),
+            post_only: true,
             active: true,
             accepting_orders: true,
             closed: false,
             archived: false,
             best_ask: "0.20".into(),
+            limit_price: "0.19".into(),
             ask_size: "10".into(),
             target_size: "5".into(),
             spread_bps: 251,
             min_order_size: "1".into(),
-            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1", "1"),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1"),
             liquidity_score: 999,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-wide-spread".into(),
@@ -554,17 +581,19 @@ fn real_funds_market_diagnostics_are_aggregate_and_fail_closed() {
             market_id: "market-min-order".into(),
             token_id: "456".into(),
             side: "BUY".into(),
-            order_type: "FOK".into(),
+            order_type: "GTC".into(),
+            post_only: true,
             active: true,
             accepting_orders: true,
             closed: false,
             archived: false,
             best_ask: "0.20".into(),
+            limit_price: "0.19".into(),
             ask_size: "10".into(),
             target_size: "5".into(),
             spread_bps: 50,
             min_order_size: "6".into(),
-            exchange_rule_snapshot: exchange_rule_snapshot_fixture("6", "1"),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("6"),
             liquidity_score: 1,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-min-order".into(),
@@ -591,10 +620,7 @@ fn real_funds_market_diagnostics_are_aggregate_and_fail_closed() {
     );
     assert_eq!(discovery.diagnostics.rejection_counts.notional_over_cap, 0);
     assert_eq!(
-        discovery
-            .diagnostics
-            .rejection_counts
-            .marketable_buy_notional_below_floor,
+        discovery.diagnostics.rejection_counts.post_only_not_bound,
         0
     );
 
@@ -605,10 +631,11 @@ fn real_funds_market_diagnostics_are_aggregate_and_fail_closed() {
 }
 
 #[test]
-fn real_funds_market_selector_requires_buy_fok_and_human_review() {
+fn real_funds_market_selector_requires_buy_gtc_post_only_and_human_review() {
     let mut candidates = safe_market_candidates();
     candidates[2].side = "SELL".into();
-    candidates[2].order_type = "GTC".into();
+    candidates[2].order_type = "FOK".into();
+    candidates[2].post_only = false;
     candidates[2].human_review_ref.clear();
     candidates[2].book_snapshot_timestamp.clear();
 
@@ -617,6 +644,10 @@ fn real_funds_market_selector_requires_buy_fok_and_human_review() {
     assert_eq!(diagnostics.diagnostics.safe_candidates, 1);
     assert_eq!(diagnostics.diagnostics.rejection_counts.wrong_side, 1);
     assert_eq!(diagnostics.diagnostics.rejection_counts.wrong_order_type, 1);
+    assert_eq!(
+        diagnostics.diagnostics.rejection_counts.post_only_not_bound,
+        1
+    );
     assert_eq!(
         diagnostics
             .diagnostics
@@ -639,17 +670,19 @@ fn safe_market_candidates() -> Vec<RealFundsCanaryMarketCandidate> {
             market_id: "market-inactive".into(),
             token_id: "111".into(),
             side: "BUY".into(),
-            order_type: "FOK".into(),
+            order_type: "GTC".into(),
+            post_only: true,
             active: false,
             accepting_orders: true,
             closed: false,
             archived: false,
             best_ask: "0.10".into(),
+            limit_price: "0.09".into(),
             ask_size: "10".into(),
             target_size: "5".into(),
             spread_bps: 10,
             min_order_size: "1".into(),
-            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1", "1"),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1"),
             liquidity_score: 1_000,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-inactive".into(),
@@ -658,17 +691,19 @@ fn safe_market_candidates() -> Vec<RealFundsCanaryMarketCandidate> {
             market_id: "market-safe-low".into(),
             token_id: "222".into(),
             side: "BUY".into(),
-            order_type: "FOK".into(),
+            order_type: "GTC".into(),
+            post_only: true,
             active: true,
             accepting_orders: true,
             closed: false,
             archived: false,
             best_ask: "0.20".into(),
+            limit_price: "0.19".into(),
             ask_size: "20".into(),
             target_size: "5".into(),
             spread_bps: 20,
             min_order_size: "1".into(),
-            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1", "1"),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1"),
             liquidity_score: 100,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-safe-low".into(),
@@ -677,17 +712,19 @@ fn safe_market_candidates() -> Vec<RealFundsCanaryMarketCandidate> {
             market_id: "market-safe-high".into(),
             token_id: "333".into(),
             side: "BUY".into(),
-            order_type: "FOK".into(),
+            order_type: "GTC".into(),
+            post_only: true,
             active: true,
             accepting_orders: true,
             closed: false,
             archived: false,
             best_ask: "0.20".into(),
+            limit_price: "0.19".into(),
             ask_size: "20".into(),
             target_size: "5".into(),
             spread_bps: 15,
             min_order_size: "1".into(),
-            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1", "1"),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1"),
             liquidity_score: 500,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-safe-high".into(),

@@ -6,7 +6,7 @@
   "decision_reason": "Template only. A reviewed decision package must replace all placeholders before any future controlled canary can be considered.",
   "source_release": "v0.26.0",
   "scope": "REAL_FUNDS_CANARY",
-  "execution_style": "FOK_LIMIT_FILL",
+  "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
   "artifact_sha256": "REPLACE_WITH_RELEASE_ARTIFACT_SHA256",
   "evidence_manifest_sha256": "REPLACE_WITH_EVIDENCE_MANIFEST_SHA256",
   "market_candidate_sha256": "REPLACE_WITH_REVIEWED_MARKET_CANDIDATE_SHA256",

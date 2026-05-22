@@ -6,7 +6,7 @@
   "decision_reason": "Example no-go decision shape for the v0.26.0 controlled real-funds canary path. It is illustrative and does not authorize live action.",
   "source_release": "v0.26.0",
   "scope": "REAL_FUNDS_CANARY",
-  "execution_style": "FOK_LIMIT_FILL",
+  "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
   "artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
   "evidence_manifest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
   "market_candidate_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",

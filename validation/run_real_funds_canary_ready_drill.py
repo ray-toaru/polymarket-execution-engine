@@ -54,7 +54,7 @@ def main() -> int:
         "--armed",
         "--market-file",
         "--release-decision-file",
-        "run_real_funds_canary_fok_fill",
+        "run_real_funds_canary_gtc_post_only_cancel",
         "validate_real_funds_canary_market_with_diagnostics",
         "PMX_ALLOW_LIVE_SUBMIT",
         "PMX_ALLOW_REAL_FUNDS_CANARY",

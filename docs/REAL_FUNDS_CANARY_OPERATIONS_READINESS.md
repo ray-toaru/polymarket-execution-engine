@@ -17,8 +17,9 @@ Required references before any future armed canary:
 - rollback runbook covering read-only, sign-only, and cancel-only fallback;
 - externally selected `candidate-market.json` reviewed outside the execution
   engine; v0.26 binds its SHA-256 into approval and release-decision JSON, and
-  the execution engine only validates that candidate against BUY/FOK,
-  human-review, CLOB book/spread, reviewed share `target_size`, and risk gates;
+  the execution engine only validates that candidate against BUY/GTC post-only,
+  human-review, CLOB book/spread, reviewed share `target_size`, non-crossing
+  limit price, and risk gates;
 - canary retry policy that waits for a reviewed candidate satisfying safe
   market conditions instead of weakening market-safety thresholds without
   review.
