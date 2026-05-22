@@ -1,7 +1,4 @@
-   Compiling postgres-types v0.2.13
-   Compiling tokio-postgres v0.7.17
-   Compiling pmx-store v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.32s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
      Running unittests src/lib.rs (target/debug/deps/pmx_store-68aa7a68e274242f)
 
 running 23 tests
@@ -29,5 +26,5 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 24 filtered out; finished in 9.41s
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 24 filtered out; finished in 9.53s
 

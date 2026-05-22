@@ -30,9 +30,8 @@ pub async fn run_real_funds_canary_fok_fill(
     let price = SdkDecimal::from_str(&request.market.limit_price).map_err(|e| {
         OfficialSdkAdapterError::InvalidInput(format!("invalid canary limit_price: {e}"))
     })?;
-    let size = SdkDecimal::from_str(&request.market.size).map_err(|e| {
-        OfficialSdkAdapterError::InvalidInput(format!("invalid canary size: {e}"))
-    })?;
+    let size = SdkDecimal::from_str(&request.market.size)
+        .map_err(|e| OfficialSdkAdapterError::InvalidInput(format!("invalid canary size: {e}")))?;
 
     let signable = time::timeout(
         timeout,

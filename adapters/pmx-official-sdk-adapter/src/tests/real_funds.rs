@@ -194,7 +194,10 @@ fn real_funds_market_selector_derives_notional_from_price_times_target_size() {
     }];
     let diagnostics = select_real_funds_canary_market_with_diagnostics(&candidates, "1");
     assert!(diagnostics.selection.is_none());
-    assert_eq!(diagnostics.diagnostics.rejection_counts.notional_over_cap, 1);
+    assert_eq!(
+        diagnostics.diagnostics.rejection_counts.notional_over_cap,
+        1
+    );
 }
 
 #[test]

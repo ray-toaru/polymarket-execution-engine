@@ -7,14 +7,17 @@
   "execution_style": "FOK_LIMIT_FILL",
   "external_candidate_market_required": true,
   "failures": [],
+  "limit_order_size_driven": true,
   "live_cancel_allowed": false,
   "live_submit_allowed": false,
   "max_daily_notional_usd": "5",
   "max_order_notional_usd": "1",
+  "notional_usd_is_price_times_size": true,
   "posted": false,
   "raw_signed_order_exposed": false,
   "raw_signed_order_logged": false,
   "real_funds_canary_allowed": false,
   "remote_side_effects": false,
-  "status": "pass"
+  "status": "pass",
+  "target_size_is_reviewed_candidate_input": true
 }

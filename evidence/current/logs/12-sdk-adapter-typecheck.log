@@ -7,8 +7,8 @@
    Compiling bytes v1.11.1
    Compiling generic-array v0.14.7
    Compiling const-oid v0.9.6
-   Compiling block-buffer v0.10.4
    Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
    Compiling digest v0.10.7
    Compiling getrandom v0.2.17
    Compiling rand_core v0.6.4
@@ -68,10 +68,10 @@
    Compiling alloy-sol-macro-input v1.6.0
    Compiling darling_core v0.21.3
    Compiling either v1.15.0
-   Compiling socket2 v0.6.3
    Compiling mio v1.2.0
-   Compiling crc-catalog v2.5.0
+   Compiling socket2 v0.6.3
    Compiling slab v0.4.12
+   Compiling crc-catalog v2.5.0
    Compiling aws-lc-rs v1.17.0
    Compiling crc v3.4.0
    Compiling tokio v1.52.3
@@ -88,12 +88,12 @@
    Compiling alloy-serde v1.6.3
    Compiling alloy-eip7702 v0.6.3
    Compiling nybbles v0.4.8
-   Compiling alloy-eip2930 v0.2.3
    Compiling alloy-eip7928 v0.3.4
+   Compiling alloy-eip2930 v0.2.3
    Compiling rustls-pki-types v1.14.1
-   Compiling litemap v0.8.2
-   Compiling writeable v0.6.3
    Compiling futures-task v0.3.32
+   Compiling writeable v0.6.3
+   Compiling litemap v0.8.2
    Compiling futures-io v0.3.32
    Compiling futures-util v0.3.32
    Compiling icu_locale_core v2.2.0
@@ -103,12 +103,12 @@
    Compiling alloy-sol-types v1.6.0
    Compiling zerotrie v0.2.4
    Compiling potential_utf v0.1.5
-   Compiling utf8_iter v1.0.4
-   Compiling percent-encoding v2.3.2
    Compiling untrusted v0.9.0
-   Compiling rustls v0.23.40
-   Compiling rustls-webpki v0.103.13
+   Compiling percent-encoding v2.3.2
+   Compiling utf8_iter v1.0.4
    Compiling icu_collections v2.2.0
+   Compiling rustls-webpki v0.103.13
+   Compiling rustls v0.23.40
    Compiling icu_provider v2.2.0
    Compiling alloy-consensus v1.6.3
    Compiling icu_properties_data v2.2.0
@@ -119,26 +119,26 @@
    Compiling icu_normalizer v2.2.0
    Compiling icu_properties v2.2.0
    Compiling getrandom v0.3.4
-   Compiling alloy-network-primitives v1.6.3
    Compiling alloy-consensus-any v1.6.3
+   Compiling alloy-network-primitives v1.6.3
    Compiling form_urlencoded v1.2.2
    Compiling tokio-util v0.7.18
    Compiling itertools v0.14.0
    Compiling try-lock v0.2.5
-   Compiling winnow v1.0.3
-   Compiling atomic-waker v1.1.2
-   Compiling siphasher v1.0.3
    Compiling tower-service v0.3.3
-   Compiling h2 v0.4.14
+   Compiling atomic-waker v1.1.2
+   Compiling winnow v1.0.3
+   Compiling siphasher v1.0.3
    Compiling alloy-sol-type-parser v1.6.0
+   Compiling h2 v0.4.14
    Compiling want v0.3.1
    Compiling alloy-rpc-types-eth v1.6.3
    Compiling rand_core v0.9.5
    Compiling idna_adapter v1.2.2
    Compiling getrandom v0.4.2
    Compiling rand_chacha v0.3.1
-   Compiling log v0.4.29
    Compiling openssl-probe v0.2.1
+   Compiling log v0.4.29
    Compiling rustls-native-certs v0.8.3
    Compiling rand v0.8.6
    Compiling idna v1.1.0
@@ -152,27 +152,27 @@
    Compiling alloy-json-rpc v1.6.3
    Compiling sync_wrapper v1.0.2
    Compiling ipnet v2.12.0
-   Compiling tower-layer v0.3.3
    Compiling ryu v1.0.23
    Compiling base64 v0.22.1
    Compiling futures-utils-wasm v0.1.0
+   Compiling tower-layer v0.3.3
+   Compiling tower v0.5.3
    Compiling alloy-network v1.6.3
    Compiling hyper-util v0.1.20
    Compiling phf_generator v0.13.1
-   Compiling tower v0.5.3
    Compiling alloy-dyn-abi v1.6.0
    Compiling rand v0.9.4
    Compiling url v2.5.8
    Compiling uuid v1.23.1
    Compiling sha1 v0.10.6
-   Compiling bitflags v2.11.1
-   Compiling scopeguard v1.2.0
    Compiling data-encoding v2.11.0
    Compiling cpufeatures v0.3.0
-   Compiling chacha20 v0.10.0
-   Compiling tungstenite v0.29.0
+   Compiling bitflags v2.11.1
+   Compiling scopeguard v1.2.0
    Compiling lock_api v0.4.14
    Compiling tower-http v0.6.10
+   Compiling chacha20 v0.10.0
+   Compiling tungstenite v0.29.0
    Compiling thiserror v1.0.69
    Compiling alloy-core v1.6.0
    Compiling crossbeam-utils v0.8.21
@@ -186,10 +186,10 @@
    Compiling futures-executor v0.3.32
    Compiling instant v0.1.13
    Compiling encoding_rs v0.8.35
-   Compiling hashbrown v0.14.5
    Compiling mime v0.3.17
-   Compiling reqwest v0.13.3
+   Compiling hashbrown v0.14.5
    Compiling dashmap v6.1.0
+   Compiling reqwest v0.13.3
    Compiling async-stream v0.3.6
    Compiling backoff v0.4.0
    Compiling futures v0.3.32
@@ -207,14 +207,14 @@
    Compiling polymarket_client_sdk_v2 v0.6.0-canary.1
    Compiling pmx-gateway v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
    Compiling pmx-official-sdk-adapter v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 4m 02s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 49s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-adapter/target/debug/deps/pmx_official_sdk_adapter-383466d368d6dc18)
 
-running 52 tests
+running 53 tests
 test tests::canary::authenticated_non_trading_is_explicit_opt_in ... ok
 test tests::canary::default_config_cannot_live_submit ... ok
-test tests::canary::live_canary_default_preconditions_are_blocked_without_side_effects ... ok
 test tests::canary::live_canary_prep_negative_scenarios_fail_closed_individually ... ok
+test tests::canary::live_canary_default_preconditions_are_blocked_without_side_effects ... ok
 test tests::canary::live_canary_prep_freezes_on_remote_unknown_and_never_submits ... ok
 test tests::canary::live_canary_prep_requires_whitelist_caps_approval_and_cancel_fallback ... ok
 test tests::canary::live_submit_canary_requires_cancel_only_fallback ... ok
@@ -232,16 +232,16 @@ test tests::liveness_errors::liveness_requires_reconcile_when_remote_unknown_exi
 test tests::liveness_errors::normalized_error_redaction_covers_remote_unknown_messages ... ok
 test tests::liveness_errors::redacts_named_secret_assignments ... ok
 test tests::liveness_errors::redacts_private_key_like_hex_tokens ... ok
+test tests::mapping::plan_mapping_maps_ioc_to_sdk_fak ... ok
 test tests::mapping::plan_mapping_normalizes_limit_orders ... ok
 test tests::mapping::plan_mapping_preserves_metadata_without_exposing_signed_payload ... ok
-test tests::mapping::plan_mapping_maps_ioc_to_sdk_fak ... ok
 test tests::mapping::plan_mapping_rejects_expiration_for_non_gtd ... ok
+test tests::mapping::plan_mapping_rejects_gtd_without_valid_expiration ... ok
+test tests::mapping::plan_mapping_rejects_invalid_limit_price_and_zero_size ... ok
 test tests::mapping::plan_mapping_rejects_placeholder_token_id ... ok
 test tests::mapping::plan_mapping_requires_market_amount ... ok
 test tests::mapping::plan_mapping_supports_fok_limit_orders ... ok
 test tests::mapping::plan_mapping_supports_gtd_with_expiration ... ok
-test tests::mapping::plan_mapping_rejects_gtd_without_valid_expiration ... ok
-test tests::mapping::plan_mapping_rejects_invalid_limit_price_and_zero_size ... ok
 test tests::mapping::plan_mapping_supports_market_amount ... ok
 test tests::real_funds::real_funds_canary_caps_fail_closed ... ok
 test tests::real_funds::real_funds_canary_rejects_unsafe_market_candidates ... ok
@@ -250,21 +250,22 @@ test tests::real_funds::real_funds_canary_release_decision_binds_market_candidat
 test tests::real_funds::real_funds_canary_release_decision_gate_fails_closed ... ok
 test tests::real_funds::real_funds_canary_requires_extra_env_config_approval_and_market_gates ... ok
 test tests::real_funds::real_funds_market_diagnostics_are_aggregate_and_fail_closed ... ok
-test tests::real_funds::real_funds_market_selector_compares_min_order_to_implied_size_not_notional ... ok
+test tests::real_funds::real_funds_market_selector_compares_min_order_to_target_size ... ok
+test tests::real_funds::real_funds_market_selector_derives_notional_from_price_times_target_size ... ok
 test tests::real_funds::real_funds_market_selector_picks_highest_safe_liquidity_candidate ... ok
 test tests::real_funds::real_funds_market_selector_requires_buy_fok_and_human_review ... ok
-test tests::real_funds::real_funds_market_selector_uses_price_times_ask_size_for_depth ... ok
+test tests::real_funds::real_funds_market_selector_requires_target_size_at_top_ask ... ok
 test tests::sign_only::sign_only_lifecycle_records_are_persistable_and_non_mutating ... ok
 test tests::sign_only::sign_only_lifecycle_rejects_posted_receipt ... ok
-test tests::sign_only::standard_sign_only_construction_emits_only_digest_ref_and_lifecycle ... ok
+test tests::sign_only::sign_only_request_converts_to_limit_plan ... ok
 test tests::sign_only::standard_sign_only_plan_is_default_sdk_construct_path_without_raw_payload ... ok
 test tests::sign_only::standard_sign_only_plan_rejects_profile_that_can_post_or_expose_raw_order ... ok
-test tests::sign_only::standard_sign_only_plan_supports_market_mapping_without_raw_payload ... ok
 test tests::sign_only::standard_sign_only_construction_ref_is_stable_for_same_mapping ... ok
+test tests::sign_only::standard_sign_only_plan_supports_market_mapping_without_raw_payload ... ok
 test tests::sign_only::standard_sign_only_profile_is_non_posting_v2_pusd ... ok
-test tests::sign_only::sign_only_request_converts_to_limit_plan ... ok
+test tests::sign_only::standard_sign_only_construction_emits_only_digest_ref_and_lifecycle ... ok
 
-test result: ok. 52 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 53 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
    Doc-tests pmx_official_sdk_adapter
 
