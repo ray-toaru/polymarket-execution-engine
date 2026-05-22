@@ -18,6 +18,7 @@ PUBLIC_CONTRACT = ROOT / "openapi" / "executor.v1.yaml"
 ALLOWED_POST_ORDER_FILE = ADAPTER_SRC / "sdk_runtime" / "live_canary.rs"
 FORBIDDEN_BULK_POST_ORDER = re.compile(r"\.\s*post_orders\s*\(")
 POST_ORDER_CALL = re.compile(r"\.\s*post_order\s*\(")
+MARKET_ORDER_CALL = re.compile(r"\.\s*market_order\s*\(")
 FORBIDDEN_PUBLIC_TERMS = [
     "SignedOrderEnvelope",
     "signed_payload",
@@ -90,8 +91,12 @@ def main() -> int:
         allowed_text = strip_rust_comments(ALLOWED_POST_ORDER_FILE.read_text())
         if ".post_order(signed)" not in allowed_text:
             failures.append("allowed live canary post_order call must submit only the locally signed canary order")
+        if MARKET_ORDER_CALL.search(allowed_text):
+            failures.append("real-funds canary must not use market_order amount semantics")
         for token in [
             "validate_real_funds_canary_preconditions",
+            "limit_order()",
+            "size(size)",
             "SdkOrderType::FOK",
             "raw_signed_order_exposed: false",
         ]:

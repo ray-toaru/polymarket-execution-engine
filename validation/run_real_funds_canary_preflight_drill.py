@@ -35,6 +35,9 @@ DOC_TOKENS = [
     "evidence_manifest_sha256_required = true",
     "max_order_notional_usd = 1",
     "max_daily_notional_usd = 5",
+    "target_size_is_reviewed_candidate_input = true",
+    "notional_usd_is_price_times_size = true",
+    "limit_order_size_driven = true",
     "external_candidate_market_required = true",
     "engine_market_discovery_allowed = false",
     "live_submit_allowed = false",
@@ -114,6 +117,8 @@ def main() -> int:
         "ENV_ALLOW_REAL_FUNDS_CANARY",
         "validate_real_funds_canary_preconditions",
         "run_real_funds_canary_fok_fill",
+        "limit_order()",
+        "size(size)",
         "SdkOrderType::FOK",
         "raw_signed_order_exposed: false",
     ]:
@@ -122,6 +127,8 @@ def main() -> int:
     if "post_orders(" in adapter_text:
         failures.append("bulk post_orders must remain absent")
     live_canary_text = LIVE_CANARY_SRC.read_text() if LIVE_CANARY_SRC.exists() else ""
+    if ".market_order(" in live_canary_text:
+        failures.append("real-funds canary must use limit order size semantics, not market_order amount semantics")
     post_order_occurrences = adapter_text.count(".post_order(")
     if post_order_occurrences != 1 or ".post_order(signed)" not in live_canary_text:
         failures.append("real-funds canary must be the only adapter post_order call site")
@@ -135,6 +142,9 @@ def main() -> int:
         "remote_side_effects": False,
         "max_order_notional_usd": "1",
         "max_daily_notional_usd": "5",
+        "target_size_is_reviewed_candidate_input": True,
+        "notional_usd_is_price_times_size": True,
+        "limit_order_size_driven": True,
         "execution_style": "FOK_LIMIT_FILL",
         "approval_file_required": True,
         "artifact_hash_required": True,

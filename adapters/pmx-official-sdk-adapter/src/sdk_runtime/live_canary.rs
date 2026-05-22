@@ -10,9 +10,7 @@ use super::shared::{authenticated_sdk_client, sdk_call_timeout, signer_from_env}
 use anyhow::Context;
 use polymarket_client_sdk_v2::clob::Client as SdkClient;
 use polymarket_client_sdk_v2::clob::types::request::{OrderBookSummaryRequest, SpreadRequest};
-use polymarket_client_sdk_v2::clob::types::{
-    Amount as SdkAmount, OrderType as SdkOrderType, Side as SdkSide,
-};
+use polymarket_client_sdk_v2::clob::types::{OrderType as SdkOrderType, Side as SdkSide};
 use polymarket_client_sdk_v2::types::{Decimal as SdkDecimal, U256 as SdkU256};
 use std::{cmp::Ordering, str::FromStr};
 use tokio::time;
@@ -32,28 +30,26 @@ pub async fn run_real_funds_canary_fok_fill(
     let price = SdkDecimal::from_str(&request.market.limit_price).map_err(|e| {
         OfficialSdkAdapterError::InvalidInput(format!("invalid canary limit_price: {e}"))
     })?;
-    let notional_usd = SdkDecimal::from_str(&request.market.notional_usd).map_err(|e| {
-        OfficialSdkAdapterError::InvalidInput(format!("invalid canary notional_usd: {e}"))
+    let size = SdkDecimal::from_str(&request.market.size).map_err(|e| {
+        OfficialSdkAdapterError::InvalidInput(format!("invalid canary size: {e}"))
     })?;
 
     let signable = time::timeout(
         timeout,
         client
-            .market_order()
+            .limit_order()
             .token_id(token_id)
             .price(price)
-            .amount(SdkAmount::usdc(notional_usd).map_err(|e| {
-                OfficialSdkAdapterError::InvalidInput(format!("invalid canary USDC amount: {e}"))
-            })?)
+            .size(size)
             .side(SdkSide::Buy)
             .order_type(SdkOrderType::FOK)
             .build(),
     )
     .await
     .map_err(|_| {
-        anyhow::anyhow!("official SDK canary market order build timed out after {timeout:?}")
+        anyhow::anyhow!("official SDK canary limit order build timed out after {timeout:?}")
     })?
-    .context("official SDK canary order build failed")?;
+    .context("official SDK canary limit order build failed")?;
 
     let signed = time::timeout(timeout, client.sign(&signer, signable))
         .await

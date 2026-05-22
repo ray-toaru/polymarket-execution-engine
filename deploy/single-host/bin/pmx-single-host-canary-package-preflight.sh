@@ -16,6 +16,7 @@ python validation/validate_controlled_canary_external_references.py \
 
 python - "${REVIEW_DIR}" <<'PY'
 import json
+import hashlib
 import sys
 from pathlib import Path
 
@@ -25,6 +26,7 @@ required = [
     "external-references.json",
     "release-decision.json",
     "review.json",
+    "candidate-market.json",
 ]
 missing = [name for name in required if not (review_dir / name).exists()]
 if missing:
@@ -34,6 +36,9 @@ approval = json.loads((review_dir / "approval.json").read_text())
 decision = json.loads((review_dir / "release-decision.json").read_text())
 review = json.loads((review_dir / "review.json").read_text())
 external = json.loads((review_dir / "external-references.json").read_text())
+candidate_market_path = review_dir / "candidate-market.json"
+candidate_market = json.loads(candidate_market_path.read_text())
+candidate_market_sha256 = hashlib.sha256(candidate_market_path.read_bytes()).hexdigest()
 
 failures = []
 for label, data in [
@@ -94,6 +99,24 @@ if review.get("external_references_placeholders_remaining"):
     failures.append("external references placeholders remain")
 if external.get("references_only_no_secret_values") is not True:
     failures.append("external references must be reference-only")
+
+for key in ["market_candidate_sha256"]:
+    values = {
+        "approval": approval.get(key),
+        "decision": decision.get(key),
+        "review": review.get(key),
+        "file": candidate_market_sha256,
+    }
+    if len(set(values.values())) != 1:
+        failures.append(f"{key} mismatch across package: {values}")
+    value = next(iter(values.values()))
+    if not isinstance(value, str) or len(value) != 64:
+        failures.append(f"{key} must be a concrete 64-hex digest")
+
+if candidate_market.get("side") != "BUY" or candidate_market.get("order_type") != "FOK":
+    failures.append("candidate market must be BUY/FOK")
+if not isinstance(candidate_market.get("target_size"), str) or not candidate_market["target_size"].strip():
+    failures.append("candidate market must carry reviewed target_size share quantity")
 
 if failures:
     raise SystemExit("; ".join(failures))

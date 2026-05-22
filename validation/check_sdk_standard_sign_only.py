@@ -52,6 +52,7 @@ FORBIDDEN_PATTERNS = [
     re.compile(r"\.\s*cancel_orders\s*\("),
 ]
 POST_ORDER_CALL = re.compile(r"\.\s*post_order\s*\(")
+MARKET_ORDER_CALL = re.compile(r"\.\s*market_order\s*\(")
 
 
 def strip_rust_comments(text: str) -> str:
@@ -91,8 +92,12 @@ def main() -> int:
         )
     if ALLOWED_CANARY_POST_ORDER.exists():
         canary = strip_rust_comments(ALLOWED_CANARY_POST_ORDER.read_text())
+        if MARKET_ORDER_CALL.search(canary):
+            failures.append("guarded canary post_order site must not use market_order amount semantics")
         for token in [
             "validate_real_funds_canary_preconditions",
+            "limit_order()",
+            "size(size)",
             "SdkOrderType::FOK",
             "raw_signed_order_exposed: false",
         ]:

@@ -69,6 +69,7 @@ pub struct RealFundsCanaryMarketCandidate {
     pub archived: bool,
     pub best_ask: String,
     pub ask_size: String,
+    pub target_size: String,
     pub spread_bps: u64,
     pub min_order_size: String,
     pub liquidity_score: u64,
@@ -87,10 +88,12 @@ pub struct RealFundsCanaryMarketRejectionCounts {
     pub wrong_order_type: u64,
     pub missing_book_snapshot_timestamp: u64,
     pub missing_human_review_ref: u64,
+    pub missing_or_zero_target_size: u64,
     pub spread_too_wide: u64,
     pub missing_or_zero_best_ask: u64,
     pub insufficient_ask_size: u64,
     pub min_order_size_above_order_size: u64,
+    pub notional_over_cap: u64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

@@ -289,12 +289,10 @@ pub fn select_real_funds_canary_market_with_diagnostics(
             market_id: candidate.market_id.clone(),
             token_id: candidate.token_id.clone(),
             limit_price: candidate.best_ask.clone(),
-            // For the live FOK BUY path this value is the SDK market-order USDC
-            // amount. It is kept in `size` for API compatibility with the
-            // existing selection model, while `notional_usd` is the governing
-            // risk value.
-            size: max_notional_usd.to_string(),
-            notional_usd: max_notional_usd.to_string(),
+            // For the live FOK BUY path this is the share size, not the USDC
+            // amount. The governing risk value is price * size in notional_usd.
+            size: candidate.target_size.clone(),
+            notional_usd: candidate_notional_usd(candidate).unwrap_or_default(),
             selection_reason:
                 "highest liquidity candidate within active/accepting/spread/min-order/notional-depth constraints"
                     .into(),
@@ -346,16 +344,22 @@ pub fn diagnose_real_funds_canary_markets(
         if !human_review_ref_present(&candidate.human_review_ref) {
             rejection_counts.missing_human_review_ref += 1;
         }
+        if !decimal_gt_zero(&candidate.target_size) {
+            rejection_counts.missing_or_zero_target_size += 1;
+        }
         if candidate.spread_bps > MAX_SPREAD_BPS {
             rejection_counts.spread_too_wide += 1;
         }
         if !decimal_gt_zero(&candidate.best_ask) {
             rejection_counts.missing_or_zero_best_ask += 1;
         }
-        if !best_ask_notional_gte(candidate, max_notional_usd) {
+        if !ask_size_gte_target_size(candidate) {
             rejection_counts.insufficient_ask_size += 1;
         }
-        if !min_order_size_lte_implied_order_size(candidate, max_notional_usd) {
+        if !target_notional_lte(candidate, max_notional_usd) {
+            rejection_counts.notional_over_cap += 1;
+        }
+        if !min_order_size_lte_target_size(candidate) {
             rejection_counts.min_order_size_above_order_size += 1;
             min_order_size_blocks = true;
         }
@@ -389,8 +393,10 @@ pub fn market_candidate_is_safe(
         && human_review_ref_present(&candidate.human_review_ref)
         && candidate.spread_bps <= MAX_SPREAD_BPS
         && decimal_gt_zero(&candidate.best_ask)
-        && best_ask_notional_gte(candidate, max_notional_usd)
-        && min_order_size_lte_implied_order_size(candidate, max_notional_usd)
+        && decimal_gt_zero(&candidate.target_size)
+        && ask_size_gte_target_size(candidate)
+        && target_notional_lte(candidate, max_notional_usd)
+        && min_order_size_lte_target_size(candidate)
 }
 
 fn valid_approval(approval: &RealFundsCanaryApproval) -> bool {
@@ -437,28 +443,37 @@ fn decimal_lte(left: &str, right: &str) -> bool {
     }
 }
 
-fn best_ask_notional_gte(candidate: &RealFundsCanaryMarketCandidate, cap: &str) -> bool {
+fn ask_size_gte_target_size(candidate: &RealFundsCanaryMarketCandidate) -> bool {
     match (
-        parse_decimal(&candidate.best_ask),
         parse_decimal(&candidate.ask_size),
-        parse_decimal(cap),
+        parse_decimal(&candidate.target_size),
     ) {
-        (Some(price), Some(size), Some(cap)) => price * size >= cap,
+        (Some(ask_size), Some(target_size)) => ask_size >= target_size,
         _ => false,
     }
 }
 
-fn min_order_size_lte_implied_order_size(
-    candidate: &RealFundsCanaryMarketCandidate,
-    cap: &str,
-) -> bool {
+fn min_order_size_lte_target_size(candidate: &RealFundsCanaryMarketCandidate) -> bool {
     match (
         parse_decimal(&candidate.min_order_size),
-        parse_decimal(cap),
-        parse_decimal(&candidate.best_ask),
+        parse_decimal(&candidate.target_size),
     ) {
-        (Some(min_size), Some(cap), Some(price)) if price > 0.0 => min_size <= cap / price,
+        (Some(min_size), Some(target_size)) => min_size <= target_size,
         _ => false,
+    }
+}
+
+fn target_notional_lte(candidate: &RealFundsCanaryMarketCandidate, cap: &str) -> bool {
+    candidate_notional_usd(candidate).is_some_and(|notional| decimal_lte(&notional, cap))
+}
+
+fn candidate_notional_usd(candidate: &RealFundsCanaryMarketCandidate) -> Option<String> {
+    match (
+        parse_decimal(&candidate.best_ask),
+        parse_decimal(&candidate.target_size),
+    ) {
+        (Some(price), Some(size)) => Some(format_decimal_summary(price * size)),
+        _ => None,
     }
 }
 

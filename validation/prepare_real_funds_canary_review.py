@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from decimal import Decimal, InvalidOperation
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -49,6 +50,65 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def positive_decimal_text(value: object) -> bool:
+    if not isinstance(value, str) or not value.strip() or value != value.strip():
+        return False
+    if "REPLACE_WITH" in value:
+        return False
+    try:
+        parsed = Decimal(value)
+    except (InvalidOperation, ValueError):
+        return False
+    return parsed.is_finite() and parsed > 0
+
+
+def validate_candidate_market_json(candidate_market_bytes: bytes, label: str) -> None:
+    try:
+        candidate = json.loads(candidate_market_bytes)
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"{label}: candidate market JSON is invalid: {exc}") from exc
+    if not isinstance(candidate, dict):
+        raise SystemExit(f"{label}: candidate market must be a JSON object")
+    expected_keys = {
+        "market_id",
+        "token_id",
+        "side",
+        "order_type",
+        "active",
+        "accepting_orders",
+        "closed",
+        "archived",
+        "best_ask",
+        "ask_size",
+        "target_size",
+        "spread_bps",
+        "min_order_size",
+        "liquidity_score",
+        "book_snapshot_timestamp",
+        "human_review_ref",
+    }
+    extra = sorted(set(candidate) - expected_keys)
+    missing = sorted(expected_keys - set(candidate))
+    if extra or missing:
+        raise SystemExit(
+            f"{label}: candidate market keys mismatch; missing={missing} extra={extra}"
+        )
+    if candidate.get("side") != "BUY":
+        raise SystemExit(f"{label}: candidate market side must be BUY")
+    if candidate.get("order_type") != "FOK":
+        raise SystemExit(f"{label}: candidate market order_type must be FOK")
+    if not positive_decimal_text(candidate.get("target_size")):
+        raise SystemExit(f"{label}: candidate market target_size must be a concrete positive share size")
+    if candidate.get("active") is not True or candidate.get("accepting_orders") is not True:
+        raise SystemExit(f"{label}: candidate market must be active and accepting orders")
+    if candidate.get("closed") is not False or candidate.get("archived") is not False:
+        raise SystemExit(f"{label}: candidate market must not be closed or archived")
+    for key in ["market_id", "token_id", "book_snapshot_timestamp", "human_review_ref"]:
+        value = candidate.get(key)
+        if not isinstance(value, str) or not value.strip() or "REPLACE_WITH" in value:
+            raise SystemExit(f"{label}: candidate market {key} must be concrete")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
@@ -76,6 +136,15 @@ def main() -> int:
         "--evidence-manifest-sha256",
         help="Override the evidence manifest hash recorded in the review package.",
     )
+    parser.add_argument(
+        "--candidate-market-file",
+        type=Path,
+        help=(
+            "Use a concrete reviewed candidate-market.json instead of the placeholder "
+            "template. The file is copied verbatim and its SHA-256 is bound into "
+            "approval/release-decision/review metadata."
+        ),
+    )
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
 
@@ -86,6 +155,11 @@ def main() -> int:
     external_references_file = (
         resolve_input_path(args.external_references_file)
         if args.external_references_file
+        else None
+    )
+    candidate_market_file = (
+        resolve_input_path(args.candidate_market_file)
+        if args.candidate_market_file
         else None
     )
 
@@ -103,26 +177,33 @@ def main() -> int:
         "evidence manifest sha256",
     )
 
-    candidate_market = {
-        "active": False,
-        "accepting_orders": False,
-        "archived": False,
-        "ask_size": "0",
-        "best_ask": "0",
-        "book_snapshot_timestamp": "2099-01-01T00:00:00Z",
-        "closed": True,
-        "human_review_ref": "REPLACE_WITH_OPERATOR_MARKET_REVIEW_REFERENCE",
-        "liquidity_score": 0,
-        "market_id": "REPLACE_WITH_REVIEWED_CONDITION_ID",
-        "min_order_size": "0",
-        "order_type": "FOK",
-        "side": "BUY",
-        "spread_bps": 2**64 - 1,
-        "token_id": "REPLACE_WITH_REVIEWED_CLOB_TOKEN_ID",
-    }
-    candidate_market_bytes = (
-        json.dumps(candidate_market, indent=2, sort_keys=True) + "\n"
-    ).encode()
+    if candidate_market_file:
+        candidate_market_bytes = candidate_market_file.read_bytes()
+        validate_candidate_market_json(candidate_market_bytes, str(candidate_market_file))
+        candidate_market_source = str(candidate_market_file)
+    else:
+        candidate_market = {
+            "active": False,
+            "accepting_orders": False,
+            "archived": False,
+            "ask_size": "0",
+            "best_ask": "0",
+            "book_snapshot_timestamp": "2099-01-01T00:00:00Z",
+            "closed": True,
+            "human_review_ref": "REPLACE_WITH_OPERATOR_MARKET_REVIEW_REFERENCE",
+            "liquidity_score": 0,
+            "market_id": "REPLACE_WITH_REVIEWED_CONDITION_ID",
+            "min_order_size": "0",
+            "order_type": "FOK",
+            "side": "BUY",
+            "spread_bps": 2**64 - 1,
+            "target_size": "REPLACE_WITH_REVIEWED_TARGET_SHARE_SIZE",
+            "token_id": "REPLACE_WITH_REVIEWED_CLOB_TOKEN_ID",
+        }
+        candidate_market_bytes = (
+            json.dumps(candidate_market, indent=2, sort_keys=True) + "\n"
+        ).encode()
+        candidate_market_source = "placeholder"
     candidate_market_sha = hashlib.sha256(candidate_market_bytes).hexdigest()
 
     approval = json.loads(approval_template.read_text())
@@ -208,6 +289,7 @@ def main() -> int:
         "external_references_json": "external-references.json",
         "external_references_source": str(external_references_source),
         "external_references_placeholders_remaining": placeholder_paths(external_references),
+        "candidate_market_source": candidate_market_source,
         "required_before_armed": [
             "reviewed release decision JSON bound to artifact and evidence manifest",
             "complete external references with no placeholders and no secret values",
@@ -240,7 +322,7 @@ def main() -> int:
                 "- candidate_market_json: `candidate-market.json`",
                 "- candidate market discovery is outside the execution engine boundary",
                 "- from the integration repository root, replace the placeholder candidate with:",
-                "  `python scripts/prepare_canary_candidate_market.py --output /tmp/pmx-canary-review/candidate-market.json --audit-output /tmp/pmx-canary-review/candidate-market.audit.json --human-review-ref change-ticket://reviewed-canary-market`",
+                "  `python scripts/prepare_canary_candidate_market.py --market-url <polymarket-url> --outcome Yes --output /tmp/pmx-canary-review/candidate-market.json --audit-output /tmp/pmx-canary-review/candidate-market.audit.json --human-review-ref change-ticket://reviewed-canary-market`",
                 "",
             ]
         )

@@ -18,7 +18,7 @@ Required references before any future armed canary:
 - externally selected `candidate-market.json` reviewed outside the execution
   engine; v0.26 binds its SHA-256 into approval and release-decision JSON, and
   the execution engine only validates that candidate against BUY/FOK,
-  human-review, CLOB book/spread, and risk gates;
+  human-review, CLOB book/spread, reviewed share `target_size`, and risk gates;
 - canary retry policy that waits for a reviewed candidate satisfying safe
   market conditions instead of weakening market-safety thresholds without
   review.
@@ -51,6 +51,8 @@ can be replaced with a read-only public API candidate and audit sidecar:
 
 ```bash
 python scripts/prepare_canary_candidate_market.py \
+  --market-url <polymarket-event-or-market-url> \
+  --outcome Yes \
   --output /tmp/pmx-canary-review/candidate-market.json \
   --audit-output /tmp/pmx-canary-review/candidate-market.audit.json \
   --human-review-ref change-ticket://reviewed-canary-market
@@ -58,6 +60,9 @@ python scripts/prepare_canary_candidate_market.py \
 
 The helper does not approve live trading. The resulting candidate still must be
 reviewed and validated by the execution-engine dry-run command in the package.
+When `--target-size` is omitted, the helper uses the selected CLOB book
+`min_order_size` as the candidate share size; the notional value is derived as
+`best_ask * target_size` and checked against the review cap.
 
 Before an operator-reviewed candidate can be used, every `REPLACE_WITH_*`
 placeholder must be replaced with an external reference only. Secret values,

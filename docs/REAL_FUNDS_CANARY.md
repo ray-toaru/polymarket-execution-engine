@@ -30,6 +30,9 @@ Canary scope:
 - `FOK_LIMIT_FILL`
 - `max_order_notional_usd = 1`
 - `max_daily_notional_usd = 5`
+- `target_size_is_reviewed_candidate_input = true`
+- `notional_usd_is_price_times_size = true`
+- `limit_order_size_driven = true`
 - `external_candidate_market_required = true`
 - `engine_market_discovery_allowed = false`
 - `max_spread_bps = 250`
@@ -46,6 +49,7 @@ Safety assertions:
 - `raw_signed_order_exposed = false`
 - `post_order` exists only behind the `live-submit` feature and real-funds canary preconditions
 - `post_orders` remains forbidden
+- the armed SDK path must use `limit_order().size(...)`; `market_order().amount(...)` is forbidden for real-funds canary
 
 Approval file:
 
@@ -57,5 +61,5 @@ Execution policy:
 
 - Normal validation runs only the preflight drill and must not call the SDK submit path.
 - A real canary run requires a fresh artifact hash, current evidence manifest hash, explicit local approval file, and all runtime gates.
-- Candidate market discovery is outside the execution engine boundary. The execution engine validates an externally reviewed candidate against CLOB book/spread and risk gates.
+- Candidate market discovery is outside the execution engine boundary. The execution engine validates an externally reviewed candidate against CLOB book/spread and risk gates. The reviewed candidate supplies the share `target_size`; `notional_usd` is only the derived `limit_price * target_size` risk value.
 - Recovery or availability improvements must not automatically enable live submit or real-funds canary.
