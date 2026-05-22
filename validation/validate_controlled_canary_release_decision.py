@@ -13,6 +13,7 @@ TEMPLATE = CONFIG / "controlled-canary.release-decision.template.json"
 EXAMPLE = CONFIG / "controlled-canary.release-decision.example.json"
 INVALID_PARTIAL = CONFIG / "controlled-canary.release-decision.invalid-partial.fixture.json"
 INVALID_MISMATCHED = CONFIG / "controlled-canary.release-decision.invalid-mismatched.fixture.json"
+INVALID_STATUS = CONFIG / "controlled-canary.release-decision.invalid-status.fixture.json"
 
 EXPECTED_ARTIFACT_SHA256 = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256 = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
@@ -203,6 +204,8 @@ def validate_decision(data: dict[str, Any], label: str) -> list[str]:
         return failures
 
     if decision == "go":
+        if data.get("status") != "reviewed_go":
+            failures.append(f"{label}: go decision requires status=reviewed_go")
         if not all(data.get(flag) is True for flag in ["live_submit_authorized", "real_funds_canary_authorized", "remote_side_effects_authorized"]):
             failures.append(f"{label}: go decision must explicitly authorize the controlled canary side-effect flags")
         if data.get("live_cancel_authorized") is True or data.get("production_deployment_authorized") is True:
@@ -232,7 +235,7 @@ def validate_decision(data: dict[str, Any], label: str) -> list[str]:
 
 def main() -> int:
     failures: list[str] = []
-    for path in [TEMPLATE, EXAMPLE, INVALID_PARTIAL, INVALID_MISMATCHED]:
+    for path in [TEMPLATE, EXAMPLE, INVALID_PARTIAL, INVALID_MISMATCHED, INVALID_STATUS]:
         if not path.exists():
             failures.append(f"missing {path.relative_to(ROOT)}")
     if failures:
@@ -243,6 +246,7 @@ def main() -> int:
     example = load(EXAMPLE)
     invalid = load(INVALID_PARTIAL)
     invalid_mismatched = load(INVALID_MISMATCHED)
+    invalid_status = load(INVALID_STATUS)
 
     failures.extend(validate_decision(template, "template"))
     if template.get("decision") != "no_go" or template.get("status") != "template_not_reviewed":
@@ -274,6 +278,13 @@ def main() -> int:
         if token not in invalid_text:
             failures.append(f"invalid partial fixture rejection missing token: {token}")
 
+    invalid_status_failures = validate_decision(invalid_status, "invalid_status")
+    if not invalid_status_failures:
+        failures.append("invalid status fixture must be rejected")
+    invalid_status_text = "\n".join(invalid_status_failures)
+    if "status" not in invalid_status_text or "reviewed_go" not in invalid_status_text:
+        failures.append("invalid status fixture rejection missing reviewed_go status token")
+
     mismatched_failures = validate_decision(invalid_mismatched, "invalid_mismatched")
     if invalid_mismatched.get("artifact_sha256") != EXPECTED_ARTIFACT_SHA256:
         mismatched_failures.append("invalid_mismatched: artifact hash does not match reviewed fixture")
@@ -293,6 +304,7 @@ def main() -> int:
         "template_default_decision": template.get("decision"),
         "example_decision": example.get("decision"),
         "invalid_partial_rejected": bool(invalid_failures),
+        "invalid_status_rejected": bool(invalid_status_failures),
         "invalid_mismatched_rejected": bool(mismatched_failures),
         "live_submit_authorized": False,
         "live_cancel_authorized": False,

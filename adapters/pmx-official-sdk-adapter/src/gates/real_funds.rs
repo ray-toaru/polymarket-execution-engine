@@ -120,7 +120,10 @@ pub fn validate_reviewed_real_funds_canary_release_decision(
             !decision.decision_id.trim().is_empty(),
             "decision_id missing",
         ),
-        (!decision.status.trim().is_empty(), "status missing"),
+        (
+            decision.status == "reviewed_go",
+            "release decision status is not reviewed_go",
+        ),
         (
             !decision.decision_reason.trim().is_empty(),
             "decision reason missing",
