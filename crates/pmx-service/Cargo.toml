@@ -9,6 +9,7 @@ rust-version.workspace = true
 async-trait.workspace = true
 chrono.workspace = true
 pmx-core = { path = "../pmx-core" }
+pmx-gateway = { path = "../pmx-gateway" }
 pmx-policy = { path = "../pmx-policy" }
 pmx-runtime = { path = "../pmx-runtime" }
 pmx-store = { path = "../pmx-store" }

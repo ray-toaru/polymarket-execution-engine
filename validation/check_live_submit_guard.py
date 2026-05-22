@@ -13,9 +13,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER_SRC = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
+SERVICE_SRC = ROOT / "crates" / "pmx-service" / "src"
 PUBLIC_CONTRACT = ROOT / "openapi" / "executor.v1.yaml"
 
 ALLOWED_POST_ORDER_FILE = ADAPTER_SRC / "sdk_runtime" / "live_canary.rs"
+ALLOWED_SERVICE_POST_ORDER_FILE = SERVICE_SRC / "submit" / "live.rs"
 FORBIDDEN_BULK_POST_ORDER = re.compile(r"\.\s*post_orders\s*\(")
 POST_ORDER_CALL = re.compile(r"\.\s*post_order\s*\(")
 MARKET_ORDER_CALL = re.compile(r"\.\s*market_order\s*\(")
@@ -73,6 +75,10 @@ def adapter_source_files() -> list[Path]:
     return sorted(ADAPTER_SRC.rglob("*.rs"))
 
 
+def service_source_files() -> list[Path]:
+    return sorted(SERVICE_SRC.rglob("*.rs"))
+
+
 def main() -> int:
     raw_adapter_text = read_adapter_sources()
     adapter_text = strip_rust_comments(raw_adapter_text)
@@ -102,6 +108,28 @@ def main() -> int:
         ]:
             if token not in allowed_text:
                 failures.append(f"allowed live canary post_order file missing token: {token}")
+    service_post_order_call_sites: list[Path] = []
+    for path in service_source_files():
+        text = strip_rust_comments(path.read_text())
+        if POST_ORDER_CALL.search(text):
+            service_post_order_call_sites.append(path)
+    if service_post_order_call_sites != [ALLOWED_SERVICE_POST_ORDER_FILE]:
+        display = ", ".join(str(path.relative_to(SERVICE_SRC)) for path in service_post_order_call_sites) or "none"
+        failures.append(f"pmx-service post_order call sites must be limited to submit/live.rs; found {display}")
+    service_text = "\n".join(path.read_text() for path in service_source_files())
+    if "submit_plan_with_gateway" not in service_text:
+        failures.append("pmx-service live gateway path must require explicit submit_plan_with_gateway")
+    if ALLOWED_SERVICE_POST_ORDER_FILE.exists():
+        service_live_text = strip_rust_comments(ALLOWED_SERVICE_POST_ORDER_FILE.read_text())
+        for token in [
+            "LIVE_SUBMIT_BLOCKED_PRE_SIGN_RUNTIME",
+            "LIVE_SUBMIT_BLOCKED_PRE_POST_RUNTIME",
+            "runtime_submit_block_reason",
+            "raw_signed_payload_logged\": false",
+            "raw_signed_order_exposed\": false",
+        ]:
+            if token not in service_live_text:
+                failures.append(f"pmx-service live submit path missing token: {token}")
     for token in REQUIRED_CANARY_TOKENS:
         if token not in raw_adapter_text:
             failures.append(f"official SDK adapter missing live canary guard token: {token}")

@@ -13,6 +13,7 @@ DOC = ROOT / "docs" / "REAL_FUNDS_CANARY_LIFECYCLE.md"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
 STORE_SRC = ROOT / "crates" / "pmx-store" / "src"
 SERVICE_SRC = ROOT / "crates" / "pmx-service" / "src"
+ALLOWED_SERVICE_POST_ORDER = SERVICE_SRC / "submit" / "live.rs"
 
 DOC_TOKENS = [
     "REAL_FUNDS_CANARY_LIFECYCLE",
@@ -49,6 +50,14 @@ def read_sources(root: Path) -> str:
     return "\n".join(path.read_text() for path in sorted(root.rglob("*.rs")))
 
 
+def post_order_call_sites(root: Path) -> list[Path]:
+    return [
+        path
+        for path in sorted(root.rglob("*.rs"))
+        if "post_order(" in path.read_text() or "post_orders(" in path.read_text()
+    ]
+
+
 def main() -> int:
     failures: list[str] = []
     for env_name in ["PMX_ALLOW_LIVE_SUBMIT", "PMX_ALLOW_LIVE_CANCEL", "PMX_ALLOW_REAL_FUNDS_CANARY"]:
@@ -77,8 +86,16 @@ def main() -> int:
     for token in SOURCE_TOKENS:
         if token not in sources:
             failures.append(f"real funds canary lifecycle source missing token: {token}")
-    if "post_order(" in sources or "post_orders(" in sources:
-        failures.append("store/service lifecycle code must not contain post_order call sites")
+    service_post_order_sites = post_order_call_sites(SERVICE_SRC)
+    store_post_order_sites = post_order_call_sites(STORE_SRC)
+    if store_post_order_sites:
+        failures.append("store lifecycle code must not contain post_order call sites")
+    if service_post_order_sites != [ALLOWED_SERVICE_POST_ORDER]:
+        display = ", ".join(str(path.relative_to(SERVICE_SRC)) for path in service_post_order_sites) or "none"
+        failures.append(
+            "service post_order call sites must be limited to explicit submit/live.rs gateway path; "
+            f"found {display}"
+        )
 
     result = {
         "status": "fail" if failures else "pass",

@@ -1,4 +1,5 @@
 use pmx_core::SubmitReceipt;
+use pmx_gateway::{ClobGateway, SignerProvider};
 use pmx_store::{
     AdminAuditStore, ExecutionLifecycleStore, ExecutionStore, IdempotencyStore,
     OrderLifecycleStore, RuntimeWorkerStatusStore, SignOnlyLifecycleStore,
@@ -26,6 +27,28 @@ where
     pub async fn submit_plan(&self, req: SubmitPlanCommand) -> Result<SubmitOutcome, ServiceError> {
         crate::submit::submit_plan(
             &self.store,
+            req,
+            &self.executor_version,
+            &self.contract_version,
+        )
+        .await
+    }
+
+    pub async fn submit_plan_with_gateway<P, G>(
+        &self,
+        req: SubmitPlanCommand,
+        signer_provider: &P,
+        gateway: &G,
+    ) -> Result<SubmitOutcome, ServiceError>
+    where
+        P: SignerProvider,
+        G: ClobGateway,
+    {
+        crate::submit::submit_plan_with_gateway(
+            &self.store,
+            &self.runtime_state_provider,
+            signer_provider,
+            gateway,
             req,
             &self.executor_version,
             &self.contract_version,

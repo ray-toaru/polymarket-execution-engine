@@ -1,4 +1,4 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.25s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-b59f2ab4b350d559)
 
 running 2 tests
@@ -93,9 +93,13 @@ test runtime_tests::evaluations::reconcile_websocket_geoblock::websocket_livenes
 
 test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_service-a347d7201cd5edd0)
+     Running unittests src/lib.rs (target/debug/deps/pmx_service-c1aa0b8c6a5b27b1)
 
-running 31 tests
+running 35 tests
+test service::tests::flow::explicit_live_gateway_blocks_unsupported_quote_notional_without_stuck_idempotency ... ok
+test service::tests::flow::explicit_live_gateway_posts_and_records_remote_order_lifecycle ... ok
+test service::tests::flow::explicit_live_gateway_remote_rejection_records_failed_lifecycle ... ok
+test service::tests::flow::explicit_live_gateway_remote_unknown_freezes_for_operator_review ... ok
 test service::tests::flow::live_submit_mode_fails_closed_until_gateway_is_wired ... ok
 test service::tests::flow::service_flow_persists_and_blocks_submit ... ok
 test service::tests::flow::service_id_bound_flow_persists_and_blocks_submit ... ok
@@ -128,7 +132,7 @@ test service::tests::sign_only::standard::service_derives_standard_sign_only_ref
 test service::tests::sign_only::standard::service_records_standard_sign_only_construction_without_raw_payload ... ok
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 
-test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.94s
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.97s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-9a97aadec1c8f384)
 
@@ -187,7 +191,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 53 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.10s
+test result: ok. 53 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.57s
 
    Doc-tests pmx_authz
 

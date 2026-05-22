@@ -802,6 +802,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "pmx-core",
+ "pmx-gateway",
  "pmx-policy",
  "pmx-runtime",
  "pmx-store",

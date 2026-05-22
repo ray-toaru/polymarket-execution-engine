@@ -197,3 +197,265 @@ async fn live_submit_mode_fails_closed_until_gateway_is_wired() {
         .expect_err("live mode must fail closed until gateway is wired");
     assert!(matches!(err, ServiceError::Conflict(_)));
 }
+
+#[tokio::test]
+async fn explicit_live_gateway_posts_and_records_remote_order_lifecycle() {
+    let service = ExecutorService::with_runtime_provider(
+        InMemoryStore::default(),
+        StaticRuntimeStateProvider::new(allow_runtime_state()),
+        "test-executor".into(),
+        DEFAULT_CONTRACT_VERSION.into(),
+    );
+    let normalized = service
+        .normalize(sell_base_share_intent())
+        .await
+        .expect("normalize");
+    let snapshot = service
+        .capture_snapshot(normalized.clone())
+        .await
+        .expect("snapshot");
+    let decision = service
+        .evaluate_decision_by_id(DecisionByIdRequest {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+        })
+        .await
+        .expect("decision");
+    assert_eq!(decision.status, DecisionStatus::Allow);
+    let plan = service
+        .compile_plan_by_id(CompilePlanByIdCommand {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+            decision_id: decision.decision_id.clone(),
+            approval: approval_for(&snapshot, &decision),
+        })
+        .await
+        .expect("plan");
+    let signer = pmx_gateway::DeterministicTestSignerProvider;
+    let gateway = pmx_gateway::FakeGateway::new();
+    let outcome = service
+        .submit_plan_with_gateway(
+            SubmitPlanCommand {
+                execution_id: plan.execution_id.clone(),
+                plan_hash: plan.plan_hash.0.clone(),
+                idempotency_key: "idem-live-posted".into(),
+                mode: SubmitMode::Live,
+            },
+            &signer,
+            &gateway,
+        )
+        .await
+        .expect("live submit");
+    let receipt = match outcome {
+        SubmitOutcome::Accepted(receipt) => receipt,
+        SubmitOutcome::Replayed(_) => panic!("first submit cannot replay"),
+    };
+    assert_eq!(receipt.status, SubmitStatus::Posted);
+    let order_id = format!("test-order-{}", plan.execution_id);
+    let lifecycle = service
+        .store()
+        .load_order_lifecycle(&order_id)
+        .await
+        .expect("load order")
+        .expect("order lifecycle");
+    assert_eq!(lifecycle.lifecycle_state, OrderLifecycleState::Posted);
+    assert_eq!(
+        lifecycle.remote_order_id,
+        Some(format!("remote-{order_id}"))
+    );
+}
+
+#[tokio::test]
+async fn explicit_live_gateway_remote_unknown_freezes_for_operator_review() {
+    let service = ExecutorService::with_runtime_provider(
+        InMemoryStore::default(),
+        StaticRuntimeStateProvider::new(allow_runtime_state()),
+        "test-executor".into(),
+        DEFAULT_CONTRACT_VERSION.into(),
+    );
+    let normalized = service
+        .normalize(sell_base_share_intent())
+        .await
+        .expect("normalize");
+    let snapshot = service
+        .capture_snapshot(normalized.clone())
+        .await
+        .expect("snapshot");
+    let decision = service
+        .evaluate_decision_by_id(DecisionByIdRequest {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+        })
+        .await
+        .expect("decision");
+    let plan = service
+        .compile_plan_by_id(CompilePlanByIdCommand {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+            decision_id: decision.decision_id.clone(),
+            approval: approval_for(&snapshot, &decision),
+        })
+        .await
+        .expect("plan");
+    let signer = pmx_gateway::DeterministicTestSignerProvider;
+    let gateway = pmx_gateway::FakeGateway::new().with_post_failure(
+        pmx_gateway::FakeGatewayFailure::RemoteUnknown("post timeout".into()),
+    );
+    let outcome = service
+        .submit_plan_with_gateway(
+            SubmitPlanCommand {
+                execution_id: plan.execution_id.clone(),
+                plan_hash: plan.plan_hash.0.clone(),
+                idempotency_key: "idem-live-remote-unknown".into(),
+                mode: SubmitMode::Live,
+            },
+            &signer,
+            &gateway,
+        )
+        .await
+        .expect("live submit remote unknown");
+    let receipt = match outcome {
+        SubmitOutcome::Accepted(receipt) => receipt,
+        SubmitOutcome::Replayed(_) => panic!("first submit cannot replay"),
+    };
+    assert_eq!(receipt.status, SubmitStatus::RemoteUnknown);
+    let order_id = format!("test-order-{}", plan.execution_id);
+    let lifecycle = service
+        .store()
+        .load_order_lifecycle(&order_id)
+        .await
+        .expect("load order")
+        .expect("order lifecycle");
+    assert_eq!(
+        lifecycle.lifecycle_state,
+        OrderLifecycleState::RemoteUnknown
+    );
+}
+
+#[tokio::test]
+async fn explicit_live_gateway_remote_rejection_records_failed_lifecycle() {
+    let service = ExecutorService::with_runtime_provider(
+        InMemoryStore::default(),
+        StaticRuntimeStateProvider::new(allow_runtime_state()),
+        "test-executor".into(),
+        DEFAULT_CONTRACT_VERSION.into(),
+    );
+    let normalized = service
+        .normalize(sell_base_share_intent())
+        .await
+        .expect("normalize");
+    let snapshot = service
+        .capture_snapshot(normalized.clone())
+        .await
+        .expect("snapshot");
+    let decision = service
+        .evaluate_decision_by_id(DecisionByIdRequest {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+        })
+        .await
+        .expect("decision");
+    let plan = service
+        .compile_plan_by_id(CompilePlanByIdCommand {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+            decision_id: decision.decision_id.clone(),
+            approval: approval_for(&snapshot, &decision),
+        })
+        .await
+        .expect("plan");
+    let signer = pmx_gateway::DeterministicTestSignerProvider;
+    let gateway = pmx_gateway::FakeGateway::new().with_post_failure(
+        pmx_gateway::FakeGatewayFailure::RemoteRejected("invalid order".into()),
+    );
+    let outcome = service
+        .submit_plan_with_gateway(
+            SubmitPlanCommand {
+                execution_id: plan.execution_id.clone(),
+                plan_hash: plan.plan_hash.0.clone(),
+                idempotency_key: "idem-live-remote-rejected".into(),
+                mode: SubmitMode::Live,
+            },
+            &signer,
+            &gateway,
+        )
+        .await
+        .expect("live submit remote rejected");
+    let receipt = match outcome {
+        SubmitOutcome::Accepted(receipt) => receipt,
+        SubmitOutcome::Replayed(_) => panic!("first submit cannot replay"),
+    };
+    assert_eq!(receipt.status, SubmitStatus::Rejected);
+    let order_id = format!("test-order-{}", plan.execution_id);
+    let lifecycle = service
+        .store()
+        .load_order_lifecycle(&order_id)
+        .await
+        .expect("load order")
+        .expect("order lifecycle");
+    assert_eq!(lifecycle.lifecycle_state, OrderLifecycleState::Failed);
+}
+
+#[tokio::test]
+async fn explicit_live_gateway_blocks_unsupported_quote_notional_without_stuck_idempotency() {
+    let service = ExecutorService::with_runtime_provider(
+        InMemoryStore::default(),
+        StaticRuntimeStateProvider::new(allow_runtime_state()),
+        "test-executor".into(),
+        DEFAULT_CONTRACT_VERSION.into(),
+    );
+    let normalized = service.normalize(intent()).await.expect("normalize");
+    let snapshot = service
+        .capture_snapshot(normalized.clone())
+        .await
+        .expect("snapshot");
+    let decision = service
+        .evaluate_decision_by_id(DecisionByIdRequest {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+        })
+        .await
+        .expect("decision");
+    let plan = service
+        .compile_plan_by_id(CompilePlanByIdCommand {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+            decision_id: decision.decision_id.clone(),
+            approval: approval_for(&snapshot, &decision),
+        })
+        .await
+        .expect("plan");
+    let signer = pmx_gateway::DeterministicTestSignerProvider;
+    let gateway = pmx_gateway::FakeGateway::new();
+    let command = SubmitPlanCommand {
+        execution_id: plan.execution_id.clone(),
+        plan_hash: plan.plan_hash.0.clone(),
+        idempotency_key: "idem-live-quote-notional-blocked".into(),
+        mode: SubmitMode::Live,
+    };
+    let first = service
+        .submit_plan_with_gateway(command.clone(), &signer, &gateway)
+        .await
+        .expect("live quote notional blocked");
+    match first {
+        SubmitOutcome::Accepted(receipt) => assert_eq!(receipt.status, SubmitStatus::Blocked),
+        SubmitOutcome::Replayed(_) => panic!("first submit cannot replay"),
+    }
+    let replay = service
+        .submit_plan_with_gateway(command, &signer, &gateway)
+        .await
+        .expect("blocked live quote notional replay");
+    assert!(
+        matches!(replay, SubmitOutcome::Replayed(receipt) if receipt.status == SubmitStatus::Blocked)
+    );
+}
+
+fn sell_base_share_intent() -> TradeIntent {
+    let mut intent = intent();
+    intent.side = Side::Sell;
+    intent.quantity = QuantityIntent {
+        max_notional: None,
+        max_shares: Some(DecimalString("5".into())),
+    };
+    intent
+}

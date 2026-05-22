@@ -4,7 +4,7 @@
 
 ## Purpose
 
-The project is still pre-live. The official SDK adapter may contain explicit safety gates for future `live-submit`, but it must not contain an actual SDK `post_order` or `post_orders` call in this release line.
+The project is still pre-live. The official SDK adapter may contain explicit safety gates for future `live-submit`. The service layer may contain only the explicit `submit_plan_with_gateway` pipeline for fake-gateway and future wiring tests; API/bootstrap production paths still default to fail-closed and do not wire a live gateway.
 
 ## v0.19 guard
 
@@ -19,6 +19,9 @@ The project is still pre-live. The official SDK adapter may contain explicit saf
   cancel-only fallback.
 - `default_blocked_live_canary_preconditions()` keeps every future live canary
   integration point blocked until all gates are explicitly populated.
+- `pmx-service` remote post call sites are limited to `submit/live.rs`; that path
+  must use explicit `submit_plan_with_gateway`, pre-sign and pre-post runtime
+  checks, and redacted lifecycle payloads.
 
 The fake gateway crate is intentionally outside the static guard because its in-memory `post_order` is a deterministic test double, not a Polymarket remote side effect.
 

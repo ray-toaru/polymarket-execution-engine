@@ -39,3 +39,13 @@ remote_side_effects = false
 Passing this drill does not approve a live canary. It proves only that the
 future canary preflight can be represented as current evidence and that common
 negative scenarios remain fail-closed.
+
+Current implementation boundary:
+
+- `ExecutorService::submit_plan` still rejects `SubmitMode::Live` by default.
+- `ExecutorService::submit_plan_with_gateway` is the explicit service-layer
+  gateway pipeline for fake-gateway tests and future reviewed live wiring.
+- The explicit gateway path performs runtime checks before signing and again
+  before remote post, records remote-unknown as operator-required evidence, and
+  does not expose raw signed payloads.
+- Production API/bootstrap does not wire a live gateway in this release state.
