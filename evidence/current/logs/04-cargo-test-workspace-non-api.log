@@ -1,4 +1,10 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.26s
+   Compiling pmx-core v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
+   Compiling pmx-store v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
+   Compiling pmx-gateway v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
+   Compiling pmx-runtime v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
+   Compiling pmx-policy v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
+   Compiling pmx-service v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 22.07s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-b59f2ab4b350d559)
 
 running 2 tests
@@ -9,20 +15,22 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
      Running unittests src/lib.rs (target/debug/deps/pmx_core-d71860d80f037e8d)
 
-running 20 tests
+running 22 tests
 test domain::domain_tests::divergence::order_lifecycle_divergence_escalates_terminal_remote_mismatch ... ok
 test domain::domain_tests::divergence::order_lifecycle_divergence_maps_remote_unknown_open_and_missing ... ok
 test domain::domain_tests::hash_value::hash_value_accepts_lowercase_sha256_hex ... ok
 test domain::domain_tests::hash_value::hash_value_rejects_non_sha256_hex ... ok
 test domain::domain_tests::intent_normalization::buy_notional_canonicalizes_to_quote_bound ... ok
+test domain::domain_tests::intent_normalization::buy_shares_canonicalizes_to_base_bound ... ok
 test domain::domain_tests::intent_normalization::canonical_json_hash_is_key_order_independent ... ok
+test domain::domain_tests::intent_normalization::decimal_multiplication_preserves_canonical_fixed_point ... ok
 test domain::domain_tests::intent_normalization::decimal_rejects_scientific_padding_and_trailing_dot ... ok
 test domain::domain_tests::intent_normalization::limit_price_is_executor_authoritative ... ok
 test domain::domain_tests::intent_normalization::normalized_intent_hash_is_content_derived ... ok
 test domain::domain_tests::intent_normalization::quantity_must_be_positive ... ok
 test domain::domain_tests::intent_normalization::quantity_requires_exactly_one_bound ... ok
+test domain::domain_tests::intent_normalization::sell_notional_remains_unsupported_without_base_conversion_rule ... ok
 test domain::domain_tests::intent_normalization::sell_shares_canonicalizes_to_base_bound ... ok
-test domain::domain_tests::intent_normalization::unsupported_cross_quantity_is_explicit ... ok
 test domain::domain_tests::lifecycle::cancel_confirmation_requires_remote_acceptance ... ok
 test domain::domain_tests::lifecycle::cancel_state_tracks_lifecycle_pending_and_terminal_states ... ok
 test domain::domain_tests::lifecycle::cannot_confirm_cancel_without_pending_cancel ... ok
@@ -31,7 +39,7 @@ test domain::domain_tests::lifecycle::remote_unknown_states_require_reconcile ..
 test domain::domain_tests::lifecycle::sign_only_lifecycle_never_models_remote_post ... ok
 test domain::domain_tests::lifecycle::sign_only_lifecycle_rejects_direct_sign_without_reservation ... ok
 
-test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_gateway-da3cd90baa04a373)
 
@@ -95,9 +103,10 @@ test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fin
 
      Running unittests src/lib.rs (target/debug/deps/pmx_service-c1aa0b8c6a5b27b1)
 
-running 35 tests
+running 36 tests
 test service::tests::flow::explicit_live_gateway_blocks_unsupported_quote_notional_without_stuck_idempotency ... ok
 test service::tests::flow::explicit_live_gateway_posts_and_records_remote_order_lifecycle ... ok
+test service::tests::flow::explicit_live_gateway_posts_buy_size_and_records_quote_exposure ... ok
 test service::tests::flow::explicit_live_gateway_remote_rejection_records_failed_lifecycle ... ok
 test service::tests::flow::explicit_live_gateway_remote_unknown_freezes_for_operator_review ... ok
 test service::tests::flow::live_submit_mode_fails_closed_until_gateway_is_wired ... ok
@@ -132,7 +141,7 @@ test service::tests::sign_only::standard::service_derives_standard_sign_only_ref
 test service::tests::sign_only::standard::service_records_standard_sign_only_construction_without_raw_payload ... ok
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 
-test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+test result: ok. 36 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.97s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-9a97aadec1c8f384)
 
@@ -191,7 +200,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 53 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.14s
+test result: ok. 53 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.32s
 
    Doc-tests pmx_authz
 
