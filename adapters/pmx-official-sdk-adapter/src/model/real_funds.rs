@@ -72,9 +72,28 @@ pub struct RealFundsCanaryMarketCandidate {
     pub target_size: String,
     pub spread_bps: u64,
     pub min_order_size: String,
+    pub exchange_rule_snapshot: ExchangeRuleSnapshot,
     pub liquidity_score: u64,
     pub book_snapshot_timestamp: String,
     pub human_review_ref: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ExchangeRuleSnapshot {
+    pub schema_version: u64,
+    pub venue: String,
+    pub order_mode: String,
+    pub order_type: String,
+    pub side: String,
+    pub target_size_semantics: String,
+    pub min_share_size: String,
+    pub marketable_buy_min_notional_usd: String,
+    pub min_tick_size: String,
+    pub source: String,
+    pub captured_at: String,
+    pub expires_at: String,
+    pub evidence_ref: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -93,6 +112,8 @@ pub struct RealFundsCanaryMarketRejectionCounts {
     pub missing_or_zero_best_ask: u64,
     pub insufficient_ask_size: u64,
     pub min_order_size_above_order_size: u64,
+    pub exchange_rule_snapshot_invalid: u64,
+    pub marketable_buy_notional_below_floor: u64,
     pub notional_over_cap: u64,
 }
 

@@ -29,6 +29,27 @@ fn risk_limits_fixture() -> RealFundsCanaryRiskLimits {
     }
 }
 
+fn exchange_rule_snapshot_fixture(
+    min_share_size: &str,
+    marketable_buy_min: &str,
+) -> ExchangeRuleSnapshot {
+    ExchangeRuleSnapshot {
+        schema_version: 1,
+        venue: "polymarket_clob".into(),
+        order_mode: "immediate_fill".into(),
+        order_type: "FOK".into(),
+        side: "BUY".into(),
+        target_size_semantics: "outcome_shares".into(),
+        min_share_size: min_share_size.into(),
+        marketable_buy_min_notional_usd: marketable_buy_min.into(),
+        min_tick_size: "0.001".into(),
+        source: "unit-test-rule-snapshot".into(),
+        captured_at: "2099-01-01T00:00:00Z".into(),
+        expires_at: "2099-01-01T00:15:00Z".into(),
+        evidence_ref: "review://operator/rule-snapshot".into(),
+    }
+}
+
 fn reviewed_decision_fixture(
     approval: &RealFundsCanaryApproval,
 ) -> ReviewedRealFundsCanaryReleaseDecision {
@@ -152,9 +173,9 @@ fn real_funds_market_selector_picks_highest_safe_liquidity_candidate() {
     let selected = select_real_funds_canary_market(&safe_market_candidates(), "1")
         .expect("selector should choose a safe high-liquidity market");
     assert_eq!(selected.market_id, "market-safe-high");
-    assert_eq!(selected.limit_price, "0.10");
+    assert_eq!(selected.limit_price, "0.20");
     assert_eq!(selected.size, "5");
-    assert_eq!(selected.notional_usd, "0.5");
+    assert_eq!(selected.notional_usd, "1");
     assert!(selected.selection_reason.contains("highest liquidity"));
 }
 
@@ -175,6 +196,7 @@ fn real_funds_market_selector_requires_target_size_at_top_ask() {
             target_size: "5".into(),
             spread_bps: 10,
             min_order_size: "1".into(),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1", "1"),
             liquidity_score: 999,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-shares-not-enough-notional".into(),
@@ -193,6 +215,7 @@ fn real_funds_market_selector_requires_target_size_at_top_ask() {
             target_size: "5".into(),
             spread_bps: 10,
             min_order_size: "1".into(),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1", "1"),
             liquidity_score: 1,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-enough-notional".into(),
@@ -221,6 +244,7 @@ fn real_funds_market_selector_derives_notional_from_price_times_target_size() {
         target_size: "5".into(),
         spread_bps: 10,
         min_order_size: "5".into(),
+        exchange_rule_snapshot: exchange_rule_snapshot_fixture("5", "1"),
         liquidity_score: 999,
         book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
         human_review_ref: "review://operator/market-over-cap".into(),
@@ -229,6 +253,67 @@ fn real_funds_market_selector_derives_notional_from_price_times_target_size() {
     assert!(diagnostics.selection.is_none());
     assert_eq!(
         diagnostics.diagnostics.rejection_counts.notional_over_cap,
+        1
+    );
+}
+
+#[test]
+fn real_funds_market_selector_rejects_fok_buy_below_marketable_notional_floor() {
+    let candidates = vec![RealFundsCanaryMarketCandidate {
+        market_id: "market-web-limit-size-ok-but-fok-buy-notional-too-low".into(),
+        token_id: "123".into(),
+        side: "BUY".into(),
+        order_type: "FOK".into(),
+        active: true,
+        accepting_orders: true,
+        closed: false,
+        archived: false,
+        best_ask: "0.024".into(),
+        ask_size: "1386.16".into(),
+        target_size: "5".into(),
+        spread_bps: 10,
+        min_order_size: "5".into(),
+        exchange_rule_snapshot: exchange_rule_snapshot_fixture("5", "1"),
+        liquidity_score: 999,
+        book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
+        human_review_ref: "review://operator/web-limit-size-ok-fok-buy-notional-too-low".into(),
+    }];
+    let diagnostics = select_real_funds_canary_market_with_diagnostics(&candidates, "1");
+    assert!(
+        diagnostics.selection.is_none(),
+        "FOK BUY must not reuse Web/GTC minimum-share semantics"
+    );
+    assert_eq!(
+        diagnostics
+            .diagnostics
+            .rejection_counts
+            .marketable_buy_notional_below_floor,
+        1
+    );
+    assert_eq!(
+        diagnostics.diagnostics.rejection_counts.notional_over_cap,
+        0
+    );
+    assert_eq!(
+        diagnostics
+            .diagnostics
+            .rejection_counts
+            .min_order_size_above_order_size,
+        0
+    );
+}
+
+#[test]
+fn real_funds_market_selector_rejects_missing_or_stale_rule_snapshot() {
+    let mut candidates = safe_market_candidates();
+    candidates[2].exchange_rule_snapshot.expires_at = "2000-01-01T00:00:00Z".into();
+    let diagnostics = select_real_funds_canary_market_with_diagnostics(&candidates[2..3], "1");
+    assert!(diagnostics.selection.is_none());
+    assert_eq!(
+        diagnostics
+            .diagnostics
+            .rejection_counts
+            .exchange_rule_snapshot_invalid,
         1
     );
 }
@@ -249,6 +334,7 @@ fn real_funds_market_selector_uses_fixed_decimal_for_notional_cap() {
         target_size: "0.2".into(),
         spread_bps: 10,
         min_order_size: "0.1".into(),
+        exchange_rule_snapshot: exchange_rule_snapshot_fixture("0.1", "0.02"),
         liquidity_score: 999,
         book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
         human_review_ref: "review://operator/market-decimal-boundary".into(),
@@ -275,6 +361,7 @@ fn real_funds_market_selector_compares_min_order_to_target_size() {
             target_size: "5".into(),
             spread_bps: 10,
             min_order_size: "5".into(),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("5", "1"),
             liquidity_score: 10,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-low-price-safe-size".into(),
@@ -288,26 +375,31 @@ fn real_funds_market_selector_compares_min_order_to_target_size() {
             accepting_orders: true,
             closed: false,
             archived: false,
-            best_ask: "0.10".into(),
+            best_ask: "0.20".into(),
             ask_size: "10".into(),
             target_size: "5".into(),
             spread_bps: 10,
             min_order_size: "6".into(),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("6", "1"),
             liquidity_score: 999,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-high-price-small-size".into(),
         },
     ];
-    let selected = select_real_funds_canary_market(&candidates, "1")
-        .expect("low-price candidate uses the minimum share size");
-    assert_eq!(selected.market_id, "market-low-price-safe-size");
-
     let diagnostics = select_real_funds_canary_market_with_diagnostics(&candidates, "1");
+    assert!(diagnostics.selection.is_none());
     assert_eq!(
         diagnostics
             .diagnostics
             .rejection_counts
             .min_order_size_above_order_size,
+        1
+    );
+    assert_eq!(
+        diagnostics
+            .diagnostics
+            .rejection_counts
+            .marketable_buy_notional_below_floor,
         1
     );
 }
@@ -423,6 +515,7 @@ fn real_funds_canary_rejects_unsafe_market_candidates() {
         target_size: "5".into(),
         spread_bps: 251,
         min_order_size: "1".into(),
+        exchange_rule_snapshot: exchange_rule_snapshot_fixture("1", "1"),
         liquidity_score: 999,
         book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
         human_review_ref: "review://operator/market-wide-spread".into(),
@@ -447,11 +540,12 @@ fn real_funds_market_diagnostics_are_aggregate_and_fail_closed() {
             accepting_orders: true,
             closed: false,
             archived: false,
-            best_ask: "0.10".into(),
+            best_ask: "0.20".into(),
             ask_size: "10".into(),
             target_size: "5".into(),
             spread_bps: 251,
             min_order_size: "1".into(),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1", "1"),
             liquidity_score: 999,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-wide-spread".into(),
@@ -465,11 +559,12 @@ fn real_funds_market_diagnostics_are_aggregate_and_fail_closed() {
             accepting_orders: true,
             closed: false,
             archived: false,
-            best_ask: "0.10".into(),
+            best_ask: "0.20".into(),
             ask_size: "10".into(),
             target_size: "5".into(),
             spread_bps: 50,
             min_order_size: "6".into(),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("6", "1"),
             liquidity_score: 1,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-min-order".into(),
@@ -495,6 +590,13 @@ fn real_funds_market_diagnostics_are_aggregate_and_fail_closed() {
         1
     );
     assert_eq!(discovery.diagnostics.rejection_counts.notional_over_cap, 0);
+    assert_eq!(
+        discovery
+            .diagnostics
+            .rejection_counts
+            .marketable_buy_notional_below_floor,
+        0
+    );
 
     let rendered = serde_json::to_string(&discovery.diagnostics).expect("render diagnostics");
     assert!(!rendered.contains("123"));
@@ -547,6 +649,7 @@ fn safe_market_candidates() -> Vec<RealFundsCanaryMarketCandidate> {
             target_size: "5".into(),
             spread_bps: 10,
             min_order_size: "1".into(),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1", "1"),
             liquidity_score: 1_000,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-inactive".into(),
@@ -560,11 +663,12 @@ fn safe_market_candidates() -> Vec<RealFundsCanaryMarketCandidate> {
             accepting_orders: true,
             closed: false,
             archived: false,
-            best_ask: "0.11".into(),
+            best_ask: "0.20".into(),
             ask_size: "20".into(),
             target_size: "5".into(),
             spread_bps: 20,
             min_order_size: "1".into(),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1", "1"),
             liquidity_score: 100,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-safe-low".into(),
@@ -578,11 +682,12 @@ fn safe_market_candidates() -> Vec<RealFundsCanaryMarketCandidate> {
             accepting_orders: true,
             closed: false,
             archived: false,
-            best_ask: "0.10".into(),
+            best_ask: "0.20".into(),
             ask_size: "20".into(),
             target_size: "5".into(),
             spread_bps: 15,
             min_order_size: "1".into(),
+            exchange_rule_snapshot: exchange_rule_snapshot_fixture("1", "1"),
             liquidity_score: 500,
             book_snapshot_timestamp: "2099-01-01T00:00:00Z".into(),
             human_review_ref: "review://operator/market-safe-high".into(),

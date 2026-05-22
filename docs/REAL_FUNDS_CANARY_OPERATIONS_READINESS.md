@@ -62,7 +62,11 @@ The helper does not approve live trading. The resulting candidate still must be
 reviewed and validated by the execution-engine dry-run command in the package.
 When `--target-size` is omitted, the helper uses the selected CLOB book
 `min_order_size` as the candidate share size; the notional value is derived as
-`best_ask * target_size` and checked against the review cap.
+`best_ask * target_size` and checked against the review cap. The candidate also
+includes an `exchange_rule_snapshot`. That snapshot is current rule evidence,
+not a permanent protocol constant; if Polymarket changes order limits, generate
+a fresh candidate package with a new reviewed snapshot instead of changing the
+armed command.
 
 Before an operator-reviewed candidate can be used, every `REPLACE_WITH_*`
 placeholder must be replaced with an external reference only. Secret values,

@@ -83,6 +83,7 @@ def validate_candidate_market_json(candidate_market_bytes: bytes, label: str) ->
         "target_size",
         "spread_bps",
         "min_order_size",
+        "exchange_rule_snapshot",
         "liquidity_score",
         "book_snapshot_timestamp",
         "human_review_ref",
@@ -99,6 +100,26 @@ def validate_candidate_market_json(candidate_market_bytes: bytes, label: str) ->
         raise SystemExit(f"{label}: candidate market order_type must be FOK")
     if not positive_decimal_text(candidate.get("target_size")):
         raise SystemExit(f"{label}: candidate market target_size must be a concrete positive share size")
+    snapshot = candidate.get("exchange_rule_snapshot")
+    if not isinstance(snapshot, dict):
+        raise SystemExit(f"{label}: candidate market exchange_rule_snapshot must be an object")
+    for key in [
+        "order_mode",
+        "order_type",
+        "side",
+        "target_size_semantics",
+        "marketable_buy_min_notional_usd",
+        "captured_at",
+        "expires_at",
+        "evidence_ref",
+    ]:
+        value = snapshot.get(key)
+        if not isinstance(value, str) or not value.strip() or "REPLACE_WITH" in value:
+            raise SystemExit(f"{label}: exchange_rule_snapshot {key} must be concrete")
+    if snapshot.get("order_mode") != "immediate_fill" or snapshot.get("order_type") != "FOK":
+        raise SystemExit(f"{label}: exchange_rule_snapshot must bind immediate_fill/FOK semantics")
+    if not positive_decimal_text(snapshot.get("marketable_buy_min_notional_usd")):
+        raise SystemExit(f"{label}: exchange_rule_snapshot marketable BUY minimum must be positive")
     if candidate.get("active") is not True or candidate.get("accepting_orders") is not True:
         raise SystemExit(f"{label}: candidate market must be active and accepting orders")
     if candidate.get("closed") is not False or candidate.get("archived") is not False:
@@ -194,6 +215,21 @@ def main() -> int:
             "liquidity_score": 0,
             "market_id": "REPLACE_WITH_REVIEWED_CONDITION_ID",
             "min_order_size": "0",
+            "exchange_rule_snapshot": {
+                "captured_at": "2099-01-01T00:00:00Z",
+                "evidence_ref": "REPLACE_WITH_RULE_EVIDENCE_REFERENCE",
+                "expires_at": "2099-01-01T00:15:00Z",
+                "marketable_buy_min_notional_usd": "REPLACE_WITH_REVIEWED_MARKETABLE_BUY_MIN_NOTIONAL_USD",
+                "min_share_size": "REPLACE_WITH_REVIEWED_MIN_SHARE_SIZE",
+                "min_tick_size": "REPLACE_WITH_REVIEWED_MIN_TICK_SIZE",
+                "order_mode": "immediate_fill",
+                "order_type": "FOK",
+                "schema_version": 1,
+                "side": "BUY",
+                "source": "REPLACE_WITH_RULE_SOURCE",
+                "target_size_semantics": "outcome_shares",
+                "venue": "polymarket_clob",
+            },
             "order_type": "FOK",
             "side": "BUY",
             "spread_bps": 2**64 - 1,

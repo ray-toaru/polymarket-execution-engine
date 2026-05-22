@@ -2,18 +2,20 @@ use chrono::{DateTime, Utc};
 use std::cmp::Ordering;
 
 use crate::{
-    ENV_ALLOW_REAL_FUNDS_CANARY, OfficialSdkAdapterConfig, OfficialSdkAdapterError,
-    RealFundsCanaryApproval, RealFundsCanaryMarketCandidate, RealFundsCanaryMarketDiagnostics,
-    RealFundsCanaryMarketRejectionCounts, RealFundsCanaryMarketSelection,
-    RealFundsCanaryMarketValidation, RealFundsCanaryPreconditions, RealFundsCanaryRequest,
-    RealFundsCanaryRiskLimits, ReviewedRealFundsCanaryReleaseDecision, env_flag,
-    is_canonical_production_clob_host, validate_live_submit_canary_preconditions,
+    ENV_ALLOW_REAL_FUNDS_CANARY, ExchangeRuleSnapshot, OfficialSdkAdapterConfig,
+    OfficialSdkAdapterError, RealFundsCanaryApproval, RealFundsCanaryMarketCandidate,
+    RealFundsCanaryMarketDiagnostics, RealFundsCanaryMarketRejectionCounts,
+    RealFundsCanaryMarketSelection, RealFundsCanaryMarketValidation, RealFundsCanaryPreconditions,
+    RealFundsCanaryRequest, RealFundsCanaryRiskLimits, ReviewedRealFundsCanaryReleaseDecision,
+    env_flag, is_canonical_production_clob_host, validate_live_submit_canary_preconditions,
 };
 
 const REAL_FUNDS_CANARY_SCOPE: &str = "REAL_FUNDS_CANARY";
 const REAL_FUNDS_CANARY_EXECUTION_STYLE: &str = "FOK_LIMIT_FILL";
+const REAL_FUNDS_CANARY_ORDER_MODE: &str = "immediate_fill";
 const REAL_FUNDS_CANARY_SIDE: &str = "BUY";
 const REAL_FUNDS_CANARY_ORDER_TYPE: &str = "FOK";
+const REAL_FUNDS_CANARY_TARGET_SIZE_SEMANTICS: &str = "outcome_shares";
 const MAX_SPREAD_BPS: u64 = 250;
 
 pub struct BuildRealFundsCanaryPreconditionsInput<'a> {
@@ -302,7 +304,7 @@ pub fn select_real_funds_canary_market_with_diagnostics(
             size: candidate.target_size.clone(),
             notional_usd: candidate_notional_usd(candidate).unwrap_or_default(),
             selection_reason:
-                "highest liquidity candidate within active/accepting/spread/min-order/notional-depth constraints"
+                "highest liquidity candidate within active/accepting/spread/min-order/marketable-buy-notional/notional-depth constraints"
                     .into(),
         });
     RealFundsCanaryMarketValidation {
@@ -377,6 +379,13 @@ pub fn diagnose_real_funds_canary_markets(
             rejection_counts.min_order_size_above_order_size += 1;
             min_order_size_blocks = true;
         }
+        let rule_snapshot_valid = exchange_rule_snapshot_valid(candidate);
+        if !rule_snapshot_valid {
+            rejection_counts.exchange_rule_snapshot_invalid += 1;
+        }
+        if rule_snapshot_valid && !marketable_buy_notional_floor_ok(candidate) {
+            rejection_counts.marketable_buy_notional_below_floor += 1;
+        }
         if market_candidate_is_safe(candidate, max_notional_usd) {
             safe_candidates += 1;
         }
@@ -411,6 +420,8 @@ pub fn market_candidate_is_safe(
         && ask_size_gte_target_size(candidate)
         && target_notional_lte(candidate, max_notional_usd)
         && min_order_size_lte_target_size(candidate)
+        && exchange_rule_snapshot_valid(candidate)
+        && marketable_buy_notional_floor_ok(candidate)
 }
 
 fn valid_approval(approval: &RealFundsCanaryApproval) -> bool {
@@ -457,6 +468,13 @@ fn decimal_lte(left: &str, right: &str) -> bool {
     }
 }
 
+fn decimal_gte(left: &str, right: &str) -> bool {
+    match (parse_decimal(left), parse_decimal(right)) {
+        (Some(left), Some(right)) => left >= right,
+        _ => false,
+    }
+}
+
 fn ask_size_gte_target_size(candidate: &RealFundsCanaryMarketCandidate) -> bool {
     match (
         parse_decimal(&candidate.ask_size),
@@ -479,6 +497,47 @@ fn min_order_size_lte_target_size(candidate: &RealFundsCanaryMarketCandidate) ->
 
 fn target_notional_lte(candidate: &RealFundsCanaryMarketCandidate, cap: &str) -> bool {
     candidate_notional_usd(candidate).is_some_and(|notional| decimal_lte(&notional, cap))
+}
+
+fn exchange_rule_snapshot_valid(candidate: &RealFundsCanaryMarketCandidate) -> bool {
+    let snapshot = &candidate.exchange_rule_snapshot;
+    snapshot.schema_version == 1
+        && snapshot.venue == "polymarket_clob"
+        && snapshot.order_mode == REAL_FUNDS_CANARY_ORDER_MODE
+        && snapshot.order_type == candidate.order_type
+        && snapshot.order_type == REAL_FUNDS_CANARY_ORDER_TYPE
+        && snapshot.side == candidate.side
+        && snapshot.side == REAL_FUNDS_CANARY_SIDE
+        && snapshot.target_size_semantics == REAL_FUNDS_CANARY_TARGET_SIZE_SEMANTICS
+        && decimal_gt_zero(&snapshot.min_share_size)
+        && decimal_gt_zero(&snapshot.marketable_buy_min_notional_usd)
+        && decimal_gt_zero(&snapshot.min_tick_size)
+        && decimal_lte(&snapshot.min_share_size, &candidate.target_size)
+        && timestamp_is_rfc3339(&snapshot.captured_at)
+        && approval_not_expired(&snapshot.expires_at)
+        && rule_source_present(snapshot)
+}
+
+fn rule_source_present(snapshot: &ExchangeRuleSnapshot) -> bool {
+    let source = snapshot.source.trim();
+    let evidence_ref = snapshot.evidence_ref.trim();
+    !source.is_empty()
+        && !source.contains("REPLACE_WITH")
+        && !evidence_ref.is_empty()
+        && !evidence_ref.contains("REPLACE_WITH")
+}
+
+fn marketable_buy_notional_floor_ok(candidate: &RealFundsCanaryMarketCandidate) -> bool {
+    if candidate.side != REAL_FUNDS_CANARY_SIDE
+        || candidate.order_type != REAL_FUNDS_CANARY_ORDER_TYPE
+    {
+        return false;
+    }
+    let floor = &candidate
+        .exchange_rule_snapshot
+        .marketable_buy_min_notional_usd;
+    exchange_rule_snapshot_valid(candidate)
+        && candidate_notional_usd(candidate).is_some_and(|notional| decimal_gte(&notional, floor))
 }
 
 fn candidate_notional_usd(candidate: &RealFundsCanaryMarketCandidate) -> Option<String> {
