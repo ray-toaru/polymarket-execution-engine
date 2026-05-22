@@ -16,3 +16,13 @@ fn hash_value_rejects_non_sha256_hex() {
 
     assert!(matches!(err, CoreError::InvalidHashValue(_)));
 }
+
+#[test]
+fn typed_ids_reject_blank_values_during_deserialization() {
+    assert!(serde_json::from_str::<AccountId>(r#"" ""#).is_err());
+    assert!(serde_json::from_str::<ConditionId>(r#"" ""#).is_err());
+    assert!(serde_json::from_str::<TokenId>(r#"" ""#).is_err());
+    assert!(serde_json::from_str::<ExecutionId>(r#"" ""#).is_err());
+    assert!(serde_json::from_str::<InternalOrderId>(r#"" ""#).is_err());
+    assert!(serde_json::from_str::<RemoteOrderId>(r#"" ""#).is_err());
+}

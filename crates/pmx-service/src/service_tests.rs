@@ -46,20 +46,27 @@ fn hash_value(label: &str) -> HashValue {
 }
 
 fn approval_for(snapshot: &FeasibilitySnapshot, decision: &ConstraintDecision) -> ApprovalReceipt {
-    ApprovalReceipt {
+    let mut approval = ApprovalReceipt {
         approval_id: format!("approval-{}", snapshot.snapshot_id),
         approved_by: "operator".into(),
         approved_at: Utc::now() - Duration::seconds(1),
         expires_at: Utc::now() + Duration::hours(1),
         approval_scope: ApprovalScope::Shadow,
-        approval_hash: hash_value(&format!("approval-{}", snapshot.snapshot_id)),
+        approval_hash: zero_hash(),
         bound_artifact_sha256: hash_value("artifact"),
         bound_evidence_manifest_sha256: hash_value("evidence-manifest"),
         bound_snapshot_hash: snapshot.snapshot_hash.clone(),
         bound_decision_hash: decision.decision_hash.clone(),
         bound_plan_hash: None,
         operator_identity_ref: "local-test-operator".into(),
-    }
+    };
+    approval.approval_hash = approval_receipt_hash(&approval).expect("approval hash");
+    approval
+}
+
+fn zero_hash() -> HashValue {
+    HashValue::from_sha256_hex("0000000000000000000000000000000000000000000000000000000000000000")
+        .expect("valid zero hash")
 }
 
 fn order(order_id: &str, lifecycle_state: OrderLifecycleState) -> OrderLifecycleRecord {

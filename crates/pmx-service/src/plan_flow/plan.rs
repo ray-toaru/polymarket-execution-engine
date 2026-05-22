@@ -6,7 +6,7 @@ use pmx_core::{
 use pmx_store::ExecutionStore;
 
 use crate::{
-    CompilePlanByIdCommand, CompilePlanCommand, PlanHashInput, ServiceError,
+    ApprovalHashInput, CompilePlanByIdCommand, CompilePlanCommand, PlanHashInput, ServiceError,
     verify_decision_binding, verify_snapshot_binding,
 };
 
@@ -156,6 +156,12 @@ fn verify_approval_binding(
     if approval.expires_at <= approval.approved_at || approval.expires_at <= Utc::now() {
         return Err(ServiceError::Conflict("approval is expired".into()));
     }
+    let computed_approval_hash = approval_receipt_hash(approval)?;
+    if computed_approval_hash != approval.approval_hash {
+        return Err(ServiceError::Conflict(
+            "approval_hash does not match canonical approval receipt".into(),
+        ));
+    }
     if approval.bound_snapshot_hash != snapshot.snapshot_hash {
         return Err(ServiceError::Conflict(
             "approval bound_snapshot_hash does not match snapshot".into(),
@@ -167,6 +173,11 @@ fn verify_approval_binding(
         ));
     }
     Ok(())
+}
+
+pub fn approval_receipt_hash(approval: &ApprovalReceipt) -> Result<HashValue, ServiceError> {
+    canonical_json_sha256(&ApprovalHashInput::from(approval))
+        .map_err(|err| ServiceError::Internal(err.to_string()))
 }
 
 fn zero_hash() -> HashValue {

@@ -111,6 +111,36 @@ async fn service_rejects_object_graph_mismatch() {
 }
 
 #[tokio::test]
+async fn service_rejects_tampered_approval_hash() {
+    let service = ExecutorService::new(InMemoryStore::default());
+    let normalized = service.normalize(intent()).await.expect("normalize");
+    let snapshot = service
+        .capture_snapshot(normalized.clone())
+        .await
+        .expect("snapshot");
+    let decision = service
+        .evaluate_decision(DecisionRequest {
+            normalized_intent: normalized.clone(),
+            snapshot: snapshot.clone(),
+        })
+        .await
+        .expect("decision");
+    let mut approval = approval_for(&snapshot, &decision);
+    approval.approval_hash = hash_value("tampered-approval-hash");
+
+    let err = service
+        .compile_plan(CompilePlanCommand {
+            normalized_intent: normalized,
+            snapshot,
+            decision,
+            approval,
+        })
+        .await
+        .expect_err("approval hash must be recomputed and checked");
+    assert!(matches!(err, ServiceError::Conflict(_)));
+}
+
+#[tokio::test]
 async fn static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks() {
     let service = ExecutorService::with_runtime_provider(
         InMemoryStore::default(),

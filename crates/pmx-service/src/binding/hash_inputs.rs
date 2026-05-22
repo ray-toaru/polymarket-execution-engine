@@ -33,6 +33,40 @@ pub(crate) struct PlanHashInput<'a> {
     contract_version: &'a str,
 }
 
+#[derive(Serialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct ApprovalHashInput<'a> {
+    approval_id: &'a str,
+    approved_by: &'a str,
+    approved_at: DateTime<Utc>,
+    expires_at: DateTime<Utc>,
+    approval_scope: &'a ApprovalScope,
+    bound_artifact_sha256: &'a HashValue,
+    bound_evidence_manifest_sha256: &'a HashValue,
+    bound_snapshot_hash: &'a HashValue,
+    bound_decision_hash: &'a HashValue,
+    bound_plan_hash: &'a Option<HashValue>,
+    operator_identity_ref: &'a str,
+}
+
+impl<'a> From<&'a ApprovalReceipt> for ApprovalHashInput<'a> {
+    fn from(approval: &'a ApprovalReceipt) -> Self {
+        Self {
+            approval_id: &approval.approval_id,
+            approved_by: &approval.approved_by,
+            approved_at: approval.approved_at,
+            expires_at: approval.expires_at,
+            approval_scope: &approval.approval_scope,
+            bound_artifact_sha256: &approval.bound_artifact_sha256,
+            bound_evidence_manifest_sha256: &approval.bound_evidence_manifest_sha256,
+            bound_snapshot_hash: &approval.bound_snapshot_hash,
+            bound_decision_hash: &approval.bound_decision_hash,
+            bound_plan_hash: &approval.bound_plan_hash,
+            operator_identity_ref: &approval.operator_identity_ref,
+        }
+    }
+}
+
 impl<'a> From<&'a ExecutionPlanSummary> for PlanHashInput<'a> {
     fn from(plan: &'a ExecutionPlanSummary) -> Self {
         Self {

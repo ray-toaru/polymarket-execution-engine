@@ -2,14 +2,46 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 
 use super::CoreError;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct AccountId(pub String);
+macro_rules! non_empty_string_id {
+    ($name:ident, $field:literal) => {
+        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+        pub struct $name(pub String);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct ConditionId(pub String);
+        impl $name {
+            pub fn new(value: impl Into<String>) -> Result<Self, CoreError> {
+                let value = value.into();
+                if value.trim().is_empty() {
+                    Err(CoreError::InvalidIdentifier { field: $field })
+                } else {
+                    Ok(Self(value))
+                }
+            }
+        }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct TokenId(pub String);
+        impl serde::Serialize for $name {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: Serializer,
+            {
+                serializer.serialize_str(&self.0)
+            }
+        }
+
+        impl<'de> Deserialize<'de> for $name {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                let value = String::deserialize(deserializer)?;
+                Self::new(value).map_err(de::Error::custom)
+            }
+        }
+    };
+}
+
+non_empty_string_id!(AccountId, "account_id");
+non_empty_string_id!(ConditionId, "condition_id");
+non_empty_string_id!(TokenId, "token_id");
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct HashValue(pub String);
@@ -55,11 +87,6 @@ impl<'de> Deserialize<'de> for HashValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct ExecutionId(pub String);
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct InternalOrderId(pub String);
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct RemoteOrderId(pub String);
+non_empty_string_id!(ExecutionId, "execution_id");
+non_empty_string_id!(InternalOrderId, "internal_order_id");
+non_empty_string_id!(RemoteOrderId, "remote_order_id");

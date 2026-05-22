@@ -70,21 +70,33 @@ fn test_hash(label: &str) -> String {
         .0
 }
 
+fn zero_hash() -> String {
+    "0000000000000000000000000000000000000000000000000000000000000000".into()
+}
+
 fn approval_json(approval_id: &str, snapshot: &Value, decision: &Value) -> Value {
-    json!({
+    let mut value = json!({
         "approval_id": approval_id,
         "approved_by": "operator-http-e2e",
         "approved_at": "2026-05-14T00:00:00Z",
         "expires_at": "2030-01-01T00:00:00Z",
         "approval_scope": "SHADOW",
-        "approval_hash": test_hash(approval_id),
+        "approval_hash": zero_hash(),
         "bound_artifact_sha256": test_hash("artifact"),
         "bound_evidence_manifest_sha256": test_hash("evidence-manifest"),
         "bound_snapshot_hash": snapshot["snapshot_hash"],
         "bound_decision_hash": decision["decision_hash"],
         "bound_plan_hash": null,
         "operator_identity_ref": "local-http-e2e-operator"
-    })
+    });
+    let approval: pmx_core::ApprovalReceipt =
+        serde_json::from_value(value.clone()).expect("approval json");
+    value["approval_hash"] = json!(
+        pmx_service::approval_receipt_hash(&approval)
+            .expect("approval hash")
+            .0
+    );
+    value
 }
 
 async fn seed_in_memory_cancelable_order(

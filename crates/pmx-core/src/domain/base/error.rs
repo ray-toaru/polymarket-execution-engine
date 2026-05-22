@@ -16,6 +16,8 @@ pub enum CoreError {
     InvalidLimitPrice(String),
     #[error("hash value must be a lowercase 64-character sha256 hex string: {0}")]
     InvalidHashValue(String),
+    #[error("{field} must be a non-empty identifier")]
+    InvalidIdentifier { field: &'static str },
     #[error("unsupported quantity bound for side: {0}")]
     UnsupportedQuantityBound(String),
     #[error("canonical JSON serialization failed: {0}")]

@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER_SRC = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src"
 SERVICE_SRC = ROOT / "crates" / "pmx-service" / "src"
+STORE_SRC = ROOT / "crates" / "pmx-store" / "src"
 PUBLIC_CONTRACT = ROOT / "openapi" / "executor.v1.yaml"
 
 ALLOWED_GATEWAY_POST_ORDER_FILE = ADAPTER_SRC / "sdk_runtime" / "gateway.rs"
@@ -57,6 +58,36 @@ REQUIRED_CANARY_TOKENS = [
     "run_real_funds_canary_gtc_post_only_cancel",
     "SdkOrderType::GTC",
     "raw_signed_order_exposed: false",
+]
+REQUIRED_IDEMPOTENCY_TOKENS = [
+    (
+        STORE_SRC / "memory" / "idempotency.rs",
+        [
+            "IDEMPOTENCY_LEASE_SECS",
+            "lease_expires_at > now",
+            "IdempotencyAction::InProgress",
+            "existing.owner_token = owner_token.clone()",
+            "record.owner_token != attempt.owner_token",
+        ],
+    ),
+    (
+        STORE_SRC / "postgres_idempotency" / "begin.rs",
+        [
+            "IDEMPOTENCY_LEASE_SECS",
+            "expires_at > now",
+            "IdempotencyAction::InProgress",
+            "owner_token = format!(\"owner-{}\", Uuid::new_v4())",
+            "response_fingerprint = NULL, response_json = NULL",
+        ],
+    ),
+    (
+        STORE_SRC / "postgres_idempotency" / "finish.rs",
+        [
+            "existing_owner.as_deref() != Some(attempt.owner_token)",
+            "AND owner_token = $4 AND status = 'PROCEEDING'",
+            "idempotency finish lost owner_token race",
+        ],
+    ),
 ]
 
 
@@ -136,6 +167,21 @@ def main() -> int:
         ]:
             if token not in service_live_text:
                 failures.append(f"pmx-service live submit path missing token: {token}")
+    submit_text = (SERVICE_SRC / "submit.rs").read_text()
+    for token in [
+        "LIVE submit mode is fail-closed until gateway posting is wired through the executor service",
+        "submit_plan_with_gateway",
+        "SubmitMode::Live",
+    ]:
+        if token not in submit_text:
+            failures.append(f"pmx-service submit boundary missing token: {token}")
+    for path, tokens in REQUIRED_IDEMPOTENCY_TOKENS:
+        text = path.read_text()
+        for token in tokens:
+            if token not in text:
+                failures.append(
+                    f"idempotency lease/owner guard missing token in {path.relative_to(ROOT)}: {token}"
+                )
     for token in REQUIRED_CANARY_TOKENS:
         if token not in raw_adapter_text:
             failures.append(f"official SDK adapter missing live canary guard token: {token}")

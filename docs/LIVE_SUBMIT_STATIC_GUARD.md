@@ -6,6 +6,8 @@
 
 The project is still pre-live. The official SDK adapter may contain explicit safety gates for future `live-submit`. The service layer may contain only the explicit `submit_plan_with_gateway` pipeline for fake-gateway and future wiring tests; API/bootstrap production paths still default to fail-closed and do not wire a live gateway.
 
+`ExecutorService::submit_plan` rejects `SubmitMode::Live` with `LIVE submit mode is fail-closed until gateway posting is wired through the executor service`. The only service-layer code path allowed to reach a gateway is `submit_plan_with_gateway`, which is intentionally explicit and remains outside API/bootstrap wiring until a future release decision changes that boundary.
+
 ## v0.19 guard
 
 `validation/check_live_submit_guard.py` checks:
@@ -22,6 +24,10 @@ The project is still pre-live. The official SDK adapter may contain explicit saf
 - `pmx-service` remote post call sites are limited to `submit/live.rs`; that path
   must use explicit `submit_plan_with_gateway`, pre-sign and pre-post runtime
   checks, and redacted lifecycle payloads.
+- submit idempotency is lease/owner protected in both memory and PostgreSQL
+  stores: a fresh `PROCEEDING` row returns `InProgress`; an expired lease can
+  create a new `Proceed` attempt with a new owner token; finish must match the
+  current owner token and `PROCEEDING` status before recording a response.
 
 The fake gateway crate is intentionally outside the static guard because its in-memory `post_order` is a deterministic test double, not a Polymarket remote side effect.
 
