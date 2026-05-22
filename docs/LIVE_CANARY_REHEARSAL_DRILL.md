@@ -19,7 +19,7 @@ The rehearsal walks the local decision sequence only:
 The current rehearsal also checks the service-layer BUY size path:
 
 - side = BUY
-- size = 5 shares
+- size = reviewed candidate share size
 - notional rule = limit_price * size
 - raw signed order is not exposed
 - no remote side effects occur during the rehearsal

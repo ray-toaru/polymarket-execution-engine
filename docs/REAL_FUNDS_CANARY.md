@@ -40,6 +40,17 @@ Canary scope:
 - `max_spread_bps = 250`
 - `remote_unknown_freeze_clear = true`
 
+Minimum-funds rule:
+
+- The durable rule is minimum expected funds at risk under current exchange
+  constraints, not a hard-coded share count.
+- The reviewed candidate supplies `target_size` in outcome shares. The order
+  uses `size = target_size`.
+- `notional_usd = limit_price * target_size`; it is a derived risk-review
+  value, not the order size field.
+- If the exchange changes minimum size, tick, or order-mode behavior, generate
+  a fresh externally reviewed candidate with a fresh `exchange_rule_snapshot`.
+
 Safety assertions:
 
 - `live_submit_allowed = false` during normal gates
@@ -65,5 +76,6 @@ Execution policy:
 - A real canary run requires a fresh artifact hash, current evidence manifest hash, explicit local approval file, and all runtime gates.
 - The armed canary uses a GTC post-only BUY limit order and immediately cancels it. A missing cancel confirmation is a canary failure requiring manual reconciliation.
 - Candidate market discovery is outside the execution engine boundary. The execution engine validates an externally reviewed candidate against CLOB book/spread and risk gates. The reviewed candidate supplies the share `target_size`; `notional_usd` is only the derived `limit_price * target_size` risk value.
+- Closeout requires persisted post/cancel receipt plus order-status, trade, and account-activity readback. `scripts/prepare_canary_closeout.py` turns those files into `closeout.json` and `CLOSEOUT.md` and fails if the evidence no longer supports the closeout claims.
 - Risk cap comparisons use fixed decimal parsing/comparison/multiplication, not binary floating point. Invalid precision, whitespace, negative values, exponent notation, or overflow fail closed.
 - Recovery or availability improvements must not automatically enable live submit or real-funds canary.

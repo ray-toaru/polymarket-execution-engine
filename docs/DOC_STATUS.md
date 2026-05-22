@@ -16,3 +16,5 @@ Current canary documents:
 
 - `REAL_FUNDS_CANARY.md`: guarded real-funds preflight and live-submit preconditions.
 - `REAL_FUNDS_CANARY_LIFECYCLE.md`: local run persistence, idempotency, remote-unknown freeze, and simulated reconcile behavior with no remote side effects.
+- `REAL_FUNDS_CANARY_CLOSEOUT.md`: completed controlled-canary closeout semantics, evidence files, and limitations.
+- `REAL_FUNDS_CANARY_SEMANTICS_AUDIT.md`: current trading-semantics evidence, corrections, attack review, and residual limits.
