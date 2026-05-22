@@ -2,10 +2,10 @@ use pmx_core::{AccountId, ExecutionId, HashValue};
 use pmx_official_sdk_adapter::{
     BuildRealFundsCanaryPreconditionsInput, LiveCanaryPreconditions, OfficialSdkAdapterConfig,
     RealFundsCanaryApproval, RealFundsCanaryMarketCandidate, RealFundsCanaryMarketDiagnostics,
-    RealFundsCanaryRequest, RealFundsCanaryRiskLimits, ReviewedRealFundsCanaryReleaseDecision,
-    build_real_funds_canary_preconditions, run_real_funds_canary_gtc_post_only_cancel,
-    validate_real_funds_canary_market_with_diagnostics, validate_real_funds_canary_preconditions,
-    validate_reviewed_real_funds_canary_release_decision,
+    RealFundsCanaryReceipt, RealFundsCanaryRequest, RealFundsCanaryRiskLimits,
+    ReviewedRealFundsCanaryReleaseDecision, build_real_funds_canary_preconditions,
+    run_real_funds_canary_gtc_post_only_cancel, validate_real_funds_canary_market_with_diagnostics,
+    validate_real_funds_canary_preconditions, validate_reviewed_real_funds_canary_release_decision,
 };
 use serde::Serialize;
 use serde_json::json;
@@ -27,6 +27,7 @@ struct Args {
     market_file: PathBuf,
     release_decision_file: Option<PathBuf>,
     approval_consumed_marker: Option<PathBuf>,
+    report_file: Option<PathBuf>,
     dry_run: bool,
     preflight_only: bool,
     armed: bool,
@@ -226,6 +227,7 @@ async fn main() -> anyhow::Result<()> {
         validate_real_funds_canary_preconditions(&config, &request)?;
         create_approval_consumed_marker(&args, &approval, &market_candidate_sha256)?;
         let receipt = run_real_funds_canary_gtc_post_only_cancel(&config, request).await?;
+        persist_armed_report(&args, &receipt)?;
         println!("{}", serde_json::to_string_pretty(&receipt)?);
         return Ok(());
     }
@@ -306,6 +308,7 @@ fn parse_args() -> anyhow::Result<Args> {
         market_file: required(&values, "--market-file")?.into(),
         release_decision_file: values.get("--release-decision-file").map(PathBuf::from),
         approval_consumed_marker: values.get("--approval-consumed-marker").map(PathBuf::from),
+        report_file: values.get("--report-file").map(PathBuf::from),
         daily_used_notional_usd: values
             .get("--daily-used-notional-usd")
             .cloned()
@@ -364,6 +367,17 @@ fn create_approval_consumed_marker(
         "consumed_at": chrono::Utc::now().to_rfc3339(),
     });
     file.write_all(serde_json::to_string_pretty(&marker)?.as_bytes())?;
+    file.write_all(b"\n")?;
+    Ok(())
+}
+
+fn persist_armed_report(args: &Args, receipt: &RealFundsCanaryReceipt) -> anyhow::Result<()> {
+    let path = args
+        .report_file
+        .as_ref()
+        .ok_or_else(|| anyhow::anyhow!("--report-file is required for armed real-funds canary"))?;
+    let mut file = OpenOptions::new().write(true).create_new(true).open(path)?;
+    file.write_all(serde_json::to_string_pretty(receipt)?.as_bytes())?;
     file.write_all(b"\n")?;
     Ok(())
 }

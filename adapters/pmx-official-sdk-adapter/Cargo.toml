@@ -22,6 +22,11 @@ name = "pmx-query-order"
 path = "src/bin/pmx-query-order.rs"
 required-features = ["live-submit"]
 
+[[bin]]
+name = "pmx-query-trades"
+path = "src/bin/pmx-query-trades.rs"
+required-features = ["live-submit"]
+
 [dependencies]
 pmx-core = { path = "../../crates/pmx-core" }
 pmx-gateway = { path = "../../crates/pmx-gateway" }
