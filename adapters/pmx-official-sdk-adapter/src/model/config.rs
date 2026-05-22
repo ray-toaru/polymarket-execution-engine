@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{CLOB_V2_COLLATERAL_SYMBOL, CLOB_V2_HOST, CLOB_V2_SIGNING_PROTOCOL};
+use super::{CLOB_PRODUCTION_HOST, CLOB_V2_COLLATERAL_SYMBOL, CLOB_V2_SIGNING_PROTOCOL};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -19,7 +19,7 @@ pub struct OfficialSdkAdapterConfig {
 impl Default for OfficialSdkAdapterConfig {
     fn default() -> Self {
         Self {
-            clob_host: CLOB_V2_HOST.to_string(),
+            clob_host: CLOB_PRODUCTION_HOST.to_string(),
             allow_read_only_smoke: true,
             allow_authenticated_non_trading_smoke: false,
             allow_sign_only_dry_run: false,
@@ -49,7 +49,7 @@ pub struct OfficialSdkStandardSignOnlyProfile {
 impl Default for OfficialSdkStandardSignOnlyProfile {
     fn default() -> Self {
         Self {
-            clob_host: CLOB_V2_HOST.into(),
+            clob_host: CLOB_PRODUCTION_HOST.into(),
             collateral_symbol: CLOB_V2_COLLATERAL_SYMBOL.into(),
             signing_protocol: CLOB_V2_SIGNING_PROTOCOL.into(),
             uses_deposit_wallet_order_path: true,

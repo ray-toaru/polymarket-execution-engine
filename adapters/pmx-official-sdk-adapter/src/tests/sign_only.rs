@@ -4,7 +4,7 @@ use super::*;
 fn standard_sign_only_profile_is_non_posting_v2_pusd() {
     let profile = OfficialSdkStandardSignOnlyProfile::default();
     validate_standard_sign_only_profile(&profile).expect("standard sign-only profile");
-    assert_eq!(profile.clob_host, CLOB_V2_HOST);
+    assert_eq!(profile.clob_host, CLOB_PRODUCTION_HOST);
     assert_eq!(profile.collateral_symbol, "pUSD");
     assert_eq!(profile.signing_protocol, "CLOB_V2");
     assert!(profile.uses_deposit_wallet_order_path);
@@ -20,7 +20,7 @@ fn standard_sign_only_plan_is_default_sdk_construct_path_without_raw_payload() {
     assert_eq!(plan.signed_order_ref_namespace, "sign-only");
     assert_eq!(plan.mapping.order_kind, "LIMIT");
     assert_eq!(plan.mapping.time_in_force.as_deref(), Some("GTC"));
-    assert_eq!(plan.profile.clob_host, CLOB_V2_HOST);
+    assert_eq!(plan.profile.clob_host, CLOB_PRODUCTION_HOST);
     assert_eq!(plan.profile.collateral_symbol, CLOB_V2_COLLATERAL_SYMBOL);
     assert!(plan.profile.uses_deposit_wallet_order_path);
     assert!(!plan.exposes_raw_signed_order);

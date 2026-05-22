@@ -7,7 +7,7 @@ use crate::{
     RealFundsCanaryMarketRejectionCounts, RealFundsCanaryMarketSelection,
     RealFundsCanaryMarketValidation, RealFundsCanaryPreconditions, RealFundsCanaryRequest,
     RealFundsCanaryRiskLimits, ReviewedRealFundsCanaryReleaseDecision, env_flag,
-    validate_live_submit_canary_preconditions,
+    is_canonical_production_clob_host, validate_live_submit_canary_preconditions,
 };
 
 const REAL_FUNDS_CANARY_SCOPE: &str = "REAL_FUNDS_CANARY";
@@ -91,6 +91,10 @@ pub fn validate_real_funds_canary_preconditions(
         (
             request.preconditions.selected_market_safe,
             "selected market is not canary safe",
+        ),
+        (
+            is_canonical_production_clob_host(&config.clob_host),
+            "real funds canary requires canonical CLOB production host",
         ),
     ];
     let missing: Vec<_> = required

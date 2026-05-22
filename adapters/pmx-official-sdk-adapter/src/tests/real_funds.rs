@@ -115,6 +115,39 @@ fn real_funds_canary_requires_extra_env_config_approval_and_market_gates() {
 }
 
 #[test]
+fn real_funds_canary_rejects_legacy_redirecting_clob_host() {
+    let market = select_real_funds_canary_market(&safe_market_candidates(), "1")
+        .expect("safe market candidate should be selected");
+    let approval = approval_fixture();
+    let risk_limits = risk_limits_fixture();
+    let preconditions =
+        build_real_funds_canary_preconditions(BuildRealFundsCanaryPreconditionsInput {
+            approval: &approval,
+            risk_limits: &risk_limits,
+            market: &market,
+            live_canary: all_live_canary_preconditions(),
+            artifact_sha256: &approval.artifact_sha256,
+            evidence_manifest_sha256: &approval.evidence_manifest_sha256,
+            market_candidate_sha256: &approval.market_candidate_sha256,
+            config_allow_real_funds_canary: true,
+            balance_allowance_checked: true,
+            selected_market_safe: true,
+        });
+    let request = request_fixture(preconditions, market);
+    let config = OfficialSdkAdapterConfig {
+        allow_real_funds_canary: true,
+        clob_host: LEGACY_CLOB_V2_REDIRECT_HOST.into(),
+        ..OfficialSdkAdapterConfig::default()
+    };
+    let err = validate_real_funds_canary_preconditions(&config, &request)
+        .expect_err("legacy redirecting host must fail before live posting");
+    assert!(
+        err.to_string()
+            .contains("real funds canary requires canonical CLOB production host")
+    );
+}
+
+#[test]
 fn real_funds_market_selector_picks_highest_safe_liquidity_candidate() {
     let selected = select_real_funds_canary_market(&safe_market_candidates(), "1")
         .expect("selector should choose a safe high-liquidity market");

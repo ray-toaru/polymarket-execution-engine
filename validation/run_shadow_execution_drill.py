@@ -17,7 +17,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
-DEFAULT_CLOB_HOST = "https://clob-v2.polymarket.com"
+DEFAULT_CLOB_HOST = "https://clob.polymarket.com"
 DEFAULT_MARKET_LIMIT = 200
 DEFAULT_SIZE = "5"
 DEFAULT_LIMIT_PRICE = "0.01"

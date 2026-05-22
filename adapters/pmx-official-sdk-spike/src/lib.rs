@@ -11,7 +11,7 @@ pub const OFFICIAL_SDK_REPOSITORY: &str = "https://github.com/Polymarket/rs-clob
 pub const OFFICIAL_SDK_CRATE: &str = "polymarket_client_sdk_v2";
 pub const PINNED_OFFICIAL_SDK_VERSION: &str = "=0.6.0-canary.1";
 pub const LIVE_SUBMIT_FEATURE_NAME: &str = "live-submit";
-pub const CLOB_V2_HOST: &str = "https://clob-v2.polymarket.com";
+pub const CLOB_PRODUCTION_HOST: &str = "https://clob.polymarket.com";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OfficialSdkAdapterConfig {
@@ -25,7 +25,7 @@ pub struct OfficialSdkAdapterConfig {
 impl Default for OfficialSdkAdapterConfig {
     fn default() -> Self {
         Self {
-            clob_host: CLOB_V2_HOST.to_string(),
+            clob_host: CLOB_PRODUCTION_HOST.to_string(),
             use_ws: true,
             use_heartbeats: true,
             allow_live_submit: false,
@@ -55,7 +55,7 @@ mod tests {
     #[cfg(feature = "sdk-typecheck")]
     fn default_read_only_client() -> SdkResult<polymarket_client_sdk_v2::clob::Client> {
         polymarket_client_sdk_v2::clob::Client::new(
-            CLOB_V2_HOST,
+            CLOB_PRODUCTION_HOST,
             polymarket_client_sdk_v2::clob::Config::default(),
         )
     }
@@ -64,7 +64,7 @@ mod tests {
     fn live_submit_is_disabled_by_default() {
         let cfg = OfficialSdkAdapterConfig::default();
         assert!(!cfg.allow_live_submit);
-        assert_eq!(cfg.clob_host, CLOB_V2_HOST);
+        assert_eq!(cfg.clob_host, CLOB_PRODUCTION_HOST);
         assert!(cfg.require_explicit_runtime_kill_switch_open);
     }
 

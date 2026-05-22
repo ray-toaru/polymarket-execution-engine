@@ -21,10 +21,10 @@ Confirmed from that repository and README:
 - Version observed in `Cargo.toml`: `0.6.0-canary.1`.
 - Cargo metadata observed: edition `2024`, rust-version `1.88.0`.
 - README describes typed CLOB requests, dual authentication flows, a type-level state machine, `alloy::signers::Signer` support including remote signers, order builders, serde support, and async reqwest design.
-- README documents authenticated CLOB client construction through `Client::new("https://clob-v2.polymarket.com", Config::default())`, `authentication_builder(&signer)`, and `authenticate()`.
+- README historically documented authenticated CLOB client construction through `Client::new("https://clob-v2.polymarket.com", Config::default())`, `authentication_builder(&signer)`, and `authenticate()`.
 - README documents order build/sign/post through `market_order()` / `limit_order()`, `client.sign(&signer, order)`, and `client.post_order(signed_order)`.
 - README documents WebSocket streaming through the `ws` feature and authenticated user streams.
-- README states V1/V2 protocol detection is host-driven; V2 host is `https://clob-v2.polymarket.com` and V2 collateral is pUSD.
+- Current Polymarket API reference documents order entry at `https://clob.polymarket.com/order`. The live canary must use the canonical production host; the legacy `https://clob-v2.polymarket.com` host redirects to it and can turn a POST through reqwest redirect handling into a method-mismatch failure.
 
 ## Decision
 

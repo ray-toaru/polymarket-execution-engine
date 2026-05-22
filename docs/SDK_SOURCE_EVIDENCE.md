@@ -10,7 +10,8 @@ Evidence summary as of v0.7 review:
 - Crate name: `polymarket_client_sdk_v2`.
 - README describes it as a Rust client for Polymarket services, primarily CLOB.
 - README documents feature flags including `clob`, `ws`, `rtds`, `data`, `gamma`, `bridge`, `rfq`, `heartbeats`, and `ctf`.
-- README documents authenticated client setup with `POLYMARKET_PRIVATE_KEY`, `LocalSigner`, `POLYGON`, `Client::new("https://clob-v2.polymarket.com", Config::default())`, `authentication_builder(&signer)`, and `authenticate()`.
+- README historically documented authenticated client setup with `POLYMARKET_PRIVATE_KEY`, `LocalSigner`, `POLYGON`, `Client::new("https://clob-v2.polymarket.com", Config::default())`, `authentication_builder(&signer)`, and `authenticate()`.
+- Current Polymarket API reference documents order entry at `https://clob.polymarket.com/order`; live canary code must use that canonical host to avoid POST redirect/method downgrade failure.
 - README documents order build/sign/post flow through `limit_order()` / `market_order()`, `client.sign(&signer, order)`, and `client.post_order(signed_order)`.
 - README documents WebSocket streaming with the `ws` feature and authenticated user streams.
 - Cargo metadata observed from repository pins crate version `0.6.0-canary.1`, edition `2024`, and rust-version `1.88.0`.

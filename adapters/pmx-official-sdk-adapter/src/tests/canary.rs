@@ -7,6 +7,8 @@ fn default_config_cannot_live_submit() {
     assert!(!config.allow_sign_only_dry_run);
     assert!(!config.allow_live_submit);
     assert!(!config.allow_real_funds_canary);
+    assert_eq!(config.clob_host, CLOB_PRODUCTION_HOST);
+    assert_ne!(config.clob_host, LEGACY_CLOB_V2_REDIRECT_HOST);
     assert!(config.require_kill_switch_open_for_live_submit);
     assert!(config.require_repository_reservation_for_live_submit);
     assert!(config.require_reconcile_worker_for_live_submit);

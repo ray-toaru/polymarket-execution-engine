@@ -22,7 +22,7 @@ The adapter remains outside the default workspace until the following are proven
 v0.25 standard sign-only boundary:
 
 ```text
-CLOB host: https://clob-v2.polymarket.com
+CLOB host: https://clob.polymarket.com
 collateral metadata: pUSD
 signing protocol marker: CLOB_V2
 deposit wallet order path: required by profile
