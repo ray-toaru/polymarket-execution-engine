@@ -9,6 +9,7 @@ use pmx_official_sdk_adapter::{
     validate_real_funds_canary_market_with_diagnostics, validate_real_funds_canary_preconditions,
     validate_reviewed_real_funds_canary_release_decision,
 };
+use pmx_store::{CanaryRuntimeTruthQuery, CanaryRuntimeTruthStore, PostgresStore};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::{Digest, Sha256};
@@ -29,6 +30,9 @@ struct Args {
     market_file: PathBuf,
     release_decision_file: Option<PathBuf>,
     runtime_truth_file: Option<PathBuf>,
+    runtime_truth_store: Option<String>,
+    runtime_truth_database_url_env: Option<String>,
+    runtime_truth_condition_id: Option<String>,
     approval_consumed_marker: Option<PathBuf>,
     report_file: Option<PathBuf>,
     dry_run: bool,
@@ -114,7 +118,7 @@ async fn main() -> anyhow::Result<()> {
     } else {
         false
     };
-    let runtime_truth = load_runtime_truth_file(args.runtime_truth_file.as_ref())?;
+    let runtime_truth = load_runtime_truth(&args).await?;
     let market_candidate: RealFundsCanaryMarketCandidate =
         serde_json::from_slice(&market_candidate_bytes)?;
     let validation = validate_real_funds_canary_market_with_diagnostics(
@@ -299,11 +303,18 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn parse_args() -> anyhow::Result<Args> {
+    parse_args_from(std::env::args().skip(1))
+}
+
+fn parse_args_from<I>(args: I) -> anyhow::Result<Args>
+where
+    I: IntoIterator<Item = String>,
+{
     let mut values = HashMap::<String, String>::new();
     let mut dry_run = true;
     let mut preflight_only = false;
     let mut armed = false;
-    let mut iter = std::env::args().skip(1);
+    let mut iter = args.into_iter();
     while let Some(arg) = iter.next() {
         match arg.as_str() {
             "--dry-run" => dry_run = true,
@@ -341,6 +352,9 @@ fn parse_args() -> anyhow::Result<Args> {
         market_file: required(&values, "--market-file")?.into(),
         release_decision_file: values.get("--release-decision-file").map(PathBuf::from),
         runtime_truth_file: values.get("--runtime-truth-file").map(PathBuf::from),
+        runtime_truth_store: values.get("--runtime-truth-store").cloned(),
+        runtime_truth_database_url_env: values.get("--runtime-truth-database-url-env").cloned(),
+        runtime_truth_condition_id: values.get("--runtime-truth-condition-id").cloned(),
         approval_consumed_marker: values.get("--approval-consumed-marker").map(PathBuf::from),
         report_file: values.get("--report-file").map(PathBuf::from),
         daily_used_notional_usd: values
@@ -381,6 +395,51 @@ fn validate_reviewed_release_decision(
         market_candidate_sha256,
     )?;
     Ok(true)
+}
+
+async fn load_runtime_truth(args: &Args) -> anyhow::Result<RuntimeTruthBindings> {
+    match args.runtime_truth_store.as_deref() {
+        None => load_runtime_truth_file(args.runtime_truth_file.as_ref()),
+        Some("postgres") => {
+            let condition_id = args.runtime_truth_condition_id.as_ref().ok_or_else(|| {
+                anyhow::anyhow!(
+                    "--runtime-truth-condition-id is required with --runtime-truth-store postgres"
+                )
+            })?;
+            let database_url_env = args.runtime_truth_database_url_env.as_ref().ok_or_else(|| {
+                anyhow::anyhow!(
+                    "--runtime-truth-database-url-env is required with --runtime-truth-store postgres"
+                )
+            })?;
+            let database_url = std::env::var(database_url_env).map_err(|_| {
+                anyhow::anyhow!("runtime truth database URL env {database_url_env} is not set")
+            })?;
+            if database_url.trim().is_empty() {
+                anyhow::bail!("runtime truth database URL env {database_url_env} is empty");
+            }
+            let store = PostgresStore::new(database_url);
+            let bindings = store
+                .load_canary_runtime_truth(&CanaryRuntimeTruthQuery {
+                    account_id: args.account_id.clone(),
+                    condition_id: condition_id.clone(),
+                    collateral_profile_id: None,
+                })
+                .await?;
+            Ok(runtime_truth_from_store_bindings(bindings))
+        }
+        Some(other) => anyhow::bail!("unsupported --runtime-truth-store {other}"),
+    }
+}
+
+fn runtime_truth_from_store_bindings(
+    bindings: pmx_store::CanaryRuntimeTruthBindings,
+) -> RuntimeTruthBindings {
+    RuntimeTruthBindings {
+        kill_switch: bindings.kill_switch_open,
+        live_submit_gate: bindings.live_submit_gate_ready,
+        idempotency_lease: bindings.idempotency_lease_ready,
+        order_cancel_reconciliation: bindings.order_cancel_reconciliation_ready,
+    }
 }
 
 fn load_runtime_truth_file(path: Option<&PathBuf>) -> anyhow::Result<RuntimeTruthBindings> {
@@ -495,6 +554,94 @@ mod tests {
             .expect("time")
             .as_nanos();
         std::env::temp_dir().join(format!("pmx-{name}-{nonce}.json"))
+    }
+
+    fn minimal_args(extra: &[&str]) -> Vec<String> {
+        let mut args = vec![
+            "--approval-file",
+            "approval.json",
+            "--artifact-sha256",
+            "artifact",
+            "--evidence-manifest-sha256",
+            "manifest",
+            "--idempotency-key",
+            "idem",
+            "--account-id",
+            "acct",
+            "--execution-id",
+            "exec",
+            "--plan-hash",
+            "hash",
+            "--market-file",
+            "market.json",
+        ];
+        args.extend_from_slice(extra);
+        args.into_iter().map(ToOwned::to_owned).collect()
+    }
+
+    #[test]
+    fn parses_postgres_runtime_truth_source_without_database_url_value() {
+        let args = parse_args_from(minimal_args(&[
+            "--runtime-truth-store",
+            "postgres",
+            "--runtime-truth-database-url-env",
+            "PMX_TEST_DATABASE_URL",
+            "--runtime-truth-condition-id",
+            "cond-1",
+        ]))
+        .expect("parse args");
+        assert_eq!(args.runtime_truth_store.as_deref(), Some("postgres"));
+        assert_eq!(
+            args.runtime_truth_database_url_env.as_deref(),
+            Some("PMX_TEST_DATABASE_URL")
+        );
+        assert_eq!(args.runtime_truth_condition_id.as_deref(), Some("cond-1"));
+    }
+
+    #[test]
+    fn store_runtime_truth_bindings_map_to_canary_precondition_booleans() {
+        let truth = runtime_truth_from_store_bindings(pmx_store::CanaryRuntimeTruthBindings {
+            kill_switch_open: true,
+            live_submit_gate_ready: true,
+            idempotency_lease_ready: false,
+            order_cancel_reconciliation_ready: true,
+            evidence_refs: vec!["runtime-state://kill-switch".into()],
+        });
+        assert!(truth.kill_switch);
+        assert!(truth.live_submit_gate);
+        assert!(!truth.idempotency_lease);
+        assert!(truth.order_cancel_reconciliation);
+    }
+
+    #[tokio::test]
+    async fn postgres_runtime_truth_source_requires_explicit_condition_id() {
+        let args = parse_args_from(minimal_args(&[
+            "--runtime-truth-store",
+            "postgres",
+            "--runtime-truth-database-url-env",
+            "PMX_TEST_DATABASE_URL",
+        ]))
+        .expect("parse args");
+        let err = load_runtime_truth(&args)
+            .await
+            .expect_err("missing condition id must fail before database access");
+        assert!(
+            err.to_string()
+                .contains("--runtime-truth-condition-id is required")
+        );
+    }
+
+    #[tokio::test]
+    async fn unsupported_runtime_truth_source_fails_closed() {
+        let args =
+            parse_args_from(minimal_args(&["--runtime-truth-store", "file"])).expect("parse args");
+        let err = load_runtime_truth(&args)
+            .await
+            .expect_err("unsupported source must fail");
+        assert!(
+            err.to_string()
+                .contains("unsupported --runtime-truth-store file")
+        );
     }
 
     #[test]

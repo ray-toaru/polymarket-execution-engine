@@ -55,6 +55,8 @@ REQUIRED_CANARY_TOKENS = [
     "RealFundsCanaryPreconditions",
     "ENV_ALLOW_REAL_FUNDS_CANARY",
     "load_runtime_truth_file",
+    "load_canary_runtime_truth",
+    "--runtime-truth-store",
     "durable_runtime_truth",
     "validate_real_funds_canary_preconditions",
     "runtime_kill_switch_truth_bound",

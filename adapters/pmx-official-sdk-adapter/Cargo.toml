@@ -10,7 +10,7 @@ default = []
 sdk-typecheck = ["dep:polymarket_client_sdk_v2"]
 authenticated-smoke = ["sdk-typecheck", "dep:tokio", "dep:anyhow"]
 sign-only-dry-run = ["sdk-typecheck", "dep:tokio", "dep:anyhow"]
-live-submit = ["sdk-typecheck", "dep:tokio", "dep:anyhow"]
+live-submit = ["sdk-typecheck", "dep:tokio", "dep:anyhow", "dep:pmx-store"]
 data-readback = ["sdk-typecheck", "dep:tokio", "dep:anyhow", "polymarket_client_sdk_v2/data"]
 
 [[bin]]
@@ -36,6 +36,7 @@ required-features = ["data-readback"]
 [dependencies]
 pmx-core = { path = "../../crates/pmx-core" }
 pmx-gateway = { path = "../../crates/pmx-gateway" }
+pmx-store = { path = "../../crates/pmx-store", optional = true }
 async-trait = "0.1.89"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
