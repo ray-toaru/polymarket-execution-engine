@@ -93,6 +93,11 @@ Execution policy:
   live-submit gate, idempotency lease, and order/cancel reconciliation readiness
   from runtime state plus `CanaryRuntimeTruth` worker rows. Worker rows with
   matching capability but another role are ignored.
+- `validation/run_real_funds_canary_store_truth_cli_preflight.py` seeds local
+  PostgreSQL runtime-truth rows and runs the CLI with
+  `--runtime-truth-store postgres` in `--preflight-only` mode. It proves the CLI
+  can consume store-backed runtime truth without posting, cancelling, exposing a
+  signed order, or printing the database URL.
 - The armed canary uses a GTC post-only BUY limit order and immediately cancels it. A missing cancel confirmation is a canary failure requiring manual reconciliation.
 - The armed CLI writes the report file at every remote-side-effect stage. If post status is unknown, post is accepted, cancel status is unknown, or cancel confirmation fails, the report file must contain a structured `operator_required` or stage report rather than relying on terminal output.
 - Candidate market discovery is outside the execution engine boundary. The execution engine validates an externally reviewed candidate against CLOB book/spread and risk gates. The reviewed candidate supplies the share `target_size`; `notional_usd` is only the derived `limit_price * target_size` risk value.
