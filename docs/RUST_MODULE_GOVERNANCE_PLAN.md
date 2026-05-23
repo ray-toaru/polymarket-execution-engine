@@ -150,7 +150,7 @@ material exposure, or production-readiness claims.
 - PostgreSQL migration helpers now separate manifest/checksum, apply flow, and
   applied-migration recording while preserving the same `apply_schema` entry.
 - API admin reconcile support now separates shared auth/correlation context,
-  placeholder reconcile validation, and local reconcile validation while
+  non-live reconcile validation, and local reconcile validation while
   preserving the same route behavior.
 - API in-memory/PostgreSQL E2E tests now serialize process-env token mutation
   so local `cargo test -p pmx-api` remains deterministic under parallel test

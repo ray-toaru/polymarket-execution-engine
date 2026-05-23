@@ -1,6 +1,6 @@
 mod local;
-mod placeholder;
+mod non_live;
 mod support;
 
 pub(crate) use local::*;
-pub(crate) use placeholder::*;
+pub(crate) use non_live::*;

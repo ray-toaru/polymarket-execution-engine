@@ -8,7 +8,7 @@ use crate::support::{ApiResult, api_error_with_correlation, record_admin_audit, 
 
 use super::support::require_reconcile_request;
 
-pub(crate) async fn reconcile_placeholder(
+pub(crate) async fn record_reconcile_non_live(
     State(state): State<AppState>,
     headers: HeaderMap,
     Json(req): Json<ReconcileRequest>,

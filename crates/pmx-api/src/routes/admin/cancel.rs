@@ -14,7 +14,7 @@ use pmx_core::{CancelReceipt, CancelState, redacted_payload_envelope};
 use pmx_store::ExecutionLifecycleEvent;
 use uuid::Uuid;
 
-pub(crate) async fn cancel_order_placeholder(
+pub(crate) async fn record_cancel_order_non_live(
     State(state): State<AppState>,
     headers: HeaderMap,
     Json(req): Json<CancelOrderRequest>,
