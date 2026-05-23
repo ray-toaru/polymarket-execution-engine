@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -125,6 +126,18 @@ def parse_time(value: object) -> datetime | None:
     return parsed
 
 
+def parse_positive_decimal(value: object) -> Decimal | None:
+    if not isinstance(value, str) or value.startswith("REPLACE_WITH_"):
+        return None
+    try:
+        parsed = Decimal(value)
+    except (InvalidOperation, ValueError):
+        return None
+    if not parsed.is_finite() or parsed <= 0:
+        return None
+    return parsed
+
+
 def has_placeholder(value: object) -> bool:
     if isinstance(value, str):
         return value.startswith("REPLACE_WITH_")
@@ -150,10 +163,12 @@ def validate_shape(data: dict[str, Any], label: str) -> list[str]:
     if data.get("execution_style") != "GTC_LIMIT_POST_ONLY_CANCEL":
         failures.append(f"{label}: execution_style must be GTC_LIMIT_POST_ONLY_CANCEL")
     limits = data.get("risk_limits", {})
-    if limits.get("max_order_notional_usd") != "1":
-        failures.append(f"{label}: max_order_notional_usd must be 1")
-    if limits.get("max_daily_notional_usd") != "5":
-        failures.append(f"{label}: max_daily_notional_usd must be 5")
+    max_order_notional = parse_positive_decimal(limits.get("max_order_notional_usd"))
+    if max_order_notional is None or max_order_notional > Decimal("1"):
+        failures.append(f"{label}: max_order_notional_usd must be positive and <= 1")
+    max_daily_notional = parse_positive_decimal(limits.get("max_daily_notional_usd"))
+    if max_daily_notional is None or max_daily_notional > Decimal("5"):
+        failures.append(f"{label}: max_daily_notional_usd must be positive and <= 5")
     if data.get("secrets_included") is not False:
         failures.append(f"{label}: secrets_included must be false")
     workspace_sha = data.get("workspace_manifest_sha256")
