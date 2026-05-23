@@ -409,6 +409,9 @@ pub fn diagnose_real_funds_canary_markets(
         if !ask_size_gte_target_size(candidate) {
             rejection_counts.insufficient_ask_size += 1;
         }
+        if !candidate_notional_bound_matches(candidate) {
+            rejection_counts.notional_binding_mismatch += 1;
+        }
         if !target_notional_lte(candidate, max_notional_usd) {
             rejection_counts.notional_over_cap += 1;
         }
@@ -454,6 +457,7 @@ pub fn market_candidate_is_safe(
         && candidate.spread_bps <= MAX_SPREAD_BPS
         && decimal_gt_zero(&candidate.best_ask)
         && decimal_gt_zero(&candidate.target_size)
+        && candidate_notional_bound_matches(candidate)
         && ask_size_gte_target_size(candidate)
         && target_notional_lte(candidate, max_notional_usd)
         && min_order_size_lte_target_size(candidate)
@@ -520,6 +524,13 @@ fn decimal_lt(left: &str, right: &str) -> bool {
     }
 }
 
+fn decimal_eq(left: &str, right: &str) -> bool {
+    match (parse_decimal(left), parse_decimal(right)) {
+        (Some(left), Some(right)) => left == right,
+        _ => false,
+    }
+}
+
 fn ask_size_gte_target_size(candidate: &RealFundsCanaryMarketCandidate) -> bool {
     match (
         parse_decimal(&candidate.ask_size),
@@ -542,6 +553,11 @@ fn min_order_size_lte_target_size(candidate: &RealFundsCanaryMarketCandidate) ->
 
 fn target_notional_lte(candidate: &RealFundsCanaryMarketCandidate, cap: &str) -> bool {
     candidate_notional_usd(candidate).is_some_and(|notional| decimal_lte(&notional, cap))
+}
+
+fn candidate_notional_bound_matches(candidate: &RealFundsCanaryMarketCandidate) -> bool {
+    candidate_notional_usd(candidate)
+        .is_some_and(|notional| decimal_eq(&notional, &candidate.estimated_order_notional_usd))
 }
 
 fn exchange_rule_snapshot_valid(candidate: &RealFundsCanaryMarketCandidate) -> bool {

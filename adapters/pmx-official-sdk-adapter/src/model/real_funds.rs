@@ -76,6 +76,7 @@ pub struct RealFundsCanaryMarketCandidate {
     pub limit_price: String,
     pub ask_size: String,
     pub target_size: String,
+    pub estimated_order_notional_usd: String,
     pub spread_bps: u64,
     pub min_order_size: String,
     pub exchange_rule_snapshot: ExchangeRuleSnapshot,
@@ -119,6 +120,7 @@ pub struct RealFundsCanaryMarketRejectionCounts {
     pub min_order_size_above_order_size: u64,
     pub exchange_rule_snapshot_invalid: u64,
     pub post_only_not_bound: u64,
+    pub notional_binding_mismatch: u64,
     pub notional_over_cap: u64,
 }
 

@@ -290,6 +290,7 @@ fn real_funds_market_selector_requires_target_size_at_top_ask() {
             limit_price: "0.19".into(),
             ask_size: "2".into(),
             target_size: "5".into(),
+            estimated_order_notional_usd: "0.95".into(),
             spread_bps: 10,
             min_order_size: "1".into(),
             exchange_rule_snapshot: exchange_rule_snapshot_fixture("1"),
@@ -311,6 +312,7 @@ fn real_funds_market_selector_requires_target_size_at_top_ask() {
             limit_price: "0.19".into(),
             ask_size: "5".into(),
             target_size: "5".into(),
+            estimated_order_notional_usd: "0.95".into(),
             spread_bps: 10,
             min_order_size: "1".into(),
             exchange_rule_snapshot: exchange_rule_snapshot_fixture("1"),
@@ -342,6 +344,7 @@ fn real_funds_market_selector_derives_notional_from_price_times_target_size() {
         limit_price: "0.29".into(),
         ask_size: "10".into(),
         target_size: "5".into(),
+        estimated_order_notional_usd: "1.45".into(),
         spread_bps: 10,
         min_order_size: "5".into(),
         exchange_rule_snapshot: exchange_rule_snapshot_fixture("5"),
@@ -353,6 +356,21 @@ fn real_funds_market_selector_derives_notional_from_price_times_target_size() {
     assert!(diagnostics.selection.is_none());
     assert_eq!(
         diagnostics.diagnostics.rejection_counts.notional_over_cap,
+        1
+    );
+}
+
+#[test]
+fn real_funds_market_selector_requires_candidate_notional_binding() {
+    let mut candidates = safe_market_candidates();
+    candidates[2].estimated_order_notional_usd = "0.94".into();
+    let diagnostics = select_real_funds_canary_market_with_diagnostics(&candidates[2..3], "1");
+    assert!(diagnostics.selection.is_none());
+    assert_eq!(
+        diagnostics
+            .diagnostics
+            .rejection_counts
+            .notional_binding_mismatch,
         1
     );
 }
@@ -373,6 +391,7 @@ fn real_funds_market_selector_allows_gtc_post_only_size_five_below_one_dollar() 
         limit_price: "0.023".into(),
         ask_size: "1386.16".into(),
         target_size: "5".into(),
+        estimated_order_notional_usd: "0.115".into(),
         spread_bps: 10,
         min_order_size: "5".into(),
         exchange_rule_snapshot: exchange_rule_snapshot_fixture("5"),
@@ -460,6 +479,7 @@ fn real_funds_market_selector_uses_fixed_decimal_for_notional_cap() {
         limit_price: "0.09".into(),
         ask_size: "1".into(),
         target_size: "0.2".into(),
+        estimated_order_notional_usd: "0.018".into(),
         spread_bps: 10,
         min_order_size: "0.1".into(),
         exchange_rule_snapshot: exchange_rule_snapshot_fixture("0.1"),
@@ -489,6 +509,7 @@ fn real_funds_market_selector_compares_min_order_to_target_size() {
             limit_price: "0.005".into(),
             ask_size: "2000".into(),
             target_size: "5".into(),
+            estimated_order_notional_usd: "0.025".into(),
             spread_bps: 10,
             min_order_size: "5".into(),
             exchange_rule_snapshot: exchange_rule_snapshot_fixture("5"),
@@ -510,6 +531,7 @@ fn real_funds_market_selector_compares_min_order_to_target_size() {
             limit_price: "0.19".into(),
             ask_size: "10".into(),
             target_size: "5".into(),
+            estimated_order_notional_usd: "0.95".into(),
             spread_bps: 10,
             min_order_size: "6".into(),
             exchange_rule_snapshot: exchange_rule_snapshot_fixture("6"),
@@ -654,6 +676,7 @@ fn real_funds_canary_rejects_unsafe_market_candidates() {
         limit_price: "0.09".into(),
         ask_size: "10".into(),
         target_size: "5".into(),
+        estimated_order_notional_usd: "0.45".into(),
         spread_bps: 251,
         min_order_size: "1".into(),
         exchange_rule_snapshot: exchange_rule_snapshot_fixture("1"),
@@ -686,6 +709,7 @@ fn real_funds_market_diagnostics_are_aggregate_and_fail_closed() {
             limit_price: "0.19".into(),
             ask_size: "10".into(),
             target_size: "5".into(),
+            estimated_order_notional_usd: "0.95".into(),
             spread_bps: 251,
             min_order_size: "1".into(),
             exchange_rule_snapshot: exchange_rule_snapshot_fixture("1"),
@@ -707,6 +731,7 @@ fn real_funds_market_diagnostics_are_aggregate_and_fail_closed() {
             limit_price: "0.19".into(),
             ask_size: "10".into(),
             target_size: "5".into(),
+            estimated_order_notional_usd: "0.95".into(),
             spread_bps: 50,
             min_order_size: "6".into(),
             exchange_rule_snapshot: exchange_rule_snapshot_fixture("6"),
@@ -796,6 +821,7 @@ fn safe_market_candidates() -> Vec<RealFundsCanaryMarketCandidate> {
             limit_price: "0.09".into(),
             ask_size: "10".into(),
             target_size: "5".into(),
+            estimated_order_notional_usd: "0.45".into(),
             spread_bps: 10,
             min_order_size: "1".into(),
             exchange_rule_snapshot: exchange_rule_snapshot_fixture("1"),
@@ -817,6 +843,7 @@ fn safe_market_candidates() -> Vec<RealFundsCanaryMarketCandidate> {
             limit_price: "0.19".into(),
             ask_size: "20".into(),
             target_size: "5".into(),
+            estimated_order_notional_usd: "0.95".into(),
             spread_bps: 20,
             min_order_size: "1".into(),
             exchange_rule_snapshot: exchange_rule_snapshot_fixture("1"),
@@ -838,6 +865,7 @@ fn safe_market_candidates() -> Vec<RealFundsCanaryMarketCandidate> {
             limit_price: "0.19".into(),
             ask_size: "20".into(),
             target_size: "5".into(),
+            estimated_order_notional_usd: "0.95".into(),
             spread_bps: 15,
             min_order_size: "1".into(),
             exchange_rule_snapshot: exchange_rule_snapshot_fixture("1"),

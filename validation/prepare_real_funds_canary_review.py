@@ -83,6 +83,7 @@ def validate_candidate_market_json(candidate_market_bytes: bytes, label: str) ->
         "post_only",
         "ask_size",
         "target_size",
+        "estimated_order_notional_usd",
         "spread_bps",
         "min_order_size",
         "exchange_rule_snapshot",
@@ -106,6 +107,13 @@ def validate_candidate_market_json(candidate_market_bytes: bytes, label: str) ->
         raise SystemExit(f"{label}: candidate market limit_price must be positive")
     if not positive_decimal_text(candidate.get("target_size")):
         raise SystemExit(f"{label}: candidate market target_size must be a concrete positive share size")
+    if not positive_decimal_text(candidate.get("estimated_order_notional_usd")):
+        raise SystemExit(f"{label}: candidate market estimated_order_notional_usd must be positive")
+    expected_notional = Decimal(candidate["limit_price"]) * Decimal(candidate["target_size"])
+    if Decimal(candidate["estimated_order_notional_usd"]) != expected_notional:
+        raise SystemExit(
+            f"{label}: candidate market estimated_order_notional_usd must equal limit_price * target_size"
+        )
     snapshot = candidate.get("exchange_rule_snapshot")
     if not isinstance(snapshot, dict):
         raise SystemExit(f"{label}: candidate market exchange_rule_snapshot must be an object")
