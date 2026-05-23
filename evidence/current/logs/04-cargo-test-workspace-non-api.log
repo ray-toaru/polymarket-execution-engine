@@ -1,4 +1,4 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.25s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.24s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-b59f2ab4b350d559)
 
 running 2 tests
@@ -9,11 +9,12 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
      Running unittests src/lib.rs (target/debug/deps/pmx_core-d71860d80f037e8d)
 
-running 22 tests
+running 23 tests
 test domain::domain_tests::divergence::order_lifecycle_divergence_escalates_terminal_remote_mismatch ... ok
 test domain::domain_tests::divergence::order_lifecycle_divergence_maps_remote_unknown_open_and_missing ... ok
 test domain::domain_tests::hash_value::hash_value_accepts_lowercase_sha256_hex ... ok
 test domain::domain_tests::hash_value::hash_value_rejects_non_sha256_hex ... ok
+test domain::domain_tests::hash_value::typed_ids_reject_blank_values_during_deserialization ... ok
 test domain::domain_tests::intent_normalization::buy_notional_canonicalizes_to_quote_bound ... ok
 test domain::domain_tests::intent_normalization::buy_shares_canonicalizes_to_base_bound ... ok
 test domain::domain_tests::intent_normalization::canonical_json_hash_is_key_order_independent ... ok
@@ -33,7 +34,7 @@ test domain::domain_tests::lifecycle::remote_unknown_states_require_reconcile ..
 test domain::domain_tests::lifecycle::sign_only_lifecycle_never_models_remote_post ... ok
 test domain::domain_tests::lifecycle::sign_only_lifecycle_rejects_direct_sign_without_reservation ... ok
 
-test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_gateway-da3cd90baa04a373)
 
@@ -97,7 +98,7 @@ test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fin
 
      Running unittests src/lib.rs (target/debug/deps/pmx_service-c1aa0b8c6a5b27b1)
 
-running 37 tests
+running 38 tests
 test service::tests::flow::explicit_live_gateway_blocks_unsupported_quote_notional_without_stuck_idempotency ... ok
 test service::tests::flow::explicit_live_gateway_posts_and_records_remote_order_lifecycle ... ok
 test service::tests::flow::explicit_live_gateway_posts_buy_size_and_records_quote_exposure ... ok
@@ -107,6 +108,7 @@ test service::tests::flow::live_submit_mode_fails_closed_until_gateway_is_wired 
 test service::tests::flow::service_flow_persists_and_blocks_submit ... ok
 test service::tests::flow::service_id_bound_flow_persists_and_blocks_submit ... ok
 test service::tests::flow::service_rejects_object_graph_mismatch ... ok
+test service::tests::flow::service_rejects_tampered_approval_hash ... ok
 test service::tests::flow::static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks ... ok
 test service::tests::non_live_order_lifecycle::cancel_reconcile::service_live_cancel_gateway_records_remote_acceptance_and_unknown ... ok
 test service::tests::non_live_order_lifecycle::cancel_reconcile::service_records_non_live_cancel_and_reconcile_order_lifecycle ... ok
@@ -136,7 +138,7 @@ test service::tests::sign_only::standard::service_derives_standard_sign_only_ref
 test service::tests::sign_only::standard::service_records_standard_sign_only_construction_without_raw_payload ... ok
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 
-test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.98s
+test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-9a97aadec1c8f384)
 
@@ -195,7 +197,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 53 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.31s
+test result: ok. 53 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
 
    Doc-tests pmx_authz
 

@@ -1,1 +1,11 @@
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.81s
+    Checking alloy-consensus v1.6.3
+    Checking alloy-consensus-any v1.6.3
+    Checking alloy-network-primitives v1.6.3
+    Checking alloy-rpc-types-eth v1.6.3
+    Checking alloy-rpc-types-any v1.6.3
+    Checking alloy-network v1.6.3
+    Checking alloy-signer-local v1.6.3
+    Checking alloy v1.6.3
+    Checking polymarket_client_sdk_v2 v0.6.0-canary.1
+    Checking pmx-official-sdk-adapter v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 13.95s

@@ -1,11 +1,15 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.80s
+   Compiling alloy-signer-local v1.6.3
+   Compiling alloy v1.6.3
+   Compiling polymarket_client_sdk_v2 v0.6.0-canary.1
+   Compiling pmx-official-sdk-spike v0.0.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-spike)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 10.56s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-spike/target/debug/deps/pmx_official_sdk_spike-f25e455305249ea8)
 
 running 2 tests
 test tests::live_submit_is_disabled_by_default ... ok
 test tests::read_only_ok_smoke ... ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.97s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.40s
 
    Doc-tests pmx_official_sdk_spike
 
