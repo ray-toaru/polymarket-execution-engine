@@ -1,4 +1,4 @@
-# polymarket-execution-engine v0.26.0 controlled canary source-candidate
+# polymarket-execution-engine v0.26.1 controlled canary source-candidate
 
 Standalone Rust execution plane for Polymarket. This package is a
 **controlled real-funds canary source-candidate**, not a production or

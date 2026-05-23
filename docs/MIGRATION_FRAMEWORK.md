@@ -1,6 +1,6 @@
 # PostgreSQL migration framework
 
-Status: current v0.26.0 controlled real-funds canary source-candidate documentation.
+Status: current v0.26.1 controlled real-funds canary source-candidate documentation.
 
 ## Goal
 

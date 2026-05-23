@@ -1,6 +1,6 @@
 # Sign-only Lifecycle PostgreSQL Persistence
 
-> Status: current v0.26.0 controlled real-funds canary source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+> Status: current v0.26.1 controlled real-funds canary source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
 Sign-only dry-run is intentionally non-mutating. It may build/sign locally through the official SDK path, but it must never call `post_order`, never create a remote order, and never expose raw signed payloads to the executor adapter.
 

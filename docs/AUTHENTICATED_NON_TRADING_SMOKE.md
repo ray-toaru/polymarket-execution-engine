@@ -1,6 +1,6 @@
 # Authenticated Non-trading SDK Smoke
 
-> Status: current v0.26.0 controlled real-funds canary source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+> Status: current v0.26.1 controlled real-funds canary source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
 Status: executed on 2026-05-15 in a credentialed environment with explicit gates. Evidence: `evidence/2026-05-15/v0.10/14-authenticated-smoke.log`.
 

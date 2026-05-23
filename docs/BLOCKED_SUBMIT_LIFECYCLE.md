@@ -1,6 +1,6 @@
 # Blocked submit lifecycle event
 
-> Status: current v0.26.0 controlled real-funds canary source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+> Status: current v0.26.1 controlled real-funds canary source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
 The current blocked submit path records a local execution lifecycle event without
 persisting an order reservation and without any remote side effect.

@@ -2778,7 +2778,7 @@ dependencies = [
 
 [[package]]
 name = "pmx-core"
-version = "0.26.0"
+version = "0.26.1"
 dependencies = [
  "chrono",
  "serde",
@@ -2790,7 +2790,7 @@ dependencies = [
 
 [[package]]
 name = "pmx-gateway"
-version = "0.26.0"
+version = "0.26.1"
 dependencies = [
  "async-trait",
  "pmx-core",
