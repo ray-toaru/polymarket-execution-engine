@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -41,7 +42,7 @@ def run_rehearsal(output_dir: Path, args: argparse.Namespace) -> tuple[list[str]
     failures: list[str] = []
     external_references_file = resolve_input_path(args.external_references_file)
     review_command = [
-        "python",
+        sys.executable,
         str(REVIEW_SCRIPT),
         "--output-dir",
         str(output_dir),
@@ -60,6 +61,18 @@ def run_rehearsal(output_dir: Path, args: argparse.Namespace) -> tuple[list[str]
         review_command.extend(["--artifact-sha256", args.artifact_sha256])
     if args.evidence_manifest_sha256:
         review_command.extend(["--evidence-manifest-sha256", args.evidence_manifest_sha256])
+    if args.workspace_evidence_manifest_sha256:
+        review_command.extend(
+            ["--workspace-evidence-manifest-sha256", args.workspace_evidence_manifest_sha256]
+        )
+    if args.archived_evidence_manifest_sha256:
+        review_command.extend(
+            ["--archived-evidence-manifest-sha256", args.archived_evidence_manifest_sha256]
+        )
+    if args.candidate_market_file:
+        review_command.extend(
+            ["--candidate-market-file", str(resolve_input_path(args.candidate_market_file))]
+        )
     completed = subprocess.run(
         review_command,
         cwd=ROOT,
@@ -171,6 +184,9 @@ def main() -> int:
     parser.add_argument("--external-references-file", type=Path, default=EXTERNAL_REFERENCES_EXAMPLE)
     parser.add_argument("--artifact-sha256", default=EXAMPLE_REVIEW_ARTIFACT_SHA256)
     parser.add_argument("--evidence-manifest-sha256")
+    parser.add_argument("--workspace-evidence-manifest-sha256")
+    parser.add_argument("--archived-evidence-manifest-sha256")
+    parser.add_argument("--candidate-market-file", type=Path)
     parser.add_argument("--root-ci-run-id", default="26268697168")
     parser.add_argument("--hermes-ci-run-id", default="26267887116")
     parser.add_argument("--execution-engine-ci-run-id", default="26268276210")
