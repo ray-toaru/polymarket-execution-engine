@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "status": "fixture_invalid_sensitive",
+  "source_release": "v0.27.3",
+  "scope": "REAL_FUNDS_CANARY",
+  "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
+  "artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "workspace_manifest_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "archived_manifest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "private_key": "fixture-sensitive-value-must-not-be-logged",
+  "dependencies": [
+    {
+      "name": "kill_switch",
+      "status": "durable_runtime_truth",
+      "evidence_ref": "pg://runtime/kill-switch"
+    },
+    {
+      "name": "live_submit_gate",
+      "status": "durable_runtime_truth",
+      "evidence_ref": "pg://runtime/live-submit-gate"
+    },
+    {
+      "name": "idempotency_lease",
+      "status": "durable_runtime_truth",
+      "evidence_ref": "pg://runtime/idempotency-lease"
+    },
+    {
+      "name": "order_cancel_reconciliation",
+      "status": "durable_runtime_truth",
+      "evidence_ref": "pg://runtime/order-cancel-reconciliation"
+    }
+  ],
+  "references_only_no_secret_values": true,
+  "live_submit_allowed": false,
+  "live_cancel_allowed": false,
+  "real_funds_canary_authorized": false,
+  "remote_side_effects": false,
+  "production_ready_claimed": false
+}

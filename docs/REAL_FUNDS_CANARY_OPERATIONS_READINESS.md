@@ -38,6 +38,13 @@ references-only: it records durable evidence references for `kill_switch`,
 `order_cancel_reconciliation`, but it does not contain secrets and does not
 authorize live submit by itself.
 
+Validate the reviewed runtime-truth candidate before using it:
+
+```bash
+python validation/validate_controlled_canary_runtime_truth.py \
+  --file /path/to/reviewed-runtime-truth.json
+```
+
 By default the generated package binds the current
 `evidence/current/manifest.json` file hash. Source-controlled example fixtures
 under `config/controlled-canary.*.example.json` are reviewed examples, not a

@@ -165,6 +165,7 @@ python validation/run_real_funds_canary_review_package_drill.py 2>&1 | tee "${EV
 python validation/run_single_host_deployment_drill.py 2>&1 | tee "${EVIDENCE_DIR}/69-single-host-deployment-drill.log"
 python validation/run_single_host_canary_candidate_drill.py 2>&1 | tee "${EVIDENCE_DIR}/70-single-host-canary-candidate-drill.log"
 python validation/run_single_host_go_candidate_drill.py 2>&1 | tee "${EVIDENCE_DIR}/71-single-host-go-candidate-drill.log"
+python validation/validate_controlled_canary_runtime_truth.py 2>&1 | tee "${EVIDENCE_DIR}/73-controlled-canary-runtime-truth.log"
 python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
 python validation/check_docs_evidence_governance.py 2>&1 | tee "${EVIDENCE_DIR}/30-docs-evidence-governance.log"
 python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null

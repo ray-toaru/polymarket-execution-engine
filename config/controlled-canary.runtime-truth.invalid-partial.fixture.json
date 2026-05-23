@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "status": "fixture_invalid_partial",
+  "source_release": "v0.27.3",
+  "scope": "REAL_FUNDS_CANARY",
+  "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
+  "artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "workspace_manifest_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "archived_manifest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "dependencies": [
+    {
+      "name": "kill_switch",
+      "status": "durable_runtime_truth",
+      "evidence_ref": "pg://runtime/kill-switch"
+    }
+  ],
+  "references_only_no_secret_values": true,
+  "live_submit_allowed": false,
+  "live_cancel_allowed": false,
+  "real_funds_canary_authorized": false,
+  "remote_side_effects": false,
+  "production_ready_claimed": false
+}
