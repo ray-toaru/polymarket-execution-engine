@@ -26,7 +26,9 @@ python scripts/prepare_canary_closeout.py --package-dir <exact-reviewed-go-packa
 
 The script reads the local canary review package, the current release zip
 sidecar, order-status readback, trade readback, and public Data API account
-activity readback. It writes:
+activity readback. For v0.27 and later packages it also requires
+`post-canary-report.json.stages.jsonl`, the append-only ordered stage history
+written by the armed CLI beside `post-canary-report.json`. It writes:
 
 - `closeout.json`
 - `CLOSEOUT.md`
@@ -34,6 +36,9 @@ activity readback. It writes:
 The script fails closed if the evidence no longer supports the closeout
 claims. The package directory is required so multiple local review packages
 cannot be confused by modification time.
+The stage history must contain the accepted post stage for the same remote
+order id as the final report, must not expose raw signed material, and must not
+contain unresolved `operator_required` recovery state.
 
 If the armed canary fails after a possible remote side effect, the same report
 path must already contain the latest stage report. `post_unknown`,
