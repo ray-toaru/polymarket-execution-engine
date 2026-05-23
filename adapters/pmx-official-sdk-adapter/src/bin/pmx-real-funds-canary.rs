@@ -65,6 +65,10 @@ struct CanaryCliReport {
     market_candidate_sha256: String,
     market_candidate_bound: bool,
     release_decision_bound: bool,
+    runtime_kill_switch_truth_bound: bool,
+    runtime_live_submit_gate_bound: bool,
+    runtime_idempotency_lease_bound: bool,
+    runtime_order_cancel_reconciliation_bound: bool,
     live_submit_allowed: bool,
     real_funds_canary_allowed: bool,
     posted: bool,
@@ -155,6 +159,10 @@ async fn main() -> anyhow::Result<()> {
             market_candidate_sha256: market_candidate_sha256.clone(),
             market_candidate_bound: approval.market_candidate_sha256 == market_candidate_sha256,
             release_decision_bound,
+            runtime_kill_switch_truth_bound: runtime_truth.kill_switch,
+            runtime_live_submit_gate_bound: runtime_truth.live_submit_gate,
+            runtime_idempotency_lease_bound: runtime_truth.idempotency_lease,
+            runtime_order_cancel_reconciliation_bound: runtime_truth.order_cancel_reconciliation,
             live_submit_allowed: false,
             real_funds_canary_allowed: false,
             posted: false,
@@ -250,6 +258,10 @@ async fn main() -> anyhow::Result<()> {
             market_candidate_sha256: market_candidate_sha256.clone(),
             market_candidate_bound: approval.market_candidate_sha256 == market_candidate_sha256,
             release_decision_bound,
+            runtime_kill_switch_truth_bound: runtime_truth.kill_switch,
+            runtime_live_submit_gate_bound: runtime_truth.live_submit_gate,
+            runtime_idempotency_lease_bound: runtime_truth.idempotency_lease,
+            runtime_order_cancel_reconciliation_bound: runtime_truth.order_cancel_reconciliation,
             live_submit_allowed: true,
             real_funds_canary_allowed: real_funds_env_enabled
                 && args.allow_real_funds_canary_config,
@@ -312,6 +324,10 @@ async fn main() -> anyhow::Result<()> {
         market_candidate_sha256: market_candidate_sha256.clone(),
         market_candidate_bound: approval.market_candidate_sha256 == market_candidate_sha256,
         release_decision_bound,
+        runtime_kill_switch_truth_bound: runtime_truth.kill_switch,
+        runtime_live_submit_gate_bound: runtime_truth.live_submit_gate,
+        runtime_idempotency_lease_bound: runtime_truth.idempotency_lease,
+        runtime_order_cancel_reconciliation_bound: runtime_truth.order_cancel_reconciliation,
         live_submit_allowed: false,
         real_funds_canary_allowed: real_funds_env_enabled && args.allow_real_funds_canary_config,
         posted: false,
@@ -612,7 +628,10 @@ fn sha256_hex(bytes: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pmx_official_sdk_adapter::{RealFundsCanaryMarketSelection, RealFundsCanaryPreconditions};
+    use pmx_official_sdk_adapter::{
+        RealFundsCanaryMarketRejectionCounts, RealFundsCanaryMarketSelection,
+        RealFundsCanaryPreconditions,
+    };
     use std::time::{SystemTime, UNIX_EPOCH};
 
     fn temp_runtime_truth_path(name: &str) -> PathBuf {
@@ -663,6 +682,35 @@ mod tests {
             runtime_live_submit_gate_bound: true,
             runtime_idempotency_lease_bound: true,
             runtime_order_cancel_reconciliation_bound: true,
+        }
+    }
+
+    fn empty_market_diagnostics() -> RealFundsCanaryMarketDiagnostics {
+        RealFundsCanaryMarketDiagnostics {
+            market_validation_complete: true,
+            candidates_seen: 1,
+            safe_candidates: 1,
+            max_ask_size: None,
+            min_spread_bps: None,
+            min_order_size_blocks: false,
+            rejection_counts: RealFundsCanaryMarketRejectionCounts {
+                inactive: 0,
+                not_accepting_orders: 0,
+                closed: 0,
+                archived: 0,
+                wrong_side: 0,
+                wrong_order_type: 0,
+                missing_book_snapshot_timestamp: 0,
+                missing_human_review_ref: 0,
+                missing_or_zero_target_size: 0,
+                spread_too_wide: 0,
+                missing_or_zero_best_ask: 0,
+                insufficient_ask_size: 0,
+                min_order_size_above_order_size: 0,
+                exchange_rule_snapshot_invalid: 0,
+                post_only_not_bound: 0,
+                notional_over_cap: 0,
+            },
         }
     }
 
@@ -721,6 +769,43 @@ mod tests {
         assert!(truth.live_submit_gate);
         assert!(!truth.idempotency_lease);
         assert!(truth.order_cancel_reconciliation);
+    }
+
+    #[test]
+    fn cli_preflight_report_serializes_runtime_truth_bindings() {
+        let report = CanaryCliReport {
+            status: "preflight_ready".into(),
+            dry_run: false,
+            preflight_only: true,
+            armed: false,
+            selected_market_id_hash: Some("market-hash".into()),
+            selected_token_id_hash: Some("token-hash".into()),
+            limit_price: Some("0.02".into()),
+            size: Some("5".into()),
+            notional_usd: Some("0.10".into()),
+            market_diagnostics: empty_market_diagnostics(),
+            approval_hash: "a".repeat(64),
+            artifact_bound: true,
+            evidence_manifest_bound: true,
+            market_candidate_sha256: "b".repeat(64),
+            market_candidate_bound: true,
+            release_decision_bound: true,
+            runtime_kill_switch_truth_bound: true,
+            runtime_live_submit_gate_bound: true,
+            runtime_idempotency_lease_bound: true,
+            runtime_order_cancel_reconciliation_bound: true,
+            live_submit_allowed: true,
+            real_funds_canary_allowed: true,
+            posted: false,
+            remote_side_effects: false,
+            raw_signed_order_exposed: false,
+        };
+
+        let json = serde_json::to_value(&report).expect("serialize report");
+        assert_eq!(json["runtime_kill_switch_truth_bound"], true);
+        assert_eq!(json["runtime_live_submit_gate_bound"], true);
+        assert_eq!(json["runtime_idempotency_lease_bound"], true);
+        assert_eq!(json["runtime_order_cancel_reconciliation_bound"], true);
     }
 
     #[test]
