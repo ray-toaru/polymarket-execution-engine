@@ -38,7 +38,13 @@ claims. The package directory is required so multiple local review packages
 cannot be confused by modification time.
 The stage history must contain the accepted post stage for the same remote
 order id as the final report, must not expose raw signed material, and must not
-contain unresolved `operator_required` recovery state.
+contain unresolved `operator_required` recovery state. If the stage history
+contains `operator_required`, the package must also include
+`operator-recovery.json` with `recovery_decision=operator_reviewed_closed_no_retry`,
+an operator review reference, the exact stage-history SHA-256, the same remote
+order id, no-retry/no-second-order assertions, and references to order, trade,
+and account-activity readback evidence. This recovery evidence is read-only; it
+does not authorize retrying, posting another order, or production/live trading.
 
 If the armed canary fails after a possible remote side effect, the same report
 path must already contain the latest stage report. `post_unknown`,
