@@ -1,1 +1,9 @@
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.32s
+    Checking generic-array v0.14.7
+    Checking block-buffer v0.10.4
+    Checking crypto-common v0.1.7
+    Checking digest v0.10.7
+    Checking sha2 v0.10.9
+    Checking pmx-core v0.26.1 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
+    Checking pmx-gateway v0.26.1 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
+    Checking pmx-official-sdk-adapter v0.26.1 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.82s

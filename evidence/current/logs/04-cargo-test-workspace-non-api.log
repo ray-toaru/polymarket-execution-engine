@@ -1,5 +1,5 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.26s
-     Running unittests src/lib.rs (target/debug/deps/pmx_authz-b59f2ab4b350d559)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.24s
+     Running unittests src/lib.rs (target/debug/deps/pmx_authz-ba70847bafab1af2)
 
 running 2 tests
 test tests::admin_can_cancel ... ok
@@ -7,7 +7,7 @@ test tests::service_cannot_cancel ... ok
 
 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_core-d71860d80f037e8d)
+     Running unittests src/lib.rs (target/debug/deps/pmx_core-7c1eddf6cc9ee4d7)
 
 running 23 tests
 test domain::domain_tests::divergence::order_lifecycle_divergence_escalates_terminal_remote_mismatch ... ok
@@ -36,7 +36,7 @@ test domain::domain_tests::lifecycle::sign_only_lifecycle_rejects_direct_sign_wi
 
 test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_gateway-da3cd90baa04a373)
+     Running unittests src/lib.rs (target/debug/deps/pmx_gateway-73c6cc5485f9e76f)
 
 running 9 tests
 test tests::post_cancel::deterministic_signer_provider_posts_reads_and_cancels ... ok
@@ -51,7 +51,7 @@ test tests::signer::signer_provider_defaults_are_production_conservative ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_policy-fbac55dcc4960d1d)
+     Running unittests src/lib.rs (target/debug/deps/pmx_policy-061226c64ee7f40e)
 
 running 3 tests
 test tests::degraded_worker_blocks_pre_live ... ok
@@ -60,14 +60,14 @@ test tests::geoblock_unknown_blocks ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_release-1de4003aae1e4d59)
+     Running unittests src/lib.rs (target/debug/deps/pmx_release-ac3e2349821adbed)
 
 running 1 test
 test tests::rejects_release_regression ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_runtime-6cfbd78a99718b47)
+     Running unittests src/lib.rs (target/debug/deps/pmx_runtime-0472c94b23f24882)
 
 running 23 tests
 test non_trading_worker::tests::emit_non_trading_heartbeat_delivers_to_sink_without_trading_side_effects ... ok
@@ -96,7 +96,7 @@ test runtime_tests::evaluations::reconcile_websocket_geoblock::websocket_livenes
 
 test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_service-c1aa0b8c6a5b27b1)
+     Running unittests src/lib.rs (target/debug/deps/pmx_service-b5b2bb40eaa4df76)
 
 running 39 tests
 test service::tests::flow::explicit_live_gateway_blocks_unsupported_quote_notional_without_stuck_idempotency ... ok
@@ -139,9 +139,9 @@ test service::tests::sign_only::standard::service_derives_standard_sign_only_ref
 test service::tests::sign_only::standard::service_records_standard_sign_only_construction_without_raw_payload ... ok
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 
-test result: ok. 39 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.92s
+test result: ok. 39 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.94s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_store-9a97aadec1c8f384)
+     Running unittests src/lib.rs (target/debug/deps/pmx_store-b4ebef63e63dd77d)
 
 running 57 tests
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_paginates_and_filters_by_cursor ... ok
@@ -202,7 +202,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 57 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.24s
+test result: ok. 57 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.51s
 
    Doc-tests pmx_authz
 
