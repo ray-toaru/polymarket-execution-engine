@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import argparse
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -87,6 +88,11 @@ AUTHORIZATION_FLAGS = [
 ]
 
 
+def expected_source_release() -> str:
+    cargo = tomllib.loads((ROOT / "Cargo.toml").read_text())
+    return f"v{cargo['workspace']['package']['version']}"
+
+
 def load(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text())
 
@@ -143,10 +149,11 @@ def validate_no_sensitive_material(data: object) -> list[str]:
 
 def validate_shape(data: dict[str, Any], label: str, *, allow_placeholders: bool) -> list[str]:
     failures: list[str] = []
+    source_release = expected_source_release()
     if data.get("schema_version") != 1:
         failures.append(f"{label}: schema_version must be 1")
-    if data.get("source_release") != "v0.26.1":
-        failures.append(f"{label}: source_release must be v0.26.1")
+    if data.get("source_release") != source_release:
+        failures.append(f"{label}: source_release must be {source_release}")
     if data.get("references_only_no_secret_values") is not True:
         failures.append(f"{label}: references_only_no_secret_values must be true")
     for flag in AUTHORIZATION_FLAGS:
@@ -236,13 +243,13 @@ def main() -> int:
 
     failures.extend(validate_shape(example, "example", allow_placeholders=False))
     if example.get("artifact_sha256") != EXPECTED_ARTIFACT_SHA256:
-        failures.append("example must bind v0.26.1 artifact SHA-256")
+        failures.append("example must bind illustrative current-release artifact SHA-256")
     if example.get("evidence_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256:
-        failures.append("example must bind reviewed v0.26.1 example evidence manifest SHA-256")
+        failures.append("example must bind reviewed current-release example evidence manifest SHA-256")
     if example.get("workspace_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_WORKSPACE_MANIFEST_SHA256:
-        failures.append("example must bind reviewed v0.26.1 example workspace manifest SHA-256")
+        failures.append("example must bind reviewed current-release example workspace manifest SHA-256")
     if example.get("archived_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256:
-        failures.append("example must bind reviewed v0.26.1 example archived manifest SHA-256")
+        failures.append("example must bind reviewed current-release example archived manifest SHA-256")
     for key, expected in EXPECTED_RUN_IDS.items():
         if example.get("github_evidence", {}).get(key) != expected:
             failures.append(f"example must bind GitHub evidence {key}")
