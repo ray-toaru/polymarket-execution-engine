@@ -208,6 +208,17 @@ pub fn validate_reviewed_real_funds_canary_release_decision(
             "evidence manifest hash mismatch",
         ),
         (
+            decision
+                .archived_manifest_sha256
+                .as_ref()
+                .is_none_or(|sha| sha == evidence_manifest_sha256)
+                && approval
+                    .archived_manifest_sha256
+                    .as_ref()
+                    .is_none_or(|sha| sha == evidence_manifest_sha256),
+            "archived evidence manifest hash mismatch",
+        ),
+        (
             decision.market_candidate_sha256 == market_candidate_sha256
                 && decision.market_candidate_sha256 == approval.market_candidate_sha256,
             "market candidate hash mismatch",
@@ -432,6 +443,14 @@ fn valid_approval(approval: &RealFundsCanaryApproval) -> bool {
         && approval_not_expired(&approval.expires_at)
         && is_sha256(&approval.artifact_sha256)
         && is_sha256(&approval.evidence_manifest_sha256)
+        && approval
+            .workspace_manifest_sha256
+            .as_ref()
+            .is_none_or(|sha| is_sha256(sha))
+        && approval
+            .archived_manifest_sha256
+            .as_ref()
+            .is_none_or(|sha| is_sha256(sha) && sha == &approval.evidence_manifest_sha256)
         && is_sha256(&approval.market_candidate_sha256)
         && !approval.operator_identity_ref.trim().is_empty()
         && decimal_gt_zero(&approval.max_order_notional_usd)

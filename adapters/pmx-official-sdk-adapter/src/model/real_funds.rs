@@ -11,6 +11,8 @@ pub struct RealFundsCanaryApproval {
     pub expires_at: String,
     pub artifact_sha256: String,
     pub evidence_manifest_sha256: String,
+    pub workspace_manifest_sha256: Option<String>,
+    pub archived_manifest_sha256: Option<String>,
     pub market_candidate_sha256: String,
     pub max_order_notional_usd: String,
     pub max_daily_notional_usd: String,
@@ -40,6 +42,8 @@ pub struct ReviewedRealFundsCanaryReleaseDecision {
     pub expires_at: String,
     pub artifact_sha256: String,
     pub evidence_manifest_sha256: String,
+    pub workspace_manifest_sha256: Option<String>,
+    pub archived_manifest_sha256: Option<String>,
     pub market_candidate_sha256: String,
     pub github_evidence: serde_json::Value,
     pub external_references: serde_json::Value,
@@ -197,4 +201,87 @@ pub struct RealFundsCanaryReceipt {
     pub cancelled: bool,
     pub remote_side_effects: bool,
     pub raw_signed_order_exposed: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RealFundsCanaryStageReport {
+    pub status: String,
+    pub stage: String,
+    pub account_id: AccountId,
+    pub execution_id: ExecutionId,
+    pub plan_hash: HashValue,
+    pub approval_hash: String,
+    pub market_candidate_sha256: String,
+    pub idempotency_key: String,
+    pub remote_order_id: Option<String>,
+    pub remote_status: Option<String>,
+    pub posted: bool,
+    pub filled_or_matched: bool,
+    pub cancelled: bool,
+    pub remote_side_effects: bool,
+    pub operator_required: bool,
+    pub error_summary: Option<String>,
+    pub raw_signed_order_exposed: bool,
+}
+
+impl RealFundsCanaryStageReport {
+    pub fn stage(
+        request: &RealFundsCanaryRequest,
+        stage: &str,
+        remote_order_id: Option<String>,
+        remote_status: Option<String>,
+        posted: bool,
+        filled_or_matched: bool,
+        cancelled: bool,
+    ) -> Self {
+        Self {
+            status: stage.into(),
+            stage: stage.into(),
+            account_id: request.account_id.clone(),
+            execution_id: request.execution_id.clone(),
+            plan_hash: request.plan_hash.clone(),
+            approval_hash: request.approval.approval_hash.clone(),
+            market_candidate_sha256: request.market_candidate_sha256.clone(),
+            idempotency_key: request.idempotency_key.clone(),
+            remote_order_id,
+            remote_status,
+            posted,
+            filled_or_matched,
+            cancelled,
+            remote_side_effects: posted,
+            operator_required: false,
+            error_summary: None,
+            raw_signed_order_exposed: false,
+        }
+    }
+
+    pub fn operator_required(
+        request: &RealFundsCanaryRequest,
+        stage: &str,
+        remote_order_id: Option<String>,
+        remote_status: Option<String>,
+        error_summary: impl Into<String>,
+    ) -> Self {
+        let posted = remote_order_id.is_some();
+        Self {
+            status: "operator_required".into(),
+            stage: stage.into(),
+            account_id: request.account_id.clone(),
+            execution_id: request.execution_id.clone(),
+            plan_hash: request.plan_hash.clone(),
+            approval_hash: request.approval.approval_hash.clone(),
+            market_candidate_sha256: request.market_candidate_sha256.clone(),
+            idempotency_key: request.idempotency_key.clone(),
+            remote_order_id,
+            remote_status,
+            posted,
+            filled_or_matched: false,
+            cancelled: false,
+            remote_side_effects: true,
+            operator_required: true,
+            error_summary: Some(error_summary.into()),
+            raw_signed_order_exposed: false,
+        }
+    }
 }

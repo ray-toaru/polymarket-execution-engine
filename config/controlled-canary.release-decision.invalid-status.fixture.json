@@ -48,5 +48,7 @@
   "allow_real_funds_canary": true,
   "reviewed_release_decision_present": true,
   "operator_identity_ref": "local-operator-approval-ref",
-  "secrets_included": false
+  "secrets_included": false,
+  "workspace_manifest_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "archived_manifest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
 }

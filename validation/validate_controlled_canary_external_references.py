@@ -15,6 +15,7 @@ INVALID_SENSITIVE = CONFIG / "controlled-canary.external-references.invalid-sens
 
 EXPECTED_ARTIFACT_SHA256 = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256 = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+EXPECTED_REVIEWED_EXAMPLE_WORKSPACE_MANIFEST_SHA256 = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
 EXPECTED_RUN_IDS = {
     "root_ci_run_id": "26268697168",
     "hermes_ci_run_id": "26267887116",
@@ -168,6 +169,18 @@ def validate_shape(data: dict[str, Any], label: str, *, allow_placeholders: bool
             failures.append(f"{label}: artifact_sha256 must be 64-hex")
         if not is_sha256(data.get("evidence_manifest_sha256")):
             failures.append(f"{label}: evidence_manifest_sha256 must be 64-hex")
+        if not is_sha256(data.get("workspace_manifest_sha256")):
+            failures.append(f"{label}: workspace_manifest_sha256 must be 64-hex")
+        if data.get("archived_manifest_sha256") != data.get("evidence_manifest_sha256"):
+            failures.append(f"{label}: archived_manifest_sha256 must equal evidence_manifest_sha256")
+    elif not (
+        has_placeholder(data.get("workspace_manifest_sha256"))
+        or is_sha256(data.get("workspace_manifest_sha256"))
+    ) or not (
+        has_placeholder(data.get("archived_manifest_sha256"))
+        or is_sha256(data.get("archived_manifest_sha256"))
+    ):
+        failures.append(f"{label}: workspace/archived manifest hashes must be placeholders or 64-hex")
     return failures
 
 
@@ -226,6 +239,10 @@ def main() -> int:
         failures.append("example must bind v0.26.0 artifact SHA-256")
     if example.get("evidence_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256:
         failures.append("example must bind reviewed v0.26.0 example evidence manifest SHA-256")
+    if example.get("workspace_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_WORKSPACE_MANIFEST_SHA256:
+        failures.append("example must bind reviewed v0.26.0 example workspace manifest SHA-256")
+    if example.get("archived_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256:
+        failures.append("example must bind reviewed v0.26.0 example archived manifest SHA-256")
     for key, expected in EXPECTED_RUN_IDS.items():
         if example.get("github_evidence", {}).get(key) != expected:
             failures.append(f"example must bind GitHub evidence {key}")

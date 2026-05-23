@@ -33,7 +33,8 @@ pub use sdk_runtime::run_sign_only_dry_run;
 #[cfg(feature = "live-submit")]
 pub use sdk_runtime::{
     OfficialSdkGateway, OfficialSdkSignerProvider, official_sdk_gateway_pair,
-    run_real_funds_canary_gtc_post_only_cancel, validate_real_funds_canary_market,
+    run_real_funds_canary_gtc_post_only_cancel,
+    run_real_funds_canary_gtc_post_only_cancel_with_reporter, validate_real_funds_canary_market,
     validate_real_funds_canary_market_with_diagnostics,
 };
 pub use standard_sign_only::*;

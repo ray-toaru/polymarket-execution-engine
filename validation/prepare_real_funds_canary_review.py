@@ -158,7 +158,18 @@ def main() -> int:
     )
     parser.add_argument(
         "--evidence-manifest-sha256",
-        help="Override the evidence manifest hash recorded in the review package.",
+        help=(
+            "Legacy alias for --archived-evidence-manifest-sha256. This is the "
+            "package/sidecar-normalized manifest hash used by armed CLI binding."
+        ),
+    )
+    parser.add_argument(
+        "--workspace-evidence-manifest-sha256",
+        help="Override the raw workspace evidence/current/manifest.json SHA-256.",
+    )
+    parser.add_argument(
+        "--archived-evidence-manifest-sha256",
+        help="Override the normalized manifest SHA-256 recorded in the release artifact sidecar.",
     )
     parser.add_argument(
         "--candidate-market-file",
@@ -196,9 +207,15 @@ def main() -> int:
             "from the external release .zip.sha256 sidecar"
         )
     artifact_sha = require_sha256(artifact_sha, "artifact sha256")
-    manifest_sha = require_sha256(
-        args.evidence_manifest_sha256 or sha256(manifest_path),
-        "evidence manifest sha256",
+    workspace_manifest_sha = require_sha256(
+        args.workspace_evidence_manifest_sha256 or sha256(manifest_path),
+        "workspace evidence manifest sha256",
+    )
+    archived_manifest_sha = require_sha256(
+        args.archived_evidence_manifest_sha256
+        or args.evidence_manifest_sha256
+        or workspace_manifest_sha,
+        "archived evidence manifest sha256",
     )
 
     if candidate_market_file:
@@ -248,12 +265,16 @@ def main() -> int:
 
     approval = json.loads(approval_template.read_text())
     approval["artifact_sha256"] = artifact_sha
-    approval["evidence_manifest_sha256"] = manifest_sha
+    approval["evidence_manifest_sha256"] = archived_manifest_sha
+    approval["workspace_manifest_sha256"] = workspace_manifest_sha
+    approval["archived_manifest_sha256"] = archived_manifest_sha
     approval["market_candidate_sha256"] = candidate_market_sha
 
     release_decision = json.loads(release_decision_template.read_text())
     release_decision["artifact_sha256"] = artifact_sha
-    release_decision["evidence_manifest_sha256"] = manifest_sha
+    release_decision["evidence_manifest_sha256"] = archived_manifest_sha
+    release_decision["workspace_manifest_sha256"] = workspace_manifest_sha
+    release_decision["archived_manifest_sha256"] = archived_manifest_sha
     release_decision["market_candidate_sha256"] = candidate_market_sha
     release_decision["operator_identity_ref"] = approval["operator_identity_ref"]
     release_decision["allow_real_funds_canary"] = bool(
@@ -268,7 +289,9 @@ def main() -> int:
     external_references_source = external_references_file or external_references_template
     external_references = json.loads(external_references_source.read_text())
     external_references["artifact_sha256"] = artifact_sha
-    external_references["evidence_manifest_sha256"] = manifest_sha
+    external_references["evidence_manifest_sha256"] = archived_manifest_sha
+    external_references["workspace_manifest_sha256"] = workspace_manifest_sha
+    external_references["archived_manifest_sha256"] = archived_manifest_sha
     external_references["github_evidence"] = release_decision["github_evidence"]
     external_reference_failures = validate_external_references_shape(
         external_references,
@@ -308,7 +331,7 @@ def main() -> int:
         "--dry-run",
         "--approval-file approval.json",
         f"--artifact-sha256 {artifact_sha}",
-        f"--evidence-manifest-sha256 {manifest_sha}",
+        f"--evidence-manifest-sha256 {archived_manifest_sha}",
         "--idempotency-key dry-run-<UTC_TIMESTAMP>",
         "--account-id acct-canary",
         "--execution-id exec-canary-dry-run-<UTC_TIMESTAMP>",
@@ -320,7 +343,9 @@ def main() -> int:
         "created_at": datetime.now(timezone.utc).isoformat(),
         "status": "review_package_only_not_armed_approval",
         "artifact_sha256": artifact_sha,
-        "evidence_manifest_sha256": manifest_sha,
+        "evidence_manifest_sha256": archived_manifest_sha,
+        "workspace_manifest_sha256": workspace_manifest_sha,
+        "archived_manifest_sha256": archived_manifest_sha,
         "market_candidate_sha256": candidate_market_sha,
         "github_evidence": release_decision["github_evidence"],
         "canonical_evidence_manifest": "polymarket-execution-engine/evidence/current/manifest.json",
@@ -344,19 +369,27 @@ def main() -> int:
         "secrets_included": False,
     }
     (out / "review.json").write_text(json.dumps(review, indent=2, sort_keys=True) + "\n")
+    decision_is_go = release_decision.get("decision") == "go"
+    readme_status = (
+        "This package is a reviewed-go armed canary candidate. It authorizes only the single scoped attempt described in release-decision.json and must be marked consumed/closed after use."
+        if decision_is_go
+        else "This package is local no-go review material only. It is not an armed approval."
+    )
     (out / "README.md").write_text(
         "\n".join(
             [
                 "# Real Funds Canary Review Package",
                 "",
-                "This package is local review material only. It is not an armed approval.",
+                readme_status,
                 "",
                 f"- artifact_sha256: `{artifact_sha}`",
-                f"- evidence_manifest_sha256: `{manifest_sha}`",
-                "- live_submit_allowed: `false`",
-                "- live_cancel_allowed: `false`",
-                "- real_funds_canary_authorized: `false`",
-                "- remote_side_effects: `false`",
+                f"- evidence_manifest_sha256: `{archived_manifest_sha}`",
+                f"- workspace_manifest_sha256: `{workspace_manifest_sha}`",
+                f"- archived_manifest_sha256: `{archived_manifest_sha}`",
+                f"- live_submit_allowed: `{str(bool(release_decision.get('live_submit_authorized'))).lower()}`",
+                f"- live_cancel_allowed: `{str(bool(release_decision.get('live_cancel_authorized'))).lower()}`",
+                f"- real_funds_canary_authorized: `{str(bool(release_decision.get('real_funds_canary_authorized'))).lower()}`",
+                f"- remote_side_effects: `{str(bool(release_decision.get('remote_side_effects_authorized'))).lower()}`",
                 "- secrets_included: `false`",
                 "- external_references_json: `external-references.json`",
                 "- candidate_market_json: `candidate-market.json`",

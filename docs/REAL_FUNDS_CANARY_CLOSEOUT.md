@@ -21,7 +21,7 @@ Generate the machine-readable and human closeout reports from the integration
 repository root:
 
 ```bash
-python scripts/prepare_canary_closeout.py
+python scripts/prepare_canary_closeout.py --package-dir <exact-reviewed-go-package-dir>
 ```
 
 The script reads the local canary review package, the current release zip
@@ -32,7 +32,13 @@ activity readback. It writes:
 - `CLOSEOUT.md`
 
 The script fails closed if the evidence no longer supports the closeout
-claims.
+claims. The package directory is required so multiple local review packages
+cannot be confused by modification time.
+
+If the armed canary fails after a possible remote side effect, the same report
+path must already contain the latest stage report. `post_unknown`,
+`post_accepted`, `cancel_unknown`, and `cancel_failed` reports require operator
+reconciliation before any retry or second canary can be considered.
 
 ## Design Boundary
 

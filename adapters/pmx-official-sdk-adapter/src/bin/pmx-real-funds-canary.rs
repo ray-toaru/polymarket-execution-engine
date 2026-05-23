@@ -3,8 +3,10 @@ use pmx_official_sdk_adapter::{
     BuildRealFundsCanaryPreconditionsInput, LiveCanaryPreconditions, OfficialSdkAdapterConfig,
     RealFundsCanaryApproval, RealFundsCanaryMarketCandidate, RealFundsCanaryMarketDiagnostics,
     RealFundsCanaryReceipt, RealFundsCanaryRequest, RealFundsCanaryRiskLimits,
+    RealFundsCanaryStageReport,
     ReviewedRealFundsCanaryReleaseDecision, build_real_funds_canary_preconditions,
-    run_real_funds_canary_gtc_post_only_cancel, validate_real_funds_canary_market_with_diagnostics,
+    run_real_funds_canary_gtc_post_only_cancel_with_reporter,
+    validate_real_funds_canary_market_with_diagnostics,
     validate_real_funds_canary_preconditions, validate_reviewed_real_funds_canary_release_decision,
 };
 use serde::Serialize;
@@ -226,7 +228,12 @@ async fn main() -> anyhow::Result<()> {
     if args.armed {
         validate_real_funds_canary_preconditions(&config, &request)?;
         create_approval_consumed_marker(&args, &approval, &market_candidate_sha256)?;
-        let receipt = run_real_funds_canary_gtc_post_only_cancel(&config, request).await?;
+        let receipt = run_real_funds_canary_gtc_post_only_cancel_with_reporter(
+            &config,
+            request,
+            |stage| persist_stage_report(&args, stage),
+        )
+        .await?;
         persist_armed_report(&args, &receipt)?;
         println!("{}", serde_json::to_string_pretty(&receipt)?);
         return Ok(());
@@ -372,12 +379,24 @@ fn create_approval_consumed_marker(
 }
 
 fn persist_armed_report(args: &Args, receipt: &RealFundsCanaryReceipt) -> anyhow::Result<()> {
+    write_report_file(args, receipt)
+}
+
+fn persist_stage_report(args: &Args, report: &RealFundsCanaryStageReport) -> anyhow::Result<()> {
+    write_report_file(args, report)
+}
+
+fn write_report_file<T: Serialize>(args: &Args, report: &T) -> anyhow::Result<()> {
     let path = args
         .report_file
         .as_ref()
         .ok_or_else(|| anyhow::anyhow!("--report-file is required for armed real-funds canary"))?;
-    let mut file = OpenOptions::new().write(true).create_new(true).open(path)?;
-    file.write_all(serde_json::to_string_pretty(receipt)?.as_bytes())?;
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(path)?;
+    file.write_all(serde_json::to_string_pretty(report)?.as_bytes())?;
     file.write_all(b"\n")?;
     Ok(())
 }

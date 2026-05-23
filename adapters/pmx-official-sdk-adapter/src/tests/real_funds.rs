@@ -13,6 +13,8 @@ fn approval_fixture() -> RealFundsCanaryApproval {
         expires_at: "2099-01-01T00:00:00Z".into(),
         artifact_sha256: sha256_fixture('b'),
         evidence_manifest_sha256: sha256_fixture('c'),
+        workspace_manifest_sha256: Some(sha256_fixture('e')),
+        archived_manifest_sha256: Some(sha256_fixture('c')),
         market_candidate_sha256: sha256_fixture('d'),
         max_order_notional_usd: "1".into(),
         max_daily_notional_usd: "5".into(),
@@ -61,6 +63,8 @@ fn reviewed_decision_fixture(
         expires_at: "2099-01-01T00:00:00Z".into(),
         artifact_sha256: approval.artifact_sha256.clone(),
         evidence_manifest_sha256: approval.evidence_manifest_sha256.clone(),
+        workspace_manifest_sha256: approval.workspace_manifest_sha256.clone(),
+        archived_manifest_sha256: approval.archived_manifest_sha256.clone(),
         market_candidate_sha256: approval.market_candidate_sha256.clone(),
         github_evidence: serde_json::json!({"root_ci_run_id": "unit-test"}),
         external_references: serde_json::json!({"operator_approval_ref": "approval://unit-test"}),
@@ -97,6 +101,53 @@ fn request_fixture(
         market_candidate_sha256: sha256_fixture('d'),
         preconditions,
     }
+}
+
+#[test]
+fn canary_stage_report_marks_remote_side_effect_failures_operator_required() {
+    let approval = approval_fixture();
+    let risk_limits = risk_limits_fixture();
+    let market = select_real_funds_canary_market(&safe_market_candidates(), "1")
+        .expect("safe market candidate should be selected");
+    let preconditions =
+        build_real_funds_canary_preconditions(BuildRealFundsCanaryPreconditionsInput {
+            approval: &approval,
+            risk_limits: &risk_limits,
+            market: &market,
+            live_canary: all_live_canary_preconditions(),
+            artifact_sha256: &approval.artifact_sha256,
+            evidence_manifest_sha256: &approval.evidence_manifest_sha256,
+            market_candidate_sha256: &approval.market_candidate_sha256,
+            config_allow_real_funds_canary: true,
+            balance_allowance_checked: true,
+            selected_market_safe: true,
+        });
+    let request = request_fixture(
+        preconditions,
+        market,
+    );
+    let report = RealFundsCanaryStageReport::operator_required(
+        &request,
+        "cancel_unknown",
+        Some("0xposted".into()),
+        Some("Live".into()),
+        "cancel_order timed out",
+    );
+
+    assert_eq!(report.status, "operator_required");
+    assert_eq!(report.stage, "cancel_unknown");
+    assert_eq!(report.remote_order_id.as_deref(), Some("0xposted"));
+    assert!(report.posted);
+    assert!(report.remote_side_effects);
+    assert!(report.operator_required);
+    assert!(!report.raw_signed_order_exposed);
+    assert!(
+        report
+            .error_summary
+            .as_deref()
+            .expect("error summary")
+            .contains("cancel_order timed out")
+    );
 }
 
 #[test]

@@ -1,7 +1,8 @@
 use crate::{
     OfficialSdkAdapterConfig, OfficialSdkAdapterError, RealFundsCanaryMarketCandidate,
     RealFundsCanaryMarketSelection, RealFundsCanaryMarketValidation, RealFundsCanaryReceipt,
-    RealFundsCanaryRequest, select_real_funds_canary_market_with_diagnostics,
+    RealFundsCanaryRequest, RealFundsCanaryStageReport,
+    select_real_funds_canary_market_with_diagnostics,
     validate_real_funds_canary_preconditions,
 };
 
@@ -19,6 +20,17 @@ pub async fn run_real_funds_canary_gtc_post_only_cancel(
     config: &OfficialSdkAdapterConfig,
     request: RealFundsCanaryRequest,
 ) -> anyhow::Result<RealFundsCanaryReceipt> {
+    run_real_funds_canary_gtc_post_only_cancel_with_reporter(config, request, |_| Ok(())).await
+}
+
+pub async fn run_real_funds_canary_gtc_post_only_cancel_with_reporter<F>(
+    config: &OfficialSdkAdapterConfig,
+    request: RealFundsCanaryRequest,
+    mut report_stage: F,
+) -> anyhow::Result<RealFundsCanaryReceipt>
+where
+    F: FnMut(&RealFundsCanaryStageReport) -> anyhow::Result<()>,
+{
     validate_real_funds_canary_preconditions(config, &request)?;
 
     let signer = signer_from_env()?;
@@ -56,14 +68,42 @@ pub async fn run_real_funds_canary_gtc_post_only_cancel(
         .map_err(|_| anyhow::anyhow!("official SDK canary order sign timed out after {timeout:?}"))?
         .context("official SDK canary order sign failed")?;
 
-    let response = time::timeout(timeout, client.post_order(signed))
-        .await
-        .map_err(|_| anyhow::anyhow!("official SDK post_order timed out after {timeout:?}"))?
-        .context("official SDK canary post_order failed")?;
+    let response = match time::timeout(timeout, client.post_order(signed)).await {
+        Ok(Ok(response)) => response,
+        Ok(Err(err)) => {
+            let summary = format!("official SDK canary post_order failed: {err}");
+            report_stage(&RealFundsCanaryStageReport::operator_required(
+                &request,
+                "post_unknown",
+                None,
+                None,
+                summary.clone(),
+            ))?;
+            return Err(anyhow::anyhow!(summary));
+        }
+        Err(_) => {
+            let summary = format!("official SDK post_order timed out after {timeout:?}");
+            report_stage(&RealFundsCanaryStageReport::operator_required(
+                &request,
+                "post_unknown",
+                None,
+                None,
+                summary.clone(),
+            ))?;
+            return Err(anyhow::anyhow!(summary));
+        }
+    };
 
     let remote_status = format!("{:?}", response.status);
     let filled_or_matched = remote_status == "Matched";
     if filled_or_matched {
+        report_stage(&RealFundsCanaryStageReport::operator_required(
+            &request,
+            "post_matched",
+            Some(response.order_id.clone()),
+            Some(remote_status.clone()),
+            "GTC post-only canary order unexpectedly matched",
+        ))?;
         return Err(OfficialSdkAdapterError::SafetyGate(
             "GTC post-only canary order unexpectedly matched".into(),
         )
@@ -71,26 +111,76 @@ pub async fn run_real_funds_canary_gtc_post_only_cancel(
     }
     let order_id = response.order_id;
     if !response.success || order_id.is_empty() {
+        report_stage(&RealFundsCanaryStageReport::operator_required(
+            &request,
+            "post_rejected",
+            None,
+            Some(remote_status.clone()),
+            "GTC post-only canary post_order did not return an accepted order id",
+        ))?;
         return Err(OfficialSdkAdapterError::SafetyGate(
             "GTC post-only canary post_order did not return an accepted order id".into(),
         )
         .into());
     }
+    let post_accepted_report_error = report_stage(&RealFundsCanaryStageReport::stage(
+        &request,
+        "post_accepted",
+        Some(order_id.clone()),
+        Some(remote_status.clone()),
+        true,
+        filled_or_matched,
+        false,
+    ))
+    .err();
 
-    let cancel = time::timeout(timeout, client.cancel_order(&order_id))
-        .await
-        .map_err(|_| anyhow::anyhow!("official SDK cancel_order timed out after {timeout:?}"))?
-        .context("official SDK canary cancel_order failed")?;
+    let cancel = match time::timeout(timeout, client.cancel_order(&order_id)).await {
+        Ok(Ok(cancel)) => cancel,
+        Ok(Err(err)) => {
+            let summary = format!("official SDK canary cancel_order failed: {err}");
+            report_stage(&RealFundsCanaryStageReport::operator_required(
+                &request,
+                "cancel_unknown",
+                Some(order_id.clone()),
+                Some(remote_status.clone()),
+                summary.clone(),
+            ))?;
+            return Err(anyhow::anyhow!(summary));
+        }
+        Err(_) => {
+            let summary = format!("official SDK cancel_order timed out after {timeout:?}");
+            report_stage(&RealFundsCanaryStageReport::operator_required(
+                &request,
+                "cancel_unknown",
+                Some(order_id.clone()),
+                Some(remote_status.clone()),
+                summary.clone(),
+            ))?;
+            return Err(anyhow::anyhow!(summary));
+        }
+    };
     let cancelled = cancel.canceled.iter().any(|canceled| canceled == &order_id)
         && !cancel.not_canceled.contains_key(&order_id);
     if !cancelled {
+        report_stage(&RealFundsCanaryStageReport::operator_required(
+            &request,
+            "cancel_failed",
+            Some(order_id.clone()),
+            Some(remote_status.clone()),
+            "GTC post-only canary order was posted but cancel confirmation failed",
+        ))?;
         return Err(OfficialSdkAdapterError::SafetyGate(
             "GTC post-only canary order was posted but cancel confirmation failed".into(),
         )
         .into());
     }
+    if let Some(err) = post_accepted_report_error {
+        return Err(anyhow::anyhow!(
+            "GTC post-only canary order was cancelled, but post_accepted report persistence failed: {err}"
+        ));
+    }
 
-    Ok(RealFundsCanaryReceipt {
+    let receipt = RealFundsCanaryReceipt {
         account_id: request.account_id,
         execution_id: request.execution_id,
         plan_hash: request.plan_hash,
@@ -104,7 +194,8 @@ pub async fn run_real_funds_canary_gtc_post_only_cancel(
         cancelled,
         remote_side_effects: true,
         raw_signed_order_exposed: false,
-    })
+    };
+    Ok(receipt)
 }
 
 pub async fn validate_real_funds_canary_market(

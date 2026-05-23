@@ -17,6 +17,7 @@ INVALID_STATUS = CONFIG / "controlled-canary.release-decision.invalid-status.fix
 
 EXPECTED_ARTIFACT_SHA256 = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256 = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+EXPECTED_REVIEWED_EXAMPLE_WORKSPACE_MANIFEST_SHA256 = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
 EXPECTED_MARKET_CANDIDATE_SHA256 = "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
 EXPECTED_RUN_IDS = {
     "root_ci_run_id": "26268697168",
@@ -43,6 +44,8 @@ ALLOWED_TOP_LEVEL_FIELDS = {
     "expires_at",
     "artifact_sha256",
     "evidence_manifest_sha256",
+    "workspace_manifest_sha256",
+    "archived_manifest_sha256",
     "market_candidate_sha256",
     "github_evidence",
     "external_references",
@@ -153,6 +156,17 @@ def validate_shape(data: dict[str, Any], label: str) -> list[str]:
         failures.append(f"{label}: max_daily_notional_usd must be 5")
     if data.get("secrets_included") is not False:
         failures.append(f"{label}: secrets_included must be false")
+    workspace_sha = data.get("workspace_manifest_sha256")
+    archived_sha = data.get("archived_manifest_sha256")
+    evidence_sha = data.get("evidence_manifest_sha256")
+    if label == "template":
+        if not has_placeholder(workspace_sha) or not has_placeholder(archived_sha):
+            failures.append(f"{label}: workspace/archived manifest hashes must remain placeholders")
+    else:
+        if not is_sha256(workspace_sha):
+            failures.append(f"{label}: workspace_manifest_sha256 must be 64-hex")
+        if archived_sha != evidence_sha:
+            failures.append(f"{label}: archived_manifest_sha256 must equal evidence_manifest_sha256")
     for flag in AUTHORIZATION_FLAGS:
         if flag not in data:
             failures.append(f"{label}: missing {flag}")
@@ -263,6 +277,10 @@ def main() -> int:
         failures.append("example must bind the illustrative v0.26.0 example artifact hash")
     if example.get("evidence_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256:
         failures.append("example must bind the illustrative v0.26.0 example evidence manifest hash")
+    if example.get("workspace_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_WORKSPACE_MANIFEST_SHA256:
+        failures.append("example must bind the illustrative v0.26.0 example workspace manifest hash")
+    if example.get("archived_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256:
+        failures.append("example must bind the illustrative v0.26.0 example archived manifest hash")
     if example.get("market_candidate_sha256") != EXPECTED_MARKET_CANDIDATE_SHA256:
         failures.append("example must bind the illustrative v0.26.0 example market candidate hash")
     for key, expected in EXPECTED_RUN_IDS.items():

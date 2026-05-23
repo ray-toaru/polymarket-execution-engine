@@ -66,7 +66,8 @@ Safety assertions:
 
 Approval file:
 
-- The approval file contains only operator metadata, risk caps, scope, artifact SHA-256, and evidence manifest SHA-256.
+- The approval file contains only operator metadata, risk caps, scope, artifact SHA-256, and evidence manifest SHA-256 bindings.
+- `evidence_manifest_sha256` is the archived/package-sidecar manifest hash used by the armed CLI. Review packages also record `workspace_manifest_sha256` so reviewers can distinguish the raw workspace manifest from the normalized manifest embedded in the deterministic release zip.
 - It must not contain private keys, CLOB secrets, API secrets, raw signatures, raw signed payloads, or `SignedOrderEnvelope`.
 - The example fixture is `config/real-funds-canary.approval.example.json`.
 
@@ -75,6 +76,7 @@ Execution policy:
 - Normal validation runs only the preflight drill and must not call the SDK submit path.
 - A real canary run requires a fresh artifact hash, current evidence manifest hash, explicit local approval file, and all runtime gates.
 - The armed canary uses a GTC post-only BUY limit order and immediately cancels it. A missing cancel confirmation is a canary failure requiring manual reconciliation.
+- The armed CLI writes the report file at every remote-side-effect stage. If post status is unknown, post is accepted, cancel status is unknown, or cancel confirmation fails, the report file must contain a structured `operator_required` or stage report rather than relying on terminal output.
 - Candidate market discovery is outside the execution engine boundary. The execution engine validates an externally reviewed candidate against CLOB book/spread and risk gates. The reviewed candidate supplies the share `target_size`; `notional_usd` is only the derived `limit_price * target_size` risk value.
 - Closeout requires persisted post/cancel receipt plus order-status, trade, and account-activity readback. `scripts/prepare_canary_closeout.py` turns those files into `closeout.json` and `CLOSEOUT.md` and fails if the evidence no longer supports the closeout claims.
 - Risk cap comparisons use fixed decimal parsing/comparison/multiplication, not binary floating point. Invalid precision, whitespace, negative values, exponent notation, or overflow fail closed.

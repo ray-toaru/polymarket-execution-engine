@@ -41,5 +41,7 @@
   "live_cancel_allowed": false,
   "real_funds_canary_authorized": false,
   "remote_side_effects": false,
-  "production_ready_claimed": false
+  "production_ready_claimed": false,
+  "workspace_manifest_sha256": "REPLACE_WITH_WORKSPACE_EVIDENCE_MANIFEST_SHA256",
+  "archived_manifest_sha256": "REPLACE_WITH_ARCHIVED_EVIDENCE_MANIFEST_SHA256"
 }
