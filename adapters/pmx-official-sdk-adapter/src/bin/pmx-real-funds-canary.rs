@@ -264,11 +264,26 @@ async fn main() -> anyhow::Result<()> {
     if args.armed {
         validate_real_funds_canary_preconditions(&config, &request)?;
         create_approval_consumed_marker(&args, &approval, &market_candidate_sha256)?;
-        let receipt =
+        let mut last_remote_side_effect_stage: Option<RealFundsCanaryStageReport> = None;
+        let result =
             run_real_funds_canary_gtc_post_only_cancel_with_reporter(&config, request, |stage| {
+                if stage.remote_side_effects || stage.operator_required {
+                    last_remote_side_effect_stage = Some(stage.clone());
+                }
                 persist_stage_report(&args, stage)
             })
-            .await?;
+            .await;
+        let receipt = match result {
+            Ok(receipt) => receipt,
+            Err(err) => {
+                recover_last_remote_side_effect_stage(
+                    &args,
+                    last_remote_side_effect_stage.as_ref(),
+                    &err.to_string(),
+                )?;
+                return Err(err);
+            }
+        };
         persist_armed_report(&args, &receipt)?;
         println!("{}", serde_json::to_string_pretty(&receipt)?);
         return Ok(());
@@ -530,6 +545,27 @@ fn persist_stage_report(args: &Args, report: &RealFundsCanaryStageReport) -> any
     append_stage_history(args, report)
 }
 
+fn recover_last_remote_side_effect_stage(
+    args: &Args,
+    stage: Option<&RealFundsCanaryStageReport>,
+    run_error: &str,
+) -> anyhow::Result<()> {
+    let Some(stage) = stage else {
+        return Ok(());
+    };
+    if !stage.remote_side_effects && !stage.operator_required {
+        return Ok(());
+    }
+    persist_stage_report(args, stage).map_err(|persist_err| {
+        anyhow::anyhow!(
+            "real-funds canary failed after remote-side-effect stage {}; recovery report persistence also failed: {}; original error: {}",
+            stage.stage,
+            persist_err,
+            run_error
+        )
+    })
+}
+
 fn write_report_file<T: Serialize>(args: &Args, report: &T) -> anyhow::Result<()> {
     let path = args
         .report_file
@@ -589,6 +625,45 @@ mod tests {
 
     fn temp_report_path(name: &str) -> PathBuf {
         temp_runtime_truth_path(name)
+    }
+
+    fn passing_preconditions() -> RealFundsCanaryPreconditions {
+        RealFundsCanaryPreconditions {
+            live_canary: LiveCanaryPreconditions {
+                compile_feature_live_submit: true,
+                env_allow_live_submit: true,
+                config_allow_live_submit: true,
+                kill_switch_open: true,
+                runtime_worker_healthy: true,
+                geoblock_allowed: true,
+                repository_reservation_exists: true,
+                idempotency_key_written: true,
+                reconcile_worker_healthy: true,
+                account_whitelisted: true,
+                market_whitelisted: true,
+                size_cap_ok: true,
+                daily_cap_ok: true,
+                operator_approved: true,
+                cancel_only_fallback_ready: true,
+            },
+            env_allow_real_funds_canary: true,
+            config_allow_real_funds_canary: true,
+            approval_valid: true,
+            approval_scope_matches: true,
+            approval_not_expired: true,
+            artifact_bound: true,
+            evidence_manifest_bound: true,
+            market_candidate_bound: true,
+            max_order_notional_ok: true,
+            max_daily_notional_ok: true,
+            execution_style_gtc_post_only_cancel: true,
+            balance_allowance_checked: true,
+            selected_market_safe: true,
+            runtime_kill_switch_truth_bound: true,
+            runtime_live_submit_gate_bound: true,
+            runtime_idempotency_lease_bound: true,
+            runtime_order_cancel_reconciliation_bound: true,
+        }
     }
 
     fn minimal_args(extra: &[&str]) -> Vec<String> {
@@ -756,6 +831,72 @@ mod tests {
         assert_eq!(lines.len(), 2);
         assert!(lines[0].contains("\"stage\":\"post_accepted\""));
         assert!(lines[1].contains("\"stage\":\"cancel_unknown\""));
+        let _ = std::fs::remove_file(&report_path);
+        let _ = std::fs::remove_file(&history_path);
+    }
+
+    #[test]
+    fn remote_side_effect_recovery_rewrites_latest_handoff_report() {
+        let report_path = temp_report_path("canary-recovery-report");
+        let args = parse_args_from(minimal_args(&[
+            "--report-file",
+            report_path.to_str().unwrap(),
+        ]))
+        .expect("parse args");
+        let request = RealFundsCanaryRequest {
+            account_id: AccountId("acct-canary".into()),
+            execution_id: ExecutionId("exec-canary".into()),
+            plan_hash: HashValue("plan-hash".into()),
+            idempotency_key: "idem-canary".into(),
+            approval: RealFundsCanaryApproval {
+                approval_id: "approval-canary".into(),
+                approval_hash: "a".repeat(64),
+                account_id: AccountId("acct-canary".into()),
+                scope: "REAL_FUNDS_CANARY".into(),
+                expires_at: "2099-01-01T00:00:00Z".into(),
+                artifact_sha256: "b".repeat(64),
+                evidence_manifest_sha256: "c".repeat(64),
+                workspace_manifest_sha256: Some("e".repeat(64)),
+                archived_manifest_sha256: Some("c".repeat(64)),
+                market_candidate_sha256: "d".repeat(64),
+                max_order_notional_usd: "1".into(),
+                max_daily_notional_usd: "5".into(),
+                execution_style: "GTC_LIMIT_POST_ONLY_CANCEL".into(),
+                operator_identity_ref: "operator-local-approval".into(),
+            },
+            risk_limits: RealFundsCanaryRiskLimits {
+                max_order_notional_usd: "1".into(),
+                max_daily_notional_usd: "5".into(),
+                daily_used_notional_usd: "0".into(),
+            },
+            market: RealFundsCanaryMarketSelection {
+                market_id: "market".into(),
+                token_id: "123".into(),
+                limit_price: "0.10".into(),
+                size: "5".into(),
+                notional_usd: "0.50".into(),
+                selection_reason: "unit-test".into(),
+            },
+            market_candidate_sha256: "d".repeat(64),
+            preconditions: passing_preconditions(),
+        };
+        let stage = RealFundsCanaryStageReport::operator_required(
+            &request,
+            "cancel_unknown",
+            Some("remote-1".into()),
+            Some("Live".into()),
+            "cancel_order timed out",
+        );
+
+        recover_last_remote_side_effect_stage(&args, Some(&stage), "run failed")
+            .expect("recovery handoff persisted");
+
+        let latest = std::fs::read_to_string(&report_path).expect("latest report");
+        assert!(latest.contains("\"stage\": \"cancel_unknown\""));
+        assert!(latest.contains("\"operator_required\": true"));
+        let history_path = report_path.with_extension("json.stages.jsonl");
+        let history = std::fs::read_to_string(&history_path).expect("stage history");
+        assert_eq!(history.lines().count(), 1);
         let _ = std::fs::remove_file(&report_path);
         let _ = std::fs::remove_file(&history_path);
     }

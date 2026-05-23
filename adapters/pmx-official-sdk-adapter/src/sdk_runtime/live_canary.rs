@@ -173,6 +173,15 @@ where
         )
         .into());
     }
+    report_stage(&RealFundsCanaryStageReport::stage(
+        &request,
+        "cancel_confirmed",
+        Some(order_id.clone()),
+        Some(remote_status.clone()),
+        true,
+        filled_or_matched,
+        true,
+    ))?;
     if let Some(err) = post_accepted_report_error {
         return Err(anyhow::anyhow!(
             "GTC post-only canary order was cancelled, but post_accepted report persistence failed: {err}"

@@ -56,8 +56,9 @@ was found.
 
 If the armed canary fails after a possible remote side effect, the same report
 path must already contain the latest stage report. `post_unknown`,
-`post_accepted`, `cancel_unknown`, and `cancel_failed` reports require operator
-reconciliation before any retry or second canary can be considered.
+`post_accepted`, `cancel_unknown`, `cancel_failed`, and `cancel_confirmed`
+reports are durable stage evidence; any operator-required stage requires
+operator reconciliation before any retry or second canary can be considered.
 The armed CLI also appends every stage report to `<report-file>.stages.jsonl`.
 Use that JSONL file to audit the ordered post/cancel sequence; the report file
 itself is the latest handoff artifact and may be overwritten by a later stage

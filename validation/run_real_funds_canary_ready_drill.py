@@ -71,6 +71,7 @@ def main() -> int:
         "append_stage_history",
         "stage_history_path",
         ".stages.jsonl",
+        "recover_last_remote_side_effect_stage",
         "posted: false",
         "remote_side_effects: false",
         "raw_signed_order_exposed: false",
@@ -99,6 +100,15 @@ def main() -> int:
             failures.append(f"live canary runtime must not perform active market discovery: {token}")
     if len(re.findall(r"\.\s*post_order\s*\(", live)) != 1:
         failures.append("live canary SDK runtime must still contain exactly one dedicated canary post_order call")
+    for token in [
+        '"post_accepted"',
+        '"post_unknown"',
+        '"cancel_unknown"',
+        '"cancel_failed"',
+        '"cancel_confirmed"',
+    ]:
+        if token not in live:
+            failures.append(f"live canary SDK runtime missing durable stage token: {token}")
 
     result = {
         "status": "fail" if failures else "pass",
