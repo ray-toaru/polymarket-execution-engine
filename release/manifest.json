@@ -1,13 +1,13 @@
 {
   "project": "polymarket-execution-engine",
-  "version": "0.26.1",
+  "version": "0.27.0",
   "contract_version": "1.0.0-draft",
-  "status": "v0.26-controlled-real-funds-canary-source-candidate-not-production-not-live",
+  "status": "v0.27-controlled-real-funds-canary-source-candidate-not-production-not-live",
   "official_sdk_strategy": "sdk-first",
   "official_sdk_crate": "polymarket_client_sdk_v2",
   "official_sdk_version": "=0.6.0-canary.1",
   "rust_msrv": "1.88.0",
-  "evidence_status": "v0.26.1 controlled real-funds canary candidate: code and governance are being advanced toward a one-time BUY/GTC post-only canary path with $1 per-order and $5 daily caps; production deployment and live cancel remain blocked until current gates and a reviewed go decision pass.",
+  "evidence_status": "v0.27.0 controlled real-funds canary source-candidate: execution-engine safety work advances post/cancel stage persistence, closeout recovery evidence, and independent component version governance; production deployment and live cancel remain blocked until current gates and a fresh reviewed go decision pass.",
   "validated_gates_landed": [
     "cargo-fmt-v0.10",
     "cargo-check-v0.10",

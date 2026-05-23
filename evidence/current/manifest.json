@@ -62,11 +62,11 @@
   },
   "external_artifact_sidecar": {
     "binding_note": "Current workspace evidence binds the final release artifact here. When this manifest is archived inside the artifact, package_release.py normalizes this volatile hash to null to avoid archive self-reference.",
-    "evidence_sidecar": "polymarket-execution-suite-v0.26.1.zip.evidence.json",
-    "name": "polymarket-execution-suite-v0.26.1.zip",
-    "path": "dist/polymarket-execution-suite-v0.26.1.zip",
-    "sha256": "9727ee00352e095e41a977b3d110825c4e8f86d6a0142bf9bae441a6fda1ffed",
-    "sha256_sidecar": "polymarket-execution-suite-v0.26.1.zip.sha256"
+    "evidence_sidecar": "polymarket-execution-suite-v0.27.0.zip.evidence.json",
+    "name": "polymarket-execution-suite-v0.27.0.zip",
+    "path": "dist/polymarket-execution-suite-v0.27.0.zip",
+    "sha256": "4f33f0b291daf8b65f88c3a820314472544c233d0a62aa52f13be3ecde3d81b5",
+    "sha256_sidecar": "polymarket-execution-suite-v0.27.0.zip.sha256"
   },
   "external_operator_approval_preflight_validation": {
     "logs": [
@@ -90,7 +90,7 @@
     ],
     "status": "pass"
   },
-  "generated_at": "2026-05-23T08:02:06.196049+00:00",
+  "generated_at": "2026-05-23T09:21:33.357220+00:00",
   "live_canary_blocked_validation": {
     "logs": [
       {
@@ -706,5 +706,5 @@
     ],
     "status": "pass"
   },
-  "version": "0.26.1"
+  "version": "0.27.0"
 }
