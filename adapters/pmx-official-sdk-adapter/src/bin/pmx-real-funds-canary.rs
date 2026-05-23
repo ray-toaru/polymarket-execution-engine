@@ -9,7 +9,7 @@ use pmx_official_sdk_adapter::{
     validate_real_funds_canary_market_with_diagnostics, validate_real_funds_canary_preconditions,
     validate_reviewed_real_funds_canary_release_decision,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, fs::OpenOptions, io::Write, path::PathBuf};
@@ -28,6 +28,7 @@ struct Args {
     daily_used_notional_usd: String,
     market_file: PathBuf,
     release_decision_file: Option<PathBuf>,
+    runtime_truth_file: Option<PathBuf>,
     approval_consumed_marker: Option<PathBuf>,
     report_file: Option<PathBuf>,
     dry_run: bool,
@@ -62,6 +63,27 @@ struct CanaryCliReport {
     raw_signed_order_exposed: bool,
 }
 
+#[derive(Debug, Default)]
+struct RuntimeTruthBindings {
+    kill_switch: bool,
+    live_submit_gate: bool,
+    idempotency_lease: bool,
+    order_cancel_reconciliation: bool,
+}
+
+#[derive(Debug, Deserialize)]
+struct RuntimeTruthFile {
+    schema_version: u64,
+    dependencies: Vec<RuntimeTruthDependency>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RuntimeTruthDependency {
+    name: String,
+    status: String,
+    evidence_ref: String,
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = parse_args()?;
@@ -92,6 +114,7 @@ async fn main() -> anyhow::Result<()> {
     } else {
         false
     };
+    let runtime_truth = load_runtime_truth_file(args.runtime_truth_file.as_ref())?;
     let market_candidate: RealFundsCanaryMarketCandidate =
         serde_json::from_slice(&market_candidate_bytes)?;
     let validation = validate_real_funds_canary_market_with_diagnostics(
@@ -175,24 +198,10 @@ async fn main() -> anyhow::Result<()> {
                 .as_deref()
                 == Some("1"),
             selected_market_safe: true,
-            runtime_kill_switch_truth_bound: std::env::var("PMX_RUNTIME_KILL_SWITCH_TRUTH_BOUND")
-                .ok()
-                .as_deref()
-                == Some("1"),
-            runtime_live_submit_gate_bound: std::env::var("PMX_RUNTIME_LIVE_SUBMIT_GATE_BOUND")
-                .ok()
-                .as_deref()
-                == Some("1"),
-            runtime_idempotency_lease_bound: std::env::var("PMX_RUNTIME_IDEMPOTENCY_LEASE_BOUND")
-                .ok()
-                .as_deref()
-                == Some("1"),
-            runtime_order_cancel_reconciliation_bound: std::env::var(
-                "PMX_RUNTIME_ORDER_CANCEL_RECONCILIATION_BOUND",
-            )
-            .ok()
-            .as_deref()
-                == Some("1"),
+            runtime_kill_switch_truth_bound: runtime_truth.kill_switch,
+            runtime_live_submit_gate_bound: runtime_truth.live_submit_gate,
+            runtime_idempotency_lease_bound: runtime_truth.idempotency_lease,
+            runtime_order_cancel_reconciliation_bound: runtime_truth.order_cancel_reconciliation,
         });
     let request = RealFundsCanaryRequest {
         account_id: AccountId(args.account_id.clone()),
@@ -331,6 +340,7 @@ fn parse_args() -> anyhow::Result<Args> {
         plan_hash: required(&values, "--plan-hash")?,
         market_file: required(&values, "--market-file")?.into(),
         release_decision_file: values.get("--release-decision-file").map(PathBuf::from),
+        runtime_truth_file: values.get("--runtime-truth-file").map(PathBuf::from),
         approval_consumed_marker: values.get("--approval-consumed-marker").map(PathBuf::from),
         report_file: values.get("--report-file").map(PathBuf::from),
         daily_used_notional_usd: values
@@ -371,6 +381,58 @@ fn validate_reviewed_release_decision(
         market_candidate_sha256,
     )?;
     Ok(true)
+}
+
+fn load_runtime_truth_file(path: Option<&PathBuf>) -> anyhow::Result<RuntimeTruthBindings> {
+    let Some(path) = path else {
+        return Ok(RuntimeTruthBindings::default());
+    };
+    let truth: RuntimeTruthFile = serde_json::from_str(&std::fs::read_to_string(path)?)?;
+    if truth.schema_version != 1 {
+        anyhow::bail!(
+            "unsupported runtime truth schema_version {}; expected 1",
+            truth.schema_version
+        );
+    }
+
+    let mut bindings = RuntimeTruthBindings::default();
+    let mut invalid = Vec::<String>::new();
+    for dependency in truth.dependencies {
+        let bound = dependency.status == "durable_runtime_truth"
+            && !dependency.evidence_ref.trim().is_empty()
+            && !dependency.evidence_ref.contains("REPLACE_WITH");
+        match dependency.name.as_str() {
+            "kill_switch" => bindings.kill_switch = bound,
+            "live_submit_gate" => bindings.live_submit_gate = bound,
+            "idempotency_lease" => bindings.idempotency_lease = bound,
+            "order_cancel_reconciliation" => bindings.order_cancel_reconciliation = bound,
+            _ => continue,
+        }
+        if !bound {
+            invalid.push(dependency.name);
+        }
+    }
+
+    let missing = [
+        ("kill_switch", bindings.kill_switch),
+        ("live_submit_gate", bindings.live_submit_gate),
+        ("idempotency_lease", bindings.idempotency_lease),
+        (
+            "order_cancel_reconciliation",
+            bindings.order_cancel_reconciliation,
+        ),
+    ]
+    .into_iter()
+    .filter_map(|(name, bound)| if bound { None } else { Some(name) })
+    .collect::<Vec<_>>();
+    if !missing.is_empty() {
+        anyhow::bail!(
+            "runtime truth missing durable dependencies: {}; invalid bindings: {}",
+            missing.join(","),
+            invalid.join(",")
+        );
+    }
+    Ok(bindings)
 }
 
 fn create_approval_consumed_marker(
@@ -420,4 +482,68 @@ fn write_report_file<T: Serialize>(args: &Args, report: &T) -> anyhow::Result<()
 
 fn sha256_hex(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_runtime_truth_path(name: &str) -> PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("time")
+            .as_nanos();
+        std::env::temp_dir().join(format!("pmx-{name}-{nonce}.json"))
+    }
+
+    #[test]
+    fn runtime_truth_file_requires_all_durable_dependencies() {
+        let path = temp_runtime_truth_path("partial-runtime-truth");
+        std::fs::write(
+            &path,
+            r#"{"schema_version":1,"dependencies":[{"name":"kill_switch","status":"durable_runtime_truth","evidence_ref":"pg://kill"}]}"#,
+        )
+        .expect("write runtime truth");
+        let err =
+            load_runtime_truth_file(Some(&path)).expect_err("partial runtime truth must fail");
+        let _ = std::fs::remove_file(&path);
+        assert!(
+            err.to_string()
+                .contains("runtime truth missing durable dependencies")
+        );
+    }
+
+    #[test]
+    fn missing_runtime_truth_file_argument_fails_closed() {
+        let truth = load_runtime_truth_file(None).expect("default runtime truth");
+        assert!(!truth.kill_switch);
+        assert!(!truth.live_submit_gate);
+        assert!(!truth.idempotency_lease);
+        assert!(!truth.order_cancel_reconciliation);
+    }
+
+    #[test]
+    fn runtime_truth_file_sets_all_canary_precondition_booleans() {
+        let path = temp_runtime_truth_path("complete-runtime-truth");
+        std::fs::write(
+            &path,
+            r#"{
+              "schema_version": 1,
+              "dependencies": [
+                {"name":"kill_switch","status":"durable_runtime_truth","evidence_ref":"pg://kill"},
+                {"name":"live_submit_gate","status":"durable_runtime_truth","evidence_ref":"pg://live"},
+                {"name":"idempotency_lease","status":"durable_runtime_truth","evidence_ref":"pg://idem"},
+                {"name":"order_cancel_reconciliation","status":"durable_runtime_truth","evidence_ref":"pg://reconcile"}
+              ]
+            }"#,
+        )
+        .expect("write runtime truth");
+        let truth = load_runtime_truth_file(Some(&path)).expect("runtime truth");
+        let _ = std::fs::remove_file(&path);
+        assert!(truth.kill_switch);
+        assert!(truth.live_submit_gate);
+        assert!(truth.idempotency_lease);
+        assert!(truth.order_cancel_reconciliation);
+    }
 }

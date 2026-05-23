@@ -54,6 +54,8 @@ REQUIRED_CANARY_TOKENS = [
     "live_submit_canary_requires_cancel_only_fallback",
     "RealFundsCanaryPreconditions",
     "ENV_ALLOW_REAL_FUNDS_CANARY",
+    "load_runtime_truth_file",
+    "durable_runtime_truth",
     "validate_real_funds_canary_preconditions",
     "runtime_kill_switch_truth_bound",
     "runtime_live_submit_gate_bound",

@@ -38,6 +38,7 @@ DOC_TOKENS = [
     "target_size_is_reviewed_candidate_input = true",
     "notional_usd_is_price_times_size = true",
     "limit_order_size_driven = true",
+    "runtime_truth_file_required = true",
     "external_candidate_market_required = true",
     "engine_market_discovery_allowed = false",
     "live_submit_allowed = false",
@@ -115,6 +116,8 @@ def main() -> int:
     for token in [
         "RealFundsCanaryPreconditions",
         "ENV_ALLOW_REAL_FUNDS_CANARY",
+        "load_runtime_truth_file",
+        "durable_runtime_truth",
         "validate_real_funds_canary_preconditions",
         "runtime_kill_switch_truth_bound",
         "runtime_live_submit_gate_bound",
