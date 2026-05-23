@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 
 from current_gate_chain import require_current_gate_log
@@ -25,10 +26,14 @@ CONFIG_FIELDS = {
     "rotation_evidence_reference_present": ("secret_provider", "rotation_evidence_ref"),
     "break_glass_review_reference_present": ("secret_provider", "break_glass_review_ref"),
 }
-SENSITIVE_NAMES = [
+EXPLICIT_SENSITIVE_NAMES = [
     "POLYMARKET_PRIVATE_KEY",
     "POLYMARKET_CLOB_API_SECRET",
     "CLOB_SECRET",
+]
+SENSITIVE_NAME_PATTERNS = [
+    re.compile(r"^PMX_ACCT_[A-Z0-9_]+_(POLYMARKET_PRIVATE_KEY|CLOB_API_KEY|CLOB_SECRET|CLOB_PASS_PHRASE|CLOB_API_KEY_NONCE|CLOB_FUNDER)$"),
+    re.compile(r"^POLY(_API_KEY|_API_SECRET|_API_PASSPHRASE)$"),
 ]
 
 
@@ -38,6 +43,14 @@ def env_enabled(name: str) -> bool:
 
 def present(name: str) -> bool:
     return bool(os.environ.get(name, "").strip())
+
+
+def sensitive_names() -> list[str]:
+    names = set(EXPLICIT_SENSITIVE_NAMES)
+    for name in os.environ:
+        if any(pattern.match(name) for pattern in SENSITIVE_NAME_PATTERNS):
+            names.add(name)
+    return sorted(names)
 
 
 def main() -> int:
@@ -82,7 +95,7 @@ def main() -> int:
         or nested_present(config, *CONFIG_FIELDS[label])
         for label in REFERENCE_ENV
     }
-    sensitive_env_present = {name: present(name) for name in SENSITIVE_NAMES}
+    sensitive_env_present = {name: present(name) for name in sensitive_names()}
     external_ready = all(signals.values())
     result = {
         "status": "fail" if failures else "pass",

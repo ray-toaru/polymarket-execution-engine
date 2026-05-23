@@ -30,3 +30,8 @@ Passing this drill means local logs, evidence, and package artifacts do not
 expose configured sensitive values observed by the validation process. It does
 not replace external secret custody, credential rotation, break-glass review, or
 hardware-backed signing.
+
+The scanner treats direct credential variables and account-scoped variables such
+as `PMX_ACCT_*_POLYMARKET_PRIVATE_KEY`, `PMX_ACCT_*_CLOB_SECRET`, and
+`POLY_API_SECRET` as sensitive. Reports may name which variables were present,
+but must never print their values.

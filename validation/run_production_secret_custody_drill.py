@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -16,7 +17,7 @@ MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
 EVIDENCE_ROOT = ROOT / "evidence" / "current"
 LOG_DIR = EVIDENCE_ROOT / "logs"
 
-SENSITIVE_ENV_NAMES = [
+EXPLICIT_SENSITIVE_ENV_NAMES = [
     "POLYMARKET_PRIVATE_KEY",
     "POLYMARKET_CLOB_API_KEY",
     "POLYMARKET_CLOB_API_SECRET",
@@ -26,15 +27,27 @@ SENSITIVE_ENV_NAMES = [
     "CLOB_PASS_PHRASE",
     "PMX_DATABASE_URL",
 ]
+SENSITIVE_ENV_NAME_PATTERNS = [
+    re.compile(r"^PMX_ACCT_[A-Z0-9_]+_(POLYMARKET_PRIVATE_KEY|CLOB_API_KEY|CLOB_SECRET|CLOB_PASS_PHRASE|CLOB_API_KEY_NONCE|CLOB_FUNDER)$"),
+    re.compile(r"^POLY(_API_KEY|_API_SECRET|_API_PASSPHRASE)$"),
+]
 
 
 def env_enabled(name: str) -> bool:
     return os.environ.get(name, "").strip() == "1"
 
 
+def sensitive_env_names() -> list[str]:
+    names = set(EXPLICIT_SENSITIVE_ENV_NAMES)
+    for name in os.environ:
+        if any(pattern.match(name) for pattern in SENSITIVE_ENV_NAME_PATTERNS):
+            names.add(name)
+    return sorted(names)
+
+
 def sensitive_values() -> dict[str, str]:
     values: dict[str, str] = {}
-    for name in SENSITIVE_ENV_NAMES:
+    for name in sensitive_env_names():
         value = os.environ.get(name, "")
         if len(value.strip()) >= 8:
             values[name] = value.strip()
@@ -131,8 +144,8 @@ def main() -> int:
         "env_file_absent_from_artifact": not contains_env,
         "artifact_contains_no_env_file": not contains_env,
         "package_excludes_env_file": True,
-        "no_plaintext_private_keys_logged": "POLYMARKET_PRIVATE_KEY" not in log_leaks,
-        "no_clob_secret_logged": "POLYMARKET_CLOB_API_SECRET" not in log_leaks and "CLOB_SECRET" not in log_leaks,
+        "no_plaintext_private_keys_logged": not any(name.endswith("PRIVATE_KEY") for name in log_leaks),
+        "no_clob_secret_logged": not any("CLOB_SECRET" in name or name.endswith("API_SECRET") for name in log_leaks),
         "rotation_drill_required": True,
         "break_glass_review_required": True,
         "secret_values_logged": False if not log_leaks and not manifest_leaks else True,

@@ -25,3 +25,8 @@ must never print private keys, CLOB secrets, raw signed payloads, raw
 signatures, or signed order envelopes. A complete provider reference set is
 still not enough to authorize live trading; a future reviewed release decision
 is required.
+
+Sensitive-variable detection includes direct credential variables and
+account-scoped variables such as `PMX_ACCT_*_POLYMARKET_PRIVATE_KEY`,
+`PMX_ACCT_*_CLOB_SECRET`, and `POLY_API_SECRET`. The preflight may report
+presence by variable name only; values must remain absent from output.
