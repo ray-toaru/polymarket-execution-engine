@@ -709,6 +709,7 @@ mod tests {
                 min_order_size_above_order_size: 0,
                 exchange_rule_snapshot_invalid: 0,
                 post_only_not_bound: 0,
+                notional_binding_mismatch: 0,
                 notional_over_cap: 0,
             },
         }
