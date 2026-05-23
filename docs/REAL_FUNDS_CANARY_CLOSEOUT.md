@@ -45,6 +45,14 @@ an operator review reference, the exact stage-history SHA-256, the same remote
 order id, no-retry/no-second-order assertions, and references to order, trade,
 and account-activity readback evidence. This recovery evidence is read-only; it
 does not authorize retrying, posting another order, or production/live trading.
+For `post_unknown` without a remote order id, ordinary order closeout is
+invalid because there is no specific order to prove canceled. v0.27+ requires
+`operator-incident-recovery.json` with
+`recovery_decision=operator_reviewed_no_remote_order_found_no_retry`, the exact
+stage-history SHA-256, the candidate-market SHA-256, a bounded investigation
+window, no-retry/no-second-order assertions, and account-level open-order,
+trade-history, and activity readback proving no matching remote order or fill
+was found.
 
 If the armed canary fails after a possible remote side effect, the same report
 path must already contain the latest stage report. `post_unknown`,
