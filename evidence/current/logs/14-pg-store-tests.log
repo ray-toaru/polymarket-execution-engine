@@ -1,5 +1,5 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.19s
-     Running unittests src/lib.rs (target/debug/deps/pmx_store-b4ebef63e63dd77d)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.21s
+     Running unittests src/lib.rs (target/debug/deps/pmx_store-86bee99b84143d81)
 
 running 27 tests
 test postgres::postgres_tests::admin_audit::postgres_admin_audit_paginates_and_filters_by_cursor ... ok
@@ -30,5 +30,5 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 30 filtered out; finished in 11.71s
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 30 filtered out; finished in 11.51s
 

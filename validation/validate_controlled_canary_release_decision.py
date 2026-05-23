@@ -274,15 +274,15 @@ def main() -> int:
 
     failures.extend(validate_decision(example, "example"))
     if example.get("artifact_sha256") != EXPECTED_ARTIFACT_SHA256:
-        failures.append("example must bind the illustrative v0.26.1 example artifact hash")
+        failures.append("example must bind the illustrative current example artifact hash")
     if example.get("evidence_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256:
-        failures.append("example must bind the illustrative v0.26.1 example evidence manifest hash")
+        failures.append("example must bind the illustrative current example evidence manifest hash")
     if example.get("workspace_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_WORKSPACE_MANIFEST_SHA256:
-        failures.append("example must bind the illustrative v0.26.1 example workspace manifest hash")
+        failures.append("example must bind the illustrative current example workspace manifest hash")
     if example.get("archived_manifest_sha256") != EXPECTED_REVIEWED_EXAMPLE_MANIFEST_SHA256:
-        failures.append("example must bind the illustrative v0.26.1 example archived manifest hash")
+        failures.append("example must bind the illustrative current example archived manifest hash")
     if example.get("market_candidate_sha256") != EXPECTED_MARKET_CANDIDATE_SHA256:
-        failures.append("example must bind the illustrative v0.26.1 example market candidate hash")
+        failures.append("example must bind the illustrative current example market candidate hash")
     for key, expected in EXPECTED_RUN_IDS.items():
         if example.get("github_evidence", {}).get(key) != expected:
             failures.append(f"example must bind GitHub evidence run {key}")

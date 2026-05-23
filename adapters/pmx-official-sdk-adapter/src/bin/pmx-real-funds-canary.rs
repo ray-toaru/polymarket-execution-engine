@@ -2,9 +2,9 @@ use pmx_core::{AccountId, ExecutionId, HashValue};
 use pmx_official_sdk_adapter::{
     BuildRealFundsCanaryPreconditionsInput, LiveCanaryPreconditions, OfficialSdkAdapterConfig,
     RealFundsCanaryApproval, RealFundsCanaryMarketCandidate, RealFundsCanaryMarketDiagnostics,
-    RealFundsCanaryMarketSelection, RealFundsCanaryPreconditions, RealFundsCanaryReceipt,
-    RealFundsCanaryRequest, RealFundsCanaryRiskLimits, RealFundsCanaryStageReport,
-    ReviewedRealFundsCanaryReleaseDecision, build_real_funds_canary_preconditions,
+    RealFundsCanaryReceipt, RealFundsCanaryRequest, RealFundsCanaryRiskLimits,
+    RealFundsCanaryStageReport, ReviewedRealFundsCanaryReleaseDecision,
+    build_real_funds_canary_preconditions,
     run_real_funds_canary_gtc_post_only_cancel_with_reporter,
     validate_real_funds_canary_market_with_diagnostics, validate_real_funds_canary_preconditions,
     validate_reviewed_real_funds_canary_release_decision,
@@ -13,7 +13,12 @@ use pmx_store::{CanaryRuntimeTruthQuery, CanaryRuntimeTruthStore, PostgresStore}
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::{Digest, Sha256};
-use std::{collections::HashMap, fs::OpenOptions, io::Write, path::PathBuf};
+use std::{
+    collections::HashMap,
+    fs::OpenOptions,
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 const ENV_ALLOW_REAL_FUNDS_CANARY: &str = "PMX_ALLOW_REAL_FUNDS_CANARY";
 
@@ -547,7 +552,6 @@ fn append_stage_history(args: &Args, report: &RealFundsCanaryStageReport) -> any
         .ok_or_else(|| anyhow::anyhow!("--report-file is required for armed real-funds canary"))?;
     let history_path = stage_history_path(path);
     let mut file = OpenOptions::new()
-        .write(true)
         .create(true)
         .append(true)
         .open(history_path)?;
@@ -556,7 +560,7 @@ fn append_stage_history(args: &Args, report: &RealFundsCanaryStageReport) -> any
     Ok(())
 }
 
-fn stage_history_path(path: &PathBuf) -> PathBuf {
+fn stage_history_path(path: &Path) -> PathBuf {
     let extension = path
         .extension()
         .and_then(|extension| extension.to_str())
@@ -572,6 +576,7 @@ fn sha256_hex(bytes: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pmx_official_sdk_adapter::{RealFundsCanaryMarketSelection, RealFundsCanaryPreconditions};
     use std::time::{SystemTime, UNIX_EPOCH};
 
     fn temp_runtime_truth_path(name: &str) -> PathBuf {
