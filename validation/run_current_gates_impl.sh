@@ -75,7 +75,7 @@ else
 fi
 
 if [[ "${PMX_RUN_SIGN_ONLY_DRY_RUN:-}" == "1" ]]; then
-  cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --features sign-only-dry-run --locked sign_only_dry_run -- --nocapture --test-threads=1 2>&1 | tee "${EVIDENCE_DIR}/17-sign-only-dry-run.log"
+  PMX_ALLOW_SIGN_ONLY_DRY_RUN=1 cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --features sign-only-dry-run --locked sign_only_dry_run -- --nocapture --test-threads=1 2>&1 | tee "${EVIDENCE_DIR}/17-sign-only-dry-run.log"
 else
   echo "PMX_RUN_SIGN_ONLY_DRY_RUN not set to 1; sign-only dry-run skipped" | tee "${EVIDENCE_DIR}/17-sign-only-dry-run-skipped.log"
 fi
