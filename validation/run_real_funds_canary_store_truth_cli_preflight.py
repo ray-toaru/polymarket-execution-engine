@@ -2,12 +2,14 @@
 """Run a PostgreSQL-backed real-funds canary CLI preflight without remote side effects."""
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
 import subprocess
 import tempfile
 import time
+import tomllib
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -15,6 +17,9 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER_MANIFEST = ROOT / "adapters" / "pmx-official-sdk-adapter" / "Cargo.toml"
 CANARY_CLI = ROOT / "adapters" / "pmx-official-sdk-adapter" / "target" / "debug" / "pmx-real-funds-canary"
+ARTIFACT_SHA256 = "b" * 64
+EVIDENCE_MANIFEST_SHA256 = "c" * 64
+WORKSPACE_MANIFEST_SHA256 = "e" * 64
 
 
 def load_env_file(path: Path) -> None:
@@ -191,10 +196,10 @@ def approval(account_id: str, market_sha: str) -> dict[str, Any]:
         "account_id": account_id,
         "scope": "REAL_FUNDS_CANARY",
         "expires_at": "2099-01-01T00:00:00Z",
-        "artifact_sha256": "b" * 64,
-        "evidence_manifest_sha256": "c" * 64,
-        "workspace_manifest_sha256": "e" * 64,
-        "archived_manifest_sha256": "c" * 64,
+        "artifact_sha256": ARTIFACT_SHA256,
+        "evidence_manifest_sha256": EVIDENCE_MANIFEST_SHA256,
+        "workspace_manifest_sha256": WORKSPACE_MANIFEST_SHA256,
+        "archived_manifest_sha256": EVIDENCE_MANIFEST_SHA256,
         "market_candidate_sha256": market_sha,
         "max_order_notional_usd": "1",
         "max_daily_notional_usd": "5",
@@ -267,9 +272,9 @@ def run_cli(tmp: Path, account_id: str, condition_id: str) -> dict[str, Any]:
             "--market-file",
             str(market_path),
             "--artifact-sha256",
-            "b" * 64,
+            ARTIFACT_SHA256,
             "--evidence-manifest-sha256",
-            "c" * 64,
+            EVIDENCE_MANIFEST_SHA256,
             "--idempotency-key",
             f"idem-store-truth-{account_id}",
             "--account-id",
@@ -310,7 +315,64 @@ def run_cli(tmp: Path, account_id: str, condition_id: str) -> dict[str, Any]:
     return json.loads(result.stdout)
 
 
+def runtime_truth_document(account_id: str, condition_id: str, report: dict[str, Any]) -> dict[str, Any]:
+    evidence_prefix = f"pg://canary-runtime-truth/account/{account_id}/condition/{condition_id}"
+    cargo = tomllib.loads((ROOT / "Cargo.toml").read_text())
+    return {
+        "schema_version": 1,
+        "status": "reviewed_runtime_truth_candidate",
+        "source_release": f"v{cargo['workspace']['package']['version']}",
+        "scope": "REAL_FUNDS_CANARY",
+        "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
+        "artifact_sha256": ARTIFACT_SHA256,
+        "workspace_manifest_sha256": WORKSPACE_MANIFEST_SHA256,
+        "archived_manifest_sha256": EVIDENCE_MANIFEST_SHA256,
+        "dependencies": [
+            {
+                "name": "kill_switch",
+                "status": "durable_runtime_truth",
+                "evidence_ref": f"{evidence_prefix}/runtime_accounts",
+            },
+            {
+                "name": "live_submit_gate",
+                "status": "durable_runtime_truth",
+                "evidence_ref": f"{evidence_prefix}/worker_health/live-submit-gate",
+            },
+            {
+                "name": "idempotency_lease",
+                "status": "durable_runtime_truth",
+                "evidence_ref": f"{evidence_prefix}/worker_health/idempotency-lease",
+            },
+            {
+                "name": "order_cancel_reconciliation",
+                "status": "durable_runtime_truth",
+                "evidence_ref": f"{evidence_prefix}/worker_health/order-cancel-reconciliation",
+            },
+        ],
+        "references_only_no_secret_values": True,
+        "live_submit_allowed": False,
+        "live_cancel_allowed": False,
+        "real_funds_canary_authorized": False,
+        "remote_side_effects": False,
+        "production_ready_claimed": False,
+        "preflight_report": {
+            "status": report.get("status"),
+            "runtime_truth_source": "postgres",
+            "posted": report.get("posted"),
+            "remote_side_effects": report.get("remote_side_effects"),
+            "raw_signed_order_exposed": report.get("raw_signed_order_exposed"),
+        },
+    }
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--runtime-truth-output",
+        type=Path,
+        help="Optional path for a references-only runtime-truth JSON candidate produced from the seeded PostgreSQL rows.",
+    )
+    args = parser.parse_args()
     url = database_url()
     build_cli()
     suffix = str(time.time_ns())
@@ -331,10 +393,20 @@ def main() -> int:
     ]:
         if report.get(key) is not expected:
             failures.append(f"unexpected {key}: {report.get(key)!r}")
+    runtime_truth_path = None
+    runtime_truth_sha256 = None
+    if not failures and args.runtime_truth_output:
+        runtime_truth = runtime_truth_document(account_id, condition_id, report)
+        args.runtime_truth_output.parent.mkdir(parents=True, exist_ok=True)
+        write_json(args.runtime_truth_output, runtime_truth)
+        runtime_truth_path = str(args.runtime_truth_output)
+        runtime_truth_sha256 = hashlib.sha256(args.runtime_truth_output.read_bytes()).hexdigest()
     result = {
         "status": "fail" if failures else "pass",
         "preflight_ready": report.get("status") == "preflight_ready",
         "runtime_truth_source": "postgres",
+        "runtime_truth_output": runtime_truth_path,
+        "runtime_truth_output_sha256": runtime_truth_sha256,
         "posted": report.get("posted"),
         "remote_side_effects": report.get("remote_side_effects"),
         "raw_signed_order_exposed": report.get("raw_signed_order_exposed"),

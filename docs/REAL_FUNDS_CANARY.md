@@ -97,7 +97,11 @@ Execution policy:
   PostgreSQL runtime-truth rows and runs the CLI with
   `--runtime-truth-store postgres` in `--preflight-only` mode. It proves the CLI
   can consume store-backed runtime truth without posting, cancelling, exposing a
-  signed order, or printing the database URL.
+  signed order, or printing the database URL. Use
+  `--runtime-truth-output <path>` to write a references-only runtime-truth JSON
+  candidate that can be checked by
+  `validation/validate_controlled_canary_runtime_truth.py` before the controlled
+  canary pipeline consumes it.
 - The armed canary uses a GTC post-only BUY limit order and immediately cancels it. A missing cancel confirmation is a canary failure requiring manual reconciliation.
 - The armed CLI writes the report file at every remote-side-effect stage. If post status is unknown, post is accepted, cancel status is unknown, cancel confirmation fails, or cancel is confirmed, the report file must contain a structured `operator_required` or stage report rather than relying on terminal output. Each stage is also appended to `<report-file>.stages.jsonl`, while `<report-file>` keeps the latest stage or final receipt for operator handoff. If the runner returns an error after recording a remote-side-effect stage, the CLI retries persistence of the last stage before surfacing the error.
 - Candidate market discovery is outside the execution engine boundary. The execution engine validates an externally reviewed candidate against CLOB book/spread and risk gates. The reviewed candidate supplies the share `target_size`; `notional_usd` is only the derived `limit_price * target_size` risk value.

@@ -5,6 +5,7 @@ from __future__ import annotations
 import unittest
 
 import check_current_evidence_manifest
+import run_real_funds_canary_store_truth_cli_preflight
 import write_current_evidence_manifest
 
 
@@ -42,6 +43,33 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
             ),
             "python validation/run_real_funds_canary_store_truth_cli_preflight.py",
         )
+
+    def test_store_truth_preflight_can_emit_validator_compatible_runtime_truth(self) -> None:
+        doc = run_real_funds_canary_store_truth_cli_preflight.runtime_truth_document(
+            "acct-1",
+            "cond-1",
+            {
+                "status": "preflight_ready",
+                "posted": False,
+                "remote_side_effects": False,
+                "raw_signed_order_exposed": False,
+            },
+        )
+        dependencies = {item["name"]: item for item in doc["dependencies"]}
+        self.assertEqual(
+            set(dependencies),
+            {
+                "kill_switch",
+                "live_submit_gate",
+                "idempotency_lease",
+                "order_cancel_reconciliation",
+            },
+        )
+        self.assertTrue(all(item["status"] == "durable_runtime_truth" for item in dependencies.values()))
+        self.assertTrue(all(item["evidence_ref"].startswith("pg://canary-runtime-truth/") for item in dependencies.values()))
+        self.assertTrue(doc["references_only_no_secret_values"])
+        self.assertFalse(doc["live_submit_allowed"])
+        self.assertFalse(doc["remote_side_effects"])
 
 
 if __name__ == "__main__":
