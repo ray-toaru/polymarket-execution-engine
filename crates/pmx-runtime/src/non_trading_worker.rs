@@ -67,12 +67,6 @@ pub async fn run_non_trading_heartbeat_worker<S, Fut>(
     }
 }
 
-#[deprecated(note = "use run_non_trading_heartbeat_worker with a service/store sink")]
-pub async fn run_placeholder_worker(worker_id: String) {
-    let config = NonTradingHeartbeatWorkerConfig::heartbeat(worker_id);
-    run_non_trading_heartbeat_worker(config, |_| async {}).await;
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
