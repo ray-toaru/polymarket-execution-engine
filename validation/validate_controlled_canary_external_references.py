@@ -19,7 +19,7 @@ EXPECTED_RUN_IDS = {
     "root_ci_run_id": "26268697168",
     "hermes_ci_run_id": "26267887116",
     "execution_engine_ci_run_id": "26268276210",
-    "credentialed_sdk_run_id": "local-current-gates-20260521",
+    "credentialed_sdk_run_id": "local-current-gates-20260523",
 }
 REQUIRED_FIELDS = {
     "github_evidence": [

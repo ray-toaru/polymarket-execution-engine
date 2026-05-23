@@ -174,7 +174,7 @@ def main() -> int:
     parser.add_argument("--root-ci-run-id", default="26268697168")
     parser.add_argument("--hermes-ci-run-id", default="26267887116")
     parser.add_argument("--execution-engine-ci-run-id", default="26268276210")
-    parser.add_argument("--credentialed-sdk-run-id", default="local-current-gates-20260521")
+    parser.add_argument("--credentialed-sdk-run-id", default="local-current-gates-20260523")
     parser.add_argument("--idempotency-key", default="blocked-rehearsal-idempotency")
     parser.add_argument("--execution-id", default="blocked-rehearsal-execution")
     parser.add_argument("--plan-hash", default="blocked-rehearsal-plan-hash")

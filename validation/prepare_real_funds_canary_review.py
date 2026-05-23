@@ -24,7 +24,7 @@ DEFAULT_EXTERNAL_REFERENCES = ROOT / "config" / "controlled-canary.external-refe
 DEFAULT_ROOT_CI_RUN_ID = "26268697168"
 DEFAULT_HERMES_CI_RUN_ID = "26267887116"
 DEFAULT_EXECUTION_ENGINE_CI_RUN_ID = "26268276210"
-DEFAULT_CREDENTIALED_SDK_RUN_ID = "local-current-gates-20260521"
+DEFAULT_CREDENTIALED_SDK_RUN_ID = "local-current-gates-20260523"
 
 
 def require_sha256(value: str, label: str) -> str:
