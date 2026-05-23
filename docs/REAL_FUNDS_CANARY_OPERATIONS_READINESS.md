@@ -31,6 +31,13 @@ must include `external-references.json` and `release-decision.json`, and report
 `real_funds_canary_authorized=false`, `remote_side_effects=false`, and
 `secrets_included=false`.
 
+Before any future reviewed-go attempt, build the runtime-truth input from
+`config/controlled-canary.runtime-truth.template.json`. That file must remain
+references-only: it records durable evidence references for `kill_switch`,
+`live_submit_gate`, `idempotency_lease`, and
+`order_cancel_reconciliation`, but it does not contain secrets and does not
+authorize live submit by itself.
+
 By default the generated package binds the current
 `evidence/current/manifest.json` file hash. Source-controlled example fixtures
 under `config/controlled-canary.*.example.json` are reviewed examples, not a

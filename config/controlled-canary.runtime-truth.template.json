@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "status": "template_not_reviewed",
+  "source_release": "v0.27.3",
+  "scope": "REAL_FUNDS_CANARY",
+  "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
+  "artifact_sha256": "REPLACE_WITH_RELEASE_ARTIFACT_SHA256",
+  "workspace_manifest_sha256": "REPLACE_WITH_WORKSPACE_EVIDENCE_MANIFEST_SHA256",
+  "archived_manifest_sha256": "REPLACE_WITH_ARCHIVED_EVIDENCE_MANIFEST_SHA256",
+  "dependencies": [
+    {
+      "name": "kill_switch",
+      "status": "durable_runtime_truth",
+      "evidence_ref": "REPLACE_WITH_DURABLE_KILL_SWITCH_RUNTIME_STATE_EVIDENCE",
+      "required_truth": "durable runtime state checked immediately before post and cancel",
+      "operator_assertion": "fail closed if kill switch is enabled or unavailable"
+    },
+    {
+      "name": "live_submit_gate",
+      "status": "durable_runtime_truth",
+      "evidence_ref": "REPLACE_WITH_DURABLE_LIVE_SUBMIT_GATE_EVIDENCE",
+      "required_truth": "runtime gate evaluated immediately before any remote side effect",
+      "operator_assertion": "release decision alone is not sufficient authority"
+    },
+    {
+      "name": "idempotency_lease",
+      "status": "durable_runtime_truth",
+      "evidence_ref": "REPLACE_WITH_DURABLE_IDEMPOTENCY_LEASE_EVIDENCE",
+      "required_truth": "leased owner token with recovery for post-timeout and remote-unknown attempts",
+      "operator_assertion": "no retry or second order without operator-required recovery"
+    },
+    {
+      "name": "order_cancel_reconciliation",
+      "status": "durable_runtime_truth",
+      "evidence_ref": "REPLACE_WITH_DURABLE_ORDER_CANCEL_RECONCILIATION_EVIDENCE",
+      "required_truth": "durable order/cancel state machine with readback and operator-required escalation",
+      "operator_assertion": "cancel failure or unknown status must persist evidence before exit"
+    }
+  ],
+  "references_only_no_secret_values": true,
+  "live_submit_allowed": false,
+  "live_cancel_allowed": false,
+  "real_funds_canary_authorized": false,
+  "remote_side_effects": false,
+  "production_ready_claimed": false
+}
