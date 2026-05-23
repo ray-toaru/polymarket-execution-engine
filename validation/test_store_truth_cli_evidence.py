@@ -54,6 +54,9 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
                 "remote_side_effects": False,
                 "raw_signed_order_exposed": False,
             },
+            artifact_sha256="1" * 64,
+            workspace_manifest_sha256="2" * 64,
+            archived_manifest_sha256="3" * 64,
         )
         dependencies = {item["name"]: item for item in doc["dependencies"]}
         self.assertEqual(
@@ -68,8 +71,15 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
         self.assertTrue(all(item["status"] == "durable_runtime_truth" for item in dependencies.values()))
         self.assertTrue(all(item["evidence_ref"].startswith("pg://canary-runtime-truth/") for item in dependencies.values()))
         self.assertTrue(doc["references_only_no_secret_values"])
+        self.assertEqual(doc["artifact_sha256"], "1" * 64)
+        self.assertEqual(doc["workspace_manifest_sha256"], "2" * 64)
+        self.assertEqual(doc["archived_manifest_sha256"], "3" * 64)
         self.assertFalse(doc["live_submit_allowed"])
         self.assertFalse(doc["remote_side_effects"])
+
+    def test_runtime_truth_hash_inputs_must_be_sha256(self) -> None:
+        with self.assertRaisesRegex(SystemExit, "must be 64-hex"):
+            run_real_funds_canary_store_truth_cli_preflight.require_sha256("not-a-sha", "--artifact-sha256")
 
 
 if __name__ == "__main__":

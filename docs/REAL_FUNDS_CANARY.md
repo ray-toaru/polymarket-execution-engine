@@ -98,8 +98,10 @@ Execution policy:
   `--runtime-truth-store postgres` in `--preflight-only` mode. It proves the CLI
   can consume store-backed runtime truth without posting, cancelling, exposing a
   signed order, or printing the database URL. Use
-  `--runtime-truth-output <path>` to write a references-only runtime-truth JSON
-  candidate that can be checked by
+  `--artifact-sha256`, `--workspace-manifest-sha256`,
+  `--archived-manifest-sha256`, and `--runtime-truth-output <path>` to write a
+  references-only runtime-truth JSON candidate bound to the exact release
+  artifact and evidence manifests. Check the output with
   `validation/validate_controlled_canary_runtime_truth.py` before the controlled
   canary pipeline consumes it.
 - The armed canary uses a GTC post-only BUY limit order and immediately cancels it. A missing cancel confirmation is a canary failure requiring manual reconciliation.

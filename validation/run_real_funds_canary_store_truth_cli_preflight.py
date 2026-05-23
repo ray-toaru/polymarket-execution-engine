@@ -22,6 +22,16 @@ EVIDENCE_MANIFEST_SHA256 = "c" * 64
 WORKSPACE_MANIFEST_SHA256 = "e" * 64
 
 
+def is_sha256(value: str) -> bool:
+    return len(value) == 64 and all(ch in "0123456789abcdefABCDEF" for ch in value)
+
+
+def require_sha256(value: str, field: str) -> str:
+    if not is_sha256(value):
+        raise SystemExit(f"{field} must be 64-hex")
+    return value.lower()
+
+
 def load_env_file(path: Path) -> None:
     if not path.exists():
         return
@@ -189,17 +199,24 @@ def market_candidate() -> dict[str, Any]:
     return candidate
 
 
-def approval(account_id: str, market_sha: str) -> dict[str, Any]:
+def approval(
+    account_id: str,
+    market_sha: str,
+    *,
+    artifact_sha256: str,
+    workspace_manifest_sha256: str,
+    archived_manifest_sha256: str,
+) -> dict[str, Any]:
     return {
         "approval_id": "approval-store-truth-cli-preflight",
         "approval_hash": "a" * 64,
         "account_id": account_id,
         "scope": "REAL_FUNDS_CANARY",
         "expires_at": "2099-01-01T00:00:00Z",
-        "artifact_sha256": ARTIFACT_SHA256,
-        "evidence_manifest_sha256": EVIDENCE_MANIFEST_SHA256,
-        "workspace_manifest_sha256": WORKSPACE_MANIFEST_SHA256,
-        "archived_manifest_sha256": EVIDENCE_MANIFEST_SHA256,
+        "artifact_sha256": artifact_sha256,
+        "evidence_manifest_sha256": archived_manifest_sha256,
+        "workspace_manifest_sha256": workspace_manifest_sha256,
+        "archived_manifest_sha256": archived_manifest_sha256,
         "market_candidate_sha256": market_sha,
         "max_order_notional_usd": "1",
         "max_daily_notional_usd": "5",
@@ -239,13 +256,30 @@ def seed_runtime_truth(url: str, account_id: str, condition_id: str) -> None:
     )
 
 
-def run_cli(tmp: Path, account_id: str, condition_id: str) -> dict[str, Any]:
+def run_cli(
+    tmp: Path,
+    account_id: str,
+    condition_id: str,
+    *,
+    artifact_sha256: str,
+    workspace_manifest_sha256: str,
+    archived_manifest_sha256: str,
+) -> dict[str, Any]:
     market = market_candidate()
     market_path = tmp / "candidate-market.json"
     write_json(market_path, market)
     market_sha = hashlib.sha256(market_path.read_bytes()).hexdigest()
     approval_path = tmp / "approval.json"
-    write_json(approval_path, approval(account_id, market_sha))
+    write_json(
+        approval_path,
+        approval(
+            account_id,
+            market_sha,
+            artifact_sha256=artifact_sha256,
+            workspace_manifest_sha256=workspace_manifest_sha256,
+            archived_manifest_sha256=archived_manifest_sha256,
+        ),
+    )
     env = os.environ.copy()
     env.update(
         {
@@ -272,9 +306,9 @@ def run_cli(tmp: Path, account_id: str, condition_id: str) -> dict[str, Any]:
             "--market-file",
             str(market_path),
             "--artifact-sha256",
-            ARTIFACT_SHA256,
+            artifact_sha256,
             "--evidence-manifest-sha256",
-            EVIDENCE_MANIFEST_SHA256,
+            archived_manifest_sha256,
             "--idempotency-key",
             f"idem-store-truth-{account_id}",
             "--account-id",
@@ -315,7 +349,15 @@ def run_cli(tmp: Path, account_id: str, condition_id: str) -> dict[str, Any]:
     return json.loads(result.stdout)
 
 
-def runtime_truth_document(account_id: str, condition_id: str, report: dict[str, Any]) -> dict[str, Any]:
+def runtime_truth_document(
+    account_id: str,
+    condition_id: str,
+    report: dict[str, Any],
+    *,
+    artifact_sha256: str = ARTIFACT_SHA256,
+    workspace_manifest_sha256: str = WORKSPACE_MANIFEST_SHA256,
+    archived_manifest_sha256: str = EVIDENCE_MANIFEST_SHA256,
+) -> dict[str, Any]:
     evidence_prefix = f"pg://canary-runtime-truth/account/{account_id}/condition/{condition_id}"
     cargo = tomllib.loads((ROOT / "Cargo.toml").read_text())
     return {
@@ -324,9 +366,9 @@ def runtime_truth_document(account_id: str, condition_id: str, report: dict[str,
         "source_release": f"v{cargo['workspace']['package']['version']}",
         "scope": "REAL_FUNDS_CANARY",
         "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
-        "artifact_sha256": ARTIFACT_SHA256,
-        "workspace_manifest_sha256": WORKSPACE_MANIFEST_SHA256,
-        "archived_manifest_sha256": EVIDENCE_MANIFEST_SHA256,
+        "artifact_sha256": artifact_sha256,
+        "workspace_manifest_sha256": workspace_manifest_sha256,
+        "archived_manifest_sha256": archived_manifest_sha256,
         "dependencies": [
             {
                 "name": "kill_switch",
@@ -372,7 +414,25 @@ def main() -> int:
         type=Path,
         help="Optional path for a references-only runtime-truth JSON candidate produced from the seeded PostgreSQL rows.",
     )
+    parser.add_argument(
+        "--artifact-sha256",
+        default=ARTIFACT_SHA256,
+        help="Release artifact SHA-256 to bind into the local approval and optional runtime-truth output.",
+    )
+    parser.add_argument(
+        "--workspace-manifest-sha256",
+        default=WORKSPACE_MANIFEST_SHA256,
+        help="Workspace evidence manifest SHA-256 to bind into the local approval and optional runtime-truth output.",
+    )
+    parser.add_argument(
+        "--archived-manifest-sha256",
+        default=EVIDENCE_MANIFEST_SHA256,
+        help="Archived release evidence manifest SHA-256 to bind into the local approval and optional runtime-truth output.",
+    )
     args = parser.parse_args()
+    artifact_sha256 = require_sha256(args.artifact_sha256, "--artifact-sha256")
+    workspace_manifest_sha256 = require_sha256(args.workspace_manifest_sha256, "--workspace-manifest-sha256")
+    archived_manifest_sha256 = require_sha256(args.archived_manifest_sha256, "--archived-manifest-sha256")
     url = database_url()
     build_cli()
     suffix = str(time.time_ns())
@@ -380,7 +440,14 @@ def main() -> int:
     condition_id = f"cond-store-truth-{suffix}"
     seed_runtime_truth(url, account_id, condition_id)
     with tempfile.TemporaryDirectory(prefix="pmx-store-truth-cli-") as tmp_dir:
-        report = run_cli(Path(tmp_dir), account_id, condition_id)
+        report = run_cli(
+            Path(tmp_dir),
+            account_id,
+            condition_id,
+            artifact_sha256=artifact_sha256,
+            workspace_manifest_sha256=workspace_manifest_sha256,
+            archived_manifest_sha256=archived_manifest_sha256,
+        )
     failures: list[str] = []
     if report.get("status") != "preflight_ready":
         failures.append("CLI did not report preflight_ready")
@@ -396,7 +463,14 @@ def main() -> int:
     runtime_truth_path = None
     runtime_truth_sha256 = None
     if not failures and args.runtime_truth_output:
-        runtime_truth = runtime_truth_document(account_id, condition_id, report)
+        runtime_truth = runtime_truth_document(
+            account_id,
+            condition_id,
+            report,
+            artifact_sha256=artifact_sha256,
+            workspace_manifest_sha256=workspace_manifest_sha256,
+            archived_manifest_sha256=archived_manifest_sha256,
+        )
         args.runtime_truth_output.parent.mkdir(parents=True, exist_ok=True)
         write_json(args.runtime_truth_output, runtime_truth)
         runtime_truth_path = str(args.runtime_truth_output)
