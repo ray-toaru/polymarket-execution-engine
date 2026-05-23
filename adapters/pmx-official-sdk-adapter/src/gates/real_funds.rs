@@ -29,6 +29,10 @@ pub struct BuildRealFundsCanaryPreconditionsInput<'a> {
     pub config_allow_real_funds_canary: bool,
     pub balance_allowance_checked: bool,
     pub selected_market_safe: bool,
+    pub runtime_kill_switch_truth_bound: bool,
+    pub runtime_live_submit_gate_bound: bool,
+    pub runtime_idempotency_lease_bound: bool,
+    pub runtime_order_cancel_reconciliation_bound: bool,
 }
 
 pub fn validate_real_funds_canary_preconditions(
@@ -93,6 +97,24 @@ pub fn validate_real_funds_canary_preconditions(
         (
             request.preconditions.selected_market_safe,
             "selected market is not canary safe",
+        ),
+        (
+            request.preconditions.runtime_kill_switch_truth_bound,
+            "runtime kill-switch truth missing",
+        ),
+        (
+            request.preconditions.runtime_live_submit_gate_bound,
+            "runtime live-submit gate truth missing",
+        ),
+        (
+            request.preconditions.runtime_idempotency_lease_bound,
+            "runtime idempotency lease truth missing",
+        ),
+        (
+            request
+                .preconditions
+                .runtime_order_cancel_reconciliation_bound,
+            "runtime order/cancel reconciliation truth missing",
         ),
         (
             is_canonical_production_clob_host(&config.clob_host),
@@ -281,6 +303,10 @@ pub fn build_real_funds_canary_preconditions(
             == REAL_FUNDS_CANARY_EXECUTION_STYLE,
         balance_allowance_checked: input.balance_allowance_checked,
         selected_market_safe: input.selected_market_safe,
+        runtime_kill_switch_truth_bound: input.runtime_kill_switch_truth_bound,
+        runtime_live_submit_gate_bound: input.runtime_live_submit_gate_bound,
+        runtime_idempotency_lease_bound: input.runtime_idempotency_lease_bound,
+        runtime_order_cancel_reconciliation_bound: input.runtime_order_cancel_reconciliation_bound,
     }
 }
 

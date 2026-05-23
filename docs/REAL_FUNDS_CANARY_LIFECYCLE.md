@@ -15,6 +15,9 @@ authorize live submit or live cancel.
 
 - `idempotency replay`: the same `(account_id, idempotency_key)` and same request fingerprint returns the existing run.
 - `idempotency conflict`: reusing the same idempotency key with a different request is rejected.
+- `runtime truth binding`: an armed real-funds canary must prove durable
+  kill-switch, live-submit gate, idempotency lease, and order/cancel
+  reconciliation state before the SDK path may post.
 - `remote_side_effects = false`
 - `raw_signed_order_exposed = false`
 - `simulated reconcile` records only local lifecycle state.

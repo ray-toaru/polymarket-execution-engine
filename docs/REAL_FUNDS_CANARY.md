@@ -20,6 +20,10 @@ Required gates:
 - `operator_approved = true`
 - `cancel_only_fallback_ready = true`
 - `balance_allowance_checked = true`
+- `runtime_kill_switch_truth_bound = true`
+- `runtime_live_submit_gate_bound = true`
+- `runtime_idempotency_lease_bound = true`
+- `runtime_order_cancel_reconciliation_bound = true`
 - `approval_file_required = true`
 - `artifact_sha256_required = true`
 - `evidence_manifest_sha256_required = true`
@@ -75,6 +79,10 @@ Execution policy:
 
 - Normal validation runs only the preflight drill and must not call the SDK submit path.
 - A real canary run requires a fresh artifact hash, current evidence manifest hash, explicit local approval file, and all runtime gates.
+- The armed CLI also requires durable runtime-truth bindings for kill switch,
+  live-submit gate, idempotency lease, and order/cancel reconciliation. Local
+  review evidence or operator notes alone are insufficient to satisfy these
+  booleans.
 - The armed canary uses a GTC post-only BUY limit order and immediately cancels it. A missing cancel confirmation is a canary failure requiring manual reconciliation.
 - The armed CLI writes the report file at every remote-side-effect stage. If post status is unknown, post is accepted, cancel status is unknown, or cancel confirmation fails, the report file must contain a structured `operator_required` or stage report rather than relying on terminal output.
 - Candidate market discovery is outside the execution engine boundary. The execution engine validates an externally reviewed candidate against CLOB book/spread and risk gates. The reviewed candidate supplies the share `target_size`; `notional_usd` is only the derived `limit_price * target_size` risk value.

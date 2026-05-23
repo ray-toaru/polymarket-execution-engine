@@ -2,8 +2,7 @@ use crate::{
     OfficialSdkAdapterConfig, OfficialSdkAdapterError, RealFundsCanaryMarketCandidate,
     RealFundsCanaryMarketSelection, RealFundsCanaryMarketValidation, RealFundsCanaryReceipt,
     RealFundsCanaryRequest, RealFundsCanaryStageReport,
-    select_real_funds_canary_market_with_diagnostics,
-    validate_real_funds_canary_preconditions,
+    select_real_funds_canary_market_with_diagnostics, validate_real_funds_canary_preconditions,
 };
 
 use super::shared::{authenticated_sdk_client, sdk_call_timeout, signer_from_env};

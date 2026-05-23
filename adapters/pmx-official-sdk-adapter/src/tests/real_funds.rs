@@ -121,11 +121,12 @@ fn canary_stage_report_marks_remote_side_effect_failures_operator_required() {
             config_allow_real_funds_canary: true,
             balance_allowance_checked: true,
             selected_market_safe: true,
+            runtime_kill_switch_truth_bound: true,
+            runtime_live_submit_gate_bound: true,
+            runtime_idempotency_lease_bound: true,
+            runtime_order_cancel_reconciliation_bound: true,
         });
-    let request = request_fixture(
-        preconditions,
-        market,
-    );
+    let request = request_fixture(preconditions, market);
     let report = RealFundsCanaryStageReport::operator_required(
         &request,
         "cancel_unknown",
@@ -170,6 +171,10 @@ fn real_funds_canary_requires_extra_env_config_approval_and_market_gates() {
             config_allow_real_funds_canary: false,
             balance_allowance_checked: false,
             selected_market_safe: false,
+            runtime_kill_switch_truth_bound: false,
+            runtime_live_submit_gate_bound: false,
+            runtime_idempotency_lease_bound: false,
+            runtime_order_cancel_reconciliation_bound: false,
         });
     let request = request_fixture(preconditions, market);
     let err =
@@ -180,6 +185,44 @@ fn real_funds_canary_requires_extra_env_config_approval_and_market_gates() {
     assert!(error.contains("real funds config gate not represented in preconditions"));
     assert!(error.contains("balance/allowance check missing"));
     assert!(error.contains("selected market is not canary safe"));
+}
+
+#[test]
+fn real_funds_canary_requires_durable_runtime_truth_gates() {
+    let market = select_real_funds_canary_market(&safe_market_candidates(), "1")
+        .expect("safe market candidate should be selected");
+    let approval = approval_fixture();
+    let risk_limits = risk_limits_fixture();
+    let preconditions =
+        build_real_funds_canary_preconditions(BuildRealFundsCanaryPreconditionsInput {
+            approval: &approval,
+            risk_limits: &risk_limits,
+            market: &market,
+            live_canary: all_live_canary_preconditions(),
+            artifact_sha256: &approval.artifact_sha256,
+            evidence_manifest_sha256: &approval.evidence_manifest_sha256,
+            market_candidate_sha256: &approval.market_candidate_sha256,
+            config_allow_real_funds_canary: true,
+            balance_allowance_checked: true,
+            selected_market_safe: true,
+            runtime_kill_switch_truth_bound: false,
+            runtime_live_submit_gate_bound: false,
+            runtime_idempotency_lease_bound: false,
+            runtime_order_cancel_reconciliation_bound: false,
+        });
+    let request = request_fixture(preconditions, market);
+    let config = OfficialSdkAdapterConfig {
+        allow_real_funds_canary: true,
+        clob_host: CLOB_PRODUCTION_HOST.into(),
+        ..OfficialSdkAdapterConfig::default()
+    };
+    let err = validate_real_funds_canary_preconditions(&config, &request)
+        .expect_err("missing runtime truth must block real-funds canary");
+    let error = err.to_string();
+    assert!(error.contains("runtime kill-switch truth missing"));
+    assert!(error.contains("runtime live-submit gate truth missing"));
+    assert!(error.contains("runtime idempotency lease truth missing"));
+    assert!(error.contains("runtime order/cancel reconciliation truth missing"));
 }
 
 #[test]
@@ -200,6 +243,10 @@ fn real_funds_canary_rejects_legacy_redirecting_clob_host() {
             config_allow_real_funds_canary: true,
             balance_allowance_checked: true,
             selected_market_safe: true,
+            runtime_kill_switch_truth_bound: true,
+            runtime_live_submit_gate_bound: true,
+            runtime_idempotency_lease_bound: true,
+            runtime_order_cancel_reconciliation_bound: true,
         });
     let request = request_fixture(preconditions, market);
     let config = OfficialSdkAdapterConfig {
@@ -513,6 +560,10 @@ fn real_funds_canary_caps_fail_closed() {
             config_allow_real_funds_canary: true,
             balance_allowance_checked: true,
             selected_market_safe: true,
+            runtime_kill_switch_truth_bound: true,
+            runtime_live_submit_gate_bound: true,
+            runtime_idempotency_lease_bound: true,
+            runtime_order_cancel_reconciliation_bound: true,
         });
     assert!(preconditions.max_order_notional_ok);
     assert!(!preconditions.max_daily_notional_ok);

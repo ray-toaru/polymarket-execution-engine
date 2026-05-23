@@ -169,6 +169,10 @@ pub struct RealFundsCanaryPreconditions {
     pub execution_style_gtc_post_only_cancel: bool,
     pub balance_allowance_checked: bool,
     pub selected_market_safe: bool,
+    pub runtime_kill_switch_truth_bound: bool,
+    pub runtime_live_submit_gate_bound: bool,
+    pub runtime_idempotency_lease_bound: bool,
+    pub runtime_order_cancel_reconciliation_bound: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

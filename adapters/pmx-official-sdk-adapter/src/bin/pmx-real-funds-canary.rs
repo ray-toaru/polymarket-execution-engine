@@ -3,11 +3,11 @@ use pmx_official_sdk_adapter::{
     BuildRealFundsCanaryPreconditionsInput, LiveCanaryPreconditions, OfficialSdkAdapterConfig,
     RealFundsCanaryApproval, RealFundsCanaryMarketCandidate, RealFundsCanaryMarketDiagnostics,
     RealFundsCanaryReceipt, RealFundsCanaryRequest, RealFundsCanaryRiskLimits,
-    RealFundsCanaryStageReport,
-    ReviewedRealFundsCanaryReleaseDecision, build_real_funds_canary_preconditions,
+    RealFundsCanaryStageReport, ReviewedRealFundsCanaryReleaseDecision,
+    build_real_funds_canary_preconditions,
     run_real_funds_canary_gtc_post_only_cancel_with_reporter,
-    validate_real_funds_canary_market_with_diagnostics,
-    validate_real_funds_canary_preconditions, validate_reviewed_real_funds_canary_release_decision,
+    validate_real_funds_canary_market_with_diagnostics, validate_real_funds_canary_preconditions,
+    validate_reviewed_real_funds_canary_release_decision,
 };
 use serde::Serialize;
 use serde_json::json;
@@ -175,6 +175,24 @@ async fn main() -> anyhow::Result<()> {
                 .as_deref()
                 == Some("1"),
             selected_market_safe: true,
+            runtime_kill_switch_truth_bound: std::env::var("PMX_RUNTIME_KILL_SWITCH_TRUTH_BOUND")
+                .ok()
+                .as_deref()
+                == Some("1"),
+            runtime_live_submit_gate_bound: std::env::var("PMX_RUNTIME_LIVE_SUBMIT_GATE_BOUND")
+                .ok()
+                .as_deref()
+                == Some("1"),
+            runtime_idempotency_lease_bound: std::env::var("PMX_RUNTIME_IDEMPOTENCY_LEASE_BOUND")
+                .ok()
+                .as_deref()
+                == Some("1"),
+            runtime_order_cancel_reconciliation_bound: std::env::var(
+                "PMX_RUNTIME_ORDER_CANCEL_RECONCILIATION_BOUND",
+            )
+            .ok()
+            .as_deref()
+                == Some("1"),
         });
     let request = RealFundsCanaryRequest {
         account_id: AccountId(args.account_id.clone()),
@@ -228,12 +246,11 @@ async fn main() -> anyhow::Result<()> {
     if args.armed {
         validate_real_funds_canary_preconditions(&config, &request)?;
         create_approval_consumed_marker(&args, &approval, &market_candidate_sha256)?;
-        let receipt = run_real_funds_canary_gtc_post_only_cancel_with_reporter(
-            &config,
-            request,
-            |stage| persist_stage_report(&args, stage),
-        )
-        .await?;
+        let receipt =
+            run_real_funds_canary_gtc_post_only_cancel_with_reporter(&config, request, |stage| {
+                persist_stage_report(&args, stage)
+            })
+            .await?;
         persist_armed_report(&args, &receipt)?;
         println!("{}", serde_json::to_string_pretty(&receipt)?);
         return Ok(());
