@@ -116,6 +116,40 @@ pub trait RuntimeStateStore: Send + Sync {
     ) -> Result<RuntimeStateSummary, StoreError>;
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CanaryRuntimeTruthQuery {
+    pub account_id: String,
+    pub condition_id: String,
+    pub collateral_profile_id: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CanaryRuntimeTruthBindings {
+    pub kill_switch_open: bool,
+    pub live_submit_gate_ready: bool,
+    pub idempotency_lease_ready: bool,
+    pub order_cancel_reconciliation_ready: bool,
+    pub evidence_refs: Vec<String>,
+}
+
+impl CanaryRuntimeTruthBindings {
+    pub fn all_ready(&self) -> bool {
+        self.kill_switch_open
+            && self.live_submit_gate_ready
+            && self.idempotency_lease_ready
+            && self.order_cancel_reconciliation_ready
+    }
+}
+
+#[async_trait]
+pub trait CanaryRuntimeTruthStore: Send + Sync {
+    async fn load_canary_runtime_truth(
+        &self,
+        query: &CanaryRuntimeTruthQuery,
+    ) -> Result<CanaryRuntimeTruthBindings, StoreError>;
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct KillSwitchStateChange {

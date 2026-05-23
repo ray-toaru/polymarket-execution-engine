@@ -15,6 +15,9 @@ mod freshness;
 #[path = "runtime/status.rs"]
 mod status;
 
+#[path = "runtime/truth.rs"]
+mod truth;
+
 pub use apply::*;
 pub use freshness::*;
 pub(crate) use status::*;

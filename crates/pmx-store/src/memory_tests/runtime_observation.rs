@@ -159,3 +159,146 @@ async fn global_kill_switch_overrides_account_runtime_state() {
         .expect("load runtime state");
     assert!(state.kill_switch_enabled);
 }
+
+#[tokio::test]
+async fn canary_runtime_truth_requires_store_backed_dependencies() {
+    let store = InMemoryStore::default();
+    store.set_runtime_state_for_test(
+        "acct-canary-truth-partial",
+        "cond-canary-truth-partial",
+        None,
+        RuntimeStateSummary {
+            geoblock_status: GeoblockStatus::Allowed,
+            worker_status: WorkerStatus::Healthy,
+            collateral_profile_status: CollateralProfileStatus::DefaultResolved,
+            kill_switch_enabled: false,
+            required_capabilities: vec![],
+        },
+    );
+    store
+        .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
+            worker_id: "worker-live-submit-gate".into(),
+            role: "CanaryRuntimeTruth".into(),
+            capability: "live-submit-gate".into(),
+            status: "HEALTHY".into(),
+            last_heartbeat_at: Utc::now(),
+            last_error: None,
+        })
+        .await
+        .expect("record live-submit gate");
+
+    let truth = store
+        .load_canary_runtime_truth(&CanaryRuntimeTruthQuery {
+            account_id: "acct-canary-truth-partial".into(),
+            condition_id: "cond-canary-truth-partial".into(),
+            collateral_profile_id: None,
+        })
+        .await
+        .expect("load canary runtime truth");
+    assert!(truth.kill_switch_open);
+    assert!(truth.live_submit_gate_ready);
+    assert!(!truth.idempotency_lease_ready);
+    assert!(!truth.order_cancel_reconciliation_ready);
+    assert!(!truth.all_ready());
+}
+
+#[tokio::test]
+async fn canary_runtime_truth_ignores_unscoped_worker_roles() {
+    let store = InMemoryStore::default();
+    store.set_runtime_state_for_test(
+        "acct-canary-truth-role",
+        "cond-canary-truth-role",
+        None,
+        RuntimeStateSummary {
+            geoblock_status: GeoblockStatus::Allowed,
+            worker_status: WorkerStatus::Healthy,
+            collateral_profile_status: CollateralProfileStatus::DefaultResolved,
+            kill_switch_enabled: false,
+            required_capabilities: vec![],
+        },
+    );
+    for capability in [
+        "live-submit-gate",
+        "idempotency-lease",
+        "order-cancel-reconciliation",
+    ] {
+        store
+            .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
+                worker_id: format!("unscoped-worker-{capability}"),
+                role: "GenericRuntimeWorker".into(),
+                capability: capability.into(),
+                status: "HEALTHY".into(),
+                last_heartbeat_at: Utc::now(),
+                last_error: None,
+            })
+            .await
+            .expect("record generic worker heartbeat");
+    }
+
+    let truth = store
+        .load_canary_runtime_truth(&CanaryRuntimeTruthQuery {
+            account_id: "acct-canary-truth-role".into(),
+            condition_id: "cond-canary-truth-role".into(),
+            collateral_profile_id: None,
+        })
+        .await
+        .expect("load canary runtime truth");
+    assert!(truth.kill_switch_open);
+    assert!(!truth.live_submit_gate_ready);
+    assert!(!truth.idempotency_lease_ready);
+    assert!(!truth.order_cancel_reconciliation_ready);
+    assert!(!truth.all_ready());
+}
+
+#[tokio::test]
+async fn canary_runtime_truth_is_ready_when_all_store_dependencies_are_ready() {
+    let store = InMemoryStore::default();
+    store.set_runtime_state_for_test(
+        "acct-canary-truth-ready",
+        "cond-canary-truth-ready",
+        None,
+        RuntimeStateSummary {
+            geoblock_status: GeoblockStatus::Allowed,
+            worker_status: WorkerStatus::Healthy,
+            collateral_profile_status: CollateralProfileStatus::DefaultResolved,
+            kill_switch_enabled: false,
+            required_capabilities: vec![],
+        },
+    );
+    for capability in [
+        "live-submit-gate",
+        "idempotency-lease",
+        "order-cancel-reconciliation",
+    ] {
+        store
+            .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
+                worker_id: format!("worker-{capability}"),
+                role: "CanaryRuntimeTruth".into(),
+                capability: capability.into(),
+                status: "HEALTHY".into(),
+                last_heartbeat_at: Utc::now(),
+                last_error: None,
+            })
+            .await
+            .expect("record canary runtime truth heartbeat");
+    }
+
+    let truth = store
+        .load_canary_runtime_truth(&CanaryRuntimeTruthQuery {
+            account_id: "acct-canary-truth-ready".into(),
+            condition_id: "cond-canary-truth-ready".into(),
+            collateral_profile_id: None,
+        })
+        .await
+        .expect("load canary runtime truth");
+    assert!(truth.all_ready());
+    assert_eq!(
+        truth.evidence_refs,
+        vec![
+            "runtime-state://kill-switch".to_string(),
+            "runtime-state://worker/live-submit-gate".to_string(),
+            "runtime-state://worker/idempotency-lease".to_string(),
+            "runtime-state://worker/order-cancel-reconciliation".to_string(),
+        ]
+    );
+}

@@ -53,6 +53,39 @@ async fn store_backed_runtime_provider_uses_store_state() {
 }
 
 #[tokio::test]
+async fn store_backed_runtime_provider_exposes_canary_runtime_truth() {
+    let store = InMemoryStore::default();
+    store.set_runtime_state_for_test("acct-1", "cond-1", None, allow_runtime_state());
+    for capability in [
+        "live-submit-gate",
+        "idempotency-lease",
+        "order-cancel-reconciliation",
+    ] {
+        store
+            .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
+                worker_id: format!("worker-{capability}"),
+                role: "CanaryRuntimeTruth".into(),
+                capability: capability.into(),
+                status: "HEALTHY".into(),
+                last_heartbeat_at: Utc::now(),
+                last_error: None,
+            })
+            .await
+            .expect("record canary runtime truth heartbeat");
+    }
+    let provider = StoreBackedRuntimeStateProvider::new(store);
+    let truth = provider
+        .load_canary_runtime_truth(&pmx_store::CanaryRuntimeTruthQuery {
+            account_id: "acct-1".into(),
+            condition_id: "cond-1".into(),
+            collateral_profile_id: None,
+        })
+        .await
+        .expect("load canary runtime truth");
+    assert!(truth.all_ready());
+}
+
+#[tokio::test]
 async fn service_records_runtime_worker_provider_snapshot_for_decision_gate() {
     let store = InMemoryStore::default();
     store.set_runtime_state_for_test("acct-1", "cond-1", None, allow_runtime_state());

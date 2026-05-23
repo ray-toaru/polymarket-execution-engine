@@ -211,6 +211,77 @@ async fn postgres_runtime_worker_observations_degrade_runtime_state() {
 }
 
 #[tokio::test]
+async fn postgres_loads_canary_runtime_truth_from_runtime_rows() {
+    let Some(store) = test_store().await else {
+        return;
+    };
+    let account = unique("acct-canary-truth");
+    let condition = unique("cond-canary-truth");
+    let client = store.client().await.expect("test postgres client");
+    client
+        .execute(
+            "INSERT INTO runtime_accounts (account_id, status, kill_switch_enabled) VALUES ($1, 'ACTIVE', false)",
+            &[&account],
+        )
+        .await
+        .expect("seed runtime account");
+    client
+        .execute(
+            "INSERT INTO runtime_markets (condition_id, status, is_sports) VALUES ($1, 'ACTIVE', false)",
+            &[&condition],
+        )
+        .await
+        .expect("seed runtime market");
+    for capability in [
+        "live-submit-gate",
+        "idempotency-lease",
+        "order-cancel-reconciliation",
+    ] {
+        client
+            .execute(
+                "INSERT INTO worker_health (worker_id, role, capability, status, last_heartbeat_at) \
+                 VALUES ($1, 'CanaryRuntimeTruth', $2, 'HEALTHY', now())",
+                &[&unique(&format!("worker-{capability}")), &capability],
+            )
+            .await
+            .expect("seed canary runtime truth worker");
+    }
+
+    let truth = store
+        .load_canary_runtime_truth(&CanaryRuntimeTruthQuery {
+            account_id: account.clone(),
+            condition_id: condition,
+            collateral_profile_id: None,
+        })
+        .await
+        .expect("load canary runtime truth");
+    assert!(truth.all_ready());
+
+    store
+        .record_runtime_worker_observation(&RuntimeWorkerObservation {
+            account_id: account.clone(),
+            capability: "order-cancel-reconciliation".into(),
+            worker_kind: "CanaryRuntimeTruth".into(),
+            status: "BLOCKED".into(),
+            should_fail_closed: true,
+            reason: "cancel reconciliation stale".into(),
+            observed_at: None,
+        })
+        .await
+        .expect("record blocking observation");
+    let truth = store
+        .load_canary_runtime_truth(&CanaryRuntimeTruthQuery {
+            account_id: account,
+            condition_id: unique("cond-canary-truth-recheck"),
+            collateral_profile_id: None,
+        })
+        .await
+        .expect("load blocked canary runtime truth");
+    assert!(!truth.order_cancel_reconciliation_ready);
+    assert!(!truth.all_ready());
+}
+
+#[tokio::test]
 async fn postgres_runtime_state_prefers_scoped_collateral_and_worker_rows() {
     let Some(store) = test_store().await else {
         return;

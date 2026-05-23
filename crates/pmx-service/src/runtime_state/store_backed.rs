@@ -1,4 +1,5 @@
 use super::*;
+use crate::ServiceError;
 
 #[derive(Debug, Clone)]
 pub struct StoreBackedRuntimeStateProvider<S> {
@@ -23,6 +24,19 @@ impl<S> StoreBackedRuntimeStateProvider<S> {
             store,
             required_capabilities,
         }
+    }
+
+    pub async fn load_canary_runtime_truth(
+        &self,
+        query: &pmx_store::CanaryRuntimeTruthQuery,
+    ) -> Result<pmx_store::CanaryRuntimeTruthBindings, ServiceError>
+    where
+        S: pmx_store::CanaryRuntimeTruthStore,
+    {
+        self.store
+            .load_canary_runtime_truth(query)
+            .await
+            .map_err(ServiceError::Store)
     }
 }
 
