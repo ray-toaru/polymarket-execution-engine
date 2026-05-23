@@ -2,9 +2,9 @@ use pmx_core::{AccountId, ExecutionId, HashValue};
 use pmx_official_sdk_adapter::{
     BuildRealFundsCanaryPreconditionsInput, LiveCanaryPreconditions, OfficialSdkAdapterConfig,
     RealFundsCanaryApproval, RealFundsCanaryMarketCandidate, RealFundsCanaryMarketDiagnostics,
-    RealFundsCanaryReceipt, RealFundsCanaryRequest, RealFundsCanaryRiskLimits,
-    RealFundsCanaryStageReport, ReviewedRealFundsCanaryReleaseDecision,
-    build_real_funds_canary_preconditions,
+    RealFundsCanaryMarketSelection, RealFundsCanaryPreconditions, RealFundsCanaryReceipt,
+    RealFundsCanaryRequest, RealFundsCanaryRiskLimits, RealFundsCanaryStageReport,
+    ReviewedRealFundsCanaryReleaseDecision, build_real_funds_canary_preconditions,
     run_real_funds_canary_gtc_post_only_cancel_with_reporter,
     validate_real_funds_canary_market_with_diagnostics, validate_real_funds_canary_preconditions,
     validate_reviewed_real_funds_canary_release_decision,
@@ -521,7 +521,8 @@ fn persist_armed_report(args: &Args, receipt: &RealFundsCanaryReceipt) -> anyhow
 }
 
 fn persist_stage_report(args: &Args, report: &RealFundsCanaryStageReport) -> anyhow::Result<()> {
-    write_report_file(args, report)
+    write_report_file(args, report)?;
+    append_stage_history(args, report)
 }
 
 fn write_report_file<T: Serialize>(args: &Args, report: &T) -> anyhow::Result<()> {
@@ -539,6 +540,31 @@ fn write_report_file<T: Serialize>(args: &Args, report: &T) -> anyhow::Result<()
     Ok(())
 }
 
+fn append_stage_history(args: &Args, report: &RealFundsCanaryStageReport) -> anyhow::Result<()> {
+    let path = args
+        .report_file
+        .as_ref()
+        .ok_or_else(|| anyhow::anyhow!("--report-file is required for armed real-funds canary"))?;
+    let history_path = stage_history_path(path);
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .append(true)
+        .open(history_path)?;
+    file.write_all(serde_json::to_string(report)?.as_bytes())?;
+    file.write_all(b"\n")?;
+    Ok(())
+}
+
+fn stage_history_path(path: &PathBuf) -> PathBuf {
+    let extension = path
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .map(|extension| format!("{extension}.stages.jsonl"))
+        .unwrap_or_else(|| "stages.jsonl".into());
+    path.with_extension(extension)
+}
+
 fn sha256_hex(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
@@ -554,6 +580,10 @@ mod tests {
             .expect("time")
             .as_nanos();
         std::env::temp_dir().join(format!("pmx-{name}-{nonce}.json"))
+    }
+
+    fn temp_report_path(name: &str) -> PathBuf {
+        temp_runtime_truth_path(name)
     }
 
     fn minimal_args(extra: &[&str]) -> Vec<String> {
@@ -611,6 +641,118 @@ mod tests {
         assert!(truth.live_submit_gate);
         assert!(!truth.idempotency_lease);
         assert!(truth.order_cancel_reconciliation);
+    }
+
+    #[test]
+    fn stage_report_persistence_keeps_append_only_jsonl_history() {
+        let report_path = temp_report_path("canary-stage-report");
+        let args = parse_args_from(minimal_args(&[
+            "--report-file",
+            report_path.to_str().unwrap(),
+        ]))
+        .expect("parse args");
+        let request = RealFundsCanaryRequest {
+            account_id: AccountId("acct-canary".into()),
+            execution_id: ExecutionId("exec-canary".into()),
+            plan_hash: HashValue("plan-hash".into()),
+            idempotency_key: "idem-canary".into(),
+            approval: RealFundsCanaryApproval {
+                approval_id: "approval-canary".into(),
+                approval_hash: "a".repeat(64),
+                account_id: AccountId("acct-canary".into()),
+                scope: "REAL_FUNDS_CANARY".into(),
+                expires_at: "2099-01-01T00:00:00Z".into(),
+                artifact_sha256: "b".repeat(64),
+                evidence_manifest_sha256: "c".repeat(64),
+                workspace_manifest_sha256: Some("e".repeat(64)),
+                archived_manifest_sha256: Some("c".repeat(64)),
+                market_candidate_sha256: "d".repeat(64),
+                max_order_notional_usd: "1".into(),
+                max_daily_notional_usd: "5".into(),
+                execution_style: "GTC_LIMIT_POST_ONLY_CANCEL".into(),
+                operator_identity_ref: "operator-local-approval".into(),
+            },
+            risk_limits: RealFundsCanaryRiskLimits {
+                max_order_notional_usd: "1".into(),
+                max_daily_notional_usd: "5".into(),
+                daily_used_notional_usd: "0".into(),
+            },
+            market: RealFundsCanaryMarketSelection {
+                market_id: "market".into(),
+                token_id: "123".into(),
+                limit_price: "0.10".into(),
+                size: "5".into(),
+                notional_usd: "0.50".into(),
+                selection_reason: "unit-test".into(),
+            },
+            market_candidate_sha256: "d".repeat(64),
+            preconditions: RealFundsCanaryPreconditions {
+                live_canary: LiveCanaryPreconditions {
+                    compile_feature_live_submit: true,
+                    env_allow_live_submit: true,
+                    config_allow_live_submit: true,
+                    kill_switch_open: true,
+                    runtime_worker_healthy: true,
+                    geoblock_allowed: true,
+                    repository_reservation_exists: true,
+                    idempotency_key_written: true,
+                    reconcile_worker_healthy: true,
+                    account_whitelisted: true,
+                    market_whitelisted: true,
+                    size_cap_ok: true,
+                    daily_cap_ok: true,
+                    operator_approved: true,
+                    cancel_only_fallback_ready: true,
+                },
+                env_allow_real_funds_canary: true,
+                config_allow_real_funds_canary: true,
+                approval_valid: true,
+                approval_scope_matches: true,
+                approval_not_expired: true,
+                artifact_bound: true,
+                evidence_manifest_bound: true,
+                market_candidate_bound: true,
+                max_order_notional_ok: true,
+                max_daily_notional_ok: true,
+                execution_style_gtc_post_only_cancel: true,
+                balance_allowance_checked: true,
+                selected_market_safe: true,
+                runtime_kill_switch_truth_bound: true,
+                runtime_live_submit_gate_bound: true,
+                runtime_idempotency_lease_bound: true,
+                runtime_order_cancel_reconciliation_bound: true,
+            },
+        };
+        let first = RealFundsCanaryStageReport::stage(
+            &request,
+            "post_accepted",
+            Some("remote-1".into()),
+            Some("Live".into()),
+            true,
+            false,
+            false,
+        );
+        let second = RealFundsCanaryStageReport::operator_required(
+            &request,
+            "cancel_unknown",
+            Some("remote-1".into()),
+            Some("Live".into()),
+            "cancel_order timed out",
+        );
+
+        persist_stage_report(&args, &first).expect("persist first stage");
+        persist_stage_report(&args, &second).expect("persist second stage");
+
+        let latest = std::fs::read_to_string(&report_path).expect("latest report");
+        assert!(latest.contains("\"stage\": \"cancel_unknown\""));
+        let history_path = report_path.with_extension("json.stages.jsonl");
+        let history = std::fs::read_to_string(&history_path).expect("stage history");
+        let lines = history.lines().collect::<Vec<_>>();
+        assert_eq!(lines.len(), 2);
+        assert!(lines[0].contains("\"stage\":\"post_accepted\""));
+        assert!(lines[1].contains("\"stage\":\"cancel_unknown\""));
+        let _ = std::fs::remove_file(&report_path);
+        let _ = std::fs::remove_file(&history_path);
     }
 
     #[tokio::test]
