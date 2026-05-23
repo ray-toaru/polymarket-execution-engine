@@ -1,5 +1,5 @@
 {
-  "version": "0.27.2",
+  "version": "0.27.3",
   "artifact_kind": "source_candidate",
   "generated_at": null,
   "canonical_evidence_dir": "polymarket-execution-engine/evidence/current",

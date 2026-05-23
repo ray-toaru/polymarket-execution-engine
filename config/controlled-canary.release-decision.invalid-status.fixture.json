@@ -4,7 +4,7 @@
   "status": "draft_not_approved_not_active",
   "decision": "go",
   "decision_reason": "Invalid fixture: a GO decision with a draft/not-active status must never authorize a real-funds canary.",
-  "source_release": "v0.27.2",
+  "source_release": "v0.27.3",
   "scope": "REAL_FUNDS_CANARY",
   "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
   "artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",

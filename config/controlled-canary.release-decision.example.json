@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "decision_id": "controlled-canary-v0.27.2-no-go-example",
+  "decision_id": "controlled-canary-v0.27.3-no-go-example",
   "status": "example_no_go_not_reviewed_for_live",
   "decision": "no_go",
-  "decision_reason": "Example no-go decision shape for the v0.27.2 controlled real-funds canary path. It is illustrative and does not authorize live action.",
-  "source_release": "v0.27.2",
+  "decision_reason": "Example no-go decision shape for the v0.27.3 controlled real-funds canary path. It is illustrative and does not authorize live action.",
+  "source_release": "v0.27.3",
   "scope": "REAL_FUNDS_CANARY",
   "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
   "artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
