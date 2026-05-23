@@ -22,8 +22,11 @@ The project is still pre-live. The official SDK adapter may contain explicit saf
 - `default_blocked_live_canary_preconditions()` keeps every future live canary
   integration point blocked until all gates are explicitly populated.
 - `pmx-service` remote post call sites are limited to `submit/live.rs`; that path
-  must use explicit `submit_plan_with_gateway`, pre-sign and pre-post runtime
-  checks, and redacted lifecycle payloads.
+  must use explicit `submit_plan_with_gateway`, pre-sign, pre-post, and
+  post-ack runtime checks, and redacted lifecycle payloads. If runtime truth
+  degrades after a remote post acknowledgment, the order remains recorded as
+  posted, but the submit receipt must move to `PARTIAL_REMOTE_UNKNOWN` with an
+  operator-required execution event.
 - submit idempotency is lease/owner protected in both memory and PostgreSQL
   stores: a fresh `PROCEEDING` row returns `InProgress`; an expired lease can
   create a new `Proceed` attempt with a new owner token; finish must match the

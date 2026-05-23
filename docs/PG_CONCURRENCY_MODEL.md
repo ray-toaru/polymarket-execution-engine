@@ -15,6 +15,8 @@ Repository-level PostgreSQL tests now cover core local invariants:
 - owner-token enforcement for finishing an in-progress submit attempt;
 - same resource reservation contention;
 - remote-unknown conservative persistence;
+- post-ack runtime degradation persistence as `PARTIAL_REMOTE_UNKNOWN` plus
+  operator-required execution evidence;
 - sign-only lifecycle `client_event_id` replay under concurrent writers;
 - sign-only lifecycle mismatch rejection and terminal-state rejection.
 
@@ -36,6 +38,9 @@ COMMIT;
 
 remote post/signing step is never hidden by the lock proof; remote side effects still require
 saga state and reconcile handling.
+If runtime truth degrades after a remote post acknowledgment, the order record
+must preserve the known posted remote state while the submit receipt and
+execution lifecycle move to an operator-required partial-unknown state.
 ```
 
 ## Lock key rule
@@ -56,6 +61,7 @@ fingerprint mismatch conflict
 finish requires current owner token
 same resource reservation contention
 remote-unknown conservative persistence
+post-ack runtime degradation marks operator-required partial unknown
 sign-only lifecycle concurrent client_event_id replay
 ```
 

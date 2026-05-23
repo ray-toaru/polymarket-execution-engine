@@ -370,6 +370,90 @@ async fn explicit_live_gateway_posts_buy_size_and_records_quote_exposure() {
 }
 
 #[tokio::test]
+async fn explicit_live_gateway_marks_operator_required_when_runtime_degrades_after_post_ack() {
+    let mut post_ack_block = allow_runtime_state();
+    post_ack_block.kill_switch_enabled = true;
+    let service = ExecutorService::with_runtime_provider(
+        InMemoryStore::default(),
+        SequencedRuntimeStateProvider::new(vec![
+            allow_runtime_state(),
+            allow_runtime_state(),
+            allow_runtime_state(),
+            post_ack_block,
+        ]),
+        "test-executor".into(),
+        DEFAULT_CONTRACT_VERSION.into(),
+    );
+    let normalized = service
+        .normalize(sell_base_share_intent())
+        .await
+        .expect("normalize");
+    let snapshot = service
+        .capture_snapshot(normalized.clone())
+        .await
+        .expect("snapshot");
+    let decision = service
+        .evaluate_decision_by_id(DecisionByIdRequest {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+        })
+        .await
+        .expect("decision");
+    let plan = service
+        .compile_plan_by_id(CompilePlanByIdCommand {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+            decision_id: decision.decision_id.clone(),
+            approval: approval_for(&snapshot, &decision),
+        })
+        .await
+        .expect("plan");
+    let signer = pmx_gateway::DeterministicTestSignerProvider;
+    let gateway = pmx_gateway::FakeGateway::new();
+    let outcome = service
+        .submit_plan_with_gateway(
+            SubmitPlanCommand {
+                execution_id: plan.execution_id.clone(),
+                plan_hash: plan.plan_hash.0.clone(),
+                idempotency_key: "idem-live-post-ack-runtime-degraded".into(),
+                mode: SubmitMode::Live,
+            },
+            &signer,
+            &gateway,
+        )
+        .await
+        .expect("live submit with post-ack runtime degradation");
+    let receipt = match outcome {
+        SubmitOutcome::Accepted(receipt) => receipt,
+        SubmitOutcome::Replayed(_) => panic!("first submit cannot replay"),
+    };
+    assert_eq!(receipt.status, SubmitStatus::PartialRemoteUnknown);
+    let order_id = format!("test-order-{}", plan.execution_id);
+    let lifecycle = service
+        .store()
+        .load_order_lifecycle(&order_id)
+        .await
+        .expect("load order")
+        .expect("order lifecycle");
+    assert_eq!(lifecycle.lifecycle_state, OrderLifecycleState::Posted);
+    let events = service
+        .list_execution_lifecycle_events(pmx_store::ExecutionLifecycleQuery {
+            execution_id: plan.execution_id.clone(),
+            limit: 20,
+            before_event_id: None,
+        })
+        .await
+        .expect("execution lifecycle events");
+    let post_ack_event = events
+        .iter()
+        .find(|event| event.event_type == "LIVE_SUBMIT_POST_ACK_RUNTIME_DEGRADED")
+        .expect("post-ack runtime degraded event");
+    assert_eq!(post_ack_event.payload["operator_required"], true);
+    assert_eq!(post_ack_event.payload["remote_side_effect"], true);
+    assert_eq!(post_ack_event.payload["reason"], "kill_switch_enabled");
+}
+
+#[tokio::test]
 async fn explicit_live_gateway_remote_unknown_freezes_for_operator_review() {
     let service = ExecutorService::with_runtime_provider(
         InMemoryStore::default(),
@@ -571,4 +655,31 @@ fn buy_base_share_intent() -> TradeIntent {
         max_shares: Some(DecimalString("5".into())),
     };
     intent
+}
+
+#[derive(Debug, Clone)]
+struct SequencedRuntimeStateProvider {
+    states: std::sync::Arc<std::sync::Mutex<std::collections::VecDeque<RuntimeStateSummary>>>,
+}
+
+impl SequencedRuntimeStateProvider {
+    fn new(states: Vec<RuntimeStateSummary>) -> Self {
+        Self {
+            states: std::sync::Arc::new(std::sync::Mutex::new(states.into())),
+        }
+    }
+}
+
+#[async_trait::async_trait]
+impl RuntimeStateProvider for SequencedRuntimeStateProvider {
+    async fn capture_runtime_state(
+        &self,
+        _normalized_intent: &NormalizedIntent,
+    ) -> RuntimeStateSummary {
+        self.states
+            .lock()
+            .expect("sequenced runtime provider lock")
+            .pop_front()
+            .unwrap_or_else(allow_runtime_state)
+    }
 }

@@ -155,12 +155,13 @@ where
     .await?;
     match gateway.post_order(&signed).await {
         Ok(ack) => {
+            let remote_order_id = ack.remote_order_id.0.clone();
             record_order_event(
                 store,
                 &order_id,
                 OrderEventKind::RemotePosted,
                 serde_json::json!({
-                    "remote_order_id": ack.remote_order_id.0,
+                    "remote_order_id": remote_order_id,
                     "accepted_at_ms": ack.accepted_at_ms,
                 }),
             )
@@ -174,12 +175,31 @@ where
                     token_id: req.plan.token_id.0.clone(),
                     side: format!("{:?}", req.plan.side),
                     lifecycle_state: OrderLifecycleState::Posted,
-                    remote_order_id: Some(ack.remote_order_id.0),
+                    remote_order_id: Some(remote_order_id.clone()),
                     remote_state: Some("OPEN".into()),
                     created_at: None,
                     updated_at: None,
                 })
                 .await?;
+            let post_ack_state = runtime_state_provider
+                .capture_runtime_state(&normalized)
+                .await;
+            if let Some(reason) = runtime_submit_block_reason(&post_ack_state) {
+                return finish_live_receipt(
+                    store,
+                    &req,
+                    SubmitStatus::PartialRemoteUnknown,
+                    "LIVE_SUBMIT_POST_ACK_RUNTIME_DEGRADED",
+                    serde_json::json!({
+                        "reason": reason,
+                        "order_id": order_id,
+                        "remote_order_id": remote_order_id,
+                        "remote_side_effect": true,
+                        "operator_required": true,
+                    }),
+                )
+                .await;
+            }
             finish_live_receipt(
                 store,
                 &req,
