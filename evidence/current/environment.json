@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-05-23T01:29:41.888394+00:00",
+  "captured_at": "2026-05-23T01:58:10.476736+00:00",
   "dependency_locks": {
     "polymarket-execution-engine/Cargo.lock": {
       "exists": true,
@@ -15,19 +15,19 @@
     }
   },
   "environment": {
-    "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE": null,
-    "PMX_RUN_SIGN_ONLY_DRY_RUN": null,
-    "PMX_TEST_DATABASE_URL_set": false,
+    "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE": "1",
+    "PMX_RUN_SIGN_ONLY_DRY_RUN": "1",
+    "PMX_TEST_DATABASE_URL_set": true,
     "python_executable": "/usr/local/python/current/bin/python",
     "python_version": "3.14.2 (main, Jan 20 2026, 13:54:38) [GCC 13.3.0]"
   },
   "git": {
     "execution": {
       "branch": "v0.26-controlled-canary",
-      "head": "861c6d1ee144fe78ca1938a8beed059880370c47",
+      "head": "f6cc896721b17ec998e3adae56f166116fc9ee1c",
       "path": "polymarket-execution-engine",
       "status_clean": false,
-      "status_entry_count": 73
+      "status_entry_count": 71
     },
     "hermes": {
       "branch": "v0.26-controlled-canary",
@@ -38,12 +38,12 @@
     },
     "integration": {
       "branch": "v0.26-controlled-canary",
-      "head": "849c2e4407a95476e7e2d9465ff017f6a8552bb2",
+      "head": "86f880187a5fd9e5bee3365b9a40712332ac764b",
       "path": ".",
       "status_clean": false,
       "status_entry_count": 1
     },
-    "submodules": "79fed49554610d4918424bb5bde1032c87841909 hermes-polymarket-control (heads/v0.26-controlled-canary)\n 861c6d1ee144fe78ca1938a8beed059880370c47 polymarket-execution-engine (heads/v0.26-controlled-canary)"
+    "submodules": "79fed49554610d4918424bb5bde1032c87841909 hermes-polymarket-control (heads/v0.26-controlled-canary)\n f6cc896721b17ec998e3adae56f166116fc9ee1c polymarket-execution-engine (heads/v0.26-controlled-canary)"
   },
   "integration_root": "/workspaces/universal/rust/polymarket_dual_project",
   "platform": {
