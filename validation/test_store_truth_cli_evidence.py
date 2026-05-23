@@ -81,6 +81,12 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(SystemExit, "must be 64-hex"):
             run_real_funds_canary_store_truth_cli_preflight.require_sha256("not-a-sha", "--artifact-sha256")
 
+    def test_store_truth_candidate_binds_estimated_notional(self) -> None:
+        candidate = run_real_funds_canary_store_truth_cli_preflight.market_candidate()
+        self.assertEqual(candidate["limit_price"], "0.02")
+        self.assertEqual(candidate["target_size"], "5")
+        self.assertEqual(candidate["estimated_order_notional_usd"], "0.1")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -148,6 +148,7 @@ def market_candidate() -> dict[str, Any]:
             "limit_price": "0.02",
             "ask_size": "100",
             "target_size": "5",
+            "estimated_order_notional_usd": "0.1",
             "spread_bps": 10,
             "min_order_size": "5",
             "exchange_rule_snapshot": {
@@ -180,6 +181,7 @@ def market_candidate() -> dict[str, Any]:
     candidate["order_type"] = "GTC"
     candidate["post_only"] = True
     candidate["target_size"] = "5"
+    candidate["estimated_order_notional_usd"] = "0.1"
     candidate["exchange_rule_snapshot"] = {
         **candidate.get("exchange_rule_snapshot", {}),
         "schema_version": 1,
