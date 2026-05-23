@@ -38,9 +38,12 @@ fn router_with_state(state: AppState) -> Router {
         .route("/v1/admin/kill-switch", post(admin::set_kill_switch))
         .route(
             "/v1/admin/cancel-order",
-            post(admin::cancel_order_placeholder),
+            post(admin::record_cancel_order_non_live),
         )
-        .route("/v1/admin/reconcile", post(admin::reconcile_placeholder))
+        .route(
+            "/v1/admin/reconcile",
+            post(admin::record_reconcile_non_live),
+        )
         .route(
             "/v1/admin/reconcile-order-local",
             post(admin::reconcile_order_local),
