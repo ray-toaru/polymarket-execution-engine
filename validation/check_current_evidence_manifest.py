@@ -45,6 +45,18 @@ TEST_LOG_RULES = {
         "forbidden_token": "PMX_TEST_DATABASE_URL not set",
     },
 }
+JSON_LOG_RULES = {
+    "72-real-funds-canary-store-truth-cli-preflight.log": {
+        "status": "pass",
+        "preflight_ready": True,
+        "posted": False,
+        "remote_side_effects": False,
+        "raw_signed_order_exposed": False,
+        "runtime_truth_source": "postgres",
+        "selected_market_id_hash_present": True,
+        "selected_token_id_hash_present": True,
+    },
+}
 
 
 def fail(message: str) -> int:
@@ -147,6 +159,12 @@ def validate(path: Path, *, allow_missing_semantic_logs: bool = False) -> int:
             )
             if rc:
                 return fail(rc)
+            rc = validate_json_log_semantics(
+                log_path,
+                allow_missing=allow_missing_semantic_logs,
+            )
+            if rc:
+                return fail(rc)
     return 0
 
 
@@ -181,6 +199,24 @@ def validate_test_log_semantics(path: Path, *, allow_missing: bool = False) -> s
         return f"{path.name} missing expected test module token {required_token}"
     if forbidden_token and forbidden_token in text:
         return f"{path.name} contains forbidden skip token {forbidden_token}"
+    return None
+
+
+def validate_json_log_semantics(path: Path, *, allow_missing: bool = False) -> str | None:
+    rule = JSON_LOG_RULES.get(path.name)
+    if not rule:
+        return None
+    if not path.exists():
+        if allow_missing:
+            return None
+        return f"JSON evidence log not found for semantic check: {path}"
+    try:
+        data = json.loads(path.read_text(errors="replace"))
+    except json.JSONDecodeError as exc:
+        return f"{path.name} is not valid JSON: {exc}"
+    for key, expected in rule.items():
+        if data.get(key) != expected:
+            return f"{path.name} has unexpected {key}: {data.get(key)!r}; expected {expected!r}"
     return None
 
 

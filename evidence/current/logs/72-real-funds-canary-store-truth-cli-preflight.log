@@ -1,0 +1,11 @@
+{
+  "failures": [],
+  "posted": false,
+  "preflight_ready": true,
+  "raw_signed_order_exposed": false,
+  "remote_side_effects": false,
+  "runtime_truth_source": "postgres",
+  "selected_market_id_hash_present": true,
+  "selected_token_id_hash_present": true,
+  "status": "pass"
+}

@@ -1,4 +1,83 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.26s
+   Compiling libc v0.2.186
+   Compiling typenum v1.20.0
+   Compiling serde_core v1.0.228
+   Compiling cfg-if v1.0.4
+   Compiling serde v1.0.228
+   Compiling serde_json v1.0.149
+   Compiling rand_core v0.10.1
+   Compiling memchr v2.8.0
+   Compiling zmij v1.0.21
+   Compiling itoa v1.0.18
+   Compiling getrandom v0.4.2
+   Compiling generic-array v0.14.7
+   Compiling thiserror v1.0.69
+   Compiling num-traits v0.2.19
+   Compiling iana-time-zone v0.1.65
+   Compiling chrono v0.4.44
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling cpufeatures v0.2.17
+   Compiling sha2 v0.10.9
+   Compiling uuid v1.23.1
+   Compiling pmx-core v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
+   Compiling bytes v1.11.1
+   Compiling hybrid-array v0.4.12
+   Compiling errno v0.3.14
+   Compiling pin-project-lite v0.2.17
+   Compiling signal-hook-registry v1.4.8
+   Compiling mio v1.2.0
+   Compiling socket2 v0.6.3
+   Compiling cmov v0.5.3
+   Compiling ctutils v0.4.2
+   Compiling tokio v1.52.3
+   Compiling crypto-common v0.2.1
+   Compiling block-buffer v0.12.0
+   Compiling const-oid v0.10.2
+   Compiling digest v0.11.3
+   Compiling tinyvec_macros v0.1.1
+   Compiling cpufeatures v0.3.0
+   Compiling tinyvec v1.11.0
+   Compiling unicode-normalization v0.1.25
+   Compiling chacha20 v0.10.0
+   Compiling unicode-bidi v0.3.18
+   Compiling futures-sink v0.3.32
+   Compiling unicode-properties v0.1.4
+   Compiling futures-core v0.3.32
+   Compiling stringprep v0.1.5
+   Compiling rand v0.10.1
+   Compiling sha2 v0.11.0
+   Compiling hmac v0.13.0
+   Compiling md-5 v0.11.0
+   Compiling byteorder v1.5.0
+   Compiling siphasher v1.0.3
+   Compiling scopeguard v1.2.0
+   Compiling base64 v0.22.1
+   Compiling fallible-iterator v0.2.0
+   Compiling smallvec v1.15.1
+   Compiling parking_lot_core v0.9.12
+   Compiling postgres-protocol v0.6.11
+   Compiling lock_api v0.4.14
+   Compiling phf_shared v0.13.1
+   Compiling futures-task v0.3.32
+   Compiling futures-util v0.3.32
+   Compiling phf v0.13.1
+   Compiling parking_lot v0.12.5
+   Compiling postgres-types v0.2.13
+   Compiling futures-channel v0.3.32
+   Compiling tokio-util v0.7.18
+   Compiling whoami v2.1.2
+   Compiling percent-encoding v2.3.2
+   Compiling log v0.4.29
+   Compiling tokio-postgres v0.7.17
+   Compiling pmx-store v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
+   Compiling pmx-gateway v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
+   Compiling pmx-runtime v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
+   Compiling pmx-policy v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
+   Compiling pmx-service v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
+   Compiling pmx-authz v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-authz)
+   Compiling pmx-release v0.26.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-release)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 09s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-b59f2ab4b350d559)
 
 running 2 tests
@@ -98,7 +177,7 @@ test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fin
 
      Running unittests src/lib.rs (target/debug/deps/pmx_service-c1aa0b8c6a5b27b1)
 
-running 38 tests
+running 39 tests
 test service::tests::flow::explicit_live_gateway_blocks_unsupported_quote_notional_without_stuck_idempotency ... ok
 test service::tests::flow::explicit_live_gateway_posts_and_records_remote_order_lifecycle ... ok
 test service::tests::flow::explicit_live_gateway_posts_buy_size_and_records_quote_exposure ... ok
@@ -118,6 +197,7 @@ test service::tests::real_funds_canary::service_real_funds_canary_replay_returns
 test service::tests::real_funds_canary::service_records_real_funds_canary_preflight_without_remote_side_effects ... ok
 test service::tests::real_funds_canary::service_simulated_reconcile_remains_no_remote_side_effect ... ok
 test service::tests::runtime_worker_basic::provider_state::service_records_runtime_worker_provider_snapshot_for_decision_gate ... ok
+test service::tests::runtime_worker_basic::provider_state::store_backed_runtime_provider_exposes_canary_runtime_truth ... ok
 test service::tests::runtime_worker_basic::provider_state::store_backed_runtime_provider_uses_store_state ... ok
 test service::tests::runtime_worker_basic::signals_ticks::service_records_runtime_worker_signals_for_decision_gate ... ok
 test service::tests::runtime_worker_basic::signals_ticks::service_records_runtime_worker_tick_heartbeat_and_observations ... ok
@@ -138,11 +218,11 @@ test service::tests::sign_only::standard::service_derives_standard_sign_only_ref
 test service::tests::sign_only::standard::service_records_standard_sign_only_construction_without_raw_payload ... ok
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 
-test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.04s
+test result: ok. 39 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.90s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-9a97aadec1c8f384)
 
-running 53 tests
+running 57 tests
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_paginates_and_filters_by_cursor ... ok
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_records_without_exposing_secrets ... ok
 test memory::memory_tests::admin_sign_only::sign_only::happy_path::in_memory_persists_sign_only_lifecycle_records ... ok
@@ -164,6 +244,9 @@ test memory::memory_tests::real_funds_canary::real_funds_canary_freezes_remote_u
 test memory::memory_tests::real_funds_canary::real_funds_canary_rejects_idempotency_payload_mismatch ... ok
 test memory::memory_tests::real_funds_canary::real_funds_canary_rejects_raw_signed_exposure ... ok
 test memory::memory_tests::real_funds_canary::real_funds_canary_replays_same_idempotency ... ok
+test memory::memory_tests::runtime_observation::canary_runtime_truth_ignores_unscoped_worker_roles ... ok
+test memory::memory_tests::runtime_observation::canary_runtime_truth_is_ready_when_all_store_dependencies_are_ready ... ok
+test memory::memory_tests::runtime_observation::canary_runtime_truth_requires_store_backed_dependencies ... ok
 test memory::memory_tests::runtime_observation::global_kill_switch_overrides_account_runtime_state ... ok
 test memory::memory_tests::runtime_observation::runtime_worker_observations_degrade_loaded_runtime_state ... ok
 test memory::memory_tests::runtime_observation::stale_runtime_worker_observations_are_ignored ... ok
@@ -187,6 +270,7 @@ test postgres::postgres_tests::real_funds_canary::postgres_real_funds_canary_rej
 test postgres::postgres_tests::receipt_reservation::remote_unknown_is_persisted_conservatively ... ok
 test postgres::postgres_tests::receipt_reservation::reservation_double_spend_is_prevented_concurrently ... ok
 test postgres::postgres_tests::runtime_state::load::postgres_global_kill_switch_overrides_account_runtime_state ... ok
+test postgres::postgres_tests::runtime_state::load::postgres_loads_canary_runtime_truth_from_runtime_rows ... ok
 test postgres::postgres_tests::runtime_state::load::postgres_loads_runtime_state_from_runtime_tables ... ok
 test postgres::postgres_tests::runtime_state::load::postgres_runtime_state_prefers_scoped_collateral_and_worker_rows ... ok
 test postgres::postgres_tests::runtime_state::load::postgres_runtime_worker_observations_degrade_runtime_state ... ok
@@ -197,7 +281,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 53 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.44s
+test result: ok. 57 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.32s
 
    Doc-tests pmx_authz
 

@@ -164,6 +164,9 @@ SECTIONS: dict[str, list[str]] = {
     "real_funds_canary_preflight_validation": [
         "65-real-funds-canary-preflight.log",
     ],
+    "real_funds_canary_store_truth_cli_validation": [
+        "72-real-funds-canary-store-truth-cli-preflight.log",
+    ],
     "real_funds_canary_lifecycle_validation": [
         "66-real-funds-canary-lifecycle-drill.log",
     ],
@@ -236,6 +239,18 @@ TEST_LOG_RULES = {
         "forbidden_token": "PMX_TEST_DATABASE_URL not set",
     },
 }
+JSON_LOG_RULES = {
+    "72-real-funds-canary-store-truth-cli-preflight.log": {
+        "status": "pass",
+        "preflight_ready": True,
+        "posted": False,
+        "remote_side_effects": False,
+        "raw_signed_order_exposed": False,
+        "runtime_truth_source": "postgres",
+        "selected_market_id_hash_present": True,
+        "selected_token_id_hash_present": True,
+    },
+}
 
 
 def sha256(path: Path) -> str:
@@ -286,6 +301,13 @@ def load_log_commands() -> dict[str, str]:
         command = re.sub(r"\s*\|\s*$", "", command).strip()
         command = command.removeprefix('ARTIFACT_PATH="$(').strip()
         commands[match.group(1)] = command
+    commands.update(
+        {
+            "72-real-funds-canary-store-truth-cli-preflight.log": (
+                "python validation/run_real_funds_canary_store_truth_cli_preflight.py"
+            )
+        }
+    )
     return commands
 
 
@@ -296,12 +318,25 @@ def log_passed(path: Path) -> bool:
     text = path.read_text(errors="replace")
     if any(marker in text for marker in FAIL_MARKERS):
         return False
+    if not json_log_semantics_ok(path, text):
+        return False
     if not cargo_test_semantics_ok(path, text):
         return False
     if path.stat().st_size == 0:
         # cargo fmt and rustfmt success can produce an empty log.
         return path.name in {"01-cargo-fmt.log", "08-sdk-adapter-fmt.log"}
     return any(marker in text for marker in PASS_MARKERS) or path.name.endswith("-guard.log")
+
+
+def json_log_semantics_ok(path: Path, text: str) -> bool:
+    rule = JSON_LOG_RULES.get(path.name)
+    if not rule:
+        return True
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        return False
+    return all(data.get(key) == expected for key, expected in rule.items())
 
 
 def cargo_test_semantics_ok(path: Path, text: str) -> bool:
