@@ -24,7 +24,7 @@
 
 ## Scope Model
 
-- Service scope: normal control-plane operations.
+- Service scope: normal adapter-facing operations.
 - Admin scope: cancel, reconcile, kill switch and other operator actions.
 
 Server-side authorization is mandatory. Client-side conventions are not sufficient.

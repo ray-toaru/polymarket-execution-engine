@@ -8,7 +8,7 @@ real-funds canary fill.
 
 This directory contains reference-only deployment templates for a single host.
 The `pmx-api` unit is a long-running HTTP listener for non-live API smoke and
-control-plane integration. It still does not authorize live submit, live cancel,
+adapter integration. It still does not authorize live submit, live cancel,
 production deployment, or a real-funds canary fill. Production promotion remains
 blocked until a future reviewed release decision binds deployment, rollback,
 health, runtime-state, and external custody evidence.

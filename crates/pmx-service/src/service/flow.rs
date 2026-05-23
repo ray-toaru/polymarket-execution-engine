@@ -48,7 +48,7 @@ where
 
     /// Evaluate constraints by loading the object graph from the executor store.
     ///
-    /// This is the preferred public API path from v0.14 onward: the control plane supplies
+    /// This is the preferred public API path from v0.14 onward: the executor adapter supplies
     /// only server-issued IDs, and the executor validates object ownership before computing
     /// the decision. Full-object methods remain available for internal tests and migration-free
     /// development but must not be used for live funds paths.

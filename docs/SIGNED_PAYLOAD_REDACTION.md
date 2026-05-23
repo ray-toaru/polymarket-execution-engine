@@ -8,7 +8,7 @@ v0.19 still has no live `post_order` path. This document covers the non-live SDK
 
 ## Confirmed facts
 
-- Python control plane must not receive private keys, CLOB credentials, raw signed payloads, or `SignedOrderEnvelope`.
+- Python executor adapter must not receive private keys, CLOB credentials, raw signed payloads, or `SignedOrderEnvelope`.
 - Sign-only dry-run may create a signed order inside the Rust adapter process, but must return only a non-reusable reference/fingerprint.
 - Public OpenAPI must not expose signed payload fields.
 

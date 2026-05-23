@@ -51,5 +51,5 @@ Before any live submit path is enabled:
 ## Explicit non-goals
 
 - No independent EIP-712 signing implementation in the main route.
-- No SDK object exposure to Hermes or other control planes.
+- No SDK object exposure to Hermes or other executor adapters.
 - No live submit until shadow/dry-run gates exist.

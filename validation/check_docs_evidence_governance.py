@@ -208,7 +208,7 @@ def validate_agents_guidance(failures: list[str]) -> None:
         required.extend(
             [
                 ROOT / "AGENTS.md",
-                ROOT / "hermes-polymarket-control" / "AGENTS.md",
+                ROOT / "hermes-polymarket-executor-adapter" / "AGENTS.md",
             ]
         )
     required.extend([
@@ -252,7 +252,7 @@ def validate_agents_guidance(failures: list[str]) -> None:
         for token in ["live submit", "evidence/current", "check_version_consistency.py", "Do not encode the current version"]:
             if token not in text:
                 failures.append(f"root AGENTS.md missing required guidance token: {token}")
-    hermes_agents = ROOT / "hermes-polymarket-control" / "AGENTS.md"
+    hermes_agents = ROOT / "hermes-polymarket-executor-adapter" / "AGENTS.md"
     if INTEGRATION_MODE and hermes_agents.exists():
         text = hermes_agents.read_text()
         for token in ["must not hold private keys", "must not sign orders", "pytest"]:

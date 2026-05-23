@@ -11,7 +11,7 @@ live-trading release.
 - Execution lifecycle and admin audit query APIs expose bounded cursor-style reads.
 - Runtime worker observations are aggregated into runtime state with configurable TTL via `PMX_RUNTIME_OBSERVATION_TTL_SECONDS`.
 - `pmx-api` now binds a non-live HTTP listener for local/API smoke and
-  control-plane integration when explicit auth tokens are configured.
+  adapter integration when explicit auth tokens are configured.
 - Account-scoped kill switch updates persist into runtime truth and return an
   effective state version.
 - Cancel/reconcile endpoints remain non-live and may write local lifecycle events when an `execution_id` is supplied.
@@ -43,6 +43,6 @@ python validation/check_current_evidence_manifest.py
 
 Cross-repository checks such as lifecycle API parity, version consistency, Hermes model parity, and
 release packaging run from the integration repository that checks out this repo alongside
-`hermes-polymarket-control`.
+`hermes-polymarket-executor-adapter`.
 
 Optional PostgreSQL and credentialed checks remain evidence-gated by `PMX_TEST_DATABASE_URL`, `PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE`, and `PMX_RUN_SIGN_ONLY_DRY_RUN`.

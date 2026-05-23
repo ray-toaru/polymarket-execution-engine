@@ -96,9 +96,9 @@ material exposure, or production-readiness claims.
 - Core lifecycle domain types and transitions now live in focused
   `pmx-core::domain::lifecycle` modules for sign-only lifecycle,
   order-lifecycle transitions, and divergence/reconcile classification.
-- Core plan/control-plane models now live in focused `pmx-core::domain::plan`
+- Core plan/adapter-facing models now live in focused `pmx-core::domain::plan`
   modules for decision results, execution summaries/submit receipts, redaction
-  envelopes, and control-plane request/receipt models.
+  envelopes, and adapter request/receipt models.
 - Core base domain primitives now live in focused `pmx-core::domain::base`
   modules for shared errors, typed ids, decimal validation, and canonical JSON
   hashing/serialization helpers.

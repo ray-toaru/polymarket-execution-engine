@@ -44,7 +44,7 @@ reservation consume as posted
 
 ```text
 - signed payload never leaves execution process
-- Python control plane never receives signed payload
+- Python executor adapter never receives signed payload
 - receipt contains only a local signed_order_ref
 - posted=false
 - any live-submit enablement aborts the dry-run

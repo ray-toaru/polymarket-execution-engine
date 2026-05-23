@@ -3,7 +3,7 @@ info:
   title: Polymarket Execution Engine API
   version: 1.0.0-draft
   description: >
-    Public control-plane API for a standalone deterministic Polymarket execution engine.
+    Public adapter-facing API for a standalone deterministic Polymarket execution engine.
     This API intentionally does not expose private keys, CLOB API secrets, raw signed payloads,
     internal signed-order envelopes, or direct database writes.
 servers:
@@ -380,7 +380,7 @@ components:
     ServiceToken:
       type: http
       scheme: bearer
-      description: Service-scope token for control-plane operations.
+      description: Service-scope token for adapter-facing operations.
     AdminToken:
       type: http
       scheme: bearer

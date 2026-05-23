@@ -18,9 +18,9 @@ Revision: do not add real Polymarket adapter before core compile, fake gateway E
 
 Conclusion: API should expose plan summary, not signed order objects.
 
-Defense: signed objects are reusable side-effect material and should not cross into control planes.
+Defense: signed objects are reusable side-effect material and should not cross into executor adapters.
 
-Attack: control plane may need detailed audit visibility.
+Attack: executor adapter may need detailed audit visibility.
 
 Valid: partially.
 

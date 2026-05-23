@@ -2,7 +2,7 @@
 //!
 //! This crate is the promotion target after the isolated SDK spike. It remains
 //! outside the default execution-engine workspace so `pmx-core`, `pmx-policy`,
-//! `pmx-store`, and the Python control plane cannot accidentally gain signing
+//! `pmx-store`, and the Python executor adapter cannot accidentally gain signing
 //! or live trading capability.
 //!
 //! Safety posture:

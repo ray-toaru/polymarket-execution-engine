@@ -3,7 +3,7 @@ use serde_json::Value;
 
 use crate::{AccountId, InternalOrderId};
 
-// Internal-only type. Do not expose in OpenAPI or public control-plane clients.
+// Internal-only type. Do not expose in OpenAPI or public adapter clients.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SignedOrderEnvelope {

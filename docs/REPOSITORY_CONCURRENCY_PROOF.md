@@ -45,7 +45,7 @@ The evidence supports these claims for the tested repository implementation:
 
 - Advisory locks serialize transaction sections for idempotency attempt generation and reservation writes.
 - SQL uniqueness remains the correctness backstop.
-- `submit_attempt` is executor-generated; the control plane does not supply it.
+- `submit_attempt` is executor-generated; the executor adapter does not supply it.
 - Canonical idempotency identity is `(account_id, execution_id, idempotency_key)`.
 
 ## Next tests

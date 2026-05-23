@@ -7,7 +7,7 @@ pub trait IdempotencyStore: Send + Sync {
     /// Begin or replay a submit request.
     ///
     /// Canonical identity is `(account_id, execution_id, idempotency_key)`.
-    /// `submit_attempt` is executor-generated inside the transaction and is not supplied by the control plane.
+    /// `submit_attempt` is executor-generated inside the transaction and is not supplied by the executor adapter.
     /// A different request fingerprint under the same identity must return `Conflict`.
     async fn begin_submit_attempt(
         &self,

@@ -53,7 +53,7 @@ The intended identity is:
 ```text
 account_id + execution_id + idempotency_key
 
-submit_attempt is executor-internal and must not be supplied by the control plane. Same identity + same request fingerprint while PROCEEDING returns InProgress/RetryLater, not Proceed.
+submit_attempt is executor-internal and must not be supplied by the executor adapter. Same identity + same request fingerprint while PROCEEDING returns InProgress/RetryLater, not Proceed.
 ```
 
 A retry with the same idempotency key should replay the stored response if terminal. It must not create a second remote side effect.

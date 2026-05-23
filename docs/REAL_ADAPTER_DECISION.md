@@ -80,7 +80,7 @@ Revision: pin the crate version in the spike, record the source URL, and require
 
 Current conclusion: SDK adapter must remain behind `pmx-gateway`.
 
-Defense: keeping SDK use internal prevents Hermes/control planes from seeing private keys, signed payloads, CLOB credentials, or raw SDK order objects.
+Defense: keeping SDK use internal prevents Hermes/executor adapters from seeing private keys, signed payloads, CLOB credentials, or raw SDK order objects.
 
 Attack: the SDK type-level state machine may tempt developers to expose SDK objects directly in API responses for convenience.
 

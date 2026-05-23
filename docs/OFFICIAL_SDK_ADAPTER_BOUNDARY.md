@@ -65,4 +65,4 @@ post_order reachable without live-submit feature and runtime PMX_ALLOW_LIVE_SUBM
 
 ## Why this is not over-design
 
-The execution engine is a funds-moving system. The separation prevents a convenience SDK import from weakening the already-established control-plane/execution-plane boundary.
+The execution engine is a funds-moving system. The separation prevents a convenience SDK import from weakening the already-established adapter/execution-plane boundary.
