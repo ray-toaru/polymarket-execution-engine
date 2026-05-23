@@ -12,6 +12,13 @@ mod live_canary;
 mod shared;
 #[cfg(feature = "sign-only-dry-run")]
 mod sign_only;
+#[cfg(any(
+    feature = "authenticated-smoke",
+    feature = "sign-only-dry-run",
+    feature = "live-submit",
+    all(feature = "sdk-typecheck", test)
+))]
+mod signature_type;
 
 #[cfg(feature = "authenticated-smoke")]
 pub use authenticated::run_authenticated_non_trading_sdk_smoke;
@@ -25,7 +32,7 @@ pub use live_canary::{
 #[cfg(feature = "sign-only-dry-run")]
 pub use sign_only::run_sign_only_dry_run;
 
-#[cfg(all(feature = "sdk-typecheck", test))]
-pub(crate) use shared::parse_signature_type_for_test;
 #[cfg(all(feature = "sign-only-dry-run", test))]
 pub(crate) use sign_only::discover_active_token_id;
+#[cfg(all(feature = "sdk-typecheck", test))]
+pub(crate) use signature_type::parse_signature_type_for_test;

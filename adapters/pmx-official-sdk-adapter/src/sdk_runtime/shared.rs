@@ -13,9 +13,10 @@ use std::str::FromStr;
 use std::time::Duration;
 use tokio::time;
 
+use super::signature_type::{ENV_CLOB_SIGNATURE_TYPE, parse_signature_type};
+
 const ENV_CLOB_FUNDER: &str = "PMX_CLOB_FUNDER";
 const ENV_ACCT_A_CLOB_FUNDER: &str = "PMX_ACCT_A_CLOB_FUNDER";
-const ENV_CLOB_SIGNATURE_TYPE: &str = "PMX_CLOB_SIGNATURE_TYPE";
 
 pub(super) fn sdk_call_timeout() -> Duration {
     let parsed = std::env::var(ENV_SDK_CALL_TIMEOUT_SECS)
@@ -79,19 +80,7 @@ fn clob_signature_type_from_env(has_funder: bool) -> anyhow::Result<SignatureTyp
             SignatureType::Eoa
         });
     };
-    parse_signature_type(&raw)
-}
-
-fn parse_signature_type(raw: &str) -> anyhow::Result<SignatureType> {
-    match raw.trim().to_ascii_uppercase().as_str() {
-        "EOA" | "0" => Ok(SignatureType::Eoa),
-        "PROXY" | "POLY_PROXY" | "1" => Ok(SignatureType::Proxy),
-        "GNOSIS_SAFE" | "GNOSISSAFE" | "POLY_GNOSIS_SAFE" | "2" => Ok(SignatureType::GnosisSafe),
-        "POLY_1271" | "POLY1271" | "DEPOSIT_WALLET" | "3" => Ok(SignatureType::Poly1271),
-        _ => Err(anyhow::anyhow!(
-            "unsupported {ENV_CLOB_SIGNATURE_TYPE} value"
-        )),
-    }
+    parse_signature_type(&raw).map_err(anyhow::Error::msg)
 }
 
 pub(super) async fn authenticated_sdk_client(
@@ -131,9 +120,4 @@ pub(super) async fn authenticated_sdk_client(
 #[cfg(all(feature = "sign-only-dry-run", test))]
 pub(super) fn sdk_config() -> SdkConfig {
     SdkConfig::builder().use_server_time(true).build()
-}
-
-#[cfg(all(feature = "sdk-typecheck", test))]
-pub(crate) fn parse_signature_type_for_test(raw: &str) -> anyhow::Result<SignatureType> {
-    parse_signature_type(raw)
 }
