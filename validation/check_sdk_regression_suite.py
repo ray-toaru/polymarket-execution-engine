@@ -104,7 +104,7 @@ def main() -> int:
             "validate_real_funds_canary_preconditions",
             "limit_order()",
             "size(size)",
-            "SdkOrderType::FOK",
+            "SdkOrderType::GTC",
             "raw_signed_order_exposed: false",
         ]:
             if token not in canary:

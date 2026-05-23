@@ -114,7 +114,7 @@ def main() -> int:
         canary = strip_rust_comments(ALLOWED_CANARY_POST_ORDER.read_text())
         for token in [
             "validate_real_funds_canary_preconditions",
-            "SdkOrderType::FOK",
+            "SdkOrderType::GTC",
             "raw_signed_order_exposed: false",
         ]:
             if token not in canary:

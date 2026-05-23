@@ -13,4 +13,4 @@ Real-funds canary program-readiness without live execution.
 3. Add a local-only real-funds canary CLI that defaults to dry-run and is compiled only with `live-submit`.
 4. Add SDK read-only automatic market selection with fail-closed depth, spread, and market-state checks.
 5. Add readiness validation proving the CLI cannot arm without explicit env/config/approval/artifact/evidence gates.
-6. Only after a later reviewed release decision and fresh evidence, run an actual small FOK real-funds canary.
+6. Only after a later reviewed release decision and fresh evidence, run an actual small BUY/GTC post-only real-funds canary.
