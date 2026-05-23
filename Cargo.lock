@@ -721,7 +721,7 @@ checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 
 [[package]]
 name = "pmx-api"
-version = "0.27.0"
+version = "0.27.1"
 dependencies = [
  "axum",
  "chrono",
@@ -739,7 +739,7 @@ dependencies = [
 
 [[package]]
 name = "pmx-authz"
-version = "0.27.0"
+version = "0.27.1"
 dependencies = [
  "serde",
  "thiserror",
@@ -747,7 +747,7 @@ dependencies = [
 
 [[package]]
 name = "pmx-core"
-version = "0.27.0"
+version = "0.27.1"
 dependencies = [
  "chrono",
  "serde",
@@ -759,7 +759,7 @@ dependencies = [
 
 [[package]]
 name = "pmx-gateway"
-version = "0.27.0"
+version = "0.27.1"
 dependencies = [
  "async-trait",
  "pmx-core",
@@ -770,7 +770,7 @@ dependencies = [
 
 [[package]]
 name = "pmx-policy"
-version = "0.27.0"
+version = "0.27.1"
 dependencies = [
  "chrono",
  "pmx-core",
@@ -779,7 +779,7 @@ dependencies = [
 
 [[package]]
 name = "pmx-release"
-version = "0.27.0"
+version = "0.27.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -787,7 +787,7 @@ dependencies = [
 
 [[package]]
 name = "pmx-runtime"
-version = "0.27.0"
+version = "0.27.1"
 dependencies = [
  "chrono",
  "pmx-core",
@@ -797,7 +797,7 @@ dependencies = [
 
 [[package]]
 name = "pmx-service"
-version = "0.27.0"
+version = "0.27.1"
 dependencies = [
  "async-trait",
  "chrono",
@@ -815,7 +815,7 @@ dependencies = [
 
 [[package]]
 name = "pmx-store"
-version = "0.27.0"
+version = "0.27.1"
 dependencies = [
  "async-trait",
  "chrono",

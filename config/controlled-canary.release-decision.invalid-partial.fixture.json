@@ -4,7 +4,7 @@
   "status": "reviewed_go",
   "decision": "go",
   "decision_reason": "Invalid fixture: claims authorization while references are partial, market review is missing, and the decision is expired.",
-  "source_release": "v0.27.0",
+  "source_release": "v0.27.1",
   "scope": "REAL_FUNDS_CANARY",
   "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
   "artifact_sha256": "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6",

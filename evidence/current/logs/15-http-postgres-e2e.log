@@ -1,6 +1,6 @@
-   Compiling pmx-api v0.27.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.02s
-     Running tests/http_postgres_e2e.rs (target/debug/deps/http_postgres_e2e-e31dfbbb7cd6f1fe)
+   Compiling pmx-api v0.27.1 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.06s
+     Running tests/http_postgres_e2e.rs (target/debug/deps/http_postgres_e2e-31c740f12415176d)
 
 running 4 tests
 test admin_audit::http_postgres_admin_routes_record_audit_events ... ok
@@ -8,5 +8,5 @@ test negative::http_postgres_rejects_cross_object_graph_and_bad_plan_hash ... ok
 test runtime::http_postgres_runtime_rows_can_reach_ready_plan_but_submit_still_blocks ... ok
 test smoke::http_postgres_backed_e2e_smoke ... ok
 
-test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.38s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.92s
 
