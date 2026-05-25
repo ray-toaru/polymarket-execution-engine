@@ -2,7 +2,9 @@
 """Tests for store-truth CLI preflight evidence wiring."""
 from __future__ import annotations
 
+import json
 import unittest
+from unittest.mock import patch
 
 import check_current_evidence_manifest
 import run_real_funds_canary_store_truth_cli_preflight
@@ -86,6 +88,53 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
         self.assertEqual(candidate["limit_price"], "0.02")
         self.assertEqual(candidate["target_size"], "5")
         self.assertEqual(candidate["estimated_order_notional_usd"], "0.1")
+
+    def test_database_target_summary_redacts_password_but_keeps_endpoint(self) -> None:
+        summary = run_real_funds_canary_store_truth_cli_preflight.database_target_summary(
+            "postgres://pmx:secret@127.0.0.1:5433/pmx"
+        )
+        self.assertEqual(
+            summary,
+            {
+                "scheme": "postgres",
+                "hostname": "127.0.0.1",
+                "port": 5433,
+                "database": "pmx",
+                "username": "pmx",
+            },
+        )
+
+    @patch("run_real_funds_canary_store_truth_cli_preflight.subprocess.run")
+    def test_database_connectivity_preflight_reports_target_and_empty_stderr(self, run_mock) -> None:
+        run_mock.return_value.returncode = 2
+        run_mock.return_value.stdout = ""
+        run_mock.return_value.stderr = ""
+        with self.assertRaises(SystemExit) as ctx:
+            run_real_funds_canary_store_truth_cli_preflight.check_database_connectivity(
+                "postgres://pmx:secret@127.0.0.1:5433/pmx"
+            )
+        payload = json.loads(str(ctx.exception))
+        self.assertEqual(payload["stage"], "database_connectivity_preflight")
+        self.assertEqual(payload["database_target"]["hostname"], "127.0.0.1")
+        self.assertEqual(payload["database_target"]["port"], 5433)
+        self.assertEqual(payload["database_target"]["database"], "pmx")
+        self.assertEqual(payload["stderr"], "<empty>")
+
+    @patch("run_real_funds_canary_store_truth_cli_preflight.subprocess.run")
+    def test_seed_runtime_truth_failure_reports_target_and_returncode(self, run_mock) -> None:
+        run_mock.return_value.returncode = 3
+        run_mock.return_value.stdout = ""
+        run_mock.return_value.stderr = "connection refused"
+        with self.assertRaises(SystemExit) as ctx:
+            run_real_funds_canary_store_truth_cli_preflight.run_psql(
+                "postgres://pmx:secret@127.0.0.1:5433/pmx",
+                "select 1;",
+            )
+        payload = json.loads(str(ctx.exception))
+        self.assertEqual(payload["stage"], "seed_postgres_runtime_truth")
+        self.assertEqual(payload["returncode"], 3)
+        self.assertEqual(payload["database_target"]["hostname"], "127.0.0.1")
+        self.assertEqual(payload["stderr"], "connection refused")
 
 
 if __name__ == "__main__":

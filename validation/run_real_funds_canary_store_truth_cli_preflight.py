@@ -13,6 +13,7 @@ import tomllib
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER_MANIFEST = ROOT / "adapters" / "pmx-official-sdk-adapter" / "Cargo.toml"
@@ -55,6 +56,52 @@ def database_url() -> str:
     return url
 
 
+def database_target_summary(url: str) -> dict[str, Any]:
+    parsed = urlparse(url)
+    default_port = 5432 if parsed.scheme.startswith("postgres") else None
+    return {
+        "scheme": parsed.scheme or "unknown",
+        "hostname": parsed.hostname or "unknown",
+        "port": parsed.port or default_port,
+        "database": parsed.path.lstrip("/") or "unknown",
+        "username": parsed.username or "<none>",
+    }
+
+
+def trimmed_output(text: str) -> str:
+    stripped = redact(text).strip()
+    return stripped or "<empty>"
+
+
+def check_database_connectivity(url: str) -> None:
+    env = os.environ.copy()
+    env["PGCONNECT_TIMEOUT"] = "5"
+    result = subprocess.run(
+        ["psql", url, "-v", "ON_ERROR_STOP=1", "-qAt", "-c", "select 1;"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise SystemExit(
+            json.dumps(
+                {
+                    "status": "fail",
+                    "stage": "database_connectivity_preflight",
+                    "database_target": database_target_summary(url),
+                    "returncode": result.returncode,
+                    "stdout": trimmed_output(result.stdout),
+                    "stderr": trimmed_output(result.stderr),
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+
+
 def run_psql(url: str, sql: str) -> None:
     env = os.environ.copy()
     env["PGCONNECT_TIMEOUT"] = "5"
@@ -73,7 +120,10 @@ def run_psql(url: str, sql: str) -> None:
                 {
                     "status": "fail",
                     "stage": "seed_postgres_runtime_truth",
-                    "stderr": redact(result.stderr),
+                    "database_target": database_target_summary(url),
+                    "returncode": result.returncode,
+                    "stdout": trimmed_output(result.stdout),
+                    "stderr": trimmed_output(result.stderr),
                 },
                 indent=2,
                 sort_keys=True,
@@ -436,6 +486,7 @@ def main() -> int:
     workspace_manifest_sha256 = require_sha256(args.workspace_manifest_sha256, "--workspace-manifest-sha256")
     archived_manifest_sha256 = require_sha256(args.archived_manifest_sha256, "--archived-manifest-sha256")
     url = database_url()
+    check_database_connectivity(url)
     build_cli()
     suffix = str(time.time_ns())
     account_id = f"acct-store-truth-{suffix}"
