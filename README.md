@@ -46,3 +46,15 @@ release packaging run from the integration repository that checks out this repo 
 `hermes-polymarket-executor-adapter`.
 
 Optional PostgreSQL and credentialed checks remain evidence-gated by `PMX_TEST_DATABASE_URL`, `PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE`, and `PMX_RUN_SIGN_ONLY_DRY_RUN`.
+
+For local PostgreSQL-backed canary/runtime-truth work, inspect the exact `.env`
+target before retrying higher-level validation:
+
+```bash
+PYTHONPATH=validation python validation/check_local_postgres_target.py
+```
+
+On Debian/Ubuntu-style installs this reports the configured host/port/database,
+matches it against `pg_lsclusters`, and tells you if the referenced cluster is
+down. If the report points at a down cluster such as `16/main` on `5433`, start
+that cluster as `postgres` or root before rerunning runtime-truth generation.
