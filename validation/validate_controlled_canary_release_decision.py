@@ -57,6 +57,10 @@ ALLOWED_TOP_LEVEL_FIELDS = {
     "production_deployment_authorized",
     "real_funds_canary_authorized",
     "remote_side_effects_authorized",
+    "single_attempt",
+    "max_order_count",
+    "post_cancel_required",
+    "readback_closeout_required",
     "allow_real_funds_canary",
     "reviewed_release_decision_present",
     "operator_identity_ref",
@@ -189,6 +193,16 @@ def validate_shape(data: dict[str, Any], label: str) -> list[str]:
         failures.append(f"{label}: missing allow_real_funds_canary")
     if "reviewed_release_decision_present" not in data:
         failures.append(f"{label}: missing reviewed_release_decision_present")
+    if decision := data.get("decision"):
+        if decision == "go":
+            if data.get("single_attempt") is not True:
+                failures.append(f"{label}: go decision must set single_attempt=true")
+            if data.get("max_order_count") != 1:
+                failures.append(f"{label}: go decision must set max_order_count=1")
+            if data.get("post_cancel_required") is not True:
+                failures.append(f"{label}: go decision must set post_cancel_required=true")
+            if data.get("readback_closeout_required") is not True:
+                failures.append(f"{label}: go decision must set readback_closeout_required=true")
     if not data.get("operator_identity_ref"):
         failures.append(f"{label}: operator_identity_ref must be concrete")
     elif label != "template" and has_placeholder(data.get("operator_identity_ref")):

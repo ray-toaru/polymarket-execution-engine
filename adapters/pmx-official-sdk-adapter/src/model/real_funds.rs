@@ -54,6 +54,10 @@ pub struct ReviewedRealFundsCanaryReleaseDecision {
     pub production_deployment_authorized: bool,
     pub real_funds_canary_authorized: bool,
     pub remote_side_effects_authorized: bool,
+    pub single_attempt: bool,
+    pub max_order_count: u64,
+    pub post_cancel_required: bool,
+    pub readback_closeout_required: bool,
     pub allow_real_funds_canary: bool,
     pub reviewed_release_decision_present: bool,
     pub operator_identity_ref: String,
@@ -284,8 +288,34 @@ impl RealFundsCanaryStageReport {
             posted,
             filled_or_matched: false,
             cancelled: false,
-            remote_side_effects: true,
+            remote_side_effects: posted,
             operator_required: true,
+            error_summary: Some(error_summary.into()),
+            raw_signed_order_exposed: false,
+        }
+    }
+
+    pub fn blocked(
+        request: &RealFundsCanaryRequest,
+        stage: &str,
+        error_summary: impl Into<String>,
+    ) -> Self {
+        Self {
+            status: "blocked".into(),
+            stage: stage.into(),
+            account_id: request.account_id.clone(),
+            execution_id: request.execution_id.clone(),
+            plan_hash: request.plan_hash.clone(),
+            approval_hash: request.approval.approval_hash.clone(),
+            market_candidate_sha256: request.market_candidate_sha256.clone(),
+            idempotency_key: request.idempotency_key.clone(),
+            remote_order_id: None,
+            remote_status: None,
+            posted: false,
+            filled_or_matched: false,
+            cancelled: false,
+            remote_side_effects: false,
+            operator_required: false,
             error_summary: Some(error_summary.into()),
             raw_signed_order_exposed: false,
         }

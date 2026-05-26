@@ -204,6 +204,22 @@ pub fn validate_reviewed_real_funds_canary_release_decision(
             "remote side effects not authorized by release decision",
         ),
         (
+            decision.single_attempt,
+            "release decision must remain single-attempt",
+        ),
+        (
+            decision.max_order_count == 1,
+            "release decision must cap max_order_count at 1",
+        ),
+        (
+            decision.post_cancel_required,
+            "release decision must require post_cancel",
+        ),
+        (
+            decision.readback_closeout_required,
+            "release decision must require readback closeout",
+        ),
+        (
             decision.allow_real_funds_canary,
             "real-funds canary not allowed by release decision",
         ),

@@ -72,7 +72,26 @@ Safety assertions:
 
 Approval file:
 
-- The approval file contains only operator metadata, risk caps, scope, artifact SHA-256, and evidence manifest SHA-256 bindings.
+- The armed CLI consumes a canonical `approval.json` that contains only account
+  id, operator metadata, risk caps, scope, artifact SHA-256, and evidence
+  manifest SHA-256 bindings.
+- Governance review material may also contain an `approval-request.json`; that
+  file is not a CLI authorization input.
+- Multi-account local operation must be split into two layers:
+  - private source inventory such as `PMX_PROFILE_<PROFILE>_*` in a local
+    `.env.profiles` file;
+  - generic runtime env generated from exactly one selected profile.
+- Generate the runtime env with
+  `python scripts/activate_pmx_profile.py --profile <profile> --source-env-file polymarket-execution-engine/.env.profiles --output polymarket-execution-engine/.env.runtime`
+  and validate it with
+  `python polymarket-execution-engine/validation/check_active_profile_consistency.py --env-file polymarket-execution-engine/.env.runtime --expected-account-id <approved-account-id>`.
+- The canary CLI requires `PMX_ACTIVE_ACCOUNT_PROFILE`,
+  `PMX_ACTIVE_ACCOUNT_ID`, and `PMX_ACTIVE_PROFILE_REF` in addition to the
+  generic `POLY*` and `PMX_CLOB_*` runtime variables.
+- When using deposit-wallet / Poly1271 authentication, `PMX_CLOB_FUNDER` must
+  match the active account selected by the current `POLY*` credentials. Hidden
+  account-specific fallback is not acceptable because it can silently mix
+  account A/B credential planes.
 - `evidence_manifest_sha256` is the archived/package-sidecar manifest hash used by the armed CLI. Review packages also record `workspace_manifest_sha256` so reviewers can distinguish the raw workspace manifest from the normalized manifest embedded in the deterministic release zip.
 - It must not contain private keys, CLOB secrets, API secrets, raw signatures, raw signed payloads, or `SignedOrderEnvelope`.
 - The example fixture is `config/real-funds-canary.approval.example.json`.
@@ -105,6 +124,10 @@ Execution policy:
   `validation/validate_controlled_canary_runtime_truth.py` before the controlled
   canary pipeline consumes it.
 - The armed canary uses a GTC post-only BUY limit order and immediately cancels it. A missing cancel confirmation is a canary failure requiring manual reconciliation.
+- The armed CLI can load an explicit env file with `--env-file <path>`. It
+  must point to a runtime-facing generic env such as `.env.runtime`, and it
+  must finish active-profile consistency plus signer/authentication precheck
+  before it writes the approval-consumed marker.
 - The armed CLI writes the report file at every remote-side-effect stage. If post status is unknown, post is accepted, cancel status is unknown, cancel confirmation fails, or cancel is confirmed, the report file must contain a structured `operator_required` or stage report rather than relying on terminal output. Each stage is also appended to `<report-file>.stages.jsonl`, while `<report-file>` keeps the latest stage or final receipt for operator handoff. If the runner returns an error after recording a remote-side-effect stage, the CLI retries persistence of the last stage before surfacing the error.
 - Candidate market discovery is outside the execution engine boundary. The execution engine validates an externally reviewed candidate against CLOB book/spread and risk gates. The reviewed candidate supplies the share `target_size`; `notional_usd` is only the derived `limit_price * target_size` risk value.
 - Closeout requires persisted post/cancel receipt plus order-status, trade, and account-activity readback. `scripts/prepare_canary_closeout.py` turns those files into `closeout.json` and `CLOSEOUT.md` and fails if the evidence no longer supports the closeout claims.

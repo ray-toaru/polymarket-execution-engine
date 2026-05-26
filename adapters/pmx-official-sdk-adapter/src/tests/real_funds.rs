@@ -79,6 +79,10 @@ fn reviewed_decision_fixture(
         production_deployment_authorized: false,
         real_funds_canary_authorized: true,
         remote_side_effects_authorized: true,
+        single_attempt: true,
+        max_order_count: 1,
+        post_cancel_required: true,
+        readback_closeout_required: true,
         allow_real_funds_canary: true,
         reviewed_release_decision_present: true,
         operator_identity_ref: approval.operator_identity_ref.clone(),
@@ -101,6 +105,98 @@ fn request_fixture(
         market_candidate_sha256: sha256_fixture('d'),
         preconditions,
     }
+}
+
+#[cfg(feature = "live-submit")]
+fn with_env_vars(vars: &[(&str, Option<&str>)], test: impl FnOnce()) {
+    let originals = vars
+        .iter()
+        .map(|(key, _)| ((*key).to_string(), std::env::var(key).ok()))
+        .collect::<Vec<_>>();
+    for (key, value) in vars {
+        match value {
+            Some(value) => unsafe { std::env::set_var(key, value) },
+            None => unsafe { std::env::remove_var(key) },
+        }
+    }
+    test();
+    for (key, value) in originals {
+        match value {
+            Some(value) => unsafe { std::env::set_var(key, value) },
+            None => unsafe { std::env::remove_var(key) },
+        }
+    }
+}
+
+#[cfg(feature = "live-submit")]
+fn active_profile_env_fixture() -> [(&'static str, Option<&'static str>); 7] {
+    [
+        ("POLYMARKET_PRIVATE_KEY", Some("0xabc123")),
+        ("POLY_API_KEY", Some("123e4567-e89b-12d3-a456-426614174000")),
+        ("POLY_API_SECRET", Some("api-secret")),
+        ("POLY_API_PASSPHRASE", Some("api-pass")),
+        ("PMX_ACTIVE_ACCOUNT_PROFILE", Some("acct_b")),
+        ("PMX_ACTIVE_ACCOUNT_ID", Some("acct-canary")),
+        ("PMX_ACTIVE_PROFILE_REF", Some("local-profile://acct-b")),
+    ]
+}
+
+#[cfg(feature = "live-submit")]
+#[test]
+fn active_profile_env_requires_declared_profile_metadata() {
+    let mut vars = active_profile_env_fixture().to_vec();
+    vars.extend_from_slice(&[
+        ("PMX_ACTIVE_ACCOUNT_PROFILE", None),
+        ("PMX_ACTIVE_ACCOUNT_ID", None),
+        ("PMX_ACTIVE_PROFILE_REF", None),
+        (
+            "PMX_CLOB_FUNDER",
+            Some("0x00000000000000000000000000000000000000b0"),
+        ),
+        ("PMX_CLOB_SIGNATURE_TYPE", Some("POLY_1271")),
+    ]);
+    with_env_vars(&vars, || {
+        let err = validate_active_profile_env_for_canary("acct-canary")
+            .expect_err("missing active profile metadata must fail");
+        let text = err.to_string();
+        assert!(text.contains("PMX_ACTIVE_ACCOUNT_PROFILE"));
+        assert!(text.contains("PMX_ACTIVE_ACCOUNT_ID"));
+        assert!(text.contains("PMX_ACTIVE_PROFILE_REF"));
+    });
+}
+
+#[cfg(feature = "live-submit")]
+#[test]
+fn active_profile_env_rejects_account_id_mismatch() {
+    let mut vars = active_profile_env_fixture().to_vec();
+    vars.extend_from_slice(&[
+        ("PMX_ACTIVE_ACCOUNT_ID", Some("acct-other")),
+        (
+            "PMX_CLOB_FUNDER",
+            Some("0x00000000000000000000000000000000000000b0"),
+        ),
+        ("PMX_CLOB_SIGNATURE_TYPE", Some("POLY_1271")),
+    ]);
+    with_env_vars(&vars, || {
+        let err = validate_active_profile_env_for_canary("acct-canary")
+            .expect_err("active profile mismatch must fail");
+        assert!(err.to_string().contains("account id mismatch"));
+    });
+}
+
+#[cfg(feature = "live-submit")]
+#[test]
+fn active_profile_env_requires_funder_for_poly1271() {
+    let mut vars = active_profile_env_fixture().to_vec();
+    vars.extend_from_slice(&[
+        ("PMX_CLOB_FUNDER", None),
+        ("PMX_CLOB_SIGNATURE_TYPE", Some("POLY_1271")),
+    ]);
+    with_env_vars(&vars, || {
+        let err = validate_active_profile_env_for_canary("acct-canary")
+            .expect_err("poly1271 without funder must fail");
+        assert!(err.to_string().contains("PMX_CLOB_FUNDER"));
+    });
 }
 
 #[test]

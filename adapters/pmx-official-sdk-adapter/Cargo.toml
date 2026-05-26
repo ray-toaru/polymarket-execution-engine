@@ -46,5 +46,6 @@ chrono = { version = "0.4.44", features = ["serde"] }
 polymarket_client_sdk_v2 = { version = "=0.6.0-canary.1", features = ["clob", "tracing", "ws", "heartbeats"], optional = true }
 anyhow = { version = "1.0.102", optional = true }
 tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread", "time"], optional = true }
+dotenvy = "0.15.7"
 
 [workspace]

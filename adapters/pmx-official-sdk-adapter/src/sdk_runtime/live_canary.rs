@@ -22,6 +22,13 @@ pub async fn run_real_funds_canary_gtc_post_only_cancel(
     run_real_funds_canary_gtc_post_only_cancel_with_reporter(config, request, |_| Ok(())).await
 }
 
+pub async fn preflight_real_funds_canary_execution(
+    config: &OfficialSdkAdapterConfig,
+) -> anyhow::Result<()> {
+    let _ = authenticated_sdk_client(config).await?;
+    Ok(())
+}
+
 pub async fn run_real_funds_canary_gtc_post_only_cancel_with_reporter<F>(
     config: &OfficialSdkAdapterConfig,
     request: RealFundsCanaryRequest,

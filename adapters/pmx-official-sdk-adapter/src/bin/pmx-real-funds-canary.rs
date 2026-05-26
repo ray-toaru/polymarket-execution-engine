@@ -4,10 +4,10 @@ use pmx_official_sdk_adapter::{
     RealFundsCanaryApproval, RealFundsCanaryMarketCandidate, RealFundsCanaryMarketDiagnostics,
     RealFundsCanaryReceipt, RealFundsCanaryRequest, RealFundsCanaryRiskLimits,
     RealFundsCanaryStageReport, ReviewedRealFundsCanaryReleaseDecision,
-    build_real_funds_canary_preconditions,
+    build_real_funds_canary_preconditions, preflight_real_funds_canary_execution,
     run_real_funds_canary_gtc_post_only_cancel_with_reporter,
-    validate_real_funds_canary_market_with_diagnostics, validate_real_funds_canary_preconditions,
-    validate_reviewed_real_funds_canary_release_decision,
+    validate_active_profile_env_for_canary, validate_real_funds_canary_market_with_diagnostics,
+    validate_real_funds_canary_preconditions, validate_reviewed_real_funds_canary_release_decision,
 };
 use pmx_store::{CanaryRuntimeTruthQuery, CanaryRuntimeTruthStore, PostgresStore};
 use serde::{Deserialize, Serialize};
@@ -32,6 +32,7 @@ struct Args {
     execution_id: String,
     plan_hash: String,
     daily_used_notional_usd: String,
+    env_file: Option<PathBuf>,
     market_file: PathBuf,
     release_decision_file: Option<PathBuf>,
     runtime_truth_file: Option<PathBuf>,
@@ -100,6 +101,7 @@ struct RuntimeTruthDependency {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = parse_args()?;
+    load_env_file(args.env_file.as_deref())?;
     if args.armed && args.dry_run {
         anyhow::bail!("--armed and --dry-run are mutually exclusive");
     }
@@ -234,6 +236,8 @@ async fn main() -> anyhow::Result<()> {
 
     if args.preflight_only {
         validate_real_funds_canary_preconditions(&config, &request)?;
+        validate_active_profile_env_for_canary(&args.account_id)?;
+        preflight_real_funds_canary_execution(&config).await?;
         let report = CanaryCliReport {
             status: "preflight_ready".into(),
             dry_run: false,
@@ -275,11 +279,47 @@ async fn main() -> anyhow::Result<()> {
 
     if args.armed {
         validate_real_funds_canary_preconditions(&config, &request)?;
+        validate_active_profile_env_for_canary(&args.account_id)?;
+        persist_stage_report(
+            &args,
+            &RealFundsCanaryStageReport::stage(
+                &request,
+                "armed_precheck_started",
+                None,
+                None,
+                false,
+                false,
+                false,
+            ),
+        )?;
+        if let Err(err) = preflight_real_funds_canary_execution(&config).await {
+            persist_stage_report(
+                &args,
+                &RealFundsCanaryStageReport::blocked(
+                    &request,
+                    "armed_precheck_failed",
+                    err.to_string(),
+                ),
+            )?;
+            return Err(err);
+        }
         create_approval_consumed_marker(&args, &approval, &market_candidate_sha256)?;
+        persist_stage_report(
+            &args,
+            &RealFundsCanaryStageReport::stage(
+                &request,
+                "approval_consumed",
+                None,
+                None,
+                false,
+                false,
+                false,
+            ),
+        )?;
         let mut last_remote_side_effect_stage: Option<RealFundsCanaryStageReport> = None;
         let result =
             run_real_funds_canary_gtc_post_only_cancel_with_reporter(&config, request, |stage| {
-                if stage.remote_side_effects || stage.operator_required {
+                if stage.remote_side_effects {
                     last_remote_side_effect_stage = Some(stage.clone());
                 }
                 persist_stage_report(&args, stage)
@@ -386,6 +426,7 @@ where
         execution_id: required(&values, "--execution-id")?,
         plan_hash: required(&values, "--plan-hash")?,
         market_file: required(&values, "--market-file")?.into(),
+        env_file: values.get("--env-file").map(PathBuf::from),
         release_decision_file: values.get("--release-decision-file").map(PathBuf::from),
         runtime_truth_file: values.get("--runtime-truth-file").map(PathBuf::from),
         runtime_truth_store: values.get("--runtime-truth-store").cloned(),
@@ -403,6 +444,15 @@ where
         allow_live_submit_config: values.contains_key("--allow-live-submit-config"),
         allow_real_funds_canary_config: values.contains_key("--allow-real-funds-canary-config"),
     })
+}
+
+fn load_env_file(path: Option<&Path>) -> anyhow::Result<()> {
+    let Some(path) = path else {
+        return Ok(());
+    };
+    dotenvy::from_path_override(path)
+        .map(|_| ())
+        .map_err(|err| anyhow::anyhow!("failed to load env file {}: {err}", path.display()))
 }
 
 fn required(values: &HashMap<String, String>, key: &str) -> anyhow::Result<String> {
@@ -736,6 +786,31 @@ mod tests {
         ];
         args.extend_from_slice(extra);
         args.into_iter().map(ToOwned::to_owned).collect()
+    }
+
+    #[test]
+    fn parses_optional_env_file_path() {
+        let args =
+            parse_args_from(minimal_args(&["--env-file", "/tmp/pmx.env"])).expect("parse args");
+        assert_eq!(args.env_file.as_deref(), Some(Path::new("/tmp/pmx.env")));
+    }
+
+    #[test]
+    fn load_env_file_reads_explicit_path() {
+        let path = temp_runtime_truth_path("canary-env-file");
+        std::fs::write(&path, "PMX_TEST_ENV_FILE_FLAG=from-env-file\n").expect("write env file");
+        unsafe {
+            std::env::remove_var("PMX_TEST_ENV_FILE_FLAG");
+        }
+        load_env_file(Some(&path)).expect("load env file");
+        assert_eq!(
+            std::env::var("PMX_TEST_ENV_FILE_FLAG").as_deref(),
+            Ok("from-env-file")
+        );
+        unsafe {
+            std::env::remove_var("PMX_TEST_ENV_FILE_FLAG");
+        }
+        let _ = std::fs::remove_file(&path);
     }
 
     #[test]
