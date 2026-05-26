@@ -20,7 +20,7 @@
     }
   ],
   "artifact": {
-    "binding_note": "The canonical manifest is source-candidate evidence and does not self-bind a containing zip. Release artifacts are bound by external .zip.sha256 and .zip.evidence.json sidecars.",
+    "binding_note": "The canonical manifest does not self-bind a containing zip. Release artifacts are bound by external .zip.sha256 and .zip.evidence.json sidecars.",
     "name": null,
     "path": null,
     "sha256": null
@@ -62,11 +62,11 @@
   },
   "external_artifact_sidecar": {
     "binding_note": "Current workspace evidence binds the final release artifact here. When this manifest is archived inside the artifact, package_release.py normalizes this volatile hash to null to avoid archive self-reference.",
-    "evidence_sidecar": "polymarket-execution-suite-v0.27.3.zip.evidence.json",
-    "name": "polymarket-execution-suite-v0.27.3.zip",
-    "path": "dist/polymarket-execution-suite-v0.27.3.zip",
-    "sha256": "c9b520f9f5b79d82589f8bb4033103b1aa7d73b8ba5c927e3d93c4fe67d68ed1",
-    "sha256_sidecar": "polymarket-execution-suite-v0.27.3.zip.sha256"
+    "evidence_sidecar": "polymarket-execution-suite-v0.28.0.zip.evidence.json",
+    "name": "polymarket-execution-suite-v0.28.0.zip",
+    "path": "dist/polymarket-execution-suite-v0.28.0.zip",
+    "sha256": "c25dd74d207a09c318dacbf94b659628fc0e4a9e0c04bb95b636589f0e96a821",
+    "sha256_sidecar": "polymarket-execution-suite-v0.28.0.zip.sha256"
   },
   "external_operator_approval_preflight_validation": {
     "logs": [
@@ -90,7 +90,7 @@
     ],
     "status": "pass"
   },
-  "generated_at": "2026-05-23T16:04:05.725197+00:00",
+  "generated_at": "2026-05-26T15:49:08.356237+00:00",
   "live_canary_blocked_validation": {
     "logs": [
       {
@@ -517,14 +517,14 @@
   "release_decision": {
     "live_trading_ready": false,
     "production_ready": false,
-    "reason": "Controlled real-funds canary source-candidate. Required source, Rust, PostgreSQL, SDK, credentialed smoke, sign-only dry-run, local static, drill, governance, and artifact checks are bound in current evidence; production and live trading remain explicitly unapproved.",
+    "reason": "Production-live-candidate. Required source, Rust, PostgreSQL, SDK, credentialed smoke, sign-only dry-run, local static, drill, governance, and artifact checks are bound in current evidence; production and live trading remain explicitly unapproved by default.",
     "required_non_optional_sections": [
       "local_static_validation",
       "rust_workspace_validation",
       "postgres_validation",
       "sdk_adapter_validation"
     ],
-    "status": "controlled real-funds canary source-candidate",
+    "status": "production-live-candidate",
     "validated_release": false
   },
   "rollback_kill_switch_validation": {
@@ -706,5 +706,5 @@
     ],
     "status": "pass"
   },
-  "version": "0.27.3"
+  "version": "0.28.0"
 }

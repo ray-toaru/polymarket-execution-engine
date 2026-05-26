@@ -452,20 +452,20 @@ def main(argv: list[str]) -> int:
     ]
     if skipped_sections:
         reason = (
-            "Controlled real-funds canary source-candidate local refresh. Current evidence binds source, "
+            "Production-live-candidate local refresh. Current evidence binds source, "
             "Rust, PostgreSQL, SDK, local static, drill, governance, and artifact checks, but does not refresh "
             f"external sections skipped in this environment: {', '.join(skipped_sections)}. "
-            "Production and live trading remain explicitly unapproved."
+            "Production and live trading remain explicitly unapproved by default."
         )
     else:
         reason = (
-            "Controlled real-funds canary source-candidate. Required source, Rust, PostgreSQL, SDK, "
+            "Production-live-candidate. Required source, Rust, PostgreSQL, SDK, "
             "credentialed smoke, sign-only dry-run, local static, drill, governance, and artifact "
-            "checks are bound in current evidence; production and live trading remain explicitly unapproved."
+            "checks are bound in current evidence; production and live trading remain explicitly unapproved by default."
         )
     data["release_decision"] = {
         "validated_release": False,
-        "status": "controlled real-funds canary source-candidate",
+        "status": "production-live-candidate",
         "production_ready": False,
         "live_trading_ready": False,
         "reason": reason,
