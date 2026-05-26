@@ -150,10 +150,9 @@ pub fn validate_active_profile_env_for_canary(expected_account_id: &str) -> anyh
         );
     }
     let signature_type = parse_signature_type(
-        &std::env::var(ENV_CLOB_SIGNATURE_TYPE)
+        std::env::var(ENV_CLOB_SIGNATURE_TYPE)
             .expect("checked above")
-            .trim()
-            .to_owned(),
+            .trim(),
     )
     .map_err(anyhow::Error::msg)?;
     let funder = clob_funder_from_env()?;
