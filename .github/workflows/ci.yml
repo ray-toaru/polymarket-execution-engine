@@ -1,9 +1,13 @@
 name: ci
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - ".github/**"
+      - ".gitignore"
+      - ".env.example"
+      - ".env.profiles.example"
       - "adapters/**"
       - "config/**"
       - "crates/**"
@@ -21,6 +25,9 @@ on:
   pull_request:
     paths:
       - ".github/**"
+      - ".gitignore"
+      - ".env.example"
+      - ".env.profiles.example"
       - "adapters/**"
       - "config/**"
       - "crates/**"
