@@ -1,10 +1,10 @@
-# polymarket-execution-engine v0.26.1 controlled canary source-candidate
+# polymarket-execution-engine v0.27.3 controlled canary source-candidate
 
 Standalone Rust execution plane for Polymarket. This package is a
 **controlled real-funds canary source-candidate**, not a production or
 live-trading release.
 
-## v0.26 scope
+## v0.27 scope
 
 - Server-authoritative planning and blocked submit receipt path remain in place.
 - Sign-only lifecycle append/list APIs exist with local state-machine validation, PG advisory-lock scaffolding, server-assigned metadata, and `client_event_id` replay/conflict semantics.
