@@ -65,7 +65,7 @@
     "evidence_sidecar": "polymarket-execution-suite-v0.28.0.zip.evidence.json",
     "name": "polymarket-execution-suite-v0.28.0.zip",
     "path": "dist/polymarket-execution-suite-v0.28.0.zip",
-    "sha256": "c25dd74d207a09c318dacbf94b659628fc0e4a9e0c04bb95b636589f0e96a821",
+    "sha256": "cf0b71433620e81c4d081eda606c49f1899bc7e188f05aa766ece3e69dce5a42",
     "sha256_sidecar": "polymarket-execution-suite-v0.28.0.zip.sha256"
   },
   "external_operator_approval_preflight_validation": {

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "review_reference_example_not_armed",
-  "source_release": "v0.27.3",
+  "source_release": "v0.28.0",
   "artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
   "evidence_manifest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
   "github_evidence": {

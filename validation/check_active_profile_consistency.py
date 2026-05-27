@@ -8,7 +8,14 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-VALID_SIGNATURE_TYPES = {"EOA", "POLY_1271"}
+SIGNATURE_TYPE_ALIASES = {
+    "EOA": "EOA",
+    "0": "EOA",
+    "POLY_1271": "POLY_1271",
+    "POLY1271": "POLY_1271",
+    "DEPOSIT_WALLET": "POLY_1271",
+    "3": "POLY_1271",
+}
 RUNTIME_REQUIRED = [
     "PMX_ACTIVE_ACCOUNT_PROFILE",
     "PMX_ACTIVE_ACCOUNT_ID",
@@ -37,6 +44,16 @@ def parse_env_file(path: Path) -> tuple[dict[str, str], list[str]]:
     return values, raw_keys
 
 
+def normalize_signature_type(raw: str) -> str:
+    normalized = raw.strip().upper()
+    try:
+        return SIGNATURE_TYPE_ALIASES[normalized]
+    except KeyError as exc:
+        raise SystemExit(
+            "PMX_CLOB_SIGNATURE_TYPE must be EOA or POLY_1271; numeric aliases 0 and 3 are accepted"
+        ) from exc
+
+
 def evaluate_env_file(path: Path, expected_account_id: str | None = None) -> dict[str, str]:
     values, raw_keys = parse_env_file(path)
     forbidden = [
@@ -50,12 +67,7 @@ def evaluate_env_file(path: Path, expected_account_id: str | None = None) -> dic
     missing = [key for key in RUNTIME_REQUIRED if not values.get(key, "").strip()]
     if missing:
         raise SystemExit("missing required runtime env variables: " + ", ".join(missing))
-    signature_type = values["PMX_CLOB_SIGNATURE_TYPE"]
-    if signature_type not in VALID_SIGNATURE_TYPES:
-        raise SystemExit(
-            "PMX_CLOB_SIGNATURE_TYPE must be one of "
-            + ", ".join(sorted(VALID_SIGNATURE_TYPES))
-        )
+    signature_type = normalize_signature_type(values["PMX_CLOB_SIGNATURE_TYPE"])
     funder = values.get("PMX_CLOB_FUNDER", "").strip()
     if signature_type == "POLY_1271" and not funder:
         raise SystemExit("PMX_CLOB_FUNDER is required when PMX_CLOB_SIGNATURE_TYPE=POLY_1271")

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "decision_id": "controlled-canary-v0.27.3-release-decision-template",
+  "decision_id": "controlled-canary-v0.28.0-release-decision-template",
   "status": "template_not_reviewed",
   "decision": "no_go",
   "decision_reason": "Template only. A reviewed decision package must replace all placeholders before any future controlled canary can be considered.",
-  "source_release": "v0.27.3",
+  "source_release": "v0.28.0",
   "scope": "REAL_FUNDS_CANARY",
   "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
   "artifact_sha256": "REPLACE_WITH_RELEASE_ARTIFACT_SHA256",
@@ -28,6 +28,10 @@
     "max_order_notional_usd": "1",
     "max_daily_notional_usd": "5"
   },
+  "single_attempt": true,
+  "max_order_count": 1,
+  "post_cancel_required": true,
+  "readback_closeout_required": true,
   "required_review_signals": {
     "artifact_hash_reviewed": false,
     "evidence_manifest_hash_reviewed": false,

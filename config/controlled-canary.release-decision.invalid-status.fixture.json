@@ -4,7 +4,7 @@
   "status": "draft_not_approved_not_active",
   "decision": "go",
   "decision_reason": "Invalid fixture: a GO decision with a draft/not-active status must never authorize a real-funds canary.",
-  "source_release": "v0.27.3",
+  "source_release": "v0.28.0",
   "scope": "REAL_FUNDS_CANARY",
   "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
   "artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -28,6 +28,10 @@
     "max_order_notional_usd": "1",
     "max_daily_notional_usd": "5"
   },
+  "single_attempt": true,
+  "max_order_count": 1,
+  "post_cancel_required": true,
+  "readback_closeout_required": true,
   "required_review_signals": {
     "artifact_hash_reviewed": true,
     "evidence_manifest_hash_reviewed": true,

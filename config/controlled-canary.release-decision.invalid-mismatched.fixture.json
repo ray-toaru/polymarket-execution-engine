@@ -3,8 +3,8 @@
   "decision_id": "controlled-canary-invalid-mismatched",
   "status": "reviewed_go",
   "decision": "go",
-  "decision_reason": "Invalid fixture: claims authorization while the artifact, evidence, and market-candidate hashes do not match the reviewed v0.27.3 baseline.",
-  "source_release": "v0.27.3",
+  "decision_reason": "Invalid fixture: claims authorization while the artifact, evidence, and market-candidate hashes do not match the reviewed v0.28.0 baseline.",
+  "source_release": "v0.28.0",
   "scope": "REAL_FUNDS_CANARY",
   "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
   "artifact_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
@@ -28,6 +28,10 @@
     "max_order_notional_usd": "1",
     "max_daily_notional_usd": "5"
   },
+  "single_attempt": true,
+  "max_order_count": 1,
+  "post_cancel_required": true,
+  "readback_closeout_required": true,
   "required_review_signals": {
     "artifact_hash_reviewed": true,
     "evidence_manifest_hash_reviewed": true,
