@@ -23,6 +23,7 @@ CURRENT_MANIFEST = EVIDENCE / "current" / "manifest.json"
 RELEASE_MANIFEST = EXECUTOR / "release" / "manifest.json"
 PACKAGE_SCRIPT = ROOT / "scripts" / "package_release.py"
 ARTIFACT_CHECK = ROOT / "scripts" / "check_release_artifact.py"
+RELEASE_POLICY = ROOT / "scripts" / "release_policy.py"
 
 STALE_ROOT_PATTERNS = [
     re.compile(r"^V0_.*\.md$"),
@@ -292,12 +293,26 @@ def validate_agents_guidance(failures: list[str]) -> None:
 def validate_packaging_scripts(failures: list[str]) -> None:
     if not INTEGRATION_MODE:
         return
+    if not RELEASE_POLICY.exists():
+        failures.append("release_policy.py missing")
+        return
+    policy_text = RELEASE_POLICY.read_text()
     package_text = PACKAGE_SCRIPT.read_text()
-    for token in ["docs/archive", "evidence/archive", "validation/archive", "polymarket-execution-engine/validation/archive", "external_reviews"]:
-        if token not in package_text:
-            failures.append(f"package_release.py must exclude {token}")
+    for token in [
+        "docs/archive",
+        "evidence/archive",
+        "validation/archive",
+        "polymarket-execution-engine/validation/archive",
+        "external_reviews",
+    ]:
+        if token not in policy_text:
+            failures.append(f"release_policy.py must exclude {token}")
+    if "from release_policy import" not in package_text:
+        failures.append("package_release.py must import shared release_policy")
     artifact_text = ARTIFACT_CHECK.read_text()
-    for token in ["canonical evidence manifest", "docs/archive", "evidence/archive", "validation/archive"]:
+    if "from release_policy import" not in artifact_text:
+        failures.append("check_release_artifact.py must import shared release_policy")
+    for token in ["canonical evidence manifest", "validate_dist_index", "release_policy"]:
         if token not in artifact_text:
             failures.append(f"check_release_artifact.py missing governance check token: {token}")
 
