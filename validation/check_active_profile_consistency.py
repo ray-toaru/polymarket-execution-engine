@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Validate a runtime-facing active account env file for the real-funds canary path."""
+"""Validate a runtime-facing active account env file for the real-funds canary path.
+
+``PMX_ACTIVE_ACCOUNT_PROFILE`` is the local profile selector. ``PMX_ACTIVE_ACCOUNT_ID``
+and ``PMX_ACTIVE_PROFILE_REF`` are opaque runtime identity values and are checked
+for presence/equality only; this guard does not normalize their spelling.
+"""
 from __future__ import annotations
 
 import argparse

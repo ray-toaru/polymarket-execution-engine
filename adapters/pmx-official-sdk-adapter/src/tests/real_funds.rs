@@ -137,7 +137,7 @@ fn active_profile_env_fixture() -> [(&'static str, Option<&'static str>); 7] {
         ("POLY_API_PASSPHRASE", Some("api-pass")),
         ("PMX_ACTIVE_ACCOUNT_PROFILE", Some("acct_b")),
         ("PMX_ACTIVE_ACCOUNT_ID", Some("acct-canary")),
-        ("PMX_ACTIVE_PROFILE_REF", Some("local-profile://acct-b")),
+        ("PMX_ACTIVE_PROFILE_REF", Some("local-profile://acct_b")),
     ]
 }
 
