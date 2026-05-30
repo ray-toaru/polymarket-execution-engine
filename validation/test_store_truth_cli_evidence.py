@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import check_current_evidence_manifest
@@ -88,6 +90,66 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
         self.assertEqual(candidate["limit_price"], "0.02")
         self.assertEqual(candidate["target_size"], "5")
         self.assertEqual(candidate["estimated_order_notional_usd"], "0.1")
+
+    def test_store_truth_cli_injects_synthetic_active_profile_env(self) -> None:
+        class Result:
+            returncode = 0
+            stdout = json.dumps(
+                {
+                    "status": "preflight_ready",
+                    "posted": False,
+                    "remote_side_effects": False,
+                    "raw_signed_order_exposed": False,
+                    "live_submit_allowed": True,
+                    "real_funds_canary_allowed": True,
+                    "selected_market_id_hash": "1" * 64,
+                    "selected_token_id_hash": "2" * 64,
+                }
+            )
+            stderr = ""
+
+        with tempfile.TemporaryDirectory() as tmp_name:
+            with patch("run_real_funds_canary_store_truth_cli_preflight.subprocess.run", return_value=Result()) as run_mock:
+                run_real_funds_canary_store_truth_cli_preflight.run_cli(
+                    Path(tmp_name),
+                    "acct-store-truth-test",
+                    "cond-store-truth-test",
+                    artifact_sha256="b" * 64,
+                    workspace_manifest_sha256="e" * 64,
+                    archived_manifest_sha256="c" * 64,
+                )
+        env = run_mock.call_args.kwargs["env"]
+        self.assertEqual(env["PMX_ACTIVE_ACCOUNT_PROFILE"], "store_truth_cli_preflight")
+        self.assertEqual(env["PMX_ACTIVE_ACCOUNT_ID"], "acct-store-truth-test")
+        self.assertEqual(env["PMX_ACTIVE_PROFILE_REF"], "local-profile://store_truth_cli_preflight")
+
+    def test_load_env_file_expands_local_references(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            env_file = Path(tmp_name) / ".env"
+            env_file.write_text(
+                "\n".join(
+                    [
+                        "PMX_ACCT_B_CLOB_FUNDER=0x00000000000000000000000000000000000000b0",
+                        "PMX_CLOB_FUNDER=${PMX_ACCT_B_CLOB_FUNDER}",
+                        "POLY_API_KEY=${PMX_MISSING_FALLBACK}",
+                    ]
+                )
+                + "\n"
+            )
+            with patch.dict(
+                "run_real_funds_canary_store_truth_cli_preflight.os.environ",
+                {},
+                clear=True,
+            ):
+                run_real_funds_canary_store_truth_cli_preflight.load_env_file(env_file)
+                self.assertEqual(
+                    run_real_funds_canary_store_truth_cli_preflight.os.environ["PMX_CLOB_FUNDER"],
+                    "0x00000000000000000000000000000000000000b0",
+                )
+                self.assertEqual(
+                    run_real_funds_canary_store_truth_cli_preflight.os.environ["POLY_API_KEY"],
+                    "${PMX_MISSING_FALLBACK}",
+                )
 
     def test_database_target_summary_redacts_password_but_keeps_endpoint(self) -> None:
         summary = run_real_funds_canary_store_truth_cli_preflight.database_target_summary(

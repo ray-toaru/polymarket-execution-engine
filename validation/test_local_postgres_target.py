@@ -1,13 +1,34 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import check_local_postgres_target
 
 
 class LocalPostgresTargetTests(unittest.TestCase):
+    def test_load_env_file_expands_local_references(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            env_file = Path(tmp_name) / ".env"
+            env_file.write_text(
+                "\n".join(
+                    [
+                        "PMX_HOST=127.0.0.1",
+                        "PMX_DATABASE_URL=postgres://pmx:pmx@${PMX_HOST}:5432/pmx",
+                    ]
+                )
+                + "\n"
+            )
+            with patch.dict("check_local_postgres_target.os.environ", {}, clear=True):
+                check_local_postgres_target.load_env_file(env_file)
+                self.assertEqual(
+                    check_local_postgres_target.os.environ["PMX_DATABASE_URL"],
+                    "postgres://pmx:pmx@127.0.0.1:5432/pmx",
+                )
+
     def test_parse_database_target(self) -> None:
         self.assertEqual(
             check_local_postgres_target.parse_database_target("postgres://pmx:secret@127.0.0.1:5433/pmx"),

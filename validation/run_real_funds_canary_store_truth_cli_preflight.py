@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import tempfile
 import time
@@ -21,6 +22,8 @@ CANARY_CLI = ROOT / "adapters" / "pmx-official-sdk-adapter" / "target" / "debug"
 ARTIFACT_SHA256 = "b" * 64
 EVIDENCE_MANIFEST_SHA256 = "c" * 64
 WORKSPACE_MANIFEST_SHA256 = "e" * 64
+SYNTHETIC_ACTIVE_PROFILE = "store_truth_cli_preflight"
+ENV_REFERENCE_PATTERN = re.compile(r"\$\{([A-Z0-9_]+)\}")
 
 
 def is_sha256(value: str) -> bool:
@@ -33,22 +36,44 @@ def require_sha256(value: str, field: str) -> str:
     return value.lower()
 
 
+def resolve_env_references(value: str, known: dict[str, str]) -> str:
+    resolved = value
+    for _ in range(8):
+        updated = ENV_REFERENCE_PATTERN.sub(
+            lambda match: known.get(match.group(1), os.environ.get(match.group(1), match.group(0))),
+            resolved,
+        )
+        if updated == resolved:
+            break
+        resolved = updated
+    return resolved
+
+
 def load_env_file(path: Path) -> None:
     if not path.exists():
         return
+    loaded: dict[str, str] = {}
     for raw_line in path.read_text().splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
         key = key.strip()
-        value = value.strip().strip("'").strip('"')
+        value = resolve_env_references(value.strip().strip("'").strip('"'), loaded)
         if key and key not in os.environ:
             os.environ[key] = value
+        loaded[key] = os.environ.get(key, value)
+
+
+def load_default_env_files() -> None:
+    # Prefer a generated runtime env when present; fall back to the broader local
+    # .env for database URLs and legacy variable references.
+    load_env_file(ROOT / ".env.runtime")
+    load_env_file(ROOT / ".env")
 
 
 def database_url() -> str:
-    load_env_file(ROOT / ".env")
+    load_default_env_files()
     url = os.environ.get("PMX_TEST_DATABASE_URL") or os.environ.get("PMX_DATABASE_URL")
     if not url or not url.strip():
         raise SystemExit("PMX_TEST_DATABASE_URL or PMX_DATABASE_URL is required")
@@ -175,6 +200,14 @@ def redact(text: str) -> str:
 
 def write_json(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
+
+
+def with_synthetic_active_profile_env(env: dict[str, str], account_id: str) -> dict[str, str]:
+    updated = dict(env)
+    updated["PMX_ACTIVE_ACCOUNT_PROFILE"] = SYNTHETIC_ACTIVE_PROFILE
+    updated["PMX_ACTIVE_ACCOUNT_ID"] = account_id
+    updated["PMX_ACTIVE_PROFILE_REF"] = f"local-profile://{SYNTHETIC_ACTIVE_PROFILE}"
+    return updated
 
 
 def market_candidate() -> dict[str, Any]:
@@ -347,6 +380,7 @@ def run_cli(
             "PMX_BALANCE_ALLOWANCE_CHECKED": "1",
         }
     )
+    env = with_synthetic_active_profile_env(env, account_id)
     result = subprocess.run(
         [
             str(CANARY_CLI),

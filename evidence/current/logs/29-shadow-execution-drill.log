@@ -1,6 +1,6 @@
 {
   "cancelled": false,
-  "captured_at": "2026-05-23T15:18:23.910876+00:00",
+  "captured_at": "2026-05-30T16:01:06.861741+00:00",
   "drill": "shadow_execution_would_submit",
   "live_submit_enabled": false,
   "market": {
@@ -19,7 +19,7 @@
     "credentials_logged": false,
     "raw_signature_logged": false,
     "raw_signed_payload_logged": false,
-    "sensitive_env_present": true
+    "sensitive_env_present": false
   },
   "schema_version": 1,
   "signed": false,

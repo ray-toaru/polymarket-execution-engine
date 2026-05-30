@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -11,20 +12,36 @@ from urllib.parse import urlparse
 
 
 ROOT = Path(__file__).resolve().parents[1]
+ENV_REFERENCE_PATTERN = re.compile(r"\$\{([A-Z0-9_]+)\}")
+
+
+def resolve_env_references(value: str, known: dict[str, str]) -> str:
+    resolved = value
+    for _ in range(8):
+        updated = ENV_REFERENCE_PATTERN.sub(
+            lambda match: known.get(match.group(1), os.environ.get(match.group(1), match.group(0))),
+            resolved,
+        )
+        if updated == resolved:
+            break
+        resolved = updated
+    return resolved
 
 
 def load_env_file(path: Path) -> None:
     if not path.exists():
         return
+    loaded: dict[str, str] = {}
     for raw_line in path.read_text().splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
         key = key.strip()
-        value = value.strip().strip("'").strip('"')
+        value = resolve_env_references(value.strip().strip("'").strip('"'), loaded)
         if key and key not in os.environ:
             os.environ[key] = value
+        loaded[key] = os.environ.get(key, value)
 
 
 def database_url() -> str:

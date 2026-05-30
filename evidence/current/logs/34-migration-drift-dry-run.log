@@ -24,11 +24,8 @@
     "0010_real_funds_canary_gtc_post_only"
   ],
   "postgres_dry_run": {
-    "drift_detection": "bad checksum fixture created; production runner must fail closed on mismatch",
-    "drift_schema": "pmx_migration_drift_1779549505650_3313862",
-    "fresh_schema": "pmx_migration_fresh_1779549505650_3313862",
-    "status": "pass",
-    "upgraded_schema": "pmx_migration_upgraded_1779549505650_3313862"
+    "reason": "PMX_TEST_DATABASE_URL not set",
+    "status": "skipped"
   },
   "status": "pass"
 }

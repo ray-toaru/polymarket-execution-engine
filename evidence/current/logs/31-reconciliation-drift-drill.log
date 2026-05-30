@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-05-23T15:18:23.974417+00:00",
+  "captured_at": "2026-05-30T16:01:06.931725+00:00",
   "drill": "reconciliation_drift",
   "failed_scenarios": [],
   "reconcile_decision": "fail_closed_operator_escalation_on_missing_or_unknown_remote_truth",

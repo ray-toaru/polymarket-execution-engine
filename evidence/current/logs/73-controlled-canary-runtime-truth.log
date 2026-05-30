@@ -1,0 +1,11 @@
+{
+  "failures": [],
+  "required_dependencies": [
+    "idempotency_lease",
+    "kill_switch",
+    "live_submit_gate",
+    "order_cancel_reconciliation"
+  ],
+  "status": "ok",
+  "template": "/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/config/controlled-canary.runtime-truth.template.json"
+}
