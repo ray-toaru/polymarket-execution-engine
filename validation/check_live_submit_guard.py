@@ -167,6 +167,20 @@ def public_contract_terms(text: str) -> set[str]:
     return present
 
 
+def validate_idempotency_guard_tokens() -> list[str]:
+    failures: list[str] = []
+    for path, tokens in REQUIRED_IDEMPOTENCY_TOKENS:
+        text = path.read_text()
+        failures.extend(
+            validate_required_tokens(
+                text,
+                tokens=tokens,
+                failure_prefix=f"idempotency lease/owner guard missing token in {path.relative_to(ROOT)}",
+            )
+        )
+    return failures
+
+
 def main() -> int:
     raw_adapter_text = read_adapter_sources()
     adapter_text = strip_rust_comments(raw_adapter_text)
@@ -240,15 +254,7 @@ def main() -> int:
             failure_prefix="pmx-service submit boundary missing token",
         )
     )
-    for path, tokens in REQUIRED_IDEMPOTENCY_TOKENS:
-        text = path.read_text()
-        failures.extend(
-            validate_required_tokens(
-                text,
-                tokens=tokens,
-                failure_prefix=f"idempotency lease/owner guard missing token in {path.relative_to(ROOT)}",
-            )
-        )
+    failures.extend(validate_idempotency_guard_tokens())
     failures.extend(
         validate_required_tokens(
             raw_adapter_text,
