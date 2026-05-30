@@ -4,6 +4,7 @@
 .env.*
 !.env.example
 !.env.profiles.example
+!.env.runtime.example
 *.db
 *.sqlite
 *.sqlite3

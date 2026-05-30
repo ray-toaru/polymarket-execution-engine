@@ -79,8 +79,9 @@ Approval file:
   file is not a CLI authorization input.
 - Multi-account local operation must be split into two layers:
   - private source inventory such as `PMX_PROFILE_<PROFILE>_*` in a local
-    `.env.profiles` file;
-  - generic runtime env generated from exactly one selected profile.
+    `.env.profiles` file, shaped like `.env.profiles.example`;
+  - generic runtime env generated from exactly one selected profile, shaped
+    like `.env.runtime.example`.
 - Generate the runtime env with
   `python scripts/activate_pmx_profile.py --profile <profile> --source-env-file polymarket-execution-engine/.env.profiles --output polymarket-execution-engine/.env.runtime`
   and validate it with
