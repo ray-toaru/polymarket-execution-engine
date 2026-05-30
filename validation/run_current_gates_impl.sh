@@ -135,7 +135,9 @@ python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" >/dev/nul
 if [[ -f "${INTEGRATION_ROOT}/scripts/check_version_consistency.py" && -f "${INTEGRATION_ROOT}/scripts/validate_contracts.py" ]]; then
   python validation/check_current_lifecycle_api.py 2>&1 | tee "${EVIDENCE_DIR}/22-current-lifecycle-api-guard.log"
   python "${INTEGRATION_ROOT}/scripts/check_version_consistency.py" 2>&1 | tee "${EVIDENCE_DIR}/24-version-consistency-guard.log"
-  python "${INTEGRATION_ROOT}/scripts/validate_contracts.py" 2>&1 | tee "${EVIDENCE_DIR}/25-contract-validation.log"
+  python "${INTEGRATION_ROOT}/scripts/validate_contracts.py" \
+    --report-file "${EVIDENCE_DIR}/25-contract-validation.report.json" \
+    2>&1 | tee "${EVIDENCE_DIR}/25-contract-validation.log"
   ARTIFACT_PATH="$(python "${INTEGRATION_ROOT}/scripts/package_release.py" | tee "${EVIDENCE_DIR}/27-package-release.log" | tail -n 1)"
   python "${INTEGRATION_ROOT}/scripts/check_release_artifact.py" "${ARTIFACT_PATH}" "$(cat "${INTEGRATION_ROOT}/VERSION")" 2>&1 | tee "${EVIDENCE_DIR}/28-release-artifact-check.log"
   PMX_RELEASE_ARTIFACT_PATH="${ARTIFACT_PATH}" python validation/run_production_deployment_preflight_drill.py 2>&1 | tee "${EVIDENCE_DIR}/50-production-deployment-preflight-drill.log"

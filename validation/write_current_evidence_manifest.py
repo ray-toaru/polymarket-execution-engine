@@ -37,6 +37,7 @@ DEFAULT_LOG_DIR = CURRENT_DIR / "logs"
 OUT = CURRENT_DIR / "manifest.json"
 ENVIRONMENT = CURRENT_DIR / "environment.json"
 GATE_RUNNER = EXECUTOR / "validation" / "run_current_gates_impl.sh"
+CONTRACT_VALIDATION_REPORT = DEFAULT_LOG_DIR / "25-contract-validation.report.json"
 
 SECTIONS: dict[str, list[str]] = {
     "rust_workspace_validation": [
@@ -278,6 +279,13 @@ def log_entry(path: Path) -> dict[str, str | int]:
     return entry
 
 
+def file_entry(path: Path, *, command: str | None = None) -> dict[str, str | int]:
+    entry = log_entry(path)
+    if command is not None:
+        entry["command"] = command
+    return entry
+
+
 def display_path(path: Path) -> str:
     path = path.resolve()
     try:
@@ -433,6 +441,11 @@ def main(argv: list[str]) -> int:
             log_dir,
             names,
             optional=section == "credentialed_non_trading_validation",
+        )
+    if CONTRACT_VALIDATION_REPORT.exists():
+        data["local_static_validation"]["contract_validation_report"] = file_entry(
+            CONTRACT_VALIDATION_REPORT,
+            command='python "${INTEGRATION_ROOT}/scripts/validate_contracts.py" --report-file "${EVIDENCE_DIR}/25-contract-validation.report.json"',
         )
     extra_logs = [path for path in sorted(log_dir.glob("*.log")) if path.name not in captured_names]
     data["additional_logs"] = [log_entry(path) for path in extra_logs]
