@@ -181,6 +181,49 @@ def validate_idempotency_guard_tokens() -> list[str]:
     return failures
 
 
+def validate_canary_guard_tokens(raw_adapter_text: str) -> list[str]:
+    return validate_required_tokens(
+        raw_adapter_text,
+        tokens=REQUIRED_CANARY_TOKENS,
+        failure_prefix="official SDK adapter missing live canary guard token",
+    )
+
+
+def validate_service_live_submit_tokens() -> list[str]:
+    failures: list[str] = []
+    service_text = "\n".join(path.read_text() for path in service_source_files())
+    if "submit_plan_with_gateway" not in service_text:
+        failures.append("pmx-service live gateway path must require explicit submit_plan_with_gateway")
+    if ALLOWED_SERVICE_POST_ORDER_FILE.exists():
+        service_live_text = strip_rust_comments(ALLOWED_SERVICE_POST_ORDER_FILE.read_text())
+        failures.extend(
+            validate_required_tokens(
+                service_live_text,
+                tokens=[
+                    "LIVE_SUBMIT_BLOCKED_PRE_SIGN_RUNTIME",
+                    "LIVE_SUBMIT_BLOCKED_PRE_POST_RUNTIME",
+                    "runtime_submit_block_reason",
+                    "raw_signed_payload_logged\": false",
+                    "raw_signed_order_exposed\": false",
+                ],
+                failure_prefix="pmx-service live submit path missing token",
+            )
+        )
+    submit_text = (SERVICE_SRC / "submit.rs").read_text()
+    failures.extend(
+        validate_required_tokens(
+            submit_text,
+            tokens=[
+                "LIVE submit mode is fail-closed until gateway posting is wired through the executor service",
+                "submit_plan_with_gateway",
+                "SubmitMode::Live",
+            ],
+            failure_prefix="pmx-service submit boundary missing token",
+        )
+    )
+    return failures
+
+
 def main() -> int:
     raw_adapter_text = read_adapter_sources()
     adapter_text = strip_rust_comments(raw_adapter_text)
@@ -224,44 +267,9 @@ def main() -> int:
             failure_prefix="pmx-service post_order call sites must be limited to submit/live.rs",
         )
     )
-    service_text = "\n".join(path.read_text() for path in service_source_files())
-    if "submit_plan_with_gateway" not in service_text:
-        failures.append("pmx-service live gateway path must require explicit submit_plan_with_gateway")
-    if ALLOWED_SERVICE_POST_ORDER_FILE.exists():
-        service_live_text = strip_rust_comments(ALLOWED_SERVICE_POST_ORDER_FILE.read_text())
-        failures.extend(
-            validate_required_tokens(
-                service_live_text,
-                tokens=[
-                    "LIVE_SUBMIT_BLOCKED_PRE_SIGN_RUNTIME",
-                    "LIVE_SUBMIT_BLOCKED_PRE_POST_RUNTIME",
-                    "runtime_submit_block_reason",
-                    "raw_signed_payload_logged\": false",
-                    "raw_signed_order_exposed\": false",
-                ],
-                failure_prefix="pmx-service live submit path missing token",
-            )
-        )
-    submit_text = (SERVICE_SRC / "submit.rs").read_text()
-    failures.extend(
-        validate_required_tokens(
-            submit_text,
-            tokens=[
-                "LIVE submit mode is fail-closed until gateway posting is wired through the executor service",
-                "submit_plan_with_gateway",
-                "SubmitMode::Live",
-            ],
-            failure_prefix="pmx-service submit boundary missing token",
-        )
-    )
+    failures.extend(validate_service_live_submit_tokens())
     failures.extend(validate_idempotency_guard_tokens())
-    failures.extend(
-        validate_required_tokens(
-            raw_adapter_text,
-            tokens=REQUIRED_CANARY_TOKENS,
-            failure_prefix="official SDK adapter missing live canary guard token",
-        )
-    )
+    failures.extend(validate_canary_guard_tokens(raw_adapter_text))
 
     public_text = PUBLIC_CONTRACT.read_text()
     for term in sorted(public_contract_terms(public_text)):
