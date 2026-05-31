@@ -1,6 +1,6 @@
 # Execution engine roadmap
 
-> Status: v0.27 development status for the standalone Rust execution plane.
+> Status: v0.28 development status for the standalone Rust execution plane.
 > This is not a production-ready or live-trading release decision.
 
 ## Current phase
@@ -8,7 +8,7 @@
 Repeatable controlled-canary hardening while live submit, live cancel, broad
 production deployment, and any second canary attempt remain blocked by default.
 
-## Already landed for v0.27
+## Already landed for v0.28
 
 - Real-funds canary CLI remains feature-gated and dry-run by default.
 - Externally reviewed BUY/GTC post-only candidate files are validated against
@@ -36,12 +36,12 @@ production deployment, and any second canary attempt remain blocked by default.
   deployment preflight, and external reference checks while preserving blocked
   live/prod defaults.
 
-## Remaining before v0.27 release
+## Remaining before v0.28 release
 
-1. Re-run the full current gates after all v0.27 source and documentation
+1. Re-run the full current gates after all v0.28 source and documentation
    changes, including Rust, PostgreSQL, SDK adapter, credentialed non-trading,
    and sign-only dry-run evidence when the required environment is available.
-2. Rebuild a deterministic v0.27 release artifact and detached sidecars only
+2. Rebuild a deterministic v0.28 release artifact and detached sidecars only
    after the source version, compatibility matrix, release manifest, validation
    report, and release decision are coherently updated.
 3. Keep any future real-funds canary attempt single-attempt scoped: fresh
@@ -50,7 +50,7 @@ production deployment, and any second canary attempt remain blocked by default.
 4. Keep production/live trading out of scope unless a separate release decision
    and stronger production evidence explicitly change that boundary.
 
-## Non-goals for v0.27
+## Non-goals for v0.28
 
 - General live trading.
 - Reusable live submit/cancel enablement.
