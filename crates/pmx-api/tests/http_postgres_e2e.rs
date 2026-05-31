@@ -51,6 +51,44 @@ async fn request_json(
     (status, value)
 }
 
+async fn request_json_with_headers(
+    app: axum::Router,
+    method: &str,
+    uri: &str,
+    token: Option<&str>,
+    body: Option<Value>,
+    headers: &[(&str, &str)],
+) -> (StatusCode, Value) {
+    let mut builder = Request::builder()
+        .method(method)
+        .uri(uri)
+        .header("content-type", "application/json");
+    if let Some(token) = token {
+        builder = builder.header("Authorization", bearer(token));
+    }
+    for (name, value) in headers {
+        builder = builder.header(*name, *value);
+    }
+    let body = match body {
+        Some(value) => Body::from(value.to_string()),
+        None => Body::empty(),
+    };
+    let response = app
+        .oneshot(builder.body(body).expect("request body"))
+        .await
+        .expect("router response");
+    let status = response.status();
+    let bytes = to_bytes(response.into_body(), usize::MAX)
+        .await
+        .expect("body bytes");
+    let value = if bytes.is_empty() {
+        Value::Null
+    } else {
+        serde_json::from_slice(&bytes).expect("json response")
+    };
+    (status, value)
+}
+
 fn sample_intent() -> Value {
     json!({
         "client_intent_id": "intent-http-pg-e2e-1",
