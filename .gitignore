@@ -5,6 +5,7 @@
 !.env.example
 !.env.profiles.example
 !.env.runtime.example
+!.env.runtime.secrets.example
 *.db
 *.sqlite
 *.sqlite3

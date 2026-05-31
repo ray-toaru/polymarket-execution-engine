@@ -33,6 +33,12 @@ RUNTIME_REQUIRED = [
 ]
 
 
+def companion_secrets_path(path: Path) -> Path:
+    if path.suffix == ".example":
+        return path.with_name(path.stem + ".secrets" + path.suffix)
+    return path.with_name(path.name + ".secrets")
+
+
 def parse_env_file(path: Path) -> tuple[dict[str, str], list[str]]:
     values: dict[str, str] = {}
     raw_keys: list[str] = []
@@ -61,6 +67,10 @@ def normalize_signature_type(raw: str) -> str:
 
 def evaluate_env_file(path: Path, expected_account_id: str | None = None) -> dict[str, str]:
     values, raw_keys = parse_env_file(path)
+    if companion_secrets_path(path).is_file():
+        companion_values, companion_raw_keys = parse_env_file(companion_secrets_path(path))
+        values.update(companion_values)
+        raw_keys.extend(companion_raw_keys)
     forbidden = [
         key for key in raw_keys if key.startswith("PMX_PROFILE_") or key.startswith("PMX_ACCT_")
     ]

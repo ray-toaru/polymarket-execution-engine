@@ -79,6 +79,7 @@ def load_default_env_files() -> None:
     # Prefer a generated runtime env when present; fall back to the broader local
     # .env for database URLs and legacy variable references.
     load_env_file(ROOT / ".env.runtime")
+    load_env_file(ROOT / ".env.runtime.secrets")
     load_env_file(ROOT / ".env")
 
 
