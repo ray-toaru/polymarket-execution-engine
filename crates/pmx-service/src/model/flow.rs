@@ -42,6 +42,7 @@ pub struct SubmitPlanCommand {
     pub plan_hash: String,
     pub idempotency_key: String,
     pub mode: SubmitMode,
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

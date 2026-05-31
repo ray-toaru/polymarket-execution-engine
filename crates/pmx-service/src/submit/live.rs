@@ -14,6 +14,7 @@ pub struct LiveSubmitRequest<'a> {
     pub owner_token: &'a str,
     pub executor_version: &'a str,
     pub contract_version: &'a str,
+    pub correlation_id: Option<&'a str>,
 }
 
 pub async fn live_submit_outcome<S, R, P, G>(
@@ -123,6 +124,7 @@ where
         store,
         &order_id,
         OrderEventKind::Signed,
+        scoped_correlation_id(req.correlation_id, "signed").as_deref(),
         serde_json::json!({
             "submit_attempt": req.submit_attempt,
             "signer_fingerprint": signed.signer_fingerprint,
@@ -150,6 +152,7 @@ where
         store,
         &order_id,
         OrderEventKind::PostRequested,
+        scoped_correlation_id(req.correlation_id, "post_requested").as_deref(),
         serde_json::json!({"submit_attempt": req.submit_attempt}),
     )
     .await?;
@@ -160,6 +163,7 @@ where
                 store,
                 &order_id,
                 OrderEventKind::RemotePosted,
+                scoped_correlation_id(req.correlation_id, "remote_posted").as_deref(),
                 serde_json::json!({
                     "remote_order_id": remote_order_id,
                     "accepted_at_ms": ack.accepted_at_ms,
@@ -214,6 +218,7 @@ where
                 store,
                 &order_id,
                 OrderEventKind::RemoteUnknown,
+                scoped_correlation_id(req.correlation_id, "remote_unknown").as_deref(),
                 serde_json::json!({"reason": reason, "operator_required": true}),
             )
             .await?;
@@ -231,6 +236,7 @@ where
                 store,
                 &order_id,
                 OrderEventKind::RemoteRejected,
+                scoped_correlation_id(req.correlation_id, "remote_rejected").as_deref(),
                 serde_json::json!({"error": err.to_string(), "operator_required": true}),
             )
             .await?;
@@ -285,10 +291,15 @@ fn runtime_submit_block_reason(state: &RuntimeStateSummary) -> Option<&'static s
     None
 }
 
+fn scoped_correlation_id(base: Option<&str>, suffix: &str) -> Option<String> {
+    base.map(|value| format!("{value}:{suffix}"))
+}
+
 async fn record_order_event<S>(
     store: &S,
     order_id: &str,
     event: OrderEventKind,
+    correlation_id: Option<&str>,
     payload: serde_json::Value,
 ) -> Result<(), ServiceError>
 where
@@ -300,7 +311,7 @@ where
             order_id: order_id.to_owned(),
             event,
             event_source: "pmx-service".into(),
-            correlation_id: None,
+            correlation_id: correlation_id.map(str::to_owned),
             payload,
             created_at: None,
         })
@@ -363,7 +374,13 @@ where
             account_id: req.plan.account_id.0.clone(),
             event_type: event_type.to_owned(),
             event_source: "pmx-service".into(),
-            payload,
+            payload: match req.correlation_id {
+                Some(correlation_id) => serde_json::json!({
+                    "correlation_id": correlation_id,
+                    "body": payload,
+                }),
+                None => payload,
+            },
             created_at: None,
         })
         .await?;

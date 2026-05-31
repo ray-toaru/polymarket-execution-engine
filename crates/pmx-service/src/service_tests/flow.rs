@@ -30,6 +30,7 @@ async fn service_flow_persists_and_blocks_submit() {
             plan_hash: plan.plan_hash.0.clone(),
             idempotency_key: "idem-1".into(),
             mode: SubmitMode::BlockedDryRun,
+            correlation_id: Some("corr-blocked-1".into()),
         })
         .await
         .expect("submit");
@@ -49,6 +50,7 @@ async fn service_flow_persists_and_blocks_submit() {
         .iter()
         .find(|event| event.event_type == "SUBMIT_BLOCKED_BEFORE_REMOTE")
         .expect("blocked event");
+    assert_eq!(blocked.payload["correlation_id"], "corr-blocked-1");
     assert_eq!(blocked.payload["reservation_written"], false);
 }
 
@@ -82,6 +84,7 @@ async fn service_id_bound_flow_persists_and_blocks_submit() {
             plan_hash: plan.plan_hash.0.clone(),
             idempotency_key: "idem-id-bound-1".into(),
             mode: SubmitMode::BlockedDryRun,
+            correlation_id: None,
         })
         .await
         .expect("submit");
@@ -178,6 +181,7 @@ async fn static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks() 
             plan_hash: plan.plan_hash.0.clone(),
             idempotency_key: "idem-ready-still-blocked".into(),
             mode: SubmitMode::BlockedDryRun,
+            correlation_id: None,
         })
         .await
         .expect("submit");
@@ -222,6 +226,7 @@ async fn live_submit_mode_fails_closed_until_gateway_is_wired() {
             plan_hash: plan.plan_hash.0.clone(),
             idempotency_key: "idem-live-fail-closed".into(),
             mode: SubmitMode::Live,
+            correlation_id: None,
         })
         .await
         .expect_err("live mode must fail closed until gateway is wired");
@@ -270,6 +275,7 @@ async fn explicit_live_gateway_posts_and_records_remote_order_lifecycle() {
                 plan_hash: plan.plan_hash.0.clone(),
                 idempotency_key: "idem-live-posted".into(),
                 mode: SubmitMode::Live,
+                correlation_id: Some("corr-live-posted".into()),
             },
             &signer,
             &gateway,
@@ -292,6 +298,23 @@ async fn explicit_live_gateway_posts_and_records_remote_order_lifecycle() {
     assert_eq!(
         lifecycle.remote_order_id,
         Some(format!("remote-{order_id}"))
+    );
+    let order_events = service
+        .store()
+        .list_order_lifecycle_events(&pmx_store::OrderLifecycleEventQuery {
+            order_id: order_id.clone(),
+            limit: 20,
+            before_event_id: None,
+        })
+        .await
+        .expect("order events");
+    assert!(
+        order_events
+            .iter()
+            .all(|event| event
+                .correlation_id
+                .as_deref()
+                .is_some_and(|value| value.starts_with("corr-live-posted:")))
     );
 }
 
@@ -344,6 +367,7 @@ async fn explicit_live_gateway_posts_buy_size_and_records_quote_exposure() {
                 plan_hash: plan.plan_hash.0.clone(),
                 idempotency_key: "idem-live-buy-size-posted".into(),
                 mode: SubmitMode::Live,
+                correlation_id: Some("corr-live-buy-size-posted".into()),
             },
             &signer,
             &gateway,
@@ -417,6 +441,7 @@ async fn explicit_live_gateway_marks_operator_required_when_runtime_degrades_aft
                 plan_hash: plan.plan_hash.0.clone(),
                 idempotency_key: "idem-live-post-ack-runtime-degraded".into(),
                 mode: SubmitMode::Live,
+                correlation_id: Some("corr-live-post-ack-runtime-degraded".into()),
             },
             &signer,
             &gateway,
@@ -448,9 +473,10 @@ async fn explicit_live_gateway_marks_operator_required_when_runtime_degrades_aft
         .iter()
         .find(|event| event.event_type == "LIVE_SUBMIT_POST_ACK_RUNTIME_DEGRADED")
         .expect("post-ack runtime degraded event");
-    assert_eq!(post_ack_event.payload["operator_required"], true);
-    assert_eq!(post_ack_event.payload["remote_side_effect"], true);
-    assert_eq!(post_ack_event.payload["reason"], "kill_switch_enabled");
+    assert_eq!(post_ack_event.payload["correlation_id"], "corr-live-post-ack-runtime-degraded");
+    assert_eq!(post_ack_event.payload["body"]["operator_required"], true);
+    assert_eq!(post_ack_event.payload["body"]["remote_side_effect"], true);
+    assert_eq!(post_ack_event.payload["body"]["reason"], "kill_switch_enabled");
 }
 
 #[tokio::test]
@@ -496,6 +522,7 @@ async fn explicit_live_gateway_remote_unknown_freezes_for_operator_review() {
                 plan_hash: plan.plan_hash.0.clone(),
                 idempotency_key: "idem-live-remote-unknown".into(),
                 mode: SubmitMode::Live,
+                correlation_id: Some("corr-live-remote-unknown".into()),
             },
             &signer,
             &gateway,
@@ -563,6 +590,7 @@ async fn explicit_live_gateway_remote_rejection_records_failed_lifecycle() {
                 plan_hash: plan.plan_hash.0.clone(),
                 idempotency_key: "idem-live-remote-rejected".into(),
                 mode: SubmitMode::Live,
+                correlation_id: Some("corr-live-remote-rejected".into()),
             },
             &signer,
             &gateway,
@@ -620,6 +648,7 @@ async fn explicit_live_gateway_blocks_unsupported_quote_notional_without_stuck_i
         plan_hash: plan.plan_hash.0.clone(),
         idempotency_key: "idem-live-quote-notional-blocked".into(),
         mode: SubmitMode::Live,
+        correlation_id: Some("corr-live-quote-notional-blocked".into()),
     };
     let first = service
         .submit_plan_with_gateway(command.clone(), &signer, &gateway)

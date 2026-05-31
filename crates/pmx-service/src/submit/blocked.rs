@@ -8,6 +8,7 @@ pub struct BlockedSubmitRequest<'a> {
     pub owner_token: &'a str,
     pub executor_version: &'a str,
     pub contract_version: &'a str,
+    pub correlation_id: Option<&'a str>,
 }
 
 pub async fn blocked_submit_outcome<S>(
@@ -38,6 +39,7 @@ where
             payload: serde_json::json!({
                 "submit_attempt": req.submit_attempt,
                 "plan_status": format!("{:?}", req.plan.status),
+                "correlation_id": req.correlation_id,
                 "no_remote_side_effect": true,
                 "reservation_written": false,
                 "receipt_id": receipt.receipt_id.clone(),

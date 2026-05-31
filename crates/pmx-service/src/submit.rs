@@ -79,6 +79,7 @@ where
                     owner_token: &owner_token,
                     executor_version,
                     contract_version,
+                    correlation_id: req.correlation_id.as_deref(),
                 },
             )
             .await
@@ -152,6 +153,7 @@ where
                         owner_token: &owner_token,
                         executor_version,
                         contract_version,
+                        correlation_id: req.correlation_id.as_deref(),
                     },
                 )
                 .await
@@ -170,6 +172,7 @@ where
                         owner_token: &owner_token,
                         executor_version,
                         contract_version,
+                        correlation_id: req.correlation_id.as_deref(),
                     },
                 )
                 .await

@@ -97,6 +97,12 @@ paths:
       security:
         - ServiceToken: []
         - AdminToken: []
+      parameters:
+        - in: header
+          name: X-Correlation-Id
+          required: false
+          schema: { type: string }
+          description: Optional executor correlation id propagated into submit lifecycle evidence.
       requestBody:
         required: true
         content:

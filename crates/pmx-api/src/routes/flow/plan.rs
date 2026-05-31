@@ -1,4 +1,5 @@
 use super::*;
+use crate::support::correlation_id_from_headers;
 
 pub(crate) async fn compile_plan(
     State(state): State<AppState>,
@@ -25,6 +26,7 @@ pub(crate) async fn submit_plan(
     Json(req): Json<SubmitPlanRequest>,
 ) -> ApiResult<SubmitReceipt> {
     require(&headers, Operation::SubmitPlan)?;
+    let correlation_id = correlation_id_from_headers(&headers);
     let outcome = state
         .service
         .submit_plan(pmx_service::SubmitPlanCommand {
@@ -32,6 +34,7 @@ pub(crate) async fn submit_plan(
             plan_hash: req.plan_hash,
             idempotency_key: req.idempotency_key,
             mode: req.mode,
+            correlation_id: Some(correlation_id),
         })
         .await
         .map_err(service_error)?;
