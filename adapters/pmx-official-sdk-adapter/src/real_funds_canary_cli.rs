@@ -113,6 +113,7 @@ struct RuntimeTruthPreflightReport {
     reconcile_worker_healthy: bool,
     cancel_only_fallback_ready: bool,
     balance_allowance_checked: bool,
+    gate_evidence_refs: std::collections::HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -682,7 +683,28 @@ fn load_runtime_truth_file(path: Option<&PathBuf>) -> anyhow::Result<RuntimeTrut
             invalid.join(",")
         );
     }
-    bindings.gate_snapshot = truth.preflight_report.map(|report| RuntimeGateSnapshot {
+    bindings.gate_snapshot = truth.preflight_report.map(|report| {
+        for field in [
+            "kill_switch_open",
+            "runtime_worker_healthy",
+            "geoblock_allowed",
+            "repository_reservation_exists",
+            "idempotency_key_written",
+            "reconcile_worker_healthy",
+            "cancel_only_fallback_ready",
+            "balance_allowance_checked",
+        ] {
+            let evidence_ref = report
+                .gate_evidence_refs
+                .get(field)
+                .ok_or_else(|| anyhow::anyhow!("runtime truth preflight_report.gate_evidence_refs.{field} is required"))?;
+            if evidence_ref.trim().is_empty() || evidence_ref.contains("REPLACE_WITH") {
+                anyhow::bail!(
+                    "runtime truth preflight_report.gate_evidence_refs.{field} must be concrete"
+                );
+            }
+        }
+        Ok(RuntimeGateSnapshot {
         kill_switch_open: Some(report.kill_switch_open),
         runtime_worker_healthy: Some(report.runtime_worker_healthy),
         geoblock_allowed: Some(report.geoblock_allowed),
@@ -691,7 +713,8 @@ fn load_runtime_truth_file(path: Option<&PathBuf>) -> anyhow::Result<RuntimeTrut
         reconcile_worker_healthy: Some(report.reconcile_worker_healthy),
         cancel_only_fallback_ready: Some(report.cancel_only_fallback_ready),
         balance_allowance_checked: Some(report.balance_allowance_checked),
-    });
+        })
+    }).transpose()?;
     Ok(bindings)
 }
 
@@ -1035,6 +1058,16 @@ mod tests {
                 "reconcile_worker_healthy": true,
                 "cancel_only_fallback_ready": true,
                 "balance_allowance_checked": true,
+                "gate_evidence_refs": {
+                    "kill_switch_open": "pg://truth/runtime_accounts/kill-switch",
+                    "runtime_worker_healthy": "pg://truth/worker_health/runtime-worker",
+                    "geoblock_allowed": "pg://truth/compliance/geoblock",
+                    "repository_reservation_exists": "pg://truth/repository/reservation",
+                    "idempotency_key_written": "pg://truth/worker_health/idempotency-lease",
+                    "reconcile_worker_healthy": "pg://truth/worker_health/reconcile-worker",
+                    "cancel_only_fallback_ready": "pg://truth/operations/cancel-only-fallback",
+                    "balance_allowance_checked": "pg://truth/balances/allowance-check",
+                },
             }
         });
         std::fs::write(
@@ -1096,6 +1129,39 @@ mod tests {
         assert_eq!(json["runtime_live_submit_gate_bound"], true);
         assert_eq!(json["runtime_idempotency_lease_bound"], true);
         assert_eq!(json["runtime_order_cancel_reconciliation_bound"], true);
+    }
+
+    #[test]
+    fn runtime_truth_file_requires_gate_evidence_refs() {
+        let path = temp_runtime_truth_path("canary-runtime-truth-missing-gate-evidence");
+        let truth = serde_json::json!({
+            "schema_version": 1,
+            "dependencies": [
+                {"name": "kill_switch", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/kill-switch"},
+                {"name": "live_submit_gate", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/live-submit"},
+                {"name": "idempotency_lease", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/idempotency"},
+                {"name": "order_cancel_reconciliation", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/reconcile"}
+            ],
+            "preflight_report": {
+                "kill_switch_open": true,
+                "runtime_worker_healthy": true,
+                "geoblock_allowed": true,
+                "repository_reservation_exists": true,
+                "idempotency_key_written": true,
+                "reconcile_worker_healthy": true,
+                "cancel_only_fallback_ready": true,
+                "balance_allowance_checked": true
+            }
+        });
+        std::fs::write(&path, serde_json::to_vec_pretty(&truth).expect("serialize truth file"))
+            .expect("write truth file");
+        let error = load_runtime_truth_file(Some(&path)).expect_err("missing gate evidence refs must fail");
+        assert!(
+            error
+                .to_string()
+                .contains("runtime truth preflight_report.gate_evidence_refs.kill_switch_open is required")
+        );
+        let _ = std::fs::remove_file(&path);
     }
 
     #[test]
