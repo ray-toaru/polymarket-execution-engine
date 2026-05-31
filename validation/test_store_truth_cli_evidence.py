@@ -100,8 +100,10 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
                     "posted": False,
                     "remote_side_effects": False,
                     "raw_signed_order_exposed": False,
-                    "live_submit_allowed": True,
-                    "real_funds_canary_allowed": True,
+                    "live_submit_allowed": False,
+                    "real_funds_canary_allowed": False,
+                    "preconditions_live_submit_would_pass": True,
+                    "preconditions_real_funds_canary_would_pass": True,
                     "selected_market_id_hash": "1" * 64,
                     "selected_token_id_hash": "2" * 64,
                 }

@@ -33,6 +33,8 @@ PREFLIGHT_BOOL_FIELDS = [
     "raw_signed_order_exposed",
     "live_submit_allowed",
     "real_funds_canary_allowed",
+    "preconditions_live_submit_would_pass",
+    "preconditions_real_funds_canary_would_pass",
     "kill_switch_open",
     "runtime_worker_healthy",
     "geoblock_allowed",
@@ -156,6 +158,14 @@ def validate_shape(data: dict[str, Any], label: str, *, allow_placeholders: bool
         for field in PREFLIGHT_BOOL_FIELDS:
             if not isinstance(preflight_report.get(field), bool):
                 failures.append(f"{label}: preflight_report.{field} must be boolean")
+        if preflight_report.get("live_submit_allowed") is not False:
+            failures.append(f"{label}: preflight_report.live_submit_allowed must remain false")
+        if preflight_report.get("real_funds_canary_allowed") is not False:
+            failures.append(f"{label}: preflight_report.real_funds_canary_allowed must remain false")
+        if preflight_report.get("preconditions_live_submit_would_pass") is not True:
+            failures.append(f"{label}: preflight_report.preconditions_live_submit_would_pass must be true")
+        if preflight_report.get("preconditions_real_funds_canary_would_pass") is not True:
+            failures.append(f"{label}: preflight_report.preconditions_real_funds_canary_would_pass must be true")
 
     if not allow_placeholders:
         for field in ["artifact_sha256", "workspace_manifest_sha256", "archived_manifest_sha256"]:

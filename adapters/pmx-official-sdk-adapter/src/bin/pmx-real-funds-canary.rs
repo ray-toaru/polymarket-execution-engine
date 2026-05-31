@@ -72,6 +72,8 @@ struct CanaryCliReport {
     runtime_order_cancel_reconciliation_bound: bool,
     live_submit_allowed: bool,
     real_funds_canary_allowed: bool,
+    preconditions_live_submit_would_pass: bool,
+    preconditions_real_funds_canary_would_pass: bool,
     posted: bool,
     remote_side_effects: bool,
     raw_signed_order_exposed: bool,
@@ -167,6 +169,8 @@ async fn main() -> anyhow::Result<()> {
             runtime_order_cancel_reconciliation_bound: runtime_truth.order_cancel_reconciliation,
             live_submit_allowed: false,
             real_funds_canary_allowed: false,
+            preconditions_live_submit_would_pass: false,
+            preconditions_real_funds_canary_would_pass: false,
             posted: false,
             remote_side_effects: false,
             raw_signed_order_exposed: false,
@@ -196,7 +200,7 @@ async fn main() -> anyhow::Result<()> {
         market_whitelisted: true,
         size_cap_ok: true,
         daily_cap_ok: true,
-        operator_approved: !approval.operator_identity_ref.trim().is_empty(),
+        operator_approved: release_decision_bound && !approval.operator_identity_ref.trim().is_empty(),
         cancel_only_fallback_ready: std::env::var("PMX_CANCEL_ONLY_FALLBACK_READY")
             .ok()
             .as_deref()
@@ -237,7 +241,6 @@ async fn main() -> anyhow::Result<()> {
     if args.preflight_only {
         validate_real_funds_canary_preconditions(&config, &request)?;
         validate_active_profile_env_for_canary(&args.account_id)?;
-        preflight_real_funds_canary_execution(&config).await?;
         let report = CanaryCliReport {
             status: "preflight_ready".into(),
             dry_run: false,
@@ -266,8 +269,10 @@ async fn main() -> anyhow::Result<()> {
             runtime_live_submit_gate_bound: runtime_truth.live_submit_gate,
             runtime_idempotency_lease_bound: runtime_truth.idempotency_lease,
             runtime_order_cancel_reconciliation_bound: runtime_truth.order_cancel_reconciliation,
-            live_submit_allowed: true,
-            real_funds_canary_allowed: real_funds_env_enabled
+            live_submit_allowed: false,
+            real_funds_canary_allowed: false,
+            preconditions_live_submit_would_pass: true,
+            preconditions_real_funds_canary_would_pass: real_funds_env_enabled
                 && args.allow_real_funds_canary_config,
             posted: false,
             remote_side_effects: false,
@@ -369,7 +374,9 @@ async fn main() -> anyhow::Result<()> {
         runtime_idempotency_lease_bound: runtime_truth.idempotency_lease,
         runtime_order_cancel_reconciliation_bound: runtime_truth.order_cancel_reconciliation,
         live_submit_allowed: false,
-        real_funds_canary_allowed: real_funds_env_enabled && args.allow_real_funds_canary_config,
+        real_funds_canary_allowed: false,
+        preconditions_live_submit_would_pass: false,
+        preconditions_real_funds_canary_would_pass: false,
         posted: false,
         remote_side_effects: false,
         raw_signed_order_exposed: false,

@@ -493,6 +493,8 @@ def runtime_truth_document(
             "raw_signed_order_exposed": report.get("raw_signed_order_exposed"),
             "live_submit_allowed": report.get("live_submit_allowed"),
             "real_funds_canary_allowed": report.get("real_funds_canary_allowed"),
+            "preconditions_live_submit_would_pass": report.get("preconditions_live_submit_would_pass"),
+            "preconditions_real_funds_canary_would_pass": report.get("preconditions_real_funds_canary_would_pass"),
             "kill_switch_open": report.get("kill_switch_open"),
             "runtime_worker_healthy": report.get("runtime_worker_healthy"),
             "geoblock_allowed": report.get("geoblock_allowed"),
