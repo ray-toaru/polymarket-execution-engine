@@ -236,6 +236,10 @@ async fn postgres_loads_canary_runtime_truth_from_runtime_rows() {
         "live-submit-gate",
         "idempotency-lease",
         "order-cancel-reconciliation",
+        "repository-reservation",
+        "reconcile-worker",
+        "cancel-only-fallback",
+        "balance-allowance-check",
     ] {
         client
             .execute(
@@ -258,6 +262,11 @@ async fn postgres_loads_canary_runtime_truth_from_runtime_rows() {
     assert!(truth.all_ready());
     assert_eq!(truth.runtime_worker_healthy, Some(true));
     assert_eq!(truth.geoblock_allowed, Some(true));
+    assert_eq!(truth.repository_reservation_exists, Some(true));
+    assert_eq!(truth.idempotency_key_written, Some(true));
+    assert_eq!(truth.reconcile_worker_healthy, Some(true));
+    assert_eq!(truth.cancel_only_fallback_ready, Some(true));
+    assert_eq!(truth.balance_allowance_checked, Some(true));
 
     store
         .record_runtime_worker_observation(&RuntimeWorkerObservation {

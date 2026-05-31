@@ -201,6 +201,11 @@ async fn canary_runtime_truth_requires_store_backed_dependencies() {
     assert!(!truth.order_cancel_reconciliation_ready);
     assert_eq!(truth.runtime_worker_healthy, Some(true));
     assert_eq!(truth.geoblock_allowed, Some(true));
+    assert_eq!(truth.repository_reservation_exists, Some(false));
+    assert_eq!(truth.idempotency_key_written, Some(false));
+    assert_eq!(truth.reconcile_worker_healthy, Some(false));
+    assert_eq!(truth.cancel_only_fallback_ready, Some(false));
+    assert_eq!(truth.balance_allowance_checked, Some(false));
     assert!(!truth.all_ready());
 }
 
@@ -273,6 +278,10 @@ async fn canary_runtime_truth_is_ready_when_all_store_dependencies_are_ready() {
         "live-submit-gate",
         "idempotency-lease",
         "order-cancel-reconciliation",
+        "repository-reservation",
+        "reconcile-worker",
+        "cancel-only-fallback",
+        "balance-allowance-check",
     ] {
         store
             .record_worker_heartbeat(&RuntimeWorkerHeartbeat {
@@ -298,6 +307,11 @@ async fn canary_runtime_truth_is_ready_when_all_store_dependencies_are_ready() {
     assert!(truth.all_ready());
     assert_eq!(truth.runtime_worker_healthy, Some(true));
     assert_eq!(truth.geoblock_allowed, Some(true));
+    assert_eq!(truth.repository_reservation_exists, Some(true));
+    assert_eq!(truth.idempotency_key_written, Some(true));
+    assert_eq!(truth.reconcile_worker_healthy, Some(true));
+    assert_eq!(truth.cancel_only_fallback_ready, Some(true));
+    assert_eq!(truth.balance_allowance_checked, Some(true));
     assert_eq!(
         truth.evidence_refs,
         vec![
@@ -305,6 +319,10 @@ async fn canary_runtime_truth_is_ready_when_all_store_dependencies_are_ready() {
             "runtime-state://worker/live-submit-gate".to_string(),
             "runtime-state://worker/idempotency-lease".to_string(),
             "runtime-state://worker/order-cancel-reconciliation".to_string(),
+            "runtime-state://worker/repository-reservation".to_string(),
+            "runtime-state://worker/reconcile-worker".to_string(),
+            "runtime-state://worker/cancel-only-fallback".to_string(),
+            "runtime-state://worker/balance-allowance-check".to_string(),
         ]
     );
 }

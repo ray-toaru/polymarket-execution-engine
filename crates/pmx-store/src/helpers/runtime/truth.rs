@@ -11,6 +11,10 @@ use crate::{
 const LIVE_SUBMIT_GATE_CAPABILITY: &str = "live-submit-gate";
 const IDEMPOTENCY_LEASE_CAPABILITY: &str = "idempotency-lease";
 const ORDER_CANCEL_RECONCILIATION_CAPABILITY: &str = "order-cancel-reconciliation";
+const REPOSITORY_RESERVATION_CAPABILITY: &str = "repository-reservation";
+const RECONCILE_WORKER_CAPABILITY: &str = "reconcile-worker";
+const CANCEL_ONLY_FALLBACK_CAPABILITY: &str = "cancel-only-fallback";
+const BALANCE_ALLOWANCE_CHECK_CAPABILITY: &str = "balance-allowance-check";
 
 #[async_trait]
 impl<T> CanaryRuntimeTruthStore for T
@@ -55,6 +59,26 @@ where
             &status.observations,
             ORDER_CANCEL_RECONCILIATION_CAPABILITY,
         );
+        let repository_reservation_exists = capability_ready(
+            &status.heartbeats,
+            &status.observations,
+            REPOSITORY_RESERVATION_CAPABILITY,
+        );
+        let reconcile_worker_healthy = capability_ready(
+            &status.heartbeats,
+            &status.observations,
+            RECONCILE_WORKER_CAPABILITY,
+        );
+        let cancel_only_fallback_ready = capability_ready(
+            &status.heartbeats,
+            &status.observations,
+            CANCEL_ONLY_FALLBACK_CAPABILITY,
+        );
+        let balance_allowance_checked = capability_ready(
+            &status.heartbeats,
+            &status.observations,
+            BALANCE_ALLOWANCE_CHECK_CAPABILITY,
+        );
 
         let mut evidence_refs = Vec::new();
         if kill_switch_open {
@@ -66,6 +90,19 @@ where
             (
                 ORDER_CANCEL_RECONCILIATION_CAPABILITY,
                 order_cancel_reconciliation_ready,
+            ),
+            (
+                REPOSITORY_RESERVATION_CAPABILITY,
+                repository_reservation_exists,
+            ),
+            (RECONCILE_WORKER_CAPABILITY, reconcile_worker_healthy),
+            (
+                CANCEL_ONLY_FALLBACK_CAPABILITY,
+                cancel_only_fallback_ready,
+            ),
+            (
+                BALANCE_ALLOWANCE_CHECK_CAPABILITY,
+                balance_allowance_checked,
             ),
         ] {
             if ready {
@@ -80,6 +117,11 @@ where
             order_cancel_reconciliation_ready,
             runtime_worker_healthy: Some(runtime_worker_healthy),
             geoblock_allowed: Some(geoblock_allowed),
+            repository_reservation_exists: Some(repository_reservation_exists),
+            idempotency_key_written: Some(idempotency_lease_ready),
+            reconcile_worker_healthy: Some(reconcile_worker_healthy),
+            cancel_only_fallback_ready: Some(cancel_only_fallback_ready),
+            balance_allowance_checked: Some(balance_allowance_checked),
             evidence_refs,
         })
     }

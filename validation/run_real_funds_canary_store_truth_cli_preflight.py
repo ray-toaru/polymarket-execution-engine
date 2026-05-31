@@ -343,7 +343,11 @@ def seed_runtime_truth(url: str, account_id: str, condition_id: str) -> None:
         VALUES
           ('store-truth-live-submit-gate-{account_id}', 'CanaryRuntimeTruth', 'live-submit-gate', 'HEALTHY', now(), now()),
           ('store-truth-idempotency-lease-{account_id}', 'CanaryRuntimeTruth', 'idempotency-lease', 'HEALTHY', now(), now()),
-          ('store-truth-order-cancel-reconciliation-{account_id}', 'CanaryRuntimeTruth', 'order-cancel-reconciliation', 'HEALTHY', now(), now())
+          ('store-truth-order-cancel-reconciliation-{account_id}', 'CanaryRuntimeTruth', 'order-cancel-reconciliation', 'HEALTHY', now(), now()),
+          ('store-truth-repository-reservation-{account_id}', 'CanaryRuntimeTruth', 'repository-reservation', 'HEALTHY', now(), now()),
+          ('store-truth-reconcile-worker-{account_id}', 'CanaryRuntimeTruth', 'reconcile-worker', 'HEALTHY', now(), now()),
+          ('store-truth-cancel-only-fallback-{account_id}', 'CanaryRuntimeTruth', 'cancel-only-fallback', 'HEALTHY', now(), now()),
+          ('store-truth-balance-allowance-check-{account_id}', 'CanaryRuntimeTruth', 'balance-allowance-check', 'HEALTHY', now(), now())
         ON CONFLICT (worker_id) DO UPDATE SET
           role = EXCLUDED.role,
           capability = EXCLUDED.capability,

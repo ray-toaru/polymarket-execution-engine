@@ -624,11 +624,11 @@ fn runtime_truth_from_store_bindings(
             kill_switch_open: Some(bindings.kill_switch_open),
             runtime_worker_healthy: bindings.runtime_worker_healthy,
             geoblock_allowed: bindings.geoblock_allowed,
-            repository_reservation_exists: None,
-            idempotency_key_written: None,
-            reconcile_worker_healthy: None,
-            cancel_only_fallback_ready: None,
-            balance_allowance_checked: None,
+            repository_reservation_exists: bindings.repository_reservation_exists,
+            idempotency_key_written: bindings.idempotency_key_written,
+            reconcile_worker_healthy: bindings.reconcile_worker_healthy,
+            cancel_only_fallback_ready: bindings.cancel_only_fallback_ready,
+            balance_allowance_checked: bindings.balance_allowance_checked,
         }),
     }
 }
@@ -956,6 +956,11 @@ mod tests {
             order_cancel_reconciliation_ready: true,
             runtime_worker_healthy: Some(true),
             geoblock_allowed: Some(true),
+            repository_reservation_exists: Some(true),
+            idempotency_key_written: Some(false),
+            reconcile_worker_healthy: Some(true),
+            cancel_only_fallback_ready: Some(true),
+            balance_allowance_checked: Some(true),
             evidence_refs: vec!["runtime-state://kill-switch".into()],
         });
         assert!(truth.kill_switch);
@@ -976,6 +981,36 @@ mod tests {
             truth.gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.geoblock_allowed),
+            Some(true)
+        );
+        assert_eq!(
+            truth.gate_snapshot
+                .as_ref()
+                .and_then(|snapshot| snapshot.repository_reservation_exists),
+            Some(true)
+        );
+        assert_eq!(
+            truth.gate_snapshot
+                .as_ref()
+                .and_then(|snapshot| snapshot.idempotency_key_written),
+            Some(false)
+        );
+        assert_eq!(
+            truth.gate_snapshot
+                .as_ref()
+                .and_then(|snapshot| snapshot.reconcile_worker_healthy),
+            Some(true)
+        );
+        assert_eq!(
+            truth.gate_snapshot
+                .as_ref()
+                .and_then(|snapshot| snapshot.cancel_only_fallback_ready),
+            Some(true)
+        );
+        assert_eq!(
+            truth.gate_snapshot
+                .as_ref()
+                .and_then(|snapshot| snapshot.balance_allowance_checked),
             Some(true)
         );
     }

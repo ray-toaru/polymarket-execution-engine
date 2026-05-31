@@ -132,6 +132,11 @@ pub struct CanaryRuntimeTruthBindings {
     pub order_cancel_reconciliation_ready: bool,
     pub runtime_worker_healthy: Option<bool>,
     pub geoblock_allowed: Option<bool>,
+    pub repository_reservation_exists: Option<bool>,
+    pub idempotency_key_written: Option<bool>,
+    pub reconcile_worker_healthy: Option<bool>,
+    pub cancel_only_fallback_ready: Option<bool>,
+    pub balance_allowance_checked: Option<bool>,
     pub evidence_refs: Vec<String>,
 }
 
