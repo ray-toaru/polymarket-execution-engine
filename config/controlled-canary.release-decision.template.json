@@ -75,6 +75,8 @@
   "allow_real_funds_canary": false,
   "reviewed_release_decision_present": false,
   "operator_identity_ref": "REPLACE_WITH_OPERATOR_IDENTITY_REFERENCE",
+  "operator_identity_sha256": "REPLACE_WITH_OPERATOR_IDENTITY_SHA256",
+  "reviewer_identity_sha256": "REPLACE_WITH_REVIEWER_IDENTITY_SHA256",
   "secrets_included": false,
   "workspace_manifest_sha256": "REPLACE_WITH_WORKSPACE_EVIDENCE_MANIFEST_SHA256",
   "archived_manifest_sha256": "REPLACE_WITH_ARCHIVED_EVIDENCE_MANIFEST_SHA256"

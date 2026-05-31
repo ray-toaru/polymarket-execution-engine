@@ -67,6 +67,8 @@ ALLOWED_TOP_LEVEL_FIELDS = {
     "allow_real_funds_canary",
     "reviewed_release_decision_present",
     "operator_identity_ref",
+    "operator_identity_sha256",
+    "reviewer_identity_sha256",
     "secrets_included",
 }
 REQUIRED_EXTERNAL_REFS = [
@@ -234,6 +236,18 @@ def validate_shape(data: dict[str, Any], label: str) -> list[str]:
         failures.append(f"{label}: operator_identity_ref must be concrete")
     elif label != "template" and has_placeholder(data.get("operator_identity_ref")):
         failures.append(f"{label}: operator_identity_ref must be concrete")
+    operator_identity_sha256 = data.get("operator_identity_sha256")
+    if label == "template":
+        if not has_placeholder(operator_identity_sha256):
+            failures.append(f"{label}: operator_identity_sha256 must remain a placeholder")
+    elif not is_sha256(operator_identity_sha256):
+        failures.append(f"{label}: operator_identity_sha256 must be 64-hex")
+    reviewer_identity_sha256 = data.get("reviewer_identity_sha256")
+    if label == "template":
+        if not has_placeholder(reviewer_identity_sha256):
+            failures.append(f"{label}: reviewer_identity_sha256 must remain a placeholder")
+    elif not is_sha256(reviewer_identity_sha256):
+        failures.append(f"{label}: reviewer_identity_sha256 must be 64-hex")
     refs = data.get("external_references")
     if not isinstance(refs, dict):
         failures.append(f"{label}: external_references must be an object")

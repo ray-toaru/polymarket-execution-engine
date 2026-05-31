@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use sha2::{Digest, Sha256};
 use std::cmp::Ordering;
 
 use crate::{
@@ -232,8 +233,25 @@ pub fn validate_reviewed_real_funds_canary_release_decision(
             "operator identity ref missing",
         ),
         (
+            is_sha256(&decision.operator_identity_sha256),
+            "operator identity sha256 missing",
+        ),
+        (
+            is_sha256(&decision.reviewer_identity_sha256),
+            "reviewer identity sha256 missing",
+        ),
+        (
             decision.operator_identity_ref == approval.operator_identity_ref,
             "operator identity ref mismatch",
+        ),
+        (
+            decision.operator_identity_sha256 == approval.operator_identity_sha256,
+            "operator identity sha256 mismatch",
+        ),
+        (
+            decision.operator_identity_sha256
+                == format!("{:x}", Sha256::digest(decision.operator_identity_ref.as_bytes())),
+            "operator identity sha256 does not match operator identity ref",
         ),
         (
             decision.artifact_sha256 == artifact_sha256
@@ -499,6 +517,9 @@ fn valid_approval(approval: &RealFundsCanaryApproval) -> bool {
             .is_none_or(|sha| is_sha256(sha) && sha == &approval.evidence_manifest_sha256)
         && is_sha256(&approval.market_candidate_sha256)
         && !approval.operator_identity_ref.trim().is_empty()
+        && is_sha256(&approval.operator_identity_sha256)
+        && approval.operator_identity_sha256
+            == format!("{:x}", Sha256::digest(approval.operator_identity_ref.as_bytes()))
         && decimal_gt_zero(&approval.max_order_notional_usd)
         && decimal_gt_zero(&approval.max_daily_notional_usd)
 }

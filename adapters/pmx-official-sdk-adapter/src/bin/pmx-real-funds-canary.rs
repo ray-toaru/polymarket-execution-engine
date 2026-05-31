@@ -298,7 +298,9 @@ async fn main() -> anyhow::Result<()> {
         size_cap_ok: true,
         daily_cap_ok: true,
         operator_approved: release_decision_bound
-            && !approval.operator_identity_ref.trim().is_empty(),
+            && !approval.operator_identity_ref.trim().is_empty()
+            && approval.operator_identity_sha256
+                == format!("{:x}", Sha256::digest(approval.operator_identity_ref.as_bytes())),
         cancel_only_fallback_ready: runtime_truth.cancel_only_fallback_ready(),
     };
     let preconditions =
@@ -1095,6 +1097,9 @@ mod tests {
                 max_daily_notional_usd: "5".into(),
                 execution_style: "GTC_LIMIT_POST_ONLY_CANCEL".into(),
                 operator_identity_ref: "operator-local-approval".into(),
+                operator_identity_sha256:
+                    "1cde65add0b43ed4a85f3f2d9006e1cb9cb9f23709e893cd95359421301c6648"
+                        .into(),
             },
             risk_limits: RealFundsCanaryRiskLimits {
                 max_order_notional_usd: "1".into(),
@@ -1207,6 +1212,9 @@ mod tests {
                 max_daily_notional_usd: "5".into(),
                 execution_style: "GTC_LIMIT_POST_ONLY_CANCEL".into(),
                 operator_identity_ref: "operator-local-approval".into(),
+                operator_identity_sha256:
+                    "1cde65add0b43ed4a85f3f2d9006e1cb9cb9f23709e893cd95359421301c6648"
+                        .into(),
             },
             risk_limits: RealFundsCanaryRiskLimits {
                 max_order_notional_usd: "1".into(),

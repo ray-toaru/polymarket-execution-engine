@@ -75,6 +75,8 @@
   "allow_real_funds_canary": false,
   "reviewed_release_decision_present": false,
   "operator_identity_ref": "local-operator-approval-ref",
+  "operator_identity_sha256": "0a0865655462d329af9d315430bdfed5f662bcc84289da67d253a95845dbd87a",
+  "reviewer_identity_sha256": "9644ef536b99be9273eb3a72384705f6642a461810904a1107610fe4f48e14ec",
   "secrets_included": false,
   "workspace_manifest_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
   "archived_manifest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"

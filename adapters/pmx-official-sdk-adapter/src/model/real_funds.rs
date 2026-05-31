@@ -18,6 +18,7 @@ pub struct RealFundsCanaryApproval {
     pub max_daily_notional_usd: String,
     pub execution_style: String,
     pub operator_identity_ref: String,
+    pub operator_identity_sha256: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -61,6 +62,8 @@ pub struct ReviewedRealFundsCanaryReleaseDecision {
     pub allow_real_funds_canary: bool,
     pub reviewed_release_decision_present: bool,
     pub operator_identity_ref: String,
+    pub operator_identity_sha256: String,
+    pub reviewer_identity_sha256: String,
     pub secrets_included: bool,
 }
 
