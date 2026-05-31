@@ -19,6 +19,16 @@ path = "src/bin/pmx-real-funds-canary.rs"
 required-features = ["live-submit"]
 
 [[bin]]
+name = "pmx-real-funds-canary-preflight"
+path = "src/bin/pmx-real-funds-canary-preflight.rs"
+required-features = ["live-submit"]
+
+[[bin]]
+name = "pmx-real-funds-canary-armed"
+path = "src/bin/pmx-real-funds-canary-armed.rs"
+required-features = ["live-submit"]
+
+[[bin]]
 name = "pmx-query-order"
 path = "src/bin/pmx-query-order.rs"
 required-features = ["live-submit"]

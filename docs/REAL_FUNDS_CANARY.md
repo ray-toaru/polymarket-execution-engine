@@ -117,9 +117,9 @@ Execution policy:
   matching capability but another role are ignored.
 - `validation/run_real_funds_canary_store_truth_cli_preflight.py` seeds local
   PostgreSQL runtime-truth rows and runs the CLI with
-  `--runtime-truth-store postgres` in `--preflight-only` mode. It proves the CLI
-  can consume store-backed runtime truth without posting, cancelling, exposing a
-  signed order, or printing the database URL. Use
+  `pmx-real-funds-canary-preflight --runtime-truth-store postgres`. It proves
+  the CLI can consume store-backed runtime truth without posting, cancelling,
+  exposing a signed order, or printing the database URL. Use
   `--artifact-sha256`, `--workspace-manifest-sha256`,
   `--archived-manifest-sha256`, and `--runtime-truth-output <path>` to write a
   references-only runtime-truth JSON candidate bound to the exact release

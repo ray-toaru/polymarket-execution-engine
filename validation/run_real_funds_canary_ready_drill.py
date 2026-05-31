@@ -11,7 +11,7 @@ from current_gate_chain import require_current_gate_log
 
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = ROOT / "adapters" / "pmx-official-sdk-adapter"
-CLI = ADAPTER / "src" / "bin" / "pmx-real-funds-canary.rs"
+CLI = ADAPTER / "src" / "real_funds_canary_cli.rs"
 LIVE_CANARY = ADAPTER / "src" / "sdk_runtime" / "live_canary.rs"
 CARGO = ADAPTER / "Cargo.toml"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
@@ -41,6 +41,8 @@ def main() -> int:
     cargo = CARGO.read_text()
     for token in [
         'name = "pmx-real-funds-canary"',
+        'name = "pmx-real-funds-canary-preflight"',
+        'name = "pmx-real-funds-canary-armed"',
         'required-features = ["live-submit"]',
     ]:
         if token not in cargo:

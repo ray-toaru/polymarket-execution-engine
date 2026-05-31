@@ -18,7 +18,9 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER_MANIFEST = ROOT / "adapters" / "pmx-official-sdk-adapter" / "Cargo.toml"
-CANARY_CLI = ROOT / "adapters" / "pmx-official-sdk-adapter" / "target" / "debug" / "pmx-real-funds-canary"
+CANARY_CLI = (
+    ROOT / "adapters" / "pmx-official-sdk-adapter" / "target" / "debug" / "pmx-real-funds-canary-preflight"
+)
 ARTIFACT_SHA256 = "b" * 64
 EVIDENCE_MANIFEST_SHA256 = "c" * 64
 WORKSPACE_MANIFEST_SHA256 = "e" * 64
@@ -178,7 +180,7 @@ def build_cli() -> None:
             "live-submit",
             "--locked",
             "--bin",
-            "pmx-real-funds-canary",
+            "pmx-real-funds-canary-preflight",
         ],
         cwd=ROOT,
         text=True,
@@ -395,9 +397,6 @@ def run_cli(
     result = subprocess.run(
         [
             str(CANARY_CLI),
-            "--preflight-only",
-            "--allow-live-submit-config",
-            "--allow-real-funds-canary-config",
             "--approval-file",
             str(approval_path),
             "--market-file",

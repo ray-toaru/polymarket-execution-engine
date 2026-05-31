@@ -21,7 +21,7 @@ VERSION = VERSION_FILE.read_text().strip()
 DEFAULT_RELEASE_ARTIFACT = INTEGRATION_ROOT / "dist" / f"polymarket-execution-suite-v{VERSION}.zip"
 EXTERNAL_REFERENCES = ROOT / "config" / "controlled-canary.external-references.example.json"
 PREPARE_REVIEW = ROOT / "validation" / "prepare_real_funds_canary_review.py"
-CLI = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src" / "bin" / "pmx-real-funds-canary.rs"
+CLI = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src" / "real_funds_canary_cli.rs"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
 FORBIDDEN_GO_DECISION_GLOBS = [
     "config/*go*.json",

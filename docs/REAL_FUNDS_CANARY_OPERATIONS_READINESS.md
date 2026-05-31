@@ -131,7 +131,7 @@ reviewed release decision explicitly changes that boundary.
 
 `validation/run_real_funds_canary_blocked_rehearsal_package.py` exercises that
 boundary by generating a complete review package, invoking the real-funds
-canary CLI with `--armed` and local allow-config flags, and proving a `no_go`
+canary armed entrypoint, and proving a `no_go`
 adapter release decision blocks execution at the release-decision gate before
 posting, cancelling, raw signed order exposure, or remote side effects.
 Use `--output-dir`, `--external-references-file`, `--artifact-sha256`, and
