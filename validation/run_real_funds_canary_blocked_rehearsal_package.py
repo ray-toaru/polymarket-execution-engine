@@ -14,7 +14,7 @@ INTEGRATION_ROOT = ROOT.parent
 REVIEW_SCRIPT = ROOT / "validation" / "prepare_real_funds_canary_review.py"
 EXTERNAL_REFERENCES_EXAMPLE = ROOT / "config" / "controlled-canary.external-references.example.json"
 ADAPTER_MANIFEST = ROOT / "adapters" / "pmx-official-sdk-adapter" / "Cargo.toml"
-RUN_REVIEWED_GO = INTEGRATION_ROOT / "scripts" / "run_reviewed_go_canary.py"
+RUN_REVIEWED_GO = INTEGRATION_ROOT / "scripts" / "run_reviewed_go_canary_armed.py"
 EXAMPLE_REVIEW_ARTIFACT_SHA256 = "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6"
 
 
@@ -148,8 +148,6 @@ def run_rehearsal(output_dir: Path, args: argparse.Namespace) -> tuple[list[str]
         str(output_dir),
         "--env-file",
         str(env_path),
-        "--mode",
-        "armed",
         "--daily-used-notional-usd",
         "0",
         "--idempotency-key",
@@ -158,7 +156,6 @@ def run_rehearsal(output_dir: Path, args: argparse.Namespace) -> tuple[list[str]
         args.execution_id,
         "--plan-hash",
         args.plan_hash,
-        "--include-live-config-overrides",
         "--run",
     ]
     rehearsal = subprocess.run(
