@@ -14,6 +14,7 @@ INTEGRATION_ROOT = ROOT.parent
 REVIEW_SCRIPT = ROOT / "validation" / "prepare_real_funds_canary_review.py"
 EXTERNAL_REFERENCES_EXAMPLE = ROOT / "config" / "controlled-canary.external-references.example.json"
 ADAPTER_MANIFEST = ROOT / "adapters" / "pmx-official-sdk-adapter" / "Cargo.toml"
+RUN_REVIEWED_GO = INTEGRATION_ROOT / "scripts" / "run_reviewed_go_canary.py"
 EXAMPLE_REVIEW_ARTIFACT_SHA256 = "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6"
 
 
@@ -122,41 +123,47 @@ def run_rehearsal(output_dir: Path, args: argparse.Namespace) -> tuple[list[str]
     decision_path = output_dir / "adapter-release-decision.no-go.json"
     decision_path.write_text(json.dumps(no_go_decision, indent=2, sort_keys=True) + "\n")
 
+    env_path = output_dir / ".env.runtime"
+    env_path.write_text(
+        "\n".join(
+            [
+                "PMX_ACTIVE_ACCOUNT_PROFILE=acct_rehearsal",
+                f"PMX_ACTIVE_ACCOUNT_ID={approval.get('account_id', 'acct-canary')}",
+                "PMX_ACTIVE_PROFILE_REF=local-profile://acct_rehearsal",
+                "POLYMARKET_PRIVATE_KEY=0xabc123",
+                "POLY_API_KEY=123e4567-e89b-12d3-a456-426614174000",
+                "POLY_API_SECRET=api-secret",
+                "POLY_API_PASSPHRASE=api-pass",
+                "PMX_CLOB_SIGNATURE_TYPE=POLY_1271",
+                "PMX_CLOB_FUNDER=0x00000000000000000000000000000000000000b0",
+                "",
+            ]
+        )
+    )
+
     command = [
-        "cargo",
-        "run",
-        "--manifest-path",
-        str(ADAPTER_MANIFEST.relative_to(ROOT)),
-        "--features",
-        "live-submit",
-        "--bin",
-        "pmx-real-funds-canary",
-        "--",
-        "--armed",
-        "--approval-file",
-        str(output_dir / "approval.json"),
-        "--release-decision-file",
-        str(decision_path),
-        "--artifact-sha256",
-        str(approval.get("artifact_sha256")),
-        "--evidence-manifest-sha256",
-        str(approval.get("evidence_manifest_sha256")),
+        sys.executable,
+        str(RUN_REVIEWED_GO),
+        "--package-dir",
+        str(output_dir),
+        "--env-file",
+        str(env_path),
+        "--mode",
+        "armed",
+        "--daily-used-notional-usd",
+        "0",
         "--idempotency-key",
         args.idempotency_key,
-        "--account-id",
-        approval.get("account_id", "acct-canary"),
         "--execution-id",
         args.execution_id,
         "--plan-hash",
         args.plan_hash,
-        "--market-file",
-        str(output_dir / "candidate-market.json"),
-        "--allow-live-submit-config",
-        "--allow-real-funds-canary-config",
+        "--include-live-config-overrides",
+        "--run",
     ]
     rehearsal = subprocess.run(
         command,
-        cwd=ROOT,
+        cwd=INTEGRATION_ROOT,
         text=True,
         capture_output=True,
         check=False,
@@ -209,8 +216,7 @@ def main() -> int:
         "status": "fail" if failures else "pass",
         "rehearsal": "blocked_real_funds_canary_armed_no_go",
         "armed_requested": True,
-        "allow_live_submit_config": True,
-        "allow_real_funds_canary_config": True,
+        "includes_live_config_overrides": True,
         "expected_exit_code": 1,
         "observed_exit_code": observed_exit_code,
         "blocked_at": "release_decision_gate",
