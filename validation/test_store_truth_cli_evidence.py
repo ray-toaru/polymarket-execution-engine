@@ -80,6 +80,10 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
         self.assertEqual(doc["archived_manifest_sha256"], "3" * 64)
         self.assertFalse(doc["live_submit_allowed"])
         self.assertFalse(doc["remote_side_effects"])
+        self.assertEqual(
+            doc["preflight_report"]["gate_evidence_refs"]["kill_switch_open"],
+            "pg://canary-runtime-truth/account/acct-1/condition/cond-1/runtime_accounts/kill-switch",
+        )
 
     def test_runtime_truth_hash_inputs_must_be_sha256(self) -> None:
         with self.assertRaisesRegex(SystemExit, "must be 64-hex"):

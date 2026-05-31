@@ -24,6 +24,16 @@ EVIDENCE_MANIFEST_SHA256 = "c" * 64
 WORKSPACE_MANIFEST_SHA256 = "e" * 64
 SYNTHETIC_ACTIVE_PROFILE = "store_truth_cli_preflight"
 ENV_REFERENCE_PATTERN = re.compile(r"\$\{([A-Z0-9_]+)\}")
+PREFLIGHT_GATE_EVIDENCE_PATHS = {
+    "kill_switch_open": "runtime_accounts/kill-switch",
+    "runtime_worker_healthy": "worker_health/runtime-worker",
+    "geoblock_allowed": "compliance/geoblock",
+    "repository_reservation_exists": "repository/reservation",
+    "idempotency_key_written": "worker_health/idempotency-lease",
+    "reconcile_worker_healthy": "worker_health/reconcile-worker",
+    "cancel_only_fallback_ready": "operations/cancel-only-fallback",
+    "balance_allowance_checked": "balances/allowance-check",
+}
 
 
 def is_sha256(value: str) -> bool:
@@ -446,6 +456,10 @@ def runtime_truth_document(
 ) -> dict[str, Any]:
     evidence_prefix = f"pg://canary-runtime-truth/account/{account_id}/condition/{condition_id}"
     cargo = tomllib.loads((ROOT / "Cargo.toml").read_text())
+    gate_evidence_refs = {
+        field: f"{evidence_prefix}/{suffix}"
+        for field, suffix in PREFLIGHT_GATE_EVIDENCE_PATHS.items()
+    }
     return {
         "schema_version": 1,
         "status": "reviewed_runtime_truth_candidate",
@@ -503,6 +517,7 @@ def runtime_truth_document(
             "reconcile_worker_healthy": report.get("reconcile_worker_healthy"),
             "cancel_only_fallback_ready": report.get("cancel_only_fallback_ready"),
             "balance_allowance_checked": report.get("balance_allowance_checked"),
+            "gate_evidence_refs": gate_evidence_refs,
         },
     }
 

@@ -44,6 +44,16 @@ PREFLIGHT_BOOL_FIELDS = [
     "cancel_only_fallback_ready",
     "balance_allowance_checked",
 ]
+PREFLIGHT_EVIDENCE_FIELDS = [
+    "kill_switch_open",
+    "runtime_worker_healthy",
+    "geoblock_allowed",
+    "repository_reservation_exists",
+    "idempotency_key_written",
+    "reconcile_worker_healthy",
+    "cancel_only_fallback_ready",
+    "balance_allowance_checked",
+]
 FORBIDDEN_KEYS = {
     "private_key",
     "privateKey",
@@ -166,6 +176,16 @@ def validate_shape(data: dict[str, Any], label: str, *, allow_placeholders: bool
             failures.append(f"{label}: preflight_report.preconditions_live_submit_would_pass must be true")
         if preflight_report.get("preconditions_real_funds_canary_would_pass") is not True:
             failures.append(f"{label}: preflight_report.preconditions_real_funds_canary_would_pass must be true")
+        gate_evidence_refs = preflight_report.get("gate_evidence_refs")
+        if not isinstance(gate_evidence_refs, dict):
+            failures.append(f"{label}: preflight_report.gate_evidence_refs must be an object")
+        else:
+            for field in PREFLIGHT_EVIDENCE_FIELDS:
+                evidence_ref = gate_evidence_refs.get(field)
+                if not isinstance(evidence_ref, str) or not evidence_ref.strip():
+                    failures.append(f"{label}: preflight_report.gate_evidence_refs.{field} must be a non-empty string")
+                elif not allow_placeholders and has_placeholder(evidence_ref):
+                    failures.append(f"{label}: preflight_report.gate_evidence_refs.{field} must be concrete")
 
     if not allow_placeholders:
         for field in ["artifact_sha256", "workspace_manifest_sha256", "archived_manifest_sha256"]:

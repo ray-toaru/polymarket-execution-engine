@@ -62,6 +62,16 @@
     "idempotency_key_written": true,
     "reconcile_worker_healthy": true,
     "cancel_only_fallback_ready": true,
-    "balance_allowance_checked": true
+    "balance_allowance_checked": true,
+    "gate_evidence_refs": {
+      "kill_switch_open": "REPLACE_WITH_GATE_EVIDENCE_REF",
+      "runtime_worker_healthy": "REPLACE_WITH_GATE_EVIDENCE_REF",
+      "geoblock_allowed": "REPLACE_WITH_GATE_EVIDENCE_REF",
+      "repository_reservation_exists": "REPLACE_WITH_GATE_EVIDENCE_REF",
+      "idempotency_key_written": "REPLACE_WITH_GATE_EVIDENCE_REF",
+      "reconcile_worker_healthy": "REPLACE_WITH_GATE_EVIDENCE_REF",
+      "cancel_only_fallback_ready": "REPLACE_WITH_GATE_EVIDENCE_REF",
+      "balance_allowance_checked": "REPLACE_WITH_GATE_EVIDENCE_REF"
+    }
   }
 }
