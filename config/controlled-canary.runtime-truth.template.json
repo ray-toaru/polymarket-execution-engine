@@ -4,6 +4,8 @@
   "source_release": "v0.28.0",
   "scope": "REAL_FUNDS_CANARY",
   "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
+  "account_id": "REPLACE_WITH_RUNTIME_ACCOUNT_ID",
+  "condition_id": "REPLACE_WITH_RUNTIME_CONDITION_ID",
   "artifact_sha256": "REPLACE_WITH_RELEASE_ARTIFACT_SHA256",
   "workspace_manifest_sha256": "REPLACE_WITH_WORKSPACE_EVIDENCE_MANIFEST_SHA256",
   "archived_manifest_sha256": "REPLACE_WITH_ARCHIVED_EVIDENCE_MANIFEST_SHA256",
@@ -42,5 +44,22 @@
   "live_cancel_allowed": false,
   "real_funds_canary_authorized": false,
   "remote_side_effects": false,
-  "production_ready_claimed": false
+  "production_ready_claimed": false,
+  "preflight_report": {
+    "status": "preflight_ready",
+    "runtime_truth_source": "postgres",
+    "posted": false,
+    "remote_side_effects": false,
+    "raw_signed_order_exposed": false,
+    "live_submit_allowed": true,
+    "real_funds_canary_allowed": true,
+    "kill_switch_open": true,
+    "runtime_worker_healthy": true,
+    "geoblock_allowed": true,
+    "repository_reservation_exists": true,
+    "idempotency_key_written": true,
+    "reconcile_worker_healthy": true,
+    "cancel_only_fallback_ready": true,
+    "balance_allowance_checked": true
+  }
 }

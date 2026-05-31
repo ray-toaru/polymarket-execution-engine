@@ -27,6 +27,21 @@ AUTHORIZATION_FLAGS = [
     "remote_side_effects",
     "production_ready_claimed",
 ]
+PREFLIGHT_BOOL_FIELDS = [
+    "posted",
+    "remote_side_effects",
+    "raw_signed_order_exposed",
+    "live_submit_allowed",
+    "real_funds_canary_allowed",
+    "kill_switch_open",
+    "runtime_worker_healthy",
+    "geoblock_allowed",
+    "repository_reservation_exists",
+    "idempotency_key_written",
+    "reconcile_worker_healthy",
+    "cancel_only_fallback_ready",
+    "balance_allowance_checked",
+]
 FORBIDDEN_KEYS = {
     "private_key",
     "privateKey",
@@ -121,12 +136,26 @@ def validate_shape(data: dict[str, Any], label: str, *, allow_placeholders: bool
         failures.append(f"{label}: scope must be REAL_FUNDS_CANARY")
     if data.get("execution_style") != "GTC_LIMIT_POST_ONLY_CANCEL":
         failures.append(f"{label}: execution_style must be GTC_LIMIT_POST_ONLY_CANCEL")
+    if not isinstance(data.get("account_id"), str) or not data.get("account_id", "").strip():
+        failures.append(f"{label}: account_id must be a non-empty string")
+    if not isinstance(data.get("condition_id"), str) or not data.get("condition_id", "").strip():
+        failures.append(f"{label}: condition_id must be a non-empty string")
     if data.get("references_only_no_secret_values") is not True:
         failures.append(f"{label}: references_only_no_secret_values must be true")
     for flag in AUTHORIZATION_FLAGS:
         if data.get(flag) is not False:
             failures.append(f"{label}: {flag} must be false")
     failures.extend(f"{label}: {failure}" for failure in validate_no_sensitive_material(data))
+
+    preflight_report = data.get("preflight_report")
+    if not isinstance(preflight_report, dict):
+        failures.append(f"{label}: preflight_report must be an object")
+    else:
+        if preflight_report.get("status") != "preflight_ready":
+            failures.append(f"{label}: preflight_report.status must be preflight_ready")
+        for field in PREFLIGHT_BOOL_FIELDS:
+            if not isinstance(preflight_report.get(field), bool):
+                failures.append(f"{label}: preflight_report.{field} must be boolean")
 
     if not allow_placeholders:
         for field in ["artifact_sha256", "workspace_manifest_sha256", "archived_manifest_sha256"]:
