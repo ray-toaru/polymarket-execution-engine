@@ -48,9 +48,12 @@ ALLOWED_TOP_LEVEL_FIELDS = {
     "workspace_manifest_sha256",
     "archived_manifest_sha256",
     "market_candidate_sha256",
+    "condition_id",
     "github_evidence",
     "external_references",
     "risk_limits",
+    "runtime_gate_snapshot",
+    "runtime_gate_evidence_refs",
     "required_review_signals",
     "live_submit_authorized",
     "live_cancel_authorized",
@@ -84,6 +87,28 @@ REQUIRED_REVIEW_SIGNALS = [
     "rollback_reviewed",
     "runtime_health_reviewed",
     "reconcile_and_cancel_fallback_reviewed",
+]
+PREFLIGHT_GATE_FIELDS = [
+    "preconditions_live_submit_would_pass",
+    "preconditions_real_funds_canary_would_pass",
+    "kill_switch_open",
+    "runtime_worker_healthy",
+    "geoblock_allowed",
+    "repository_reservation_exists",
+    "idempotency_key_written",
+    "reconcile_worker_healthy",
+    "cancel_only_fallback_ready",
+    "balance_allowance_checked",
+]
+PREFLIGHT_GATE_EVIDENCE_FIELDS = [
+    "kill_switch_open",
+    "runtime_worker_healthy",
+    "geoblock_allowed",
+    "repository_reservation_exists",
+    "idempotency_key_written",
+    "reconcile_worker_healthy",
+    "cancel_only_fallback_ready",
+    "balance_allowance_checked",
 ]
 FORBIDDEN_TEXT_TOKENS = [
     "private_key",
@@ -166,6 +191,8 @@ def validate_shape(data: dict[str, Any], label: str) -> list[str]:
         failures.append(f"{label}: scope must be REAL_FUNDS_CANARY")
     if data.get("execution_style") != "GTC_LIMIT_POST_ONLY_CANCEL":
         failures.append(f"{label}: execution_style must be GTC_LIMIT_POST_ONLY_CANCEL")
+    if not isinstance(data.get("condition_id"), str) or not data.get("condition_id", "").strip():
+        failures.append(f"{label}: condition_id must be concrete")
     limits = data.get("risk_limits", {})
     max_order_notional = parse_positive_decimal(limits.get("max_order_notional_usd"))
     if max_order_notional is None or max_order_notional > Decimal("1"):
@@ -223,6 +250,23 @@ def validate_shape(data: dict[str, Any], label: str) -> list[str]:
                 failures.append(f"{label}: missing review signal {key}")
             elif not isinstance(signals[key], bool):
                 failures.append(f"{label}: review signal {key} must be boolean")
+    gate_snapshot = data.get("runtime_gate_snapshot")
+    if not isinstance(gate_snapshot, dict):
+        failures.append(f"{label}: runtime_gate_snapshot must be an object")
+    else:
+        for field in PREFLIGHT_GATE_FIELDS:
+            if gate_snapshot.get(field) is not True:
+                failures.append(f"{label}: runtime_gate_snapshot.{field} must be true")
+    gate_evidence_refs = data.get("runtime_gate_evidence_refs")
+    if not isinstance(gate_evidence_refs, dict):
+        failures.append(f"{label}: runtime_gate_evidence_refs must be an object")
+    else:
+        for field in PREFLIGHT_GATE_EVIDENCE_FIELDS:
+            value = gate_evidence_refs.get(field)
+            if not isinstance(value, str) or not value.strip():
+                failures.append(f"{label}: runtime_gate_evidence_refs.{field} must be a non-empty string")
+            elif label != "template" and has_placeholder(value):
+                failures.append(f"{label}: runtime_gate_evidence_refs.{field} must be concrete")
     lowered = json.dumps(data, sort_keys=True).lower()
     for token in FORBIDDEN_TEXT_TOKENS:
         if token in lowered:

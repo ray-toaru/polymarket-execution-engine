@@ -7,6 +7,7 @@
   "source_release": "v0.28.0",
   "scope": "REAL_FUNDS_CANARY",
   "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
+  "condition_id": "condition-example-reviewed-canary",
   "artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
   "evidence_manifest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
   "market_candidate_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
@@ -27,6 +28,28 @@
   "risk_limits": {
     "max_order_notional_usd": "1",
     "max_daily_notional_usd": "5"
+  },
+  "runtime_gate_snapshot": {
+    "preconditions_live_submit_would_pass": true,
+    "preconditions_real_funds_canary_would_pass": true,
+    "kill_switch_open": true,
+    "runtime_worker_healthy": true,
+    "geoblock_allowed": true,
+    "repository_reservation_exists": true,
+    "idempotency_key_written": true,
+    "reconcile_worker_healthy": true,
+    "cancel_only_fallback_ready": true,
+    "balance_allowance_checked": true
+  },
+  "runtime_gate_evidence_refs": {
+    "kill_switch_open": "pg://canary-runtime-truth/account/acct-example/condition/condition-example-reviewed-canary/runtime_accounts/kill-switch",
+    "runtime_worker_healthy": "pg://canary-runtime-truth/account/acct-example/condition/condition-example-reviewed-canary/worker_health/runtime-worker",
+    "geoblock_allowed": "pg://canary-runtime-truth/account/acct-example/condition/condition-example-reviewed-canary/compliance/geoblock",
+    "repository_reservation_exists": "pg://canary-runtime-truth/account/acct-example/condition/condition-example-reviewed-canary/repository/reservation",
+    "idempotency_key_written": "pg://canary-runtime-truth/account/acct-example/condition/condition-example-reviewed-canary/worker_health/idempotency-lease",
+    "reconcile_worker_healthy": "pg://canary-runtime-truth/account/acct-example/condition/condition-example-reviewed-canary/worker_health/reconcile-worker",
+    "cancel_only_fallback_ready": "pg://canary-runtime-truth/account/acct-example/condition/condition-example-reviewed-canary/operations/cancel-only-fallback",
+    "balance_allowance_checked": "pg://canary-runtime-truth/account/acct-example/condition/condition-example-reviewed-canary/balances/allowance-check"
   },
   "single_attempt": true,
   "max_order_count": 1,

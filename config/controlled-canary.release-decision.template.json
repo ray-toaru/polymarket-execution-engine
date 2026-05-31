@@ -7,6 +7,7 @@
   "source_release": "v0.28.0",
   "scope": "REAL_FUNDS_CANARY",
   "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
+  "condition_id": "REPLACE_WITH_REVIEWED_MARKET_CONDITION_ID",
   "artifact_sha256": "REPLACE_WITH_RELEASE_ARTIFACT_SHA256",
   "evidence_manifest_sha256": "REPLACE_WITH_EVIDENCE_MANIFEST_SHA256",
   "market_candidate_sha256": "REPLACE_WITH_REVIEWED_MARKET_CANDIDATE_SHA256",
@@ -27,6 +28,28 @@
   "risk_limits": {
     "max_order_notional_usd": "1",
     "max_daily_notional_usd": "5"
+  },
+  "runtime_gate_snapshot": {
+    "preconditions_live_submit_would_pass": true,
+    "preconditions_real_funds_canary_would_pass": true,
+    "kill_switch_open": true,
+    "runtime_worker_healthy": true,
+    "geoblock_allowed": true,
+    "repository_reservation_exists": true,
+    "idempotency_key_written": true,
+    "reconcile_worker_healthy": true,
+    "cancel_only_fallback_ready": true,
+    "balance_allowance_checked": true
+  },
+  "runtime_gate_evidence_refs": {
+    "kill_switch_open": "REPLACE_WITH_GATE_EVIDENCE_REF",
+    "runtime_worker_healthy": "REPLACE_WITH_GATE_EVIDENCE_REF",
+    "geoblock_allowed": "REPLACE_WITH_GATE_EVIDENCE_REF",
+    "repository_reservation_exists": "REPLACE_WITH_GATE_EVIDENCE_REF",
+    "idempotency_key_written": "REPLACE_WITH_GATE_EVIDENCE_REF",
+    "reconcile_worker_healthy": "REPLACE_WITH_GATE_EVIDENCE_REF",
+    "cancel_only_fallback_ready": "REPLACE_WITH_GATE_EVIDENCE_REF",
+    "balance_allowance_checked": "REPLACE_WITH_GATE_EVIDENCE_REF"
   },
   "single_attempt": true,
   "max_order_count": 1,
