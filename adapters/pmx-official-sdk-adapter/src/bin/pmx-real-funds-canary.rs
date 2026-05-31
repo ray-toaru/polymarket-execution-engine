@@ -85,12 +85,15 @@ struct RuntimeTruthBindings {
     live_submit_gate: bool,
     idempotency_lease: bool,
     order_cancel_reconciliation: bool,
+    gate_snapshot: Option<RuntimeGateSnapshot>,
 }
 
 #[derive(Debug, Deserialize)]
 struct RuntimeTruthFile {
     schema_version: u64,
     dependencies: Vec<RuntimeTruthDependency>,
+    #[serde(default)]
+    preflight_report: Option<RuntimeTruthPreflightReport>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -98,6 +101,108 @@ struct RuntimeTruthDependency {
     name: String,
     status: String,
     evidence_ref: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct RuntimeTruthPreflightReport {
+    kill_switch_open: bool,
+    runtime_worker_healthy: bool,
+    geoblock_allowed: bool,
+    repository_reservation_exists: bool,
+    idempotency_key_written: bool,
+    reconcile_worker_healthy: bool,
+    cancel_only_fallback_ready: bool,
+    balance_allowance_checked: bool,
+}
+
+#[derive(Debug, Clone, Default)]
+struct RuntimeGateSnapshot {
+    kill_switch_open: bool,
+    runtime_worker_healthy: bool,
+    geoblock_allowed: bool,
+    repository_reservation_exists: bool,
+    idempotency_key_written: bool,
+    reconcile_worker_healthy: bool,
+    cancel_only_fallback_ready: bool,
+    balance_allowance_checked: bool,
+}
+
+impl RuntimeTruthBindings {
+    fn bool_or_env(&self, value: Option<bool>, env_key: &str) -> bool {
+        value.unwrap_or_else(|| std::env::var(env_key).ok().as_deref() == Some("1"))
+    }
+
+    fn kill_switch_open(&self) -> bool {
+        self.bool_or_env(
+            self.gate_snapshot
+                .as_ref()
+                .map(|snapshot| snapshot.kill_switch_open),
+            "PMX_KILL_SWITCH_OPEN",
+        )
+    }
+
+    fn runtime_worker_healthy(&self) -> bool {
+        self.bool_or_env(
+            self.gate_snapshot
+                .as_ref()
+                .map(|snapshot| snapshot.runtime_worker_healthy),
+            "PMX_RUNTIME_WORKER_HEALTHY",
+        )
+    }
+
+    fn geoblock_allowed(&self) -> bool {
+        self.bool_or_env(
+            self.gate_snapshot
+                .as_ref()
+                .map(|snapshot| snapshot.geoblock_allowed),
+            "PMX_GEOBLOCK_ALLOWED",
+        )
+    }
+
+    fn repository_reservation_exists(&self) -> bool {
+        self.bool_or_env(
+            self.gate_snapshot
+                .as_ref()
+                .map(|snapshot| snapshot.repository_reservation_exists),
+            "PMX_REPOSITORY_RESERVATION_EXISTS",
+        )
+    }
+
+    fn idempotency_key_written(&self) -> bool {
+        self.bool_or_env(
+            self.gate_snapshot
+                .as_ref()
+                .map(|snapshot| snapshot.idempotency_key_written),
+            "PMX_IDEMPOTENCY_KEY_WRITTEN",
+        )
+    }
+
+    fn reconcile_worker_healthy(&self) -> bool {
+        self.bool_or_env(
+            self.gate_snapshot
+                .as_ref()
+                .map(|snapshot| snapshot.reconcile_worker_healthy),
+            "PMX_RECONCILE_WORKER_HEALTHY",
+        )
+    }
+
+    fn cancel_only_fallback_ready(&self) -> bool {
+        self.bool_or_env(
+            self.gate_snapshot
+                .as_ref()
+                .map(|snapshot| snapshot.cancel_only_fallback_ready),
+            "PMX_CANCEL_ONLY_FALLBACK_READY",
+        )
+    }
+
+    fn balance_allowance_checked(&self) -> bool {
+        self.bool_or_env(
+            self.gate_snapshot
+                .as_ref()
+                .map(|snapshot| snapshot.balance_allowance_checked),
+            "PMX_BALANCE_ALLOWANCE_CHECKED",
+        )
+    }
 }
 
 #[tokio::main]
@@ -182,29 +287,19 @@ async fn main() -> anyhow::Result<()> {
         compile_feature_live_submit: cfg!(feature = "live-submit"),
         env_allow_live_submit: std::env::var("PMX_ALLOW_LIVE_SUBMIT").ok().as_deref() == Some("1"),
         config_allow_live_submit: args.allow_live_submit_config,
-        kill_switch_open: std::env::var("PMX_KILL_SWITCH_OPEN").ok().as_deref() == Some("1"),
-        runtime_worker_healthy: std::env::var("PMX_RUNTIME_WORKER_HEALTHY").ok().as_deref()
-            == Some("1"),
-        geoblock_allowed: std::env::var("PMX_GEOBLOCK_ALLOWED").ok().as_deref() == Some("1"),
-        repository_reservation_exists: std::env::var("PMX_REPOSITORY_RESERVATION_EXISTS")
-            .ok()
-            .as_deref()
-            == Some("1"),
-        idempotency_key_written: std::env::var("PMX_IDEMPOTENCY_KEY_WRITTEN").ok().as_deref()
-            == Some("1"),
-        reconcile_worker_healthy: std::env::var("PMX_RECONCILE_WORKER_HEALTHY")
-            .ok()
-            .as_deref()
-            == Some("1"),
+        kill_switch_open: runtime_truth.kill_switch_open(),
+        runtime_worker_healthy: runtime_truth.runtime_worker_healthy(),
+        geoblock_allowed: runtime_truth.geoblock_allowed(),
+        repository_reservation_exists: runtime_truth.repository_reservation_exists(),
+        idempotency_key_written: runtime_truth.idempotency_key_written(),
+        reconcile_worker_healthy: runtime_truth.reconcile_worker_healthy(),
         account_whitelisted: approval.account_id.0 == args.account_id,
         market_whitelisted: true,
         size_cap_ok: true,
         daily_cap_ok: true,
-        operator_approved: release_decision_bound && !approval.operator_identity_ref.trim().is_empty(),
-        cancel_only_fallback_ready: std::env::var("PMX_CANCEL_ONLY_FALLBACK_READY")
-            .ok()
-            .as_deref()
-            == Some("1"),
+        operator_approved: release_decision_bound
+            && !approval.operator_identity_ref.trim().is_empty(),
+        cancel_only_fallback_ready: runtime_truth.cancel_only_fallback_ready(),
     };
     let preconditions =
         build_real_funds_canary_preconditions(BuildRealFundsCanaryPreconditionsInput {
@@ -216,10 +311,7 @@ async fn main() -> anyhow::Result<()> {
             evidence_manifest_sha256: &args.evidence_manifest_sha256,
             market_candidate_sha256: &market_candidate_sha256,
             config_allow_real_funds_canary: args.allow_real_funds_canary_config,
-            balance_allowance_checked: std::env::var("PMX_BALANCE_ALLOWANCE_CHECKED")
-                .ok()
-                .as_deref()
-                == Some("1"),
+            balance_allowance_checked: runtime_truth.balance_allowance_checked(),
             selected_market_safe: true,
             runtime_kill_switch_truth_bound: runtime_truth.kill_switch,
             runtime_live_submit_gate_bound: runtime_truth.live_submit_gate,
@@ -532,6 +624,7 @@ fn runtime_truth_from_store_bindings(
         live_submit_gate: bindings.live_submit_gate_ready,
         idempotency_lease: bindings.idempotency_lease_ready,
         order_cancel_reconciliation: bindings.order_cancel_reconciliation_ready,
+        gate_snapshot: None,
     }
 }
 
@@ -584,6 +677,16 @@ fn load_runtime_truth_file(path: Option<&PathBuf>) -> anyhow::Result<RuntimeTrut
             invalid.join(",")
         );
     }
+    bindings.gate_snapshot = truth.preflight_report.map(|report| RuntimeGateSnapshot {
+        kill_switch_open: report.kill_switch_open,
+        runtime_worker_healthy: report.runtime_worker_healthy,
+        geoblock_allowed: report.geoblock_allowed,
+        repository_reservation_exists: report.repository_reservation_exists,
+        idempotency_key_written: report.idempotency_key_written,
+        reconcile_worker_healthy: report.reconcile_worker_healthy,
+        cancel_only_fallback_ready: report.cancel_only_fallback_ready,
+        balance_allowance_checked: report.balance_allowance_checked,
+    });
     Ok(bindings)
 }
 
@@ -852,6 +955,51 @@ mod tests {
         assert!(truth.live_submit_gate);
         assert!(!truth.idempotency_lease);
         assert!(truth.order_cancel_reconciliation);
+        assert!(truth.gate_snapshot.is_none());
+    }
+
+    #[test]
+    fn runtime_truth_file_preflight_snapshot_overrides_env_gate_values() {
+        let path = temp_runtime_truth_path("canary-runtime-truth-gates");
+        let truth = serde_json::json!({
+            "schema_version": 1,
+            "dependencies": [
+                {"name": "kill_switch", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/kill-switch"},
+                {"name": "live_submit_gate", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/live-submit"},
+                {"name": "idempotency_lease", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/idempotency"},
+                {"name": "order_cancel_reconciliation", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/reconcile"},
+            ],
+            "preflight_report": {
+                "kill_switch_open": true,
+                "runtime_worker_healthy": true,
+                "geoblock_allowed": true,
+                "repository_reservation_exists": true,
+                "idempotency_key_written": true,
+                "reconcile_worker_healthy": true,
+                "cancel_only_fallback_ready": true,
+                "balance_allowance_checked": true,
+            }
+        });
+        std::fs::write(
+            &path,
+            serde_json::to_vec_pretty(&truth).expect("serialize truth file"),
+        )
+        .expect("write truth file");
+        unsafe {
+            std::env::set_var("PMX_KILL_SWITCH_OPEN", "0");
+            std::env::set_var("PMX_CANCEL_ONLY_FALLBACK_READY", "0");
+            std::env::set_var("PMX_BALANCE_ALLOWANCE_CHECKED", "0");
+        }
+        let loaded = load_runtime_truth_file(Some(&path)).expect("load runtime truth");
+        assert!(loaded.kill_switch_open());
+        assert!(loaded.cancel_only_fallback_ready());
+        assert!(loaded.balance_allowance_checked());
+        unsafe {
+            std::env::remove_var("PMX_KILL_SWITCH_OPEN");
+            std::env::remove_var("PMX_CANCEL_ONLY_FALLBACK_READY");
+            std::env::remove_var("PMX_BALANCE_ALLOWANCE_CHECKED");
+        }
+        let _ = std::fs::remove_file(&path);
     }
 
     #[test]
