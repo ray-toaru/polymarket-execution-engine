@@ -83,9 +83,11 @@ Approval file:
   - generic runtime env generated from exactly one selected profile, shaped
     like `.env.runtime.example`.
 - Generate the runtime env with
-  `python scripts/activate_pmx_profile.py --profile <profile> --source-env-file polymarket-execution-engine/.env.profiles --output polymarket-execution-engine/.env.runtime`
+  `python scripts/activate_pmx_profile.py --profile <profile> --source-env-file polymarket-execution-engine/.env.profiles --write-secrets --output polymarket-execution-engine/.env.runtime`
   and validate it with
   `python polymarket-execution-engine/validation/check_active_profile_consistency.py --env-file polymarket-execution-engine/.env.runtime --expected-account-id <approved-account-id>`.
+- Without `--write-secrets`, the generated file contains only active profile
+  identity fields and is not sufficient for runtime authentication.
 - The canary CLI requires `PMX_ACTIVE_ACCOUNT_PROFILE`,
   `PMX_ACTIVE_ACCOUNT_ID`, and `PMX_ACTIVE_PROFILE_REF` in addition to the
   generic `POLY*` and `PMX_CLOB_*` runtime variables.
