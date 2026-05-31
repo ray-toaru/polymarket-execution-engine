@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use pmx_core::{GeoblockStatus, WorkerStatus};
 
 use super::*;
 use crate::{
@@ -37,6 +38,8 @@ where
             .await?;
 
         let kill_switch_open = !runtime_state.kill_switch_enabled;
+        let runtime_worker_healthy = matches!(runtime_state.worker_status, WorkerStatus::Healthy);
+        let geoblock_allowed = matches!(runtime_state.geoblock_status, GeoblockStatus::Allowed);
         let live_submit_gate_ready = capability_ready(
             &status.heartbeats,
             &status.observations,
@@ -75,6 +78,8 @@ where
             live_submit_gate_ready,
             idempotency_lease_ready,
             order_cancel_reconciliation_ready,
+            runtime_worker_healthy: Some(runtime_worker_healthy),
+            geoblock_allowed: Some(geoblock_allowed),
             evidence_refs,
         })
     }

@@ -117,14 +117,14 @@ struct RuntimeTruthPreflightReport {
 
 #[derive(Debug, Clone, Default)]
 struct RuntimeGateSnapshot {
-    kill_switch_open: bool,
-    runtime_worker_healthy: bool,
-    geoblock_allowed: bool,
-    repository_reservation_exists: bool,
-    idempotency_key_written: bool,
-    reconcile_worker_healthy: bool,
-    cancel_only_fallback_ready: bool,
-    balance_allowance_checked: bool,
+    kill_switch_open: Option<bool>,
+    runtime_worker_healthy: Option<bool>,
+    geoblock_allowed: Option<bool>,
+    repository_reservation_exists: Option<bool>,
+    idempotency_key_written: Option<bool>,
+    reconcile_worker_healthy: Option<bool>,
+    cancel_only_fallback_ready: Option<bool>,
+    balance_allowance_checked: Option<bool>,
 }
 
 impl RuntimeTruthBindings {
@@ -136,7 +136,7 @@ impl RuntimeTruthBindings {
         self.bool_or_env(
             self.gate_snapshot
                 .as_ref()
-                .map(|snapshot| snapshot.kill_switch_open),
+                .and_then(|snapshot| snapshot.kill_switch_open),
             "PMX_KILL_SWITCH_OPEN",
         )
     }
@@ -145,7 +145,7 @@ impl RuntimeTruthBindings {
         self.bool_or_env(
             self.gate_snapshot
                 .as_ref()
-                .map(|snapshot| snapshot.runtime_worker_healthy),
+                .and_then(|snapshot| snapshot.runtime_worker_healthy),
             "PMX_RUNTIME_WORKER_HEALTHY",
         )
     }
@@ -154,7 +154,7 @@ impl RuntimeTruthBindings {
         self.bool_or_env(
             self.gate_snapshot
                 .as_ref()
-                .map(|snapshot| snapshot.geoblock_allowed),
+                .and_then(|snapshot| snapshot.geoblock_allowed),
             "PMX_GEOBLOCK_ALLOWED",
         )
     }
@@ -163,7 +163,7 @@ impl RuntimeTruthBindings {
         self.bool_or_env(
             self.gate_snapshot
                 .as_ref()
-                .map(|snapshot| snapshot.repository_reservation_exists),
+                .and_then(|snapshot| snapshot.repository_reservation_exists),
             "PMX_REPOSITORY_RESERVATION_EXISTS",
         )
     }
@@ -172,7 +172,7 @@ impl RuntimeTruthBindings {
         self.bool_or_env(
             self.gate_snapshot
                 .as_ref()
-                .map(|snapshot| snapshot.idempotency_key_written),
+                .and_then(|snapshot| snapshot.idempotency_key_written),
             "PMX_IDEMPOTENCY_KEY_WRITTEN",
         )
     }
@@ -181,7 +181,7 @@ impl RuntimeTruthBindings {
         self.bool_or_env(
             self.gate_snapshot
                 .as_ref()
-                .map(|snapshot| snapshot.reconcile_worker_healthy),
+                .and_then(|snapshot| snapshot.reconcile_worker_healthy),
             "PMX_RECONCILE_WORKER_HEALTHY",
         )
     }
@@ -190,7 +190,7 @@ impl RuntimeTruthBindings {
         self.bool_or_env(
             self.gate_snapshot
                 .as_ref()
-                .map(|snapshot| snapshot.cancel_only_fallback_ready),
+                .and_then(|snapshot| snapshot.cancel_only_fallback_ready),
             "PMX_CANCEL_ONLY_FALLBACK_READY",
         )
     }
@@ -199,7 +199,7 @@ impl RuntimeTruthBindings {
         self.bool_or_env(
             self.gate_snapshot
                 .as_ref()
-                .map(|snapshot| snapshot.balance_allowance_checked),
+                .and_then(|snapshot| snapshot.balance_allowance_checked),
             "PMX_BALANCE_ALLOWANCE_CHECKED",
         )
     }
@@ -624,7 +624,16 @@ fn runtime_truth_from_store_bindings(
         live_submit_gate: bindings.live_submit_gate_ready,
         idempotency_lease: bindings.idempotency_lease_ready,
         order_cancel_reconciliation: bindings.order_cancel_reconciliation_ready,
-        gate_snapshot: None,
+        gate_snapshot: Some(RuntimeGateSnapshot {
+            kill_switch_open: Some(bindings.kill_switch_open),
+            runtime_worker_healthy: bindings.runtime_worker_healthy,
+            geoblock_allowed: bindings.geoblock_allowed,
+            repository_reservation_exists: None,
+            idempotency_key_written: None,
+            reconcile_worker_healthy: None,
+            cancel_only_fallback_ready: None,
+            balance_allowance_checked: None,
+        }),
     }
 }
 
@@ -678,14 +687,14 @@ fn load_runtime_truth_file(path: Option<&PathBuf>) -> anyhow::Result<RuntimeTrut
         );
     }
     bindings.gate_snapshot = truth.preflight_report.map(|report| RuntimeGateSnapshot {
-        kill_switch_open: report.kill_switch_open,
-        runtime_worker_healthy: report.runtime_worker_healthy,
-        geoblock_allowed: report.geoblock_allowed,
-        repository_reservation_exists: report.repository_reservation_exists,
-        idempotency_key_written: report.idempotency_key_written,
-        reconcile_worker_healthy: report.reconcile_worker_healthy,
-        cancel_only_fallback_ready: report.cancel_only_fallback_ready,
-        balance_allowance_checked: report.balance_allowance_checked,
+        kill_switch_open: Some(report.kill_switch_open),
+        runtime_worker_healthy: Some(report.runtime_worker_healthy),
+        geoblock_allowed: Some(report.geoblock_allowed),
+        repository_reservation_exists: Some(report.repository_reservation_exists),
+        idempotency_key_written: Some(report.idempotency_key_written),
+        reconcile_worker_healthy: Some(report.reconcile_worker_healthy),
+        cancel_only_fallback_ready: Some(report.cancel_only_fallback_ready),
+        balance_allowance_checked: Some(report.balance_allowance_checked),
     });
     Ok(bindings)
 }
@@ -949,13 +958,30 @@ mod tests {
             live_submit_gate_ready: true,
             idempotency_lease_ready: false,
             order_cancel_reconciliation_ready: true,
+            runtime_worker_healthy: Some(true),
+            geoblock_allowed: Some(true),
             evidence_refs: vec!["runtime-state://kill-switch".into()],
         });
         assert!(truth.kill_switch);
         assert!(truth.live_submit_gate);
         assert!(!truth.idempotency_lease);
         assert!(truth.order_cancel_reconciliation);
-        assert!(truth.gate_snapshot.is_none());
+        assert_eq!(
+            truth.gate_snapshot.as_ref().and_then(|snapshot| snapshot.kill_switch_open),
+            Some(true)
+        );
+        assert_eq!(
+            truth.gate_snapshot
+                .as_ref()
+                .and_then(|snapshot| snapshot.runtime_worker_healthy),
+            Some(true)
+        );
+        assert_eq!(
+            truth.gate_snapshot
+                .as_ref()
+                .and_then(|snapshot| snapshot.geoblock_allowed),
+            Some(true)
+        );
     }
 
     #[test]
@@ -1027,6 +1053,8 @@ mod tests {
             runtime_order_cancel_reconciliation_bound: true,
             live_submit_allowed: true,
             real_funds_canary_allowed: true,
+            preconditions_live_submit_would_pass: true,
+            preconditions_real_funds_canary_would_pass: true,
             posted: false,
             remote_side_effects: false,
             raw_signed_order_exposed: false,

@@ -130,6 +130,8 @@ pub struct CanaryRuntimeTruthBindings {
     pub live_submit_gate_ready: bool,
     pub idempotency_lease_ready: bool,
     pub order_cancel_reconciliation_ready: bool,
+    pub runtime_worker_healthy: Option<bool>,
+    pub geoblock_allowed: Option<bool>,
     pub evidence_refs: Vec<String>,
 }
 

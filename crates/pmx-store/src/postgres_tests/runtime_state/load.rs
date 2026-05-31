@@ -256,6 +256,8 @@ async fn postgres_loads_canary_runtime_truth_from_runtime_rows() {
         .await
         .expect("load canary runtime truth");
     assert!(truth.all_ready());
+    assert_eq!(truth.runtime_worker_healthy, Some(true));
+    assert_eq!(truth.geoblock_allowed, Some(true));
 
     store
         .record_runtime_worker_observation(&RuntimeWorkerObservation {
@@ -278,6 +280,8 @@ async fn postgres_loads_canary_runtime_truth_from_runtime_rows() {
         .await
         .expect("load blocked canary runtime truth");
     assert!(!truth.order_cancel_reconciliation_ready);
+    assert_eq!(truth.runtime_worker_healthy, Some(true));
+    assert_eq!(truth.geoblock_allowed, Some(true));
     assert!(!truth.all_ready());
 }
 
