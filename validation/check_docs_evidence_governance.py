@@ -24,15 +24,16 @@ RELEASE_MANIFEST = EXECUTOR / "release" / "manifest.json"
 PACKAGE_SCRIPT = ROOT / "scripts" / "package_release.py"
 ARTIFACT_CHECK = ROOT / "scripts" / "check_release_artifact.py"
 RELEASE_POLICY = ROOT / "scripts" / "release_policy.py"
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 
-STALE_ROOT_PATTERNS = [
-    re.compile(r"^V0_.*\.md$"),
-    re.compile(r"^VALIDATION_V0_.*\.md$"),
-    re.compile(r".*_GATE_CONFIRMATION\.md$"),
-    re.compile(r"^VALIDATION_CONFIRMATION_REPORT\.md$"),
-    re.compile(r"^CONTINUATION_REPORT\.md$"),
-    re.compile(r"^ISSUES_CONFIRMED_AND_FIXED\.md$"),
-]
+from release_doc_policy import (
+    STALE_ROOT_DOC_PATTERNS,
+    contains_historical_root_doc_marker,
+    contains_release_specific_agents_marker,
+)
+
 VALID_STATUSES = {"pending", "pass", "fail", "skipped", "not_run"}
 REQUIRED_SECTIONS = [
     "local_static_validation",
@@ -60,10 +61,9 @@ def validate_root_docs(failures: list[str]) -> None:
     stale = []
     historical_content = []
     for path in ROOT.glob("*.md"):
-        if any(pattern.match(path.name) for pattern in STALE_ROOT_PATTERNS):
+        if any(pattern.match(path.name) for pattern in STALE_ROOT_DOC_PATTERNS):
             stale.append(path.name)
-        first_line = path.read_text(errors="replace").splitlines()[:1]
-        if first_line and re.search(r"\bHistorical v0\.", first_line[0], re.IGNORECASE):
+        if contains_historical_root_doc_marker(path.read_text(errors="replace")):
             historical_content.append(path.name)
     if stale:
         failures.append("stale historical root docs must live in docs/archive: " + ", ".join(sorted(stale)))
@@ -236,15 +236,11 @@ def validate_agents_guidance(failures: list[str]) -> None:
         content = path.read_text()
         if len(content.strip()) < 200:
             failures.append(f"AGENTS.md appears too small to be useful: {path.relative_to(ROOT)}")
-    versioned_agents_pattern = re.compile(
-        r"(?:\b0\.\d+(?:\.\d+)?\b|\bv0\.\d+\b|\bv0_\d+\b|\bV0_\d+\b|run_v0_\d+_gates\.sh)",
-        re.IGNORECASE,
-    )
     for agents_path in required:
         if not agents_path.exists():
             continue
         text = agents_path.read_text()
-        if versioned_agents_pattern.search(text):
+        if contains_release_specific_agents_marker(text):
             failures.append(f"AGENTS.md must not contain version-specific release markers: {agents_path.relative_to(ROOT)}")
 
     root_agents = ROOT / "AGENTS.md"
