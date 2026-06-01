@@ -138,79 +138,71 @@ struct RuntimeGateSnapshot {
 }
 
 impl RuntimeTruthBindings {
-    fn bool_or_env(&self, value: Option<bool>, env_key: &str) -> bool {
-        value.unwrap_or_else(|| std::env::var(env_key).ok().as_deref() == Some("1"))
+    fn bool_or_false(&self, value: Option<bool>) -> bool {
+        value.unwrap_or(false)
     }
 
     fn kill_switch_open(&self) -> bool {
-        self.bool_or_env(
+        self.bool_or_false(
             self.gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.kill_switch_open),
-            "PMX_KILL_SWITCH_OPEN",
         )
     }
 
     fn runtime_worker_healthy(&self) -> bool {
-        self.bool_or_env(
+        self.bool_or_false(
             self.gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.runtime_worker_healthy),
-            "PMX_RUNTIME_WORKER_HEALTHY",
         )
     }
 
     fn geoblock_allowed(&self) -> bool {
-        self.bool_or_env(
+        self.bool_or_false(
             self.gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.geoblock_allowed),
-            "PMX_GEOBLOCK_ALLOWED",
         )
     }
 
     fn repository_reservation_exists(&self) -> bool {
-        self.bool_or_env(
+        self.bool_or_false(
             self.gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.repository_reservation_exists),
-            "PMX_REPOSITORY_RESERVATION_EXISTS",
         )
     }
 
     fn idempotency_key_written(&self) -> bool {
-        self.bool_or_env(
+        self.bool_or_false(
             self.gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.idempotency_key_written),
-            "PMX_IDEMPOTENCY_KEY_WRITTEN",
         )
     }
 
     fn reconcile_worker_healthy(&self) -> bool {
-        self.bool_or_env(
+        self.bool_or_false(
             self.gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.reconcile_worker_healthy),
-            "PMX_RECONCILE_WORKER_HEALTHY",
         )
     }
 
     fn cancel_only_fallback_ready(&self) -> bool {
-        self.bool_or_env(
+        self.bool_or_false(
             self.gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.cancel_only_fallback_ready),
-            "PMX_CANCEL_ONLY_FALLBACK_READY",
         )
     }
 
     fn balance_allowance_checked(&self) -> bool {
-        self.bool_or_env(
+        self.bool_or_false(
             self.gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.balance_allowance_checked),
-            "PMX_BALANCE_ALLOWANCE_CHECKED",
         )
     }
 }
@@ -1848,6 +1840,19 @@ mod tests {
         assert!(!truth.live_submit_gate);
         assert!(!truth.idempotency_lease);
         assert!(!truth.order_cancel_reconciliation);
+        unsafe {
+            std::env::set_var("PMX_KILL_SWITCH_OPEN", "1");
+            std::env::set_var("PMX_CANCEL_ONLY_FALLBACK_READY", "1");
+            std::env::set_var("PMX_BALANCE_ALLOWANCE_CHECKED", "1");
+        }
+        assert!(!truth.kill_switch_open());
+        assert!(!truth.cancel_only_fallback_ready());
+        assert!(!truth.balance_allowance_checked());
+        unsafe {
+            std::env::remove_var("PMX_KILL_SWITCH_OPEN");
+            std::env::remove_var("PMX_CANCEL_ONLY_FALLBACK_READY");
+            std::env::remove_var("PMX_BALANCE_ALLOWANCE_CHECKED");
+        }
     }
 
     #[test]
