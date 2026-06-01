@@ -151,8 +151,7 @@ async fn submit_plan_propagates_header_correlation_id_into_lifecycle_events() {
     .await;
 
     let (execution_id, plan_hash) =
-        compile_and_submit_blocked_plan(app.clone(), sample_intent_variant(&suffix), &suffix)
-            .await;
+        compile_and_submit_blocked_plan(app.clone(), sample_intent_variant(&suffix), &suffix).await;
     let submit_body = json!({
         "execution_id": execution_id.clone(),
         "plan_hash": plan_hash,
@@ -180,7 +179,11 @@ async fn submit_plan_propagates_header_correlation_id_into_lifecycle_events() {
         None,
     )
     .await;
-    assert_eq!(status, StatusCode::OK, "lifecycle events response: {lifecycle_events}");
+    assert_eq!(
+        status,
+        StatusCode::OK,
+        "lifecycle events response: {lifecycle_events}"
+    );
     let blocked = lifecycle_events
         .as_array()
         .expect("lifecycle events array")

@@ -308,14 +308,12 @@ async fn explicit_live_gateway_posts_and_records_remote_order_lifecycle() {
         })
         .await
         .expect("order events");
-    assert!(
-        order_events
-            .iter()
-            .all(|event| event
-                .correlation_id
-                .as_deref()
-                .is_some_and(|value| value.starts_with("corr-live-posted:")))
-    );
+    assert!(order_events.iter().all(|event| {
+        event
+            .correlation_id
+            .as_deref()
+            .is_some_and(|value| value.starts_with("corr-live-posted:"))
+    }));
 }
 
 #[tokio::test]
@@ -473,10 +471,16 @@ async fn explicit_live_gateway_marks_operator_required_when_runtime_degrades_aft
         .iter()
         .find(|event| event.event_type == "LIVE_SUBMIT_POST_ACK_RUNTIME_DEGRADED")
         .expect("post-ack runtime degraded event");
-    assert_eq!(post_ack_event.payload["correlation_id"], "corr-live-post-ack-runtime-degraded");
+    assert_eq!(
+        post_ack_event.payload["correlation_id"],
+        "corr-live-post-ack-runtime-degraded"
+    );
     assert_eq!(post_ack_event.payload["body"]["operator_required"], true);
     assert_eq!(post_ack_event.payload["body"]["remote_side_effect"], true);
-    assert_eq!(post_ack_event.payload["body"]["reason"], "kill_switch_enabled");
+    assert_eq!(
+        post_ack_event.payload["body"]["reason"],
+        "kill_switch_enabled"
+    );
 }
 
 #[tokio::test]

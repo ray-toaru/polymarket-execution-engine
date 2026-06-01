@@ -96,10 +96,7 @@ where
                 repository_reservation_exists,
             ),
             (RECONCILE_WORKER_CAPABILITY, reconcile_worker_healthy),
-            (
-                CANCEL_ONLY_FALLBACK_CAPABILITY,
-                cancel_only_fallback_ready,
-            ),
+            (CANCEL_ONLY_FALLBACK_CAPABILITY, cancel_only_fallback_ready),
             (
                 BALANCE_ALLOWANCE_CHECK_CAPABILITY,
                 balance_allowance_checked,
