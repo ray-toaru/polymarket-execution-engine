@@ -12,6 +12,7 @@ async fn seed_test_plan(store: &InMemoryStore, execution_id: &str, account_id: &
             execution_id: execution_id.into(),
             account_id: pmx_core::AccountId(account_id.into()),
             normalized_intent_id: format!("norm-{execution_id}"),
+            correlation_id: None,
             snapshot_id: format!("snap-{execution_id}"),
             snapshot_hash: hash_value(&format!("snap-{execution_id}")),
             decision_id: format!("decision-{execution_id}"),

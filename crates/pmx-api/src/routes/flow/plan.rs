@@ -7,6 +7,7 @@ pub(crate) async fn compile_plan(
     Json(req): Json<CompilePlanRequest>,
 ) -> ApiResult<ExecutionPlanSummary> {
     require(&headers, Operation::CompilePlan)?;
+    let correlation_id = correlation_id_from_headers(&headers);
     let plan = state
         .service
         .compile_plan_by_id(pmx_service::CompilePlanByIdCommand {
@@ -14,6 +15,7 @@ pub(crate) async fn compile_plan(
             snapshot_id: req.snapshot_id,
             decision_id: req.decision_id,
             approval: req.approval,
+            correlation_id: Some(correlation_id),
         })
         .await
         .map_err(service_error)?;

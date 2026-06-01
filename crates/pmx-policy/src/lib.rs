@@ -16,6 +16,7 @@ mod tests {
         NormalizedIntent {
             normalized_intent_id: "n1".into(),
             intent_hash: HashValue("h1".into()),
+            correlation_id: None,
             account_id: AccountId("a1".into()),
             market: MarketRef {
                 condition_id: ConditionId("c1".into()),
@@ -36,6 +37,7 @@ mod tests {
             snapshot_id: "s1".into(),
             snapshot_hash: HashValue("sh1".into()),
             normalized_intent_id: "n1".into(),
+            correlation_id: None,
             runtime_state: state,
             captured_at: Utc::now(),
         }

@@ -6,23 +6,41 @@ use pmx_service::{CompilePlanByIdCommand, DecisionByIdRequest, ServiceError};
 use super::ServiceBackend;
 
 impl ServiceBackend {
-    pub(crate) async fn normalize(
+    pub(crate) async fn normalize_with_correlation(
         &self,
         intent: TradeIntent,
+        correlation_id: Option<String>,
     ) -> Result<NormalizedIntent, ServiceError> {
         match self {
-            Self::InMemory(service) => service.normalize(intent).await,
-            Self::Postgres(service) => service.normalize(intent).await,
+            Self::InMemory(service) => {
+                service
+                    .normalize_with_correlation(intent, correlation_id.clone())
+                    .await
+            }
+            Self::Postgres(service) => {
+                service
+                    .normalize_with_correlation(intent, correlation_id)
+                    .await
+            }
         }
     }
 
-    pub(crate) async fn capture_snapshot(
+    pub(crate) async fn capture_snapshot_with_correlation(
         &self,
         normalized: NormalizedIntent,
+        correlation_id: Option<String>,
     ) -> Result<FeasibilitySnapshot, ServiceError> {
         match self {
-            Self::InMemory(service) => service.capture_snapshot(normalized).await,
-            Self::Postgres(service) => service.capture_snapshot(normalized).await,
+            Self::InMemory(service) => {
+                service
+                    .capture_snapshot_with_correlation(normalized, correlation_id.clone())
+                    .await
+            }
+            Self::Postgres(service) => {
+                service
+                    .capture_snapshot_with_correlation(normalized, correlation_id)
+                    .await
+            }
         }
     }
 

@@ -87,6 +87,7 @@ pub struct TradeIntent {
 pub struct NormalizedIntent {
     pub normalized_intent_id: String,
     pub intent_hash: HashValue,
+    pub correlation_id: Option<String>,
     pub account_id: AccountId,
     pub market: MarketRef,
     pub token_id: TokenId,
@@ -105,6 +106,7 @@ pub fn normalize_intent(intent: TradeIntent) -> Result<NormalizedIntent, CoreErr
     Ok(NormalizedIntent {
         normalized_intent_id,
         intent_hash,
+        correlation_id: None,
         account_id: intent.account_id,
         market: intent.market,
         token_id: intent.token_id,

@@ -12,6 +12,7 @@ async fn service_flow_persists_and_blocks_submit() {
         .evaluate_decision(DecisionRequest {
             normalized_intent: normalized.clone(),
             snapshot: snapshot.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");
@@ -21,6 +22,7 @@ async fn service_flow_persists_and_blocks_submit() {
             snapshot: snapshot.clone(),
             decision: decision.clone(),
             approval: approval_for(&snapshot, &decision),
+            correlation_id: None,
         })
         .await
         .expect("plan");
@@ -66,6 +68,7 @@ async fn service_id_bound_flow_persists_and_blocks_submit() {
         .evaluate_decision_by_id(DecisionByIdRequest {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision by id");
@@ -75,6 +78,7 @@ async fn service_id_bound_flow_persists_and_blocks_submit() {
             snapshot_id: snapshot.snapshot_id.clone(),
             decision_id: decision.decision_id.clone(),
             approval: approval_for(&snapshot, &decision),
+            correlation_id: None,
         })
         .await
         .expect("plan by id");
@@ -95,6 +99,95 @@ async fn service_id_bound_flow_persists_and_blocks_submit() {
 }
 
 #[tokio::test]
+async fn service_id_bound_flow_propagates_correlation_id_across_object_graph() {
+    let service = ExecutorService::new(InMemoryStore::default());
+    let correlation_id = "corr-flow-object-graph-1".to_string();
+    let normalized = service
+        .normalize_with_correlation(intent(), Some(correlation_id.clone()))
+        .await
+        .expect("normalize");
+    assert_eq!(
+        normalized.correlation_id.as_deref(),
+        Some(correlation_id.as_str())
+    );
+
+    let snapshot = service
+        .capture_snapshot_with_correlation(normalized.clone(), Some(correlation_id.clone()))
+        .await
+        .expect("snapshot");
+    assert_eq!(
+        snapshot.correlation_id.as_deref(),
+        Some(correlation_id.as_str())
+    );
+
+    let decision = service
+        .evaluate_decision_by_id(DecisionByIdRequest {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: Some(correlation_id.clone()),
+        })
+        .await
+        .expect("decision by id");
+    assert_eq!(
+        decision.correlation_id.as_deref(),
+        Some(correlation_id.as_str())
+    );
+
+    let plan = service
+        .compile_plan_by_id(CompilePlanByIdCommand {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+            decision_id: decision.decision_id.clone(),
+            approval: approval_for(&snapshot, &decision),
+            correlation_id: Some(correlation_id.clone()),
+        })
+        .await
+        .expect("plan by id");
+    assert_eq!(
+        plan.correlation_id.as_deref(),
+        Some(correlation_id.as_str())
+    );
+
+    let stored_normalized = service
+        .store()
+        .load_normalized_intent(&normalized.normalized_intent_id)
+        .await
+        .expect("stored normalized");
+    let stored_snapshot = service
+        .store()
+        .load_snapshot(&snapshot.snapshot_id)
+        .await
+        .expect("stored snapshot");
+    let stored_decision = service
+        .store()
+        .load_decision(&decision.decision_id)
+        .await
+        .expect("stored decision");
+    let stored_plan = service
+        .store()
+        .load_plan_summary(&plan.execution_id)
+        .await
+        .expect("stored plan");
+
+    assert_eq!(
+        stored_normalized.correlation_id.as_deref(),
+        Some(correlation_id.as_str())
+    );
+    assert_eq!(
+        stored_snapshot.correlation_id.as_deref(),
+        Some(correlation_id.as_str())
+    );
+    assert_eq!(
+        stored_decision.correlation_id.as_deref(),
+        Some(correlation_id.as_str())
+    );
+    assert_eq!(
+        stored_plan.correlation_id.as_deref(),
+        Some(correlation_id.as_str())
+    );
+}
+
+#[tokio::test]
 async fn service_rejects_object_graph_mismatch() {
     let service = ExecutorService::new(InMemoryStore::default());
     let normalized = service.normalize(intent()).await.expect("normalize");
@@ -107,6 +200,7 @@ async fn service_rejects_object_graph_mismatch() {
         .evaluate_decision(DecisionRequest {
             normalized_intent: normalized,
             snapshot,
+            correlation_id: None,
         })
         .await
         .expect_err("mismatched snapshot must fail");
@@ -125,6 +219,7 @@ async fn service_rejects_tampered_approval_hash() {
         .evaluate_decision(DecisionRequest {
             normalized_intent: normalized.clone(),
             snapshot: snapshot.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");
@@ -137,6 +232,7 @@ async fn service_rejects_tampered_approval_hash() {
             snapshot,
             decision,
             approval,
+            correlation_id: None,
         })
         .await
         .expect_err("approval hash must be recomputed and checked");
@@ -160,6 +256,7 @@ async fn static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks() 
         .evaluate_decision_by_id(DecisionByIdRequest {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");
@@ -170,6 +267,7 @@ async fn static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks() 
             snapshot_id: snapshot.snapshot_id.clone(),
             decision_id: decision.decision_id.clone(),
             approval: approval_for(&snapshot, &decision),
+            correlation_id: None,
         })
         .await
         .expect("plan");
@@ -208,6 +306,7 @@ async fn live_submit_mode_fails_closed_until_gateway_is_wired() {
         .evaluate_decision_by_id(DecisionByIdRequest {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");
@@ -217,6 +316,7 @@ async fn live_submit_mode_fails_closed_until_gateway_is_wired() {
             snapshot_id: snapshot.snapshot_id.clone(),
             decision_id: decision.decision_id.clone(),
             approval: approval_for(&snapshot, &decision),
+            correlation_id: None,
         })
         .await
         .expect("plan");
@@ -253,6 +353,7 @@ async fn explicit_live_gateway_posts_and_records_remote_order_lifecycle() {
         .evaluate_decision_by_id(DecisionByIdRequest {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");
@@ -263,6 +364,7 @@ async fn explicit_live_gateway_posts_and_records_remote_order_lifecycle() {
             snapshot_id: snapshot.snapshot_id.clone(),
             decision_id: decision.decision_id.clone(),
             approval: approval_for(&snapshot, &decision),
+            correlation_id: None,
         })
         .await
         .expect("plan");
@@ -340,6 +442,7 @@ async fn explicit_live_gateway_posts_buy_size_and_records_quote_exposure() {
         .evaluate_decision_by_id(DecisionByIdRequest {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");
@@ -350,6 +453,7 @@ async fn explicit_live_gateway_posts_buy_size_and_records_quote_exposure() {
             snapshot_id: snapshot.snapshot_id.clone(),
             decision_id: decision.decision_id.clone(),
             approval: approval_for(&snapshot, &decision),
+            correlation_id: None,
         })
         .await
         .expect("plan");
@@ -418,6 +522,7 @@ async fn explicit_live_gateway_marks_operator_required_when_runtime_degrades_aft
         .evaluate_decision_by_id(DecisionByIdRequest {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");
@@ -427,6 +532,7 @@ async fn explicit_live_gateway_marks_operator_required_when_runtime_degrades_aft
             snapshot_id: snapshot.snapshot_id.clone(),
             decision_id: decision.decision_id.clone(),
             approval: approval_for(&snapshot, &decision),
+            correlation_id: None,
         })
         .await
         .expect("plan");
@@ -503,6 +609,7 @@ async fn explicit_live_gateway_remote_unknown_freezes_for_operator_review() {
         .evaluate_decision_by_id(DecisionByIdRequest {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");
@@ -512,6 +619,7 @@ async fn explicit_live_gateway_remote_unknown_freezes_for_operator_review() {
             snapshot_id: snapshot.snapshot_id.clone(),
             decision_id: decision.decision_id.clone(),
             approval: approval_for(&snapshot, &decision),
+            correlation_id: None,
         })
         .await
         .expect("plan");
@@ -571,6 +679,7 @@ async fn explicit_live_gateway_remote_rejection_records_failed_lifecycle() {
         .evaluate_decision_by_id(DecisionByIdRequest {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");
@@ -580,6 +689,7 @@ async fn explicit_live_gateway_remote_rejection_records_failed_lifecycle() {
             snapshot_id: snapshot.snapshot_id.clone(),
             decision_id: decision.decision_id.clone(),
             approval: approval_for(&snapshot, &decision),
+            correlation_id: None,
         })
         .await
         .expect("plan");
@@ -633,6 +743,7 @@ async fn explicit_live_gateway_blocks_unsupported_quote_notional_without_stuck_i
         .evaluate_decision_by_id(DecisionByIdRequest {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");
@@ -642,6 +753,7 @@ async fn explicit_live_gateway_blocks_unsupported_quote_notional_without_stuck_i
             snapshot_id: snapshot.snapshot_id.clone(),
             decision_id: decision.decision_id.clone(),
             approval: approval_for(&snapshot, &decision),
+            correlation_id: None,
         })
         .await
         .expect("plan");

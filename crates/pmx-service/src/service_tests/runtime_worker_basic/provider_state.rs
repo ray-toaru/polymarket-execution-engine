@@ -46,6 +46,7 @@ async fn store_backed_runtime_provider_uses_store_state() {
         .evaluate_decision_by_id(DecisionByIdRequest {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");
@@ -150,6 +151,7 @@ async fn service_records_runtime_worker_provider_snapshot_for_decision_gate() {
         .evaluate_decision_by_id(DecisionByIdRequest {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");

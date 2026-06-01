@@ -28,15 +28,42 @@ where
     R: RuntimeStateProvider,
 {
     pub async fn normalize(&self, intent: TradeIntent) -> Result<NormalizedIntent, ServiceError> {
-        crate::plan_flow::normalize(&self.store, intent).await
+        crate::plan_flow::normalize(&self.store, intent, None).await
+    }
+
+    pub async fn normalize_with_correlation(
+        &self,
+        intent: TradeIntent,
+        correlation_id: Option<String>,
+    ) -> Result<NormalizedIntent, ServiceError> {
+        crate::plan_flow::normalize(&self.store, intent, correlation_id).await
     }
 
     pub async fn capture_snapshot(
         &self,
         normalized: NormalizedIntent,
     ) -> Result<FeasibilitySnapshot, ServiceError> {
-        crate::plan_flow::capture_snapshot(&self.store, &self.runtime_state_provider, normalized)
-            .await
+        crate::plan_flow::capture_snapshot(
+            &self.store,
+            &self.runtime_state_provider,
+            normalized,
+            None,
+        )
+        .await
+    }
+
+    pub async fn capture_snapshot_with_correlation(
+        &self,
+        normalized: NormalizedIntent,
+        correlation_id: Option<String>,
+    ) -> Result<FeasibilitySnapshot, ServiceError> {
+        crate::plan_flow::capture_snapshot(
+            &self.store,
+            &self.runtime_state_provider,
+            normalized,
+            correlation_id,
+        )
+        .await
     }
 
     pub async fn evaluate_decision(

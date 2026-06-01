@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct DecisionRequest {
     pub normalized_intent: NormalizedIntent,
     pub snapshot: FeasibilitySnapshot,
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -15,6 +16,7 @@ pub struct DecisionRequest {
 pub struct DecisionByIdRequest {
     pub normalized_intent_id: String,
     pub snapshot_id: String,
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -24,6 +26,7 @@ pub struct CompilePlanCommand {
     pub snapshot: FeasibilitySnapshot,
     pub decision: ConstraintDecision,
     pub approval: ApprovalReceipt,
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,6 +36,7 @@ pub struct CompilePlanByIdCommand {
     pub snapshot_id: String,
     pub decision_id: String,
     pub approval: ApprovalReceipt,
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

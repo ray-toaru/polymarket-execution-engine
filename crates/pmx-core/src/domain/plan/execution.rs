@@ -10,6 +10,7 @@ pub struct ExecutionPlanSummary {
     pub execution_id: String,
     pub account_id: AccountId,
     pub normalized_intent_id: String,
+    pub correlation_id: Option<String>,
     pub snapshot_id: String,
     pub snapshot_hash: HashValue,
     pub decision_id: String,

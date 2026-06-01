@@ -52,6 +52,7 @@ async fn service_records_runtime_worker_signals_for_decision_gate() {
         .evaluate_decision_by_id(DecisionByIdRequest {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");
@@ -107,6 +108,7 @@ async fn service_records_runtime_worker_tick_heartbeat_and_observations() {
             snapshot_id: "snapshot-worker-tick".into(),
             snapshot_hash: HashValue("snapshot-hash-worker-tick".into()),
             normalized_intent_id: normalized.normalized_intent_id.clone(),
+            correlation_id: None,
             runtime_state: state,
             captured_at: Utc::now(),
         },

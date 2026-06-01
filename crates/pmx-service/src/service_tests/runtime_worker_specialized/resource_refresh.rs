@@ -82,6 +82,7 @@ async fn service_records_resource_refresh_worker_tick_for_decision_gate() {
         .evaluate_decision_by_id(DecisionByIdRequest {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");

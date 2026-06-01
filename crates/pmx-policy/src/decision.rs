@@ -47,6 +47,7 @@ pub fn evaluate_constraints(
     ConstraintDecision {
         decision_id,
         decision_hash,
+        correlation_id: None,
         status,
         reasons,
     }

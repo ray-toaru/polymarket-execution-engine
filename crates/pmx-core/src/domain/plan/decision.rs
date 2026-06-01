@@ -31,6 +31,7 @@ pub enum BlockReason {
 pub struct ConstraintDecision {
     pub decision_id: String,
     pub decision_hash: HashValue,
+    pub correlation_id: Option<String>,
     pub status: DecisionStatus,
     pub reasons: Vec<BlockReason>,
 }

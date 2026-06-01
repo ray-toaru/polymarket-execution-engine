@@ -17,7 +17,8 @@ pub fn verify_decision_binding(
     snapshot: &FeasibilitySnapshot,
     decision: &ConstraintDecision,
 ) -> Result<(), ServiceError> {
-    let expected = evaluate_constraints(normalized_intent, snapshot);
+    let mut expected = evaluate_constraints(normalized_intent, snapshot);
+    expected.correlation_id = decision.correlation_id.clone();
     if &expected != decision {
         return Err(ServiceError::Conflict(
             "decision does not match server recomputation for normalized intent and snapshot"

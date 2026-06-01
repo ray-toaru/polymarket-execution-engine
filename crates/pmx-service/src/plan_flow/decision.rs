@@ -11,10 +11,18 @@ pub async fn evaluate_decision<S>(
 where
     S: ExecutionStore + Send + Sync,
 {
-    verify_snapshot_binding(&req.normalized_intent, &req.snapshot)?;
-    store.save_normalized_intent(&req.normalized_intent).await?;
-    store.save_snapshot(&req.snapshot).await?;
-    let decision = evaluate_constraints(&req.normalized_intent, &req.snapshot);
+    let DecisionRequest {
+        normalized_intent,
+        snapshot,
+        correlation_id,
+    } = req;
+    verify_snapshot_binding(&normalized_intent, &snapshot)?;
+    store.save_normalized_intent(&normalized_intent).await?;
+    store.save_snapshot(&snapshot).await?;
+    let mut decision = evaluate_constraints(&normalized_intent, &snapshot);
+    decision.correlation_id = correlation_id
+        .or_else(|| snapshot.correlation_id.clone())
+        .or_else(|| normalized_intent.correlation_id.clone());
     store.save_decision(&decision).await?;
     Ok(decision)
 }
@@ -35,6 +43,7 @@ where
         DecisionRequest {
             normalized_intent: normalized,
             snapshot,
+            correlation_id: req.correlation_id,
         },
     )
     .await

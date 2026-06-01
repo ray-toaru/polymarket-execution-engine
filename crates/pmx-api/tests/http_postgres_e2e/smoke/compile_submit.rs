@@ -128,6 +128,96 @@ pub(super) async fn compile_and_submit_blocked_plan(
 }
 
 #[tokio::test]
+async fn compile_flow_propagates_header_correlation_id_across_object_graph() {
+    let _guard = env_lock().await;
+    let Ok(database_url) = std::env::var("PMX_TEST_DATABASE_URL") else {
+        eprintln!(
+            "PMX_TEST_DATABASE_URL not set; skipping compile correlation HTTP PostgreSQL E2E"
+        );
+        return;
+    };
+    unsafe {
+        std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-pg-e2e");
+        std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-pg-e2e");
+    }
+    let suffix = unique_suffix("compile-correlation");
+    let app = pmx_api::try_postgres_app(database_url.clone(), true)
+        .await
+        .expect("postgres app");
+    seed_allow_runtime(
+        &database_url,
+        &format!("acct-http-pg-e2e-{suffix}"),
+        &format!("cond-http-pg-e2e-{suffix}"),
+        &suffix,
+    )
+    .await;
+
+    let correlation_id = format!("corr-http-compile-{suffix}");
+    let headers = [("X-Correlation-Id", correlation_id.as_str())];
+
+    let (status, normalized) = request_json_with_headers(
+        app.clone(),
+        "POST",
+        "/v1/intents/normalize",
+        Some("service-token-pg-e2e"),
+        Some(sample_intent_variant(&suffix)),
+        &headers,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "normalize response: {normalized}");
+    assert_eq!(normalized["correlation_id"], correlation_id);
+
+    let (status, snapshot) = request_json_with_headers(
+        app.clone(),
+        "POST",
+        "/v1/snapshots/capture",
+        Some("service-token-pg-e2e"),
+        Some(normalized.clone()),
+        &headers,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "snapshot response: {snapshot}");
+    assert_eq!(snapshot["correlation_id"], correlation_id);
+
+    let (status, decision) = request_json_with_headers(
+        app.clone(),
+        "POST",
+        "/v1/decisions/evaluate",
+        Some("service-token-pg-e2e"),
+        Some(json!({
+            "normalized_intent_id": normalized["normalized_intent_id"],
+            "snapshot_id": snapshot["snapshot_id"]
+        })),
+        &headers,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "decision response: {decision}");
+    assert_eq!(decision["correlation_id"], correlation_id);
+
+    let approval = approval_json(
+        &format!("approval-pg-compile-corr-{suffix}"),
+        &snapshot,
+        &decision,
+    );
+    let (status, plan) = request_json_with_headers(
+        app,
+        "POST",
+        "/v1/plans/compile",
+        Some("service-token-pg-e2e"),
+        Some(json!({
+            "normalized_intent_id": normalized["normalized_intent_id"],
+            "snapshot_id": snapshot["snapshot_id"],
+            "decision_id": decision["decision_id"],
+            "approval": approval
+        })),
+        &headers,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "plan response: {plan}");
+    assert_eq!(plan["correlation_id"], correlation_id);
+}
+
+#[tokio::test]
 async fn submit_plan_propagates_header_correlation_id_into_lifecycle_events() {
     let _guard = env_lock().await;
     let Ok(database_url) = std::env::var("PMX_TEST_DATABASE_URL") else {

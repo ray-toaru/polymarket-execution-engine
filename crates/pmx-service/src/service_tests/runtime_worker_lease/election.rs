@@ -66,6 +66,7 @@ async fn service_records_heartbeat_lease_election_tick_fail_closed_for_non_owner
         .evaluate_decision_by_id(DecisionByIdRequest {
             normalized_intent_id: normalized.normalized_intent_id.clone(),
             snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
         })
         .await
         .expect("decision");

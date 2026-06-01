@@ -19,19 +19,27 @@ pub async fn compile_plan<S>(
 where
     S: ExecutionStore + Send + Sync,
 {
-    verify_snapshot_binding(&req.normalized_intent, &req.snapshot)?;
-    verify_decision_binding(&req.normalized_intent, &req.snapshot, &req.decision)?;
-    store.save_normalized_intent(&req.normalized_intent).await?;
-    store.save_snapshot(&req.snapshot).await?;
-    store.save_decision(&req.decision).await?;
+    let CompilePlanCommand {
+        normalized_intent,
+        snapshot,
+        decision,
+        approval,
+        correlation_id,
+    } = req;
+    verify_snapshot_binding(&normalized_intent, &snapshot)?;
+    verify_decision_binding(&normalized_intent, &snapshot, &decision)?;
+    store.save_normalized_intent(&normalized_intent).await?;
+    store.save_snapshot(&snapshot).await?;
+    store.save_decision(&decision).await?;
     build_and_save_plan(
         store,
-        &req.normalized_intent,
-        &req.snapshot,
-        &req.decision,
-        &req.approval,
+        &normalized_intent,
+        &snapshot,
+        &decision,
+        &approval,
         executor_version,
         contract_version,
+        correlation_id,
     )
     .await
 }
@@ -60,6 +68,7 @@ where
         &req.approval,
         executor_version,
         contract_version,
+        req.correlation_id,
     )
     .await
 }
@@ -72,6 +81,7 @@ async fn build_and_save_plan<S>(
     approval: &ApprovalReceipt,
     executor_version: &str,
     contract_version: &str,
+    correlation_id: Option<String>,
 ) -> Result<ExecutionPlanSummary, ServiceError>
 where
     S: ExecutionStore + Send + Sync,
@@ -87,6 +97,10 @@ where
         execution_id: "pending".into(),
         account_id: normalized.account_id.clone(),
         normalized_intent_id: normalized.normalized_intent_id.clone(),
+        correlation_id: correlation_id
+            .or_else(|| decision.correlation_id.clone())
+            .or_else(|| snapshot.correlation_id.clone())
+            .or_else(|| normalized.correlation_id.clone()),
         snapshot_id: snapshot.snapshot_id.clone(),
         snapshot_hash: snapshot.snapshot_hash.clone(),
         decision_id: decision.decision_id.clone(),

@@ -46,6 +46,7 @@ pub struct FeasibilitySnapshot {
     pub snapshot_id: String,
     pub snapshot_hash: HashValue,
     pub normalized_intent_id: String,
+    pub correlation_id: Option<String>,
     pub runtime_state: RuntimeStateSummary,
     pub captured_at: DateTime<Utc>,
 }
