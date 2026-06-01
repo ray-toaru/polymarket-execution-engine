@@ -28,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--package-dir", required=True, type=Path)
     parser.add_argument("--env-file", required=True, type=Path)
+    parser.add_argument("--secrets-env-file", type=Path)
     parser.add_argument("--daily-used-notional-usd", default="0")
     parser.add_argument("--idempotency-key")
     parser.add_argument("--execution-id")
@@ -46,6 +47,7 @@ def build_armed_invocation(
     *,
     package_dir: Path,
     env_file: Path,
+    secrets_env_file: Path | None,
     daily_used_notional_usd: str,
     idempotency_key: str | None,
     execution_id: str | None,
@@ -57,6 +59,7 @@ def build_armed_invocation(
     invocation = base.build_invocation(
         package_dir=base.resolve(package_dir),
         env_file=base.resolve(env_file),
+        secrets_env_file=base.resolve(secrets_env_file) if secrets_env_file else None,
         mode="armed",
         daily_used_notional_usd=daily_used_notional_usd,
         idempotency_key=idempotency_key,
@@ -80,6 +83,7 @@ def main() -> int:
     invocation = build_armed_invocation(
         package_dir=args.package_dir,
         env_file=args.env_file,
+        secrets_env_file=args.secrets_env_file,
         daily_used_notional_usd=args.daily_used_notional_usd,
         idempotency_key=args.idempotency_key,
         execution_id=args.execution_id,

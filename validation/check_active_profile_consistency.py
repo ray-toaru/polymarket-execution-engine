@@ -93,10 +93,15 @@ def normalize_signature_type(raw: str) -> str:
         ) from exc
 
 
-def evaluate_env_file(path: Path, expected_account_id: str | None = None) -> dict[str, str]:
+def evaluate_env_file(
+    path: Path,
+    expected_account_id: str | None = None,
+    *,
+    secrets_env_file: Path | None = None,
+) -> dict[str, str]:
     values, raw_keys = parse_env_file(path)
-    if companion_secrets_path(path).is_file():
-        companion_values, companion_raw_keys = parse_env_file(companion_secrets_path(path))
+    if secrets_env_file is not None:
+        companion_values, companion_raw_keys = parse_env_file(secrets_env_file)
         values.update(companion_values)
         raw_keys.extend(companion_raw_keys)
     forbidden = [
@@ -158,6 +163,11 @@ def evaluate_identity_env_file(path: Path, expected_account_id: str | None = Non
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--env-file", required=True, type=Path)
+    parser.add_argument(
+        "--secrets-env-file",
+        type=Path,
+        help="Optional explicit companion secrets env file. Secrets are not auto-discovered.",
+    )
     parser.add_argument("--expected-account-id")
     return parser.parse_args()
 
@@ -165,7 +175,18 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     env_file = args.env_file if args.env_file.is_absolute() else ROOT / args.env_file
-    report = evaluate_env_file(env_file, expected_account_id=args.expected_account_id)
+    secrets_env_file = None
+    if args.secrets_env_file is not None:
+        secrets_env_file = (
+            args.secrets_env_file
+            if args.secrets_env_file.is_absolute()
+            else ROOT / args.secrets_env_file
+        )
+    report = evaluate_env_file(
+        env_file,
+        expected_account_id=args.expected_account_id,
+        secrets_env_file=secrets_env_file,
+    )
     print(json.dumps(report, sort_keys=True))
     return 0
 

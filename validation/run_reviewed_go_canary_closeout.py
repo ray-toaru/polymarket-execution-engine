@@ -72,6 +72,7 @@ def build_workflow_plan(
     *,
     package_dir: Path,
     env_file: Path,
+    secrets_env_file: Path | None,
     release_zip: Path | None,
     daily_used_notional_usd: str,
     account_address: str | None,
@@ -96,12 +97,18 @@ def build_workflow_plan(
         str(package_dir),
         "--env-file",
         str(env_file),
-        "--mode",
-        "preflight",
-        "--daily-used-notional-usd",
-        daily_used_notional_usd,
-        "--run",
     ]
+    if secrets_env_file is not None:
+        preflight_cmd.extend(["--secrets-env-file", str(secrets_env_file)])
+    preflight_cmd.extend(
+        [
+            "--mode",
+            "preflight",
+            "--daily-used-notional-usd",
+            daily_used_notional_usd,
+            "--run",
+        ]
+    )
     armed_cmd = [
         "python",
         str(RUN_REVIEWED_GO_ARMED),
@@ -109,10 +116,16 @@ def build_workflow_plan(
         str(package_dir),
         "--env-file",
         str(env_file),
-        "--daily-used-notional-usd",
-        daily_used_notional_usd,
-        "--run",
     ]
+    if secrets_env_file is not None:
+        armed_cmd.extend(["--secrets-env-file", str(secrets_env_file)])
+    armed_cmd.extend(
+        [
+            "--daily-used-notional-usd",
+            daily_used_notional_usd,
+            "--run",
+        ]
+    )
     order_query_output = package_dir / "order-status-query.json"
     order_query_cmd = [
         "cargo",
@@ -279,6 +292,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--package-dir", required=True, type=Path)
     parser.add_argument("--env-file", required=True, type=Path)
+    parser.add_argument("--secrets-env-file", type=Path)
     parser.add_argument("--release-zip", type=Path)
     parser.add_argument("--daily-used-notional-usd", default="0")
     parser.add_argument("--account-address")
@@ -302,6 +316,7 @@ def main() -> int:
     plan = build_workflow_plan(
         package_dir=args.package_dir,
         env_file=args.env_file,
+        secrets_env_file=args.secrets_env_file,
         release_zip=args.release_zip,
         daily_used_notional_usd=args.daily_used_notional_usd,
         account_address=args.account_address,

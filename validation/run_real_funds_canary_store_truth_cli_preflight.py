@@ -77,16 +77,17 @@ def load_env_file(path: Path) -> None:
         loaded[key] = os.environ.get(key, value)
 
 
-def load_default_env_files() -> None:
+def load_default_env_files(*, runtime_secrets_env_file: Path | None = None) -> None:
     # Prefer a generated runtime env when present; fall back to the broader local
     # .env for database URLs and legacy variable references.
     load_env_file(ROOT / ".env.runtime")
-    load_env_file(ROOT / ".env.runtime.secrets")
+    if runtime_secrets_env_file is not None:
+        load_env_file(runtime_secrets_env_file)
     load_env_file(ROOT / ".env")
 
 
-def database_url() -> str:
-    load_default_env_files()
+def database_url(*, runtime_secrets_env_file: Path | None = None) -> str:
+    load_default_env_files(runtime_secrets_env_file=runtime_secrets_env_file)
     url = os.environ.get("PMX_TEST_DATABASE_URL") or os.environ.get("PMX_DATABASE_URL")
     if not url or not url.strip():
         raise SystemExit("PMX_TEST_DATABASE_URL or PMX_DATABASE_URL is required")
@@ -548,11 +549,23 @@ def main() -> int:
         default=EVIDENCE_MANIFEST_SHA256,
         help="Archived release evidence manifest SHA-256 to bind into the local approval and optional runtime-truth output.",
     )
+    parser.add_argument(
+        "--runtime-secrets-env-file",
+        type=Path,
+        help="Optional explicit runtime companion secrets env file. The default path is not auto-loaded.",
+    )
     args = parser.parse_args()
     artifact_sha256 = require_sha256(args.artifact_sha256, "--artifact-sha256")
     workspace_manifest_sha256 = require_sha256(args.workspace_manifest_sha256, "--workspace-manifest-sha256")
     archived_manifest_sha256 = require_sha256(args.archived_manifest_sha256, "--archived-manifest-sha256")
-    url = database_url()
+    runtime_secrets_env_file = None
+    if args.runtime_secrets_env_file is not None:
+        runtime_secrets_env_file = (
+            args.runtime_secrets_env_file
+            if args.runtime_secrets_env_file.is_absolute()
+            else ROOT / args.runtime_secrets_env_file
+        )
+    url = database_url(runtime_secrets_env_file=runtime_secrets_env_file)
     check_database_connectivity(url)
     build_cli()
     suffix = str(time.time_ns())

@@ -157,6 +157,31 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
                     "${PMX_MISSING_FALLBACK}",
                 )
 
+    def test_load_default_env_files_does_not_auto_load_companion_secrets(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            tmp = Path(tmp_name)
+            runtime_env = tmp / ".env.runtime"
+            runtime_secrets = tmp / ".env.runtime.secrets"
+            fallback_env = tmp / ".env"
+            runtime_env.write_text("PMX_ACTIVE_ACCOUNT_PROFILE=acct_b\n")
+            runtime_secrets.write_text("POLY_API_SECRET=secret\n")
+            fallback_env.write_text("PMX_DATABASE_URL=postgres://pmx@localhost/pmx\n")
+            with patch.object(run_real_funds_canary_store_truth_cli_preflight, "ROOT", tmp):
+                with patch.dict(
+                    "run_real_funds_canary_store_truth_cli_preflight.os.environ",
+                    {},
+                    clear=True,
+                ):
+                    run_real_funds_canary_store_truth_cli_preflight.load_default_env_files()
+                    self.assertNotIn(
+                        "POLY_API_SECRET",
+                        run_real_funds_canary_store_truth_cli_preflight.os.environ,
+                    )
+                    self.assertEqual(
+                        run_real_funds_canary_store_truth_cli_preflight.os.environ["PMX_DATABASE_URL"],
+                        "postgres://pmx@localhost/pmx",
+                    )
+
     def test_database_target_summary_redacts_password_but_keeps_endpoint(self) -> None:
         summary = run_real_funds_canary_store_truth_cli_preflight.database_target_summary(
             "postgres://pmx:secret@127.0.0.1:5433/pmx"
