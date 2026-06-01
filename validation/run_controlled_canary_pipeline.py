@@ -619,7 +619,7 @@ def main_with_args(args: argparse.Namespace) -> int:
     canonical = sidecar_data.get("canonical_evidence", {}) if isinstance(sidecar_data, dict) else {}
     artifact_sha = sha256(release_zip)
     workspace_manifest_sha = canonical.get("workspace_manifest_sha256") or sha256(manifest)
-    archived_manifest_sha = canonical.get("archived_manifest_sha256") or canonical.get("manifest_sha256")
+    archived_manifest_sha = canonical.get("archived_manifest_sha256")
     if not archived_manifest_sha:
         raise SystemExit("release evidence sidecar missing archived manifest SHA-256")
     if args.runtime_truth_file:

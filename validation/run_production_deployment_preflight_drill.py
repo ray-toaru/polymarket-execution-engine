@@ -115,7 +115,7 @@ def main() -> int:
             if not evidence_sidecar_ok:
                 failures.append("artifact evidence sidecar does not bind artifact hash")
             manifest_rel = evidence_sidecar.get("canonical_evidence", {}).get("manifest_path")
-            manifest_sha = evidence_sidecar.get("canonical_evidence", {}).get("manifest_sha256")
+            manifest_sha = evidence_sidecar.get("canonical_evidence", {}).get("archived_manifest_sha256")
             evidence_manifest_sha_ok = (
                 isinstance(manifest_rel, str)
                 and isinstance(manifest_sha, str)
