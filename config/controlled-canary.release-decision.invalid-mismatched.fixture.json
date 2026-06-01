@@ -26,7 +26,7 @@
   },
   "risk_limits": {
     "max_order_notional_usd": "1",
-    "max_daily_notional_usd": "5"
+    "max_daily_notional_usd": "1"
   },
   "single_attempt": true,
   "max_order_count": 1,

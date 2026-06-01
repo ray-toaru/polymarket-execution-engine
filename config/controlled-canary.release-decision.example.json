@@ -27,7 +27,7 @@
   },
   "risk_limits": {
     "max_order_notional_usd": "1",
-    "max_daily_notional_usd": "5"
+    "max_daily_notional_usd": "1"
   },
   "runtime_gate_snapshot": {
     "preconditions_live_submit_would_pass": true,

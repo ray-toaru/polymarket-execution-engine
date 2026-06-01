@@ -33,7 +33,7 @@ Canary scope:
 - `REAL_FUNDS_CANARY`
 - `GTC_LIMIT_POST_ONLY_CANCEL`
 - `max_order_notional_usd = 1`
-- `max_daily_notional_usd = 5`
+- `max_daily_notional_usd <= max_order_notional_usd`
 - `target_size_is_reviewed_candidate_input = true`
 - `notional_usd_is_price_times_size = true`
 - `limit_order_size_driven = true`

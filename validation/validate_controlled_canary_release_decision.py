@@ -200,8 +200,10 @@ def validate_shape(data: dict[str, Any], label: str) -> list[str]:
     if max_order_notional is None or max_order_notional > Decimal("1"):
         failures.append(f"{label}: max_order_notional_usd must be positive and <= 1")
     max_daily_notional = parse_positive_decimal(limits.get("max_daily_notional_usd"))
-    if max_daily_notional is None or max_daily_notional > Decimal("5"):
-        failures.append(f"{label}: max_daily_notional_usd must be positive and <= 5")
+    if max_daily_notional is None:
+        failures.append(f"{label}: max_daily_notional_usd must be positive")
+    elif max_order_notional is not None and max_daily_notional > max_order_notional:
+        failures.append(f"{label}: max_daily_notional_usd must be <= max_order_notional_usd for single-attempt canary")
     if data.get("secrets_included") is not False:
         failures.append(f"{label}: secrets_included must be false")
     workspace_sha = data.get("workspace_manifest_sha256")
@@ -224,6 +226,10 @@ def validate_shape(data: dict[str, Any], label: str) -> list[str]:
         failures.append(f"{label}: missing reviewed_release_decision_present")
     if decision := data.get("decision"):
         if decision == "go":
+            if not isinstance(data.get("decision_id"), str) or not data.get("decision_id", "").strip():
+                failures.append(f"{label}: go decision requires concrete decision_id")
+            if not isinstance(data.get("decision_reason"), str) or not data.get("decision_reason", "").strip():
+                failures.append(f"{label}: go decision requires concrete decision_reason")
             if data.get("single_attempt") is not True:
                 failures.append(f"{label}: go decision must set single_attempt=true")
             if data.get("max_order_count") != 1:
