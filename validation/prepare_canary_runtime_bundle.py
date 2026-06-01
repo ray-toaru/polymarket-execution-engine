@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_ROOT = ROOT.parent
 ACTIVATE_SCRIPT = INTEGRATION_ROOT / "scripts" / "activate_pmx_profile.py"
-APPROVAL_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_operator_approval_request.py"
+APPROVAL_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_operator_approval_request_helpers.py"
 
 
 def load_module(path: Path, name: str):
@@ -22,6 +22,10 @@ def load_module(path: Path, name: str):
     sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def load_approval_request_module():
+    return load_module(APPROVAL_SCRIPT, "prepare_operator_approval_request_helpers")
 
 
 def parse_args() -> argparse.Namespace:
@@ -71,7 +75,7 @@ def prepare_bundle(
     write_runtime_secrets: bool = False,
 ) -> dict[str, str]:
     activate = load_module(ACTIVATE_SCRIPT, "activate_pmx_profile")
-    approval = load_module(APPROVAL_SCRIPT, "prepare_operator_approval_request")
+    approval = load_approval_request_module()
     source_values = activate.load_profile_source(source_env_file)
     activated = activate.activate_profile(profile, source_values)
     activate.write_runtime_env(

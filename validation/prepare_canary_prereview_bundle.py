@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_ROOT = ROOT.parent
 PREPARE_CANDIDATE_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_canary_candidate_market.py"
 REVIEW_BUNDLE_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_canary_review_bundle.py"
-APPROVAL_REQUEST_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_operator_approval_request.py"
+APPROVAL_REQUEST_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_operator_approval_request_helpers.py"
 ACTIVATE_PROFILE_SCRIPT = INTEGRATION_ROOT / "scripts" / "activate_pmx_profile.py"
 STORE_TRUTH_SCRIPT = ROOT / "validation" / "run_real_funds_canary_store_truth_cli_preflight.py"
 
@@ -28,6 +28,10 @@ def load_module(path: Path, name: str):
     sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def load_approval_request_module():
+    return load_module(APPROVAL_REQUEST_SCRIPT, "prepare_operator_approval_request_helpers")
 
 
 def parse_args() -> argparse.Namespace:
@@ -133,7 +137,7 @@ def prepare_runtime_truth(
     release_zip: Path | None,
     account_id: str | None = None,
 ) -> dict[str, str]:
-    approval_module = load_module(APPROVAL_REQUEST_SCRIPT, "prepare_operator_approval_request")
+    approval_module = load_approval_request_module()
     store_truth = load_module(STORE_TRUTH_SCRIPT, "run_real_funds_canary_store_truth_cli_preflight")
     release_zip_path = release_zip or approval_module.DEFAULT_RELEASE_ZIP
     sidecar = approval_module.load_release_sidecar(release_zip_path)

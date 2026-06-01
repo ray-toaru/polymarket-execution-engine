@@ -14,6 +14,7 @@ INTEGRATION_ROOT = ROOT.parent
 RUNTIME_BUNDLE_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_canary_runtime_bundle.py"
 DUAL_CONTROL_TEMPLATE_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_dual_control_review_template.py"
 REVIEW_PACKET_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_dual_control_review_packet.py"
+APPROVAL_REQUEST_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_operator_approval_request_helpers.py"
 
 
 def load_module(path: Path, name: str):
@@ -23,6 +24,10 @@ def load_module(path: Path, name: str):
     sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def load_approval_request_module():
+    return load_module(APPROVAL_REQUEST_SCRIPT, "prepare_operator_approval_request_helpers")
 
 
 def parse_args() -> argparse.Namespace:
@@ -115,10 +120,7 @@ def prepare_review_bundle(
         json.dumps(template, indent=2, sort_keys=True) + "\n"
     )
 
-    release_zip_path = release_zip or runtime_bundle.load_module(
-        INTEGRATION_ROOT / "scripts" / "prepare_operator_approval_request.py",
-        "prepare_operator_approval_request",
-    ).DEFAULT_RELEASE_ZIP
+    release_zip_path = release_zip or load_approval_request_module().DEFAULT_RELEASE_ZIP
     release_sha = release_zip_path.with_suffix(release_zip_path.suffix + ".sha256")
     release_evidence = release_zip_path.with_suffix(release_zip_path.suffix + ".evidence.json")
     packet = review_packet.build_packet(
