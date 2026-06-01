@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.polymarket.local/controlled-canary.release-decision.schema.json",
+  "title": "Controlled Canary Release Decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "decision_id",
+    "status",
+    "decision",
+    "decision_reason",
+    "source_release",
+    "scope",
+    "execution_style",
+    "condition_id",
+    "artifact_sha256",
+    "evidence_manifest_sha256",
+    "market_candidate_sha256",
+    "github_evidence",
+    "external_references",
+    "risk_limits",
+    "runtime_gate_snapshot",
+    "runtime_gate_evidence_refs",
+    "single_attempt",
+    "max_order_count",
+    "post_cancel_required",
+    "readback_closeout_required",
+    "required_review_signals",
+    "expires_at",
+    "live_submit_authorized",
+    "live_cancel_authorized",
+    "production_deployment_authorized",
+    "real_funds_canary_authorized",
+    "remote_side_effects_authorized",
+    "allow_real_funds_canary",
+    "reviewed_release_decision_present",
+    "operator_identity_ref",
+    "operator_identity_sha256",
+    "reviewer_identity_sha256",
+    "secrets_included",
+    "workspace_manifest_sha256",
+    "archived_manifest_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "decision_id": {"type": "string", "minLength": 1},
+    "status": {
+      "enum": [
+        "template_not_reviewed",
+        "example_no_go_not_reviewed_for_live",
+        "reviewed_go",
+        "draft_not_approved_not_active"
+      ]
+    },
+    "decision": {
+      "enum": ["no_go", "go"]
+    },
+    "decision_reason": {"type": "string", "minLength": 1},
+    "source_release": {"type": "string", "minLength": 1},
+    "scope": {"const": "REAL_FUNDS_CANARY"},
+    "execution_style": {"const": "GTC_LIMIT_POST_ONLY_CANCEL"},
+    "condition_id": {"type": "string", "minLength": 1},
+    "artifact_sha256": {"$ref": "#/$defs/nonEmptyString"},
+    "evidence_manifest_sha256": {"$ref": "#/$defs/nonEmptyString"},
+    "market_candidate_sha256": {"$ref": "#/$defs/nonEmptyString"},
+    "github_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root_ci_run_id",
+        "hermes_ci_run_id",
+        "execution_engine_ci_run_id",
+        "credentialed_sdk_run_id"
+      ],
+      "properties": {
+        "root_ci_run_id": {"type": "string", "minLength": 1},
+        "hermes_ci_run_id": {"type": "string", "minLength": 1},
+        "execution_engine_ci_run_id": {"type": "string", "minLength": 1},
+        "credentialed_sdk_run_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "external_references": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "secret_custody_ref",
+        "operator_approval_ref",
+        "alert_routing_ref",
+        "dashboard_ref",
+        "rollback_runbook_ref",
+        "incident_runbook_ref"
+      ],
+      "properties": {
+        "secret_custody_ref": {"type": ["string", "null"], "minLength": 1},
+        "operator_approval_ref": {"type": ["string", "null"], "minLength": 1},
+        "alert_routing_ref": {"type": ["string", "null"], "minLength": 1},
+        "dashboard_ref": {"type": ["string", "null"], "minLength": 1},
+        "rollback_runbook_ref": {"type": ["string", "null"], "minLength": 1},
+        "incident_runbook_ref": {"type": ["string", "null"], "minLength": 1},
+        "operator_dual_control_review_ref": {"type": "string", "minLength": 1},
+        "operator_dual_control_review_sha256": {"type": "string", "minLength": 1}
+      }
+    },
+    "risk_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_order_notional_usd",
+        "max_daily_notional_usd"
+      ],
+      "properties": {
+        "max_order_notional_usd": {"type": "string", "minLength": 1},
+        "max_daily_notional_usd": {"type": "string", "minLength": 1}
+      }
+    },
+    "runtime_gate_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preconditions_live_submit_would_pass",
+        "preconditions_real_funds_canary_would_pass",
+        "kill_switch_open",
+        "runtime_worker_healthy",
+        "geoblock_allowed",
+        "repository_reservation_exists",
+        "idempotency_key_written",
+        "reconcile_worker_healthy",
+        "cancel_only_fallback_ready",
+        "balance_allowance_checked"
+      ],
+      "properties": {
+        "preconditions_live_submit_would_pass": {"type": "boolean"},
+        "preconditions_real_funds_canary_would_pass": {"type": "boolean"},
+        "kill_switch_open": {"type": "boolean"},
+        "runtime_worker_healthy": {"type": "boolean"},
+        "geoblock_allowed": {"type": "boolean"},
+        "repository_reservation_exists": {"type": "boolean"},
+        "idempotency_key_written": {"type": "boolean"},
+        "reconcile_worker_healthy": {"type": "boolean"},
+        "cancel_only_fallback_ready": {"type": "boolean"},
+        "balance_allowance_checked": {"type": "boolean"}
+      }
+    },
+    "runtime_gate_evidence_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kill_switch_open",
+        "runtime_worker_healthy",
+        "geoblock_allowed",
+        "repository_reservation_exists",
+        "idempotency_key_written",
+        "reconcile_worker_healthy",
+        "cancel_only_fallback_ready",
+        "balance_allowance_checked"
+      ],
+      "properties": {
+        "kill_switch_open": {"type": "string", "minLength": 1},
+        "runtime_worker_healthy": {"type": "string", "minLength": 1},
+        "geoblock_allowed": {"type": "string", "minLength": 1},
+        "repository_reservation_exists": {"type": "string", "minLength": 1},
+        "idempotency_key_written": {"type": "string", "minLength": 1},
+        "reconcile_worker_healthy": {"type": "string", "minLength": 1},
+        "cancel_only_fallback_ready": {"type": "string", "minLength": 1},
+        "balance_allowance_checked": {"type": "string", "minLength": 1}
+      }
+    },
+    "single_attempt": {"type": "boolean"},
+    "max_order_count": {"type": "integer"},
+    "post_cancel_required": {"type": "boolean"},
+    "readback_closeout_required": {"type": "boolean"},
+    "required_review_signals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_hash_reviewed",
+        "evidence_manifest_hash_reviewed",
+        "market_candidate_reviewed",
+        "operator_dual_control_reviewed",
+        "secret_custody_reviewed",
+        "alerting_reviewed",
+        "rollback_reviewed",
+        "runtime_health_reviewed",
+        "reconcile_and_cancel_fallback_reviewed"
+      ],
+      "properties": {
+        "artifact_hash_reviewed": {"type": "boolean"},
+        "evidence_manifest_hash_reviewed": {"type": "boolean"},
+        "market_candidate_reviewed": {"type": "boolean"},
+        "operator_dual_control_reviewed": {"type": "boolean"},
+        "secret_custody_reviewed": {"type": "boolean"},
+        "alerting_reviewed": {"type": "boolean"},
+        "rollback_reviewed": {"type": "boolean"},
+        "runtime_health_reviewed": {"type": "boolean"},
+        "reconcile_and_cancel_fallback_reviewed": {"type": "boolean"}
+      }
+    },
+    "expires_at": {"type": "string", "minLength": 1},
+    "live_submit_authorized": {"type": "boolean"},
+    "live_cancel_authorized": {"type": "boolean"},
+    "production_deployment_authorized": {"type": "boolean"},
+    "real_funds_canary_authorized": {"type": "boolean"},
+    "remote_side_effects_authorized": {"type": "boolean"},
+    "allow_real_funds_canary": {"type": "boolean"},
+    "reviewed_release_decision_present": {"type": "boolean"},
+    "operator_identity_ref": {"type": "string", "minLength": 1},
+    "operator_identity_sha256": {"type": "string", "minLength": 1},
+    "reviewer_identity_sha256": {"type": "string", "minLength": 1},
+    "secrets_included": {"type": "boolean"},
+    "workspace_manifest_sha256": {"type": "string", "minLength": 1},
+    "archived_manifest_sha256": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

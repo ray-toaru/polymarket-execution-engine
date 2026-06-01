@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.polymarket.local/controlled-canary.dual-control-review.schema.json",
+  "title": "Controlled Canary Dual Control Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "scope",
+    "execution_style",
+    "review_ref",
+    "reviewer_identity_ref",
+    "reviewer_identity_sha256",
+    "reviewed_at",
+    "expires_at",
+    "approval_request_sha256",
+    "approval_hash",
+    "artifact_sha256",
+    "workspace_manifest_sha256",
+    "archived_manifest_sha256",
+    "evidence_manifest_sha256",
+    "market_candidate_sha256",
+    "runtime_truth_sha256",
+    "risk_limits",
+    "required_reviewer_checks",
+    "secrets_included"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "status": {
+      "enum": ["draft_requires_independent_reviewer", "approved"]
+    },
+    "scope": {"const": "REAL_FUNDS_CANARY"},
+    "execution_style": {"const": "GTC_LIMIT_POST_ONLY_CANCEL"},
+    "review_ref": {"$ref": "#/$defs/nonEmptyString"},
+    "reviewer_identity_ref": {"$ref": "#/$defs/nonEmptyString"},
+    "reviewer_identity_sha256": {"$ref": "#/$defs/nonEmptyString"},
+    "reviewed_at": {"$ref": "#/$defs/nonEmptyString"},
+    "expires_at": {"$ref": "#/$defs/dateTimeOrPlaceholder"},
+    "approval_request_sha256": {"$ref": "#/$defs/sha256OrPlaceholder"},
+    "approval_hash": {"$ref": "#/$defs/sha256"},
+    "artifact_sha256": {"$ref": "#/$defs/sha256"},
+    "workspace_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "archived_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "evidence_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "market_candidate_sha256": {"$ref": "#/$defs/sha256"},
+    "runtime_truth_sha256": {"$ref": "#/$defs/sha256"},
+    "risk_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_order_notional_usd",
+        "max_daily_notional_usd"
+      ],
+      "properties": {
+        "max_order_notional_usd": {"$ref": "#/$defs/nonEmptyString"},
+        "max_daily_notional_usd": {"$ref": "#/$defs/nonEmptyString"},
+        "candidate_target_size": {"$ref": "#/$defs/nonEmptyString"},
+        "candidate_limit_price": {"$ref": "#/$defs/nonEmptyString"},
+        "candidate_estimated_order_notional_usd": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "required_reviewer_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_hash_reviewed",
+        "evidence_manifest_hash_reviewed",
+        "market_candidate_reviewed",
+        "runtime_truth_reviewed",
+        "risk_limits_reviewed",
+        "secret_custody_reviewed",
+        "alerting_reviewed",
+        "rollback_reviewed",
+        "reconcile_and_cancel_fallback_reviewed"
+      ],
+      "properties": {
+        "artifact_hash_reviewed": {"type": "boolean"},
+        "evidence_manifest_hash_reviewed": {"type": "boolean"},
+        "market_candidate_reviewed": {"type": "boolean"},
+        "runtime_truth_reviewed": {"type": "boolean"},
+        "risk_limits_reviewed": {"type": "boolean"},
+        "secret_custody_reviewed": {"type": "boolean"},
+        "alerting_reviewed": {"type": "boolean"},
+        "rollback_reviewed": {"type": "boolean"},
+        "reconcile_and_cancel_fallback_reviewed": {"type": "boolean"}
+      }
+    },
+    "reviewer_instruction": {"type": "string"},
+    "live_submit_authorized": {"const": false},
+    "live_cancel_authorized": {"const": false},
+    "real_funds_canary_authorized": {"const": false},
+    "remote_side_effects_authorized": {"const": false},
+    "production_deployment_authorized": {"const": false},
+    "secrets_included": {"const": false},
+    "generated_at": {"$ref": "#/$defs/dateTimeOrPlaceholder"}
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{64}$"
+    },
+    "sha256OrPlaceholder": {
+      "type": "string",
+      "pattern": "^(REPLACE_WITH_[A-Z0-9_]+|[0-9a-fA-F]{64})$"
+    },
+    "dateTimeOrPlaceholder": {
+      "type": "string",
+      "pattern": "^(REPLACE_WITH_[A-Z0-9_]+|.+)$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

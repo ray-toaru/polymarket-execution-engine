@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.polymarket.local/real-funds-canary.approval-request.schema.json",
+  "title": "Real Funds Canary Approval Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "approval_id",
+    "approval_hash",
+    "scope",
+    "account_id",
+    "condition_id",
+    "active_profile_ref",
+    "execution_style",
+    "requested_at",
+    "expires_at",
+    "operator_identity_ref",
+    "operator_identity_sha256",
+    "approval_ticket_ref",
+    "dual_control_required",
+    "approval_replay_block_required",
+    "approval_expiry_enforced",
+    "artifact_sha256",
+    "workspace_manifest_sha256",
+    "archived_manifest_sha256",
+    "evidence_manifest_sha256",
+    "market_candidate_sha256",
+    "runtime_truth_sha256",
+    "runtime_gate_snapshot",
+    "runtime_gate_evidence_refs",
+    "github_evidence",
+    "risk_limits",
+    "live_submit_authorized",
+    "live_cancel_authorized",
+    "real_funds_canary_authorized",
+    "remote_side_effects_authorized",
+    "production_deployment_authorized",
+    "secrets_included"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "status": {
+      "const": "operator_approval_request_not_authorization"
+    },
+    "approval_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approval_hash": {
+      "$ref": "#/$defs/sha256"
+    },
+    "scope": {
+      "const": "REAL_FUNDS_CANARY"
+    },
+    "account_id": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "condition_id": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "active_profile_ref": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "execution_style": {
+      "const": "GTC_LIMIT_POST_ONLY_CANCEL"
+    },
+    "requested_at": {
+      "$ref": "#/$defs/dateTime"
+    },
+    "expires_at": {
+      "$ref": "#/$defs/dateTime"
+    },
+    "operator_identity_ref": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "operator_identity_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "approval_ticket_ref": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "dual_control_required": {
+      "const": true
+    },
+    "approval_replay_block_required": {
+      "const": true
+    },
+    "approval_expiry_enforced": {
+      "const": true
+    },
+    "artifact_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "workspace_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "archived_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "evidence_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "market_candidate_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "runtime_truth_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "runtime_gate_snapshot": {
+      "$ref": "#/$defs/runtimeGateSnapshot"
+    },
+    "runtime_gate_evidence_refs": {
+      "$ref": "#/$defs/runtimeGateEvidenceRefs"
+    },
+    "github_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root_ci_run_id",
+        "hermes_ci_run_id",
+        "execution_engine_ci_run_id",
+        "credentialed_sdk_run_id"
+      ],
+      "properties": {
+        "root_ci_run_id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "hermes_ci_run_id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "execution_engine_ci_run_id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "credentialed_sdk_run_id": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "risk_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_order_notional_usd",
+        "max_daily_notional_usd",
+        "candidate_target_size",
+        "candidate_limit_price",
+        "candidate_estimated_order_notional_usd"
+      ],
+      "properties": {
+        "max_order_notional_usd": {
+          "$ref": "#/$defs/decimalString"
+        },
+        "max_daily_notional_usd": {
+          "$ref": "#/$defs/decimalString"
+        },
+        "candidate_target_size": {
+          "$ref": "#/$defs/decimalString"
+        },
+        "candidate_limit_price": {
+          "$ref": "#/$defs/decimalString"
+        },
+        "candidate_estimated_order_notional_usd": {
+          "$ref": "#/$defs/decimalString"
+        }
+      }
+    },
+    "live_submit_authorized": {
+      "const": false
+    },
+    "live_cancel_authorized": {
+      "const": false
+    },
+    "real_funds_canary_authorized": {
+      "const": false
+    },
+    "remote_side_effects_authorized": {
+      "const": false
+    },
+    "production_deployment_authorized": {
+      "const": false
+    },
+    "secrets_included": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{64}$"
+    },
+    "dateTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decimalString": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "runtimeGateSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preconditions_live_submit_would_pass",
+        "preconditions_real_funds_canary_would_pass",
+        "kill_switch_open",
+        "runtime_worker_healthy",
+        "geoblock_allowed",
+        "repository_reservation_exists",
+        "idempotency_key_written",
+        "reconcile_worker_healthy",
+        "cancel_only_fallback_ready",
+        "balance_allowance_checked"
+      ],
+      "properties": {
+        "preconditions_live_submit_would_pass": {"type": "boolean"},
+        "preconditions_real_funds_canary_would_pass": {"type": "boolean"},
+        "kill_switch_open": {"type": "boolean"},
+        "runtime_worker_healthy": {"type": "boolean"},
+        "geoblock_allowed": {"type": "boolean"},
+        "repository_reservation_exists": {"type": "boolean"},
+        "idempotency_key_written": {"type": "boolean"},
+        "reconcile_worker_healthy": {"type": "boolean"},
+        "cancel_only_fallback_ready": {"type": "boolean"},
+        "balance_allowance_checked": {"type": "boolean"}
+      }
+    },
+    "runtimeGateEvidenceRefs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kill_switch_open",
+        "runtime_worker_healthy",
+        "geoblock_allowed",
+        "repository_reservation_exists",
+        "idempotency_key_written",
+        "reconcile_worker_healthy",
+        "cancel_only_fallback_ready",
+        "balance_allowance_checked"
+      ],
+      "properties": {
+        "kill_switch_open": {"$ref": "#/$defs/nonEmptyString"},
+        "runtime_worker_healthy": {"$ref": "#/$defs/nonEmptyString"},
+        "geoblock_allowed": {"$ref": "#/$defs/nonEmptyString"},
+        "repository_reservation_exists": {"$ref": "#/$defs/nonEmptyString"},
+        "idempotency_key_written": {"$ref": "#/$defs/nonEmptyString"},
+        "reconcile_worker_healthy": {"$ref": "#/$defs/nonEmptyString"},
+        "cancel_only_fallback_ready": {"$ref": "#/$defs/nonEmptyString"},
+        "balance_allowance_checked": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    }
+  }
+}
