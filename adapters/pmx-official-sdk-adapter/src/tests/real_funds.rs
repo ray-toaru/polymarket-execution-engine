@@ -9,6 +9,7 @@ fn approval_fixture() -> RealFundsCanaryApproval {
         approval_id: "approval-real-funds-canary-1".into(),
         approval_hash: sha256_fixture('a'),
         account_id: AccountId("acct-canary".into()),
+        condition_id: "cond-1".into(),
         scope: "REAL_FUNDS_CANARY".into(),
         expires_at: "2099-01-01T00:00:00Z".into(),
         artifact_sha256: sha256_fixture('b'),
@@ -21,6 +22,30 @@ fn approval_fixture() -> RealFundsCanaryApproval {
         execution_style: "GTC_LIMIT_POST_ONLY_CANCEL".into(),
         operator_identity_ref: "operator-local-approval".into(),
         operator_identity_sha256: "1cde65add0b43ed4a85f3f2d9006e1cb9cb9f23709e893cd95359421301c6648".into(),
+        runtime_gate_snapshot: serde_json::json!({
+            "live_submit_allowed": false,
+            "real_funds_canary_allowed": false,
+            "preconditions_live_submit_would_pass": true,
+            "preconditions_real_funds_canary_would_pass": true,
+            "kill_switch_open": true,
+            "runtime_worker_healthy": true,
+            "geoblock_allowed": true,
+            "repository_reservation_exists": true,
+            "idempotency_key_written": true,
+            "reconcile_worker_healthy": true,
+            "cancel_only_fallback_ready": true,
+            "balance_allowance_checked": true
+        }),
+        runtime_gate_evidence_refs: serde_json::json!({
+            "kill_switch_open": "pg://truth/runtime_accounts/kill-switch",
+            "runtime_worker_healthy": "pg://truth/worker_health/runtime-worker",
+            "geoblock_allowed": "pg://truth/compliance/geoblock",
+            "repository_reservation_exists": "pg://truth/repository/reservation",
+            "idempotency_key_written": "pg://truth/worker_health/idempotency-lease",
+            "reconcile_worker_healthy": "pg://truth/worker_health/reconcile-worker",
+            "cancel_only_fallback_ready": "pg://truth/operations/cancel-only-fallback",
+            "balance_allowance_checked": "pg://truth/balances/allowance-check"
+        }),
     }
 }
 

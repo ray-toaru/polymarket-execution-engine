@@ -91,6 +91,11 @@ struct RuntimeTruthBindings {
 #[derive(Debug, Deserialize)]
 struct RuntimeTruthFile {
     schema_version: u64,
+    account_id: String,
+    condition_id: String,
+    artifact_sha256: String,
+    workspace_manifest_sha256: String,
+    archived_manifest_sha256: String,
     dependencies: Vec<RuntimeTruthDependency>,
     #[serde(default)]
     preflight_report: Option<RuntimeTruthPreflightReport>,
@@ -235,7 +240,7 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
     } else {
         false
     };
-    let runtime_truth = load_runtime_truth(&args).await?;
+    let runtime_truth = load_runtime_truth(&args, &approval).await?;
     let market_candidate: RealFundsCanaryMarketCandidate =
         serde_json::from_slice(&market_candidate_bytes)?;
     let validation = validate_real_funds_canary_market_with_diagnostics(
@@ -579,9 +584,12 @@ fn validate_reviewed_release_decision(
     Ok(true)
 }
 
-async fn load_runtime_truth(args: &Args) -> anyhow::Result<RuntimeTruthBindings> {
+async fn load_runtime_truth(
+    args: &Args,
+    approval: &RealFundsCanaryApproval,
+) -> anyhow::Result<RuntimeTruthBindings> {
     match args.runtime_truth_store.as_deref() {
-        None => load_runtime_truth_file(args.runtime_truth_file.as_ref()),
+        None => load_runtime_truth_file(args.runtime_truth_file.as_ref(), args, approval),
         Some("postgres") => {
             let condition_id = args.runtime_truth_condition_id.as_ref().ok_or_else(|| {
                 anyhow::anyhow!(
@@ -634,7 +642,11 @@ fn runtime_truth_from_store_bindings(
     }
 }
 
-fn load_runtime_truth_file(path: Option<&PathBuf>) -> anyhow::Result<RuntimeTruthBindings> {
+fn load_runtime_truth_file(
+    path: Option<&PathBuf>,
+    args: &Args,
+    approval: &RealFundsCanaryApproval,
+) -> anyhow::Result<RuntimeTruthBindings> {
     let Some(path) = path else {
         return Ok(RuntimeTruthBindings::default());
     };
@@ -643,6 +655,76 @@ fn load_runtime_truth_file(path: Option<&PathBuf>) -> anyhow::Result<RuntimeTrut
         anyhow::bail!(
             "unsupported runtime truth schema_version {}; expected 1",
             truth.schema_version
+        );
+    }
+    if truth.account_id.trim().is_empty() {
+        anyhow::bail!("runtime truth account_id is required");
+    }
+    if truth.account_id != args.account_id {
+        anyhow::bail!(
+            "runtime truth account_id {} does not match canary account_id {}",
+            truth.account_id,
+            args.account_id
+        );
+    }
+    let expected_condition_id = args.runtime_truth_condition_id.as_ref().ok_or_else(|| {
+        anyhow::anyhow!(
+            "--runtime-truth-condition-id is required with --runtime-truth-file"
+        )
+    })?;
+    if truth.condition_id.trim().is_empty() {
+        anyhow::bail!("runtime truth condition_id is required");
+    }
+    if truth.condition_id != *expected_condition_id {
+        anyhow::bail!(
+            "runtime truth condition_id {} does not match expected runtime-truth-condition-id {}",
+            truth.condition_id,
+            expected_condition_id
+        );
+    }
+    if truth.condition_id != approval.condition_id {
+        anyhow::bail!(
+            "runtime truth condition_id {} does not match approval condition_id {}",
+            truth.condition_id,
+            approval.condition_id
+        );
+    }
+    if truth.artifact_sha256 != args.artifact_sha256 {
+        anyhow::bail!(
+            "runtime truth artifact_sha256 {} does not match canary artifact_sha256 {}",
+            truth.artifact_sha256,
+            args.artifact_sha256
+        );
+    }
+    let expected_workspace_manifest_sha256 =
+        approval.workspace_manifest_sha256.as_ref().ok_or_else(|| {
+            anyhow::anyhow!(
+                "approval workspace_manifest_sha256 is required with --runtime-truth-file"
+            )
+        })?;
+    if truth.workspace_manifest_sha256 != *expected_workspace_manifest_sha256 {
+        anyhow::bail!(
+            "runtime truth workspace_manifest_sha256 {} does not match approval workspace_manifest_sha256 {}",
+            truth.workspace_manifest_sha256,
+            expected_workspace_manifest_sha256
+        );
+    }
+    if truth.archived_manifest_sha256 != args.evidence_manifest_sha256 {
+        anyhow::bail!(
+            "runtime truth archived_manifest_sha256 {} does not match canary evidence_manifest_sha256 {}",
+            truth.archived_manifest_sha256,
+            args.evidence_manifest_sha256
+        );
+    }
+    if approval
+        .archived_manifest_sha256
+        .as_ref()
+        .is_some_and(|value| &truth.archived_manifest_sha256 != value)
+    {
+        anyhow::bail!(
+            "runtime truth archived_manifest_sha256 {} does not match approval archived_manifest_sha256 {}",
+            truth.archived_manifest_sha256,
+            approval.archived_manifest_sha256.as_deref().unwrap_or("")
         );
     }
 
@@ -926,6 +1008,76 @@ mod tests {
         args.into_iter().map(ToOwned::to_owned).collect()
     }
 
+    fn approval_fixture() -> RealFundsCanaryApproval {
+        RealFundsCanaryApproval {
+            approval_id: "approval-canary".into(),
+            approval_hash: "a".repeat(64),
+            account_id: AccountId("acct-canary".into()),
+            condition_id: "cond-1".into(),
+            scope: "REAL_FUNDS_CANARY".into(),
+            expires_at: "2099-01-01T00:00:00Z".into(),
+            artifact_sha256: "b".repeat(64),
+            evidence_manifest_sha256: "c".repeat(64),
+            workspace_manifest_sha256: Some("e".repeat(64)),
+            archived_manifest_sha256: Some("c".repeat(64)),
+            market_candidate_sha256: "d".repeat(64),
+            max_order_notional_usd: "1".into(),
+            max_daily_notional_usd: "5".into(),
+            execution_style: "GTC_LIMIT_POST_ONLY_CANCEL".into(),
+            operator_identity_ref: "operator-local-approval".into(),
+            operator_identity_sha256:
+                "1cde65add0b43ed4a85f3f2d9006e1cb9cb9f23709e893cd95359421301c6648".into(),
+            runtime_gate_snapshot: serde_json::json!({
+                "live_submit_allowed": false,
+                "real_funds_canary_allowed": false,
+                "preconditions_live_submit_would_pass": true,
+                "preconditions_real_funds_canary_would_pass": true,
+                "kill_switch_open": true,
+                "runtime_worker_healthy": true,
+                "geoblock_allowed": true,
+                "repository_reservation_exists": true,
+                "idempotency_key_written": true,
+                "reconcile_worker_healthy": true,
+                "cancel_only_fallback_ready": true,
+                "balance_allowance_checked": true
+            }),
+            runtime_gate_evidence_refs: serde_json::json!({
+                "kill_switch_open": "pg://truth/runtime_accounts/kill-switch",
+                "runtime_worker_healthy": "pg://truth/worker_health/runtime-worker",
+                "geoblock_allowed": "pg://truth/compliance/geoblock",
+                "repository_reservation_exists": "pg://truth/repository/reservation",
+                "idempotency_key_written": "pg://truth/worker_health/idempotency-lease",
+                "reconcile_worker_healthy": "pg://truth/worker_health/reconcile-worker",
+                "cancel_only_fallback_ready": "pg://truth/operations/cancel-only-fallback",
+                "balance_allowance_checked": "pg://truth/balances/allowance-check"
+            }),
+        }
+    }
+
+    fn runtime_truth_args() -> Args {
+        parse_args_from(vec![
+            "--approval-file".into(),
+            "approval.json".into(),
+            "--artifact-sha256".into(),
+            "b".repeat(64),
+            "--evidence-manifest-sha256".into(),
+            "c".repeat(64),
+            "--idempotency-key".into(),
+            "idem".into(),
+            "--account-id".into(),
+            "acct-canary".into(),
+            "--execution-id".into(),
+            "exec".into(),
+            "--plan-hash".into(),
+            "hash".into(),
+            "--market-file".into(),
+            "market.json".into(),
+            "--runtime-truth-condition-id".into(),
+            "cond-1".into(),
+        ])
+        .expect("parse args")
+    }
+
     #[test]
     fn parses_optional_env_file_path() {
         let args =
@@ -1043,6 +1195,11 @@ mod tests {
         let path = temp_runtime_truth_path("canary-runtime-truth-gates");
         let truth = serde_json::json!({
             "schema_version": 1,
+            "account_id": "acct-canary",
+            "condition_id": "cond-1",
+            "artifact_sha256": "b".repeat(64),
+            "workspace_manifest_sha256": "e".repeat(64),
+            "archived_manifest_sha256": "c".repeat(64),
             "dependencies": [
                 {"name": "kill_switch", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/kill-switch"},
                 {"name": "live_submit_gate", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/live-submit"},
@@ -1080,7 +1237,9 @@ mod tests {
             std::env::set_var("PMX_CANCEL_ONLY_FALLBACK_READY", "0");
             std::env::set_var("PMX_BALANCE_ALLOWANCE_CHECKED", "0");
         }
-        let loaded = load_runtime_truth_file(Some(&path)).expect("load runtime truth");
+        let args = runtime_truth_args();
+        let loaded =
+            load_runtime_truth_file(Some(&path), &args, &approval_fixture()).expect("load runtime truth");
         assert!(loaded.kill_switch_open());
         assert!(loaded.cancel_only_fallback_ready());
         assert!(loaded.balance_allowance_checked());
@@ -1136,6 +1295,11 @@ mod tests {
         let path = temp_runtime_truth_path("canary-runtime-truth-missing-gate-evidence");
         let truth = serde_json::json!({
             "schema_version": 1,
+            "account_id": "acct-canary",
+            "condition_id": "cond-1",
+            "artifact_sha256": "b".repeat(64),
+            "workspace_manifest_sha256": "e".repeat(64),
+            "archived_manifest_sha256": "c".repeat(64),
             "dependencies": [
                 {"name": "kill_switch", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/kill-switch"},
                 {"name": "live_submit_gate", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/live-submit"},
@@ -1155,12 +1319,40 @@ mod tests {
         });
         std::fs::write(&path, serde_json::to_vec_pretty(&truth).expect("serialize truth file"))
             .expect("write truth file");
-        let error = load_runtime_truth_file(Some(&path)).expect_err("missing gate evidence refs must fail");
+        let args = runtime_truth_args();
+        let error = load_runtime_truth_file(Some(&path), &args, &approval_fixture())
+            .expect_err("missing gate evidence refs must fail");
         assert!(
             error
                 .to_string()
                 .contains("runtime truth preflight_report.gate_evidence_refs.kill_switch_open is required")
         );
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn runtime_truth_file_requires_matching_top_level_bindings() {
+        let path = temp_runtime_truth_path("mismatched-runtime-truth-bindings");
+        let truth = serde_json::json!({
+            "schema_version": 1,
+            "account_id": "acct-other",
+            "condition_id": "cond-other",
+            "artifact_sha256": "d".repeat(64),
+            "workspace_manifest_sha256": "e".repeat(64),
+            "archived_manifest_sha256": "f".repeat(64),
+            "dependencies": [
+                {"name": "kill_switch", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/kill-switch"},
+                {"name": "live_submit_gate", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/live-submit"},
+                {"name": "idempotency_lease", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/idempotency"},
+                {"name": "order_cancel_reconciliation", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/reconcile"},
+            ]
+        });
+        std::fs::write(&path, serde_json::to_vec_pretty(&truth).expect("serialize truth file"))
+            .expect("write truth file");
+        let args = runtime_truth_args();
+        let error = load_runtime_truth_file(Some(&path), &args, &approval_fixture())
+            .expect_err("mismatched runtime truth bindings must fail");
+        assert!(error.to_string().contains("runtime truth account_id acct-other does not match"));
         let _ = std::fs::remove_file(&path);
     }
 
@@ -1181,6 +1373,7 @@ mod tests {
                 approval_id: "approval-canary".into(),
                 approval_hash: "a".repeat(64),
                 account_id: AccountId("acct-canary".into()),
+                condition_id: "cond-1".into(),
                 scope: "REAL_FUNDS_CANARY".into(),
                 expires_at: "2099-01-01T00:00:00Z".into(),
                 artifact_sha256: "b".repeat(64),
@@ -1195,6 +1388,8 @@ mod tests {
                 operator_identity_sha256:
                     "1cde65add0b43ed4a85f3f2d9006e1cb9cb9f23709e893cd95359421301c6648"
                         .into(),
+                runtime_gate_snapshot: serde_json::json!({}),
+                runtime_gate_evidence_refs: serde_json::json!({}),
             },
             risk_limits: RealFundsCanaryRiskLimits {
                 max_order_notional_usd: "1".into(),
@@ -1296,6 +1491,7 @@ mod tests {
                 approval_id: "approval-canary".into(),
                 approval_hash: "a".repeat(64),
                 account_id: AccountId("acct-canary".into()),
+                condition_id: "cond-1".into(),
                 scope: "REAL_FUNDS_CANARY".into(),
                 expires_at: "2099-01-01T00:00:00Z".into(),
                 artifact_sha256: "b".repeat(64),
@@ -1310,6 +1506,8 @@ mod tests {
                 operator_identity_sha256:
                     "1cde65add0b43ed4a85f3f2d9006e1cb9cb9f23709e893cd95359421301c6648"
                         .into(),
+                runtime_gate_snapshot: serde_json::json!({}),
+                runtime_gate_evidence_refs: serde_json::json!({}),
             },
             risk_limits: RealFundsCanaryRiskLimits {
                 max_order_notional_usd: "1".into(),
@@ -1357,7 +1555,7 @@ mod tests {
             "PMX_TEST_DATABASE_URL",
         ]))
         .expect("parse args");
-        let err = load_runtime_truth(&args)
+        let err = load_runtime_truth(&args, &approval_fixture())
             .await
             .expect_err("missing condition id must fail before database access");
         assert!(
@@ -1370,7 +1568,7 @@ mod tests {
     async fn unsupported_runtime_truth_source_fails_closed() {
         let args =
             parse_args_from(minimal_args(&["--runtime-truth-store", "file"])).expect("parse args");
-        let err = load_runtime_truth(&args)
+        let err = load_runtime_truth(&args, &approval_fixture())
             .await
             .expect_err("unsupported source must fail");
         assert!(
@@ -1384,11 +1582,12 @@ mod tests {
         let path = temp_runtime_truth_path("partial-runtime-truth");
         std::fs::write(
             &path,
-            r#"{"schema_version":1,"dependencies":[{"name":"kill_switch","status":"durable_runtime_truth","evidence_ref":"pg://kill"}]}"#,
+            r#"{"schema_version":1,"account_id":"acct-canary","condition_id":"cond-1","artifact_sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","workspace_manifest_sha256":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","archived_manifest_sha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","dependencies":[{"name":"kill_switch","status":"durable_runtime_truth","evidence_ref":"pg://kill"}]}"#,
         )
         .expect("write runtime truth");
-        let err =
-            load_runtime_truth_file(Some(&path)).expect_err("partial runtime truth must fail");
+        let args = runtime_truth_args();
+        let err = load_runtime_truth_file(Some(&path), &args, &approval_fixture())
+            .expect_err("partial runtime truth must fail");
         let _ = std::fs::remove_file(&path);
         assert!(
             err.to_string()
@@ -1398,7 +1597,8 @@ mod tests {
 
     #[test]
     fn missing_runtime_truth_file_argument_fails_closed() {
-        let truth = load_runtime_truth_file(None).expect("default runtime truth");
+        let args = parse_args_from(minimal_args(&[])).expect("parse args");
+        let truth = load_runtime_truth_file(None, &args, &approval_fixture()).expect("default runtime truth");
         assert!(!truth.kill_switch);
         assert!(!truth.live_submit_gate);
         assert!(!truth.idempotency_lease);
@@ -1412,6 +1612,11 @@ mod tests {
             &path,
             r#"{
               "schema_version": 1,
+              "account_id": "acct-canary",
+              "condition_id": "cond-1",
+              "artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "workspace_manifest_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+              "archived_manifest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
               "dependencies": [
                 {"name":"kill_switch","status":"durable_runtime_truth","evidence_ref":"pg://kill"},
                 {"name":"live_submit_gate","status":"durable_runtime_truth","evidence_ref":"pg://live"},
@@ -1421,7 +1626,9 @@ mod tests {
             }"#,
         )
         .expect("write runtime truth");
-        let truth = load_runtime_truth_file(Some(&path)).expect("runtime truth");
+        let args = runtime_truth_args();
+        let truth =
+            load_runtime_truth_file(Some(&path), &args, &approval_fixture()).expect("runtime truth");
         let _ = std::fs::remove_file(&path);
         assert!(truth.kill_switch);
         assert!(truth.live_submit_gate);

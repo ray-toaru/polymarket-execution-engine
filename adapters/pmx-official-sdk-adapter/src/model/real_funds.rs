@@ -7,6 +7,7 @@ pub struct RealFundsCanaryApproval {
     pub approval_id: String,
     pub approval_hash: String,
     pub account_id: AccountId,
+    pub condition_id: String,
     pub scope: String,
     pub expires_at: String,
     pub artifact_sha256: String,
@@ -19,6 +20,8 @@ pub struct RealFundsCanaryApproval {
     pub execution_style: String,
     pub operator_identity_ref: String,
     pub operator_identity_sha256: String,
+    pub runtime_gate_snapshot: serde_json::Value,
+    pub runtime_gate_evidence_refs: serde_json::Value,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
