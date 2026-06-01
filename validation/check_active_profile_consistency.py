@@ -32,6 +32,11 @@ RUNTIME_REQUIRED = [
     "POLY_API_PASSPHRASE",
     "PMX_CLOB_SIGNATURE_TYPE",
 ]
+IDENTITY_REQUIRED = [
+    "PMX_ACTIVE_ACCOUNT_PROFILE",
+    "PMX_ACTIVE_ACCOUNT_ID",
+    "PMX_ACTIVE_PROFILE_REF",
+]
 
 UNSUPPORTED_ENV_TOKENS = ("`", "$(", "${", "&&", "||", ";")
 
@@ -120,6 +125,32 @@ def evaluate_env_file(path: Path, expected_account_id: str | None = None) -> dic
         "active_profile_ref": values["PMX_ACTIVE_PROFILE_REF"],
         "signature_type": signature_type,
         "has_funder": "true" if bool(funder) else "false",
+        "env_file": str(path),
+    }
+
+
+def evaluate_identity_env_file(path: Path, expected_account_id: str | None = None) -> dict[str, str]:
+    values, raw_keys = parse_env_file(path)
+    forbidden = [
+        key for key in raw_keys if key.startswith("PMX_PROFILE_") or key.startswith("PMX_ACCT_")
+    ]
+    if forbidden:
+        raise SystemExit(
+            "runtime env file must not contain profile source variables: "
+            + ", ".join(sorted(forbidden))
+        )
+    missing = [key for key in IDENTITY_REQUIRED if not values.get(key, "").strip()]
+    if missing:
+        raise SystemExit("missing required runtime identity variables: " + ", ".join(missing))
+    if expected_account_id and values["PMX_ACTIVE_ACCOUNT_ID"] != expected_account_id:
+        raise SystemExit(
+            f"active account id mismatch: expected {expected_account_id} got {values['PMX_ACTIVE_ACCOUNT_ID']}"
+        )
+    return {
+        "status": "pass",
+        "active_account_profile": values["PMX_ACTIVE_ACCOUNT_PROFILE"],
+        "active_account_id": values["PMX_ACTIVE_ACCOUNT_ID"],
+        "active_profile_ref": values["PMX_ACTIVE_PROFILE_REF"],
         "env_file": str(path),
     }
 
