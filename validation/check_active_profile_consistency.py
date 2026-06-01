@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import shlex
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -32,6 +33,26 @@ RUNTIME_REQUIRED = [
     "PMX_CLOB_SIGNATURE_TYPE",
 ]
 
+UNSUPPORTED_ENV_TOKENS = ("`", "$(", "${", "&&", "||", ";")
+
+
+def parse_env_value(raw_value: str, *, path: Path, raw_line: str) -> str:
+    value = raw_value
+    if any(token in value for token in UNSUPPORTED_ENV_TOKENS):
+        raise SystemExit(f"unsupported shell-style env value in {path}: {raw_line}")
+    stripped = value.strip()
+    if not stripped:
+        return ""
+    if stripped[0] in {"'", '"'}:
+        try:
+            parsed = shlex.split(stripped, posix=True)
+        except ValueError as exc:
+            raise SystemExit(f"invalid quoted env value in {path}: {raw_line}") from exc
+        if len(parsed) != 1:
+            raise SystemExit(f"invalid quoted env value in {path}: {raw_line}")
+        return parsed[0]
+    return value
+
 
 def companion_secrets_path(path: Path) -> Path:
     if path.suffix == ".example":
@@ -43,15 +64,17 @@ def parse_env_file(path: Path) -> tuple[dict[str, str], list[str]]:
     values: dict[str, str] = {}
     raw_keys: list[str] = []
     for raw_line in path.read_text().splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
+        stripped = raw_line.lstrip()
+        if not stripped or stripped.startswith("#"):
             continue
-        if "=" not in line:
+        if stripped.startswith("export "):
+            raise SystemExit(f"unsupported export syntax in {path}: {raw_line}")
+        if "=" not in raw_line:
             raise SystemExit(f"invalid env assignment in {path}: {raw_line}")
-        key, value = line.split("=", 1)
+        key, value = raw_line.split("=", 1)
         key = key.strip()
         raw_keys.append(key)
-        values[key] = value.strip()
+        values[key] = parse_env_value(value, path=path, raw_line=raw_line)
     return values, raw_keys
 
 
