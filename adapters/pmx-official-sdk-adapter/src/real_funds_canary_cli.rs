@@ -110,6 +110,10 @@ struct RuntimeTruthDependency {
 
 #[derive(Debug, Clone, Deserialize)]
 struct RuntimeTruthPreflightReport {
+    live_submit_allowed: bool,
+    real_funds_canary_allowed: bool,
+    preconditions_live_submit_would_pass: bool,
+    preconditions_real_funds_canary_would_pass: bool,
     kill_switch_open: bool,
     runtime_worker_healthy: bool,
     geoblock_allowed: bool,
@@ -727,6 +731,14 @@ fn load_runtime_truth_file(
             approval.archived_manifest_sha256.as_deref().unwrap_or("")
         );
     }
+    let approval_gate_snapshot = approval
+        .runtime_gate_snapshot
+        .as_object()
+        .ok_or_else(|| anyhow::anyhow!("approval runtime_gate_snapshot must be an object"))?;
+    let approval_gate_evidence_refs = approval
+        .runtime_gate_evidence_refs
+        .as_object()
+        .ok_or_else(|| anyhow::anyhow!("approval runtime_gate_evidence_refs must be an object"))?;
 
     let mut bindings = RuntimeTruthBindings::default();
     let mut invalid = Vec::<String>::new();
@@ -766,7 +778,86 @@ fn load_runtime_truth_file(
         );
     }
     bindings.gate_snapshot = truth.preflight_report.map(|report| {
+        let approval_bool = |field: &str| -> anyhow::Result<bool> {
+            approval_gate_snapshot
+                .get(field)
+                .and_then(serde_json::Value::as_bool)
+                .ok_or_else(|| anyhow::anyhow!("approval runtime_gate_snapshot.{field} must be boolean"))
+        };
+        let required_bool_matches = [
+            (
+                "live_submit_allowed",
+                report.live_submit_allowed,
+                approval_bool("live_submit_allowed")?,
+            ),
+            (
+                "real_funds_canary_allowed",
+                report.real_funds_canary_allowed,
+                approval_bool("real_funds_canary_allowed")?,
+            ),
+            (
+                "preconditions_live_submit_would_pass",
+                report.preconditions_live_submit_would_pass,
+                approval_bool("preconditions_live_submit_would_pass")?,
+            ),
+            (
+                "preconditions_real_funds_canary_would_pass",
+                report.preconditions_real_funds_canary_would_pass,
+                approval_bool("preconditions_real_funds_canary_would_pass")?,
+            ),
+            (
+                "kill_switch_open",
+                report.kill_switch_open,
+                approval_bool("kill_switch_open")?,
+            ),
+            (
+                "runtime_worker_healthy",
+                report.runtime_worker_healthy,
+                approval_bool("runtime_worker_healthy")?,
+            ),
+            (
+                "geoblock_allowed",
+                report.geoblock_allowed,
+                approval_bool("geoblock_allowed")?,
+            ),
+            (
+                "repository_reservation_exists",
+                report.repository_reservation_exists,
+                approval_bool("repository_reservation_exists")?,
+            ),
+            (
+                "idempotency_key_written",
+                report.idempotency_key_written,
+                approval_bool("idempotency_key_written")?,
+            ),
+            (
+                "reconcile_worker_healthy",
+                report.reconcile_worker_healthy,
+                approval_bool("reconcile_worker_healthy")?,
+            ),
+            (
+                "cancel_only_fallback_ready",
+                report.cancel_only_fallback_ready,
+                approval_bool("cancel_only_fallback_ready")?,
+            ),
+            (
+                "balance_allowance_checked",
+                report.balance_allowance_checked,
+                approval_bool("balance_allowance_checked")?,
+            ),
+        ];
+        for (field, runtime_truth_value, approval_value) in required_bool_matches {
+            if runtime_truth_value != approval_value {
+                anyhow::bail!(
+                    "runtime truth preflight_report.{field} does not match approval runtime_gate_snapshot.{field}"
+                );
+            }
+        }
         for field in [
+            "live_submit_allowed",
+            "real_funds_canary_allowed",
+            "preconditions_live_submit_would_pass",
+            "preconditions_real_funds_canary_would_pass",
             "kill_switch_open",
             "runtime_worker_healthy",
             "geoblock_allowed",
@@ -776,6 +867,9 @@ fn load_runtime_truth_file(
             "cancel_only_fallback_ready",
             "balance_allowance_checked",
         ] {
+            let approval_evidence_ref = approval_gate_evidence_refs.get(field).and_then(serde_json::Value::as_str).ok_or_else(|| {
+                anyhow::anyhow!("approval runtime_gate_evidence_refs.{field} must be a non-empty string")
+            })?;
             let evidence_ref = report
                 .gate_evidence_refs
                 .get(field)
@@ -783,6 +877,14 @@ fn load_runtime_truth_file(
             if evidence_ref.trim().is_empty() || evidence_ref.contains("REPLACE_WITH") {
                 anyhow::bail!(
                     "runtime truth preflight_report.gate_evidence_refs.{field} must be concrete"
+                );
+            }
+            if approval_evidence_ref.trim().is_empty() {
+                anyhow::bail!("approval runtime_gate_evidence_refs.{field} must be a non-empty string");
+            }
+            if approval_evidence_ref != evidence_ref {
+                anyhow::bail!(
+                    "runtime truth preflight_report.gate_evidence_refs.{field} does not match approval runtime_gate_evidence_refs.{field}"
                 );
             }
         }
@@ -1042,6 +1144,10 @@ mod tests {
                 "balance_allowance_checked": true
             }),
             runtime_gate_evidence_refs: serde_json::json!({
+                "live_submit_allowed": "approval://runtime-gates/live-submit-authorized",
+                "real_funds_canary_allowed": "approval://runtime-gates/real-funds-canary-authorized",
+                "preconditions_live_submit_would_pass": "pg://truth/preflight/live-submit-preconditions",
+                "preconditions_real_funds_canary_would_pass": "pg://truth/preflight/real-funds-preconditions",
                 "kill_switch_open": "pg://truth/runtime_accounts/kill-switch",
                 "runtime_worker_healthy": "pg://truth/worker_health/runtime-worker",
                 "geoblock_allowed": "pg://truth/compliance/geoblock",
@@ -1207,6 +1313,10 @@ mod tests {
                 {"name": "order_cancel_reconciliation", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/reconcile"},
             ],
             "preflight_report": {
+                "live_submit_allowed": false,
+                "real_funds_canary_allowed": false,
+                "preconditions_live_submit_would_pass": true,
+                "preconditions_real_funds_canary_would_pass": true,
                 "kill_switch_open": true,
                 "runtime_worker_healthy": true,
                 "geoblock_allowed": true,
@@ -1216,6 +1326,10 @@ mod tests {
                 "cancel_only_fallback_ready": true,
                 "balance_allowance_checked": true,
                 "gate_evidence_refs": {
+                    "live_submit_allowed": "approval://runtime-gates/live-submit-authorized",
+                    "real_funds_canary_allowed": "approval://runtime-gates/real-funds-canary-authorized",
+                    "preconditions_live_submit_would_pass": "pg://truth/preflight/live-submit-preconditions",
+                    "preconditions_real_funds_canary_would_pass": "pg://truth/preflight/real-funds-preconditions",
                     "kill_switch_open": "pg://truth/runtime_accounts/kill-switch",
                     "runtime_worker_healthy": "pg://truth/worker_health/runtime-worker",
                     "geoblock_allowed": "pg://truth/compliance/geoblock",
@@ -1307,6 +1421,10 @@ mod tests {
                 {"name": "order_cancel_reconciliation", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/reconcile"}
             ],
             "preflight_report": {
+                "live_submit_allowed": false,
+                "real_funds_canary_allowed": false,
+                "preconditions_live_submit_would_pass": true,
+                "preconditions_real_funds_canary_would_pass": true,
                 "kill_switch_open": true,
                 "runtime_worker_healthy": true,
                 "geoblock_allowed": true,
@@ -1353,6 +1471,62 @@ mod tests {
         let error = load_runtime_truth_file(Some(&path), &args, &approval_fixture())
             .expect_err("mismatched runtime truth bindings must fail");
         assert!(error.to_string().contains("runtime truth account_id acct-other does not match"));
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn runtime_truth_file_requires_matching_approval_gate_snapshot_and_evidence_refs() {
+        let path = temp_runtime_truth_path("mismatched-runtime-truth-gate-snapshot");
+        let truth = serde_json::json!({
+            "schema_version": 1,
+            "account_id": "acct-canary",
+            "condition_id": "cond-1",
+            "artifact_sha256": "b".repeat(64),
+            "workspace_manifest_sha256": "e".repeat(64),
+            "archived_manifest_sha256": "c".repeat(64),
+            "dependencies": [
+                {"name": "kill_switch", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/kill-switch"},
+                {"name": "live_submit_gate", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/live-submit"},
+                {"name": "idempotency_lease", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/idempotency"},
+                {"name": "order_cancel_reconciliation", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/reconcile"}
+            ],
+            "preflight_report": {
+                "live_submit_allowed": true,
+                "real_funds_canary_allowed": false,
+                "preconditions_live_submit_would_pass": true,
+                "preconditions_real_funds_canary_would_pass": true,
+                "kill_switch_open": true,
+                "runtime_worker_healthy": true,
+                "geoblock_allowed": true,
+                "repository_reservation_exists": true,
+                "idempotency_key_written": true,
+                "reconcile_worker_healthy": true,
+                "cancel_only_fallback_ready": true,
+                "balance_allowance_checked": true,
+                "gate_evidence_refs": {
+                    "live_submit_allowed": "approval://runtime-gates/live-submit-authorized",
+                    "real_funds_canary_allowed": "approval://runtime-gates/real-funds-canary-authorized",
+                    "preconditions_live_submit_would_pass": "pg://truth/preflight/live-submit-preconditions",
+                    "preconditions_real_funds_canary_would_pass": "pg://truth/preflight/real-funds-preconditions",
+                    "kill_switch_open": "pg://truth/runtime_accounts/kill-switch",
+                    "runtime_worker_healthy": "pg://truth/worker_health/runtime-worker",
+                    "geoblock_allowed": "pg://truth/compliance/geoblock",
+                    "repository_reservation_exists": "pg://truth/repository/reservation",
+                    "idempotency_key_written": "pg://truth/worker_health/idempotency-lease",
+                    "reconcile_worker_healthy": "pg://truth/worker_health/reconcile-worker",
+                    "cancel_only_fallback_ready": "pg://truth/operations/cancel-only-fallback",
+                    "balance_allowance_checked": "pg://truth/balances/allowance-check"
+                }
+            }
+        });
+        std::fs::write(&path, serde_json::to_vec_pretty(&truth).expect("serialize truth file"))
+            .expect("write truth file");
+        let args = runtime_truth_args();
+        let error = load_runtime_truth_file(Some(&path), &args, &approval_fixture())
+            .expect_err("mismatched runtime truth approval gate snapshot must fail");
+        assert!(error
+            .to_string()
+            .contains("runtime truth preflight_report.live_submit_allowed does not match approval runtime_gate_snapshot.live_submit_allowed"));
         let _ = std::fs::remove_file(&path);
     }
 

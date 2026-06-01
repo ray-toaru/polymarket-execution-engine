@@ -37,6 +37,10 @@ fn approval_fixture() -> RealFundsCanaryApproval {
             "balance_allowance_checked": true
         }),
         runtime_gate_evidence_refs: serde_json::json!({
+            "live_submit_allowed": "approval://runtime-gates/live-submit-authorized",
+            "real_funds_canary_allowed": "approval://runtime-gates/real-funds-canary-authorized",
+            "preconditions_live_submit_would_pass": "pg://truth/preflight/live-submit-preconditions",
+            "preconditions_real_funds_canary_would_pass": "pg://truth/preflight/real-funds-preconditions",
             "kill_switch_open": "pg://truth/runtime_accounts/kill-switch",
             "runtime_worker_healthy": "pg://truth/worker_health/runtime-worker",
             "geoblock_allowed": "pg://truth/compliance/geoblock",
