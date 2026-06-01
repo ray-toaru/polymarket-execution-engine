@@ -239,6 +239,7 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
         std::env::var(ENV_ALLOW_REAL_FUNDS_CANARY).ok().as_deref() == Some("1");
     let market_candidate_bytes = std::fs::read(&args.market_file)?;
     let market_candidate_sha256 = sha256_hex(&market_candidate_bytes);
+    validate_canary_input_bindings(&args, &approval, &market_candidate_sha256)?;
     let release_decision_bound = if args.armed || args.release_decision_file.is_some() {
         validate_reviewed_release_decision(&args, &approval, &market_candidate_sha256)?
     } else {
@@ -586,6 +587,48 @@ fn validate_reviewed_release_decision(
         market_candidate_sha256,
     )?;
     Ok(true)
+}
+
+fn validate_canary_input_bindings(
+    args: &Args,
+    approval: &RealFundsCanaryApproval,
+    market_candidate_sha256: &str,
+) -> anyhow::Result<()> {
+    if approval.account_id.0 != args.account_id {
+        anyhow::bail!(
+            "approval account_id {} does not match canary account_id {}",
+            approval.account_id.0,
+            args.account_id
+        );
+    }
+    if approval.artifact_sha256 != args.artifact_sha256 {
+        anyhow::bail!(
+            "approval artifact_sha256 {} does not match canary artifact_sha256 {}",
+            approval.artifact_sha256,
+            args.artifact_sha256
+        );
+    }
+    if approval.evidence_manifest_sha256 != args.evidence_manifest_sha256 {
+        anyhow::bail!(
+            "approval evidence_manifest_sha256 {} does not match canary evidence_manifest_sha256 {}",
+            approval.evidence_manifest_sha256,
+            args.evidence_manifest_sha256
+        );
+    }
+    if approval.market_candidate_sha256 != market_candidate_sha256 {
+        anyhow::bail!(
+            "approval market_candidate_sha256 {} does not match candidate market sha256 {}",
+            approval.market_candidate_sha256,
+            market_candidate_sha256
+        );
+    }
+    if approval.execution_style != "GTC_LIMIT_POST_ONLY_CANCEL" {
+        anyhow::bail!(
+            "approval execution_style {} does not match required real-funds canary execution style",
+            approval.execution_style
+        );
+    }
+    Ok(())
 }
 
 async fn load_runtime_truth(
@@ -1528,6 +1571,34 @@ mod tests {
             .to_string()
             .contains("runtime truth preflight_report.live_submit_allowed does not match approval runtime_gate_snapshot.live_submit_allowed"));
         let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn canary_input_bindings_fail_closed_before_dry_run_ready() {
+        let args = parse_args_from(vec![
+            "--approval-file".into(),
+            "approval.json".into(),
+            "--artifact-sha256".into(),
+            "b".repeat(64),
+            "--evidence-manifest-sha256".into(),
+            "c".repeat(64),
+            "--idempotency-key".into(),
+            "idem".into(),
+            "--account-id".into(),
+            "acct-other".into(),
+            "--execution-id".into(),
+            "exec".into(),
+            "--plan-hash".into(),
+            "hash".into(),
+            "--market-file".into(),
+            "market.json".into(),
+        ])
+        .expect("parse args");
+        let err = validate_canary_input_bindings(&args, &approval_fixture(), &"d".repeat(64))
+            .expect_err("approval account mismatch must fail");
+        assert!(err
+            .to_string()
+            .contains("approval account_id acct-canary does not match canary account_id acct-other"));
     }
 
     #[test]
