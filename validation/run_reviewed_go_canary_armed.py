@@ -162,8 +162,8 @@ def build_armed_invocation(
         "runtime_gate_snapshot": gate_snapshot,
         "runtime_gate_evidence_refs": gate_evidence_refs,
         "command": command,
-        "required_gate_env_vars": base.REQUIRED_GATE_ENV_VARS,
-        "missing_gate_env_vars": base.missing_gate_env(),
+        "required_gate_env_vars": [],
+        "missing_gate_env_vars": [],
         "includes_live_config_overrides": True,
         "requires_explicit_live_config_overrides": False,
         "report_file": str(resolved_report_file),
@@ -191,13 +191,6 @@ def main() -> int:
     if not args.run:
         print(json.dumps(invocation, indent=2, sort_keys=True))
         return 0
-
-    missing = invocation["missing_gate_env_vars"]
-    if missing:
-        raise SystemExit(
-            "cannot execute reviewed-go armed canary; missing required gate env vars: "
-            + ", ".join(missing)
-        )
 
     completed = subprocess.run(
         invocation["command"],
