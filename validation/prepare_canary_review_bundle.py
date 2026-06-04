@@ -14,7 +14,7 @@ INTEGRATION_ROOT = ROOT.parent
 RUNTIME_BUNDLE_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_canary_runtime_bundle.py"
 DUAL_CONTROL_TEMPLATE_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_dual_control_review_template.py"
 REVIEW_PACKET_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_dual_control_review_packet.py"
-APPROVAL_REQUEST_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_operator_approval_request_helpers.py"
+APPROVAL_REQUEST_SCRIPT = ROOT / "validation" / "prepare_operator_approval_request_helpers.py"
 
 
 def load_module(path: Path, name: str):

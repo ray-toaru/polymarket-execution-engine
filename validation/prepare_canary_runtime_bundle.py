@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_ROOT = ROOT.parent
 ACTIVATE_SCRIPT = INTEGRATION_ROOT / "scripts" / "activate_pmx_profile.py"
-APPROVAL_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_operator_approval_request_helpers.py"
+APPROVAL_SCRIPT = ROOT / "validation" / "prepare_operator_approval_request_helpers.py"
 
 
 def load_module(path: Path, name: str):

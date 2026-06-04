@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_ROOT = ROOT.parent
 PREPARE_CANDIDATE_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_canary_candidate_market.py"
 REVIEW_BUNDLE_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_canary_review_bundle.py"
-APPROVAL_REQUEST_SCRIPT = INTEGRATION_ROOT / "scripts" / "prepare_operator_approval_request_helpers.py"
+APPROVAL_REQUEST_SCRIPT = ROOT / "validation" / "prepare_operator_approval_request_helpers.py"
 ACTIVATE_PROFILE_SCRIPT = INTEGRATION_ROOT / "scripts" / "activate_pmx_profile.py"
 STORE_TRUTH_SCRIPT = ROOT / "validation" / "run_real_funds_canary_store_truth_cli_preflight.py"
 
