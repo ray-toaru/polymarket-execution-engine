@@ -164,7 +164,7 @@ def build_armed_invocation(
         "command": command,
         "required_gate_env_vars": [],
         "missing_gate_env_vars": [],
-        "includes_live_config_overrides": True,
+        "includes_live_config_overrides": False,
         "requires_explicit_live_config_overrides": False,
         "report_file": str(resolved_report_file),
         "approval_consumed_marker": str(resolved_consumed_marker),

@@ -213,7 +213,7 @@ def main() -> int:
         "status": "fail" if failures else "pass",
         "rehearsal": "blocked_real_funds_canary_armed_no_go",
         "armed_requested": True,
-        "includes_live_config_overrides": True,
+        "includes_live_config_overrides": False,
         "expected_exit_code": 1,
         "observed_exit_code": observed_exit_code,
         "blocked_at": "release_decision_gate",
