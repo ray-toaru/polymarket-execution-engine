@@ -15,7 +15,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_ROOT = ROOT.parent
-REVIEWED_GO_DECISION = INTEGRATION_ROOT / "scripts" / "prepare_reviewed_go_decision.py"
+REVIEWED_GO_DECISION = ROOT / "validation" / "prepare_reviewed_go_decision.py"
 REVIEW_PACKET = INTEGRATION_ROOT / "scripts" / "prepare_dual_control_review_packet.py"
 
 
