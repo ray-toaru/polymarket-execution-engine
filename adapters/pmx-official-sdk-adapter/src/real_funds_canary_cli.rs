@@ -403,23 +403,22 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
             )?;
             return Err(err);
         }
-        create_approval_consumed_marker(&args, &approval, &market_candidate_sha256)?;
-        persist_stage_report(
-            &args,
-            &RealFundsCanaryStageReport::stage(
-                &request,
-                "approval_consumed",
-                None,
-                None,
-                false,
-                false,
-                false,
-            ),
-        )?;
+        let mut approval_consumed_persisted = false;
         let mut last_remote_side_effect_stage: Option<RealFundsCanaryStageReport> = None;
         let result =
             run_real_funds_canary_gtc_post_only_cancel_with_reporter(&config, request, |stage| {
-                if stage.remote_side_effects {
+                if (stage.remote_side_effects || stage.operator_required)
+                    && !approval_consumed_persisted
+                {
+                    persist_approval_consumption_after_remote_attempt(
+                        &args,
+                        &approval,
+                        &market_candidate_sha256,
+                        stage,
+                    )?;
+                    approval_consumed_persisted = true;
+                }
+                if stage.remote_side_effects || stage.operator_required {
                     last_remote_side_effect_stage = Some(stage.clone());
                 }
                 persist_stage_report(&args, stage)
@@ -957,6 +956,35 @@ fn create_approval_consumed_marker(
     file.write_all(serde_json::to_string_pretty(&marker)?.as_bytes())?;
     file.write_all(b"\n")?;
     Ok(())
+}
+
+fn persist_approval_consumption_after_remote_attempt(
+    args: &Args,
+    approval: &RealFundsCanaryApproval,
+    market_candidate_sha256: &str,
+    stage: &RealFundsCanaryStageReport,
+) -> anyhow::Result<()> {
+    create_approval_consumed_marker(args, approval, market_candidate_sha256)?;
+    let report = RealFundsCanaryStageReport {
+        status: "approval_consumed".into(),
+        stage: "approval_consumed_post_remote_attempt".into(),
+        account_id: stage.account_id.clone(),
+        execution_id: stage.execution_id.clone(),
+        plan_hash: stage.plan_hash.clone(),
+        approval_hash: stage.approval_hash.clone(),
+        market_candidate_sha256: stage.market_candidate_sha256.clone(),
+        idempotency_key: stage.idempotency_key.clone(),
+        remote_order_id: stage.remote_order_id.clone(),
+        remote_status: stage.remote_status.clone(),
+        posted: stage.posted,
+        filled_or_matched: false,
+        cancelled: false,
+        remote_side_effects: stage.remote_side_effects,
+        operator_required: false,
+        error_summary: None,
+        raw_signed_order_exposed: false,
+    };
+    persist_stage_report(args, &report)
 }
 
 fn persist_armed_report(args: &Args, receipt: &RealFundsCanaryReceipt) -> anyhow::Result<()> {
@@ -1781,6 +1809,85 @@ mod tests {
         assert_eq!(history.lines().count(), 1);
         let _ = std::fs::remove_file(&report_path);
         let _ = std::fs::remove_file(&history_path);
+    }
+
+    #[test]
+    fn real_funds_approval_consumed_marker_is_persisted_after_remote_attempt_stage_boundary() {
+        let report_path = temp_report_path("canary-approval-consumed-ordering");
+        let marker_path = temp_runtime_truth_path("approval-consumed-marker");
+        let args = parse_args_from(minimal_args(&[
+            "--report-file",
+            report_path.to_str().unwrap(),
+            "--approval-consumed-marker",
+            marker_path.to_str().unwrap(),
+        ]))
+        .expect("parse args");
+        let request = RealFundsCanaryRequest {
+            account_id: AccountId("acct-canary".into()),
+            execution_id: ExecutionId("exec-canary".into()),
+            plan_hash: HashValue("plan-hash".into()),
+            idempotency_key: "idem-canary".into(),
+            approval: approval_fixture(),
+            risk_limits: RealFundsCanaryRiskLimits {
+                max_order_notional_usd: "1".into(),
+                max_daily_notional_usd: "5".into(),
+                daily_used_notional_usd: "0".into(),
+            },
+            market: RealFundsCanaryMarketSelection {
+                market_id: "market".into(),
+                token_id: "123".into(),
+                limit_price: "0.10".into(),
+                size: "5".into(),
+                notional_usd: "0.50".into(),
+                selection_reason: "unit-test".into(),
+            },
+            market_candidate_sha256: "d".repeat(64),
+            preconditions: passing_preconditions(),
+        };
+        let remote_stage = RealFundsCanaryStageReport::stage(
+            &request,
+            "post_accepted",
+            Some("remote-1".into()),
+            Some("Live".into()),
+            true,
+            false,
+            false,
+        );
+
+        persist_stage_report(
+            &args,
+            &RealFundsCanaryStageReport::stage(
+                &request,
+                "armed_precheck_started",
+                None,
+                None,
+                false,
+                false,
+                false,
+            ),
+        )
+        .expect("persist precheck stage");
+        persist_approval_consumption_after_remote_attempt(
+            &args,
+            &request.approval,
+            &request.market_candidate_sha256,
+            &remote_stage,
+        )
+        .expect("persist approval consumed after remote attempt");
+        persist_stage_report(&args, &remote_stage).expect("persist remote stage");
+
+        assert!(marker_path.is_file());
+        let history_path = report_path.with_extension("json.stages.jsonl");
+        let history = std::fs::read_to_string(&history_path).expect("stage history");
+        let lines = history.lines().collect::<Vec<_>>();
+        assert_eq!(lines.len(), 3);
+        assert!(lines[0].contains("\"stage\":\"armed_precheck_started\""));
+        assert!(lines[1].contains("\"stage\":\"approval_consumed_post_remote_attempt\""));
+        assert!(lines[1].contains("\"remote_order_id\":\"remote-1\""));
+        assert!(lines[2].contains("\"stage\":\"post_accepted\""));
+        let _ = std::fs::remove_file(&report_path);
+        let _ = std::fs::remove_file(&history_path);
+        let _ = std::fs::remove_file(&marker_path);
     }
 
     #[tokio::test]
