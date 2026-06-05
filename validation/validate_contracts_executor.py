@@ -2213,6 +2213,39 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
         fail("current API reconcile-order-local route must bind Json<ReconcileOrderLocalRequest> -> ApiResult<ReconcileOrderLocalResponse>")
     if "Json(req): Json<CancelOrderRequest>" not in cancel_params or cancel_return != "ApiResult<CancelReceipt>":
         fail("current API cancel route must bind Json<CancelOrderRequest> -> ApiResult<CancelReceipt>")
+    sign_only_body = rust_handler_body("list_sign_only_lifecycle_events")
+    execution_body = rust_handler_body("list_execution_lifecycle_events")
+    order_body = rust_handler_body("list_order_lifecycle_events")
+    require_tokens(
+        sign_only_body,
+        "current API lifecycle read route",
+        [
+            "list_sign_only_lifecycle_events(SignOnlyLifecycleQuery {",
+            "limit: query.limit.unwrap_or(100)",
+            "before_event_id: query.before_event_id",
+            "Ok((StatusCode::OK, Json(records)))",
+        ],
+    )
+    require_tokens(
+        execution_body,
+        "current API lifecycle read route",
+        [
+            "list_execution_lifecycle_events(ExecutionLifecycleQuery {",
+            "limit: query.limit.unwrap_or(100)",
+            "before_event_id: query.before_event_id",
+            "Ok((StatusCode::OK, Json(events)))",
+        ],
+    )
+    require_tokens(
+        order_body,
+        "current API lifecycle read route",
+        [
+            "list_order_lifecycle_events(OrderLifecycleEventQuery {",
+            "limit: query.limit.unwrap_or(100)",
+            "before_event_id: query.before_event_id",
+            "Ok((StatusCode::OK, Json(events)))",
+        ],
+    )
     cancel_body = rust_handler_body("record_cancel_order_non_live")
     require_tokens(
         cancel_body,
