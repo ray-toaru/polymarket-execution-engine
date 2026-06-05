@@ -293,7 +293,7 @@ def validate_packaging_scripts(failures: list[str]) -> None:
         failures.append("release_policy.py missing")
         return
     policy_text = RELEASE_POLICY.read_text()
-    package_text = PACKAGE_SCRIPT.read_text()
+    package_text = (ROOT / "polymarket-execution-engine" / "validation" / "package_release.py").read_text()
     for token in [
         "docs/archive",
         "evidence/archive",
@@ -305,7 +305,7 @@ def validate_packaging_scripts(failures: list[str]) -> None:
             failures.append(f"release_policy.py must exclude {token}")
     if "from release_policy import" not in package_text:
         failures.append("package_release.py must import shared release_policy")
-    artifact_text = ARTIFACT_CHECK.read_text()
+    artifact_text = (ROOT / "polymarket-execution-engine" / "validation" / "check_release_artifact.py").read_text()
     if "from release_policy import" not in artifact_text:
         failures.append("check_release_artifact.py must import shared release_policy")
     for token in ["canonical evidence manifest", "validate_dist_index", "release_policy"]:
