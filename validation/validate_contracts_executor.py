@@ -1750,18 +1750,24 @@ def validate_v21_sign_only_and_runtime_models(spec: dict | None = None) -> None:
         "created_at",
     }.issubset(sign_only_record_fields):
         fail("v0.21 sign-only lifecycle core missing SignOnlyLifecycleRecord fields")
-    require_tokens(
-        sign_only_core_text,
-        "v0.21 sign-only lifecycle core",
-        [
-            "sign_only_lifecycle_has_remote_side_effect",
-        ],
+    sign_only_remote_side_effect_params, sign_only_remote_side_effect_return = rust_fn_signature(
+        sign_only_core_text, "sign_only_lifecycle_has_remote_side_effect"
     )
+    if (
+        "record: &SignOnlyLifecycleRecord" not in sign_only_remote_side_effect_params
+        or sign_only_remote_side_effect_return != "bool"
+    ):
+        fail(
+            "v0.21 sign-only lifecycle core must bind sign_only_lifecycle_has_remote_side_effect(&SignOnlyLifecycleRecord) -> bool"
+        )
     sign_only_equivalent_body = rust_fn_body(
         sign_only_core_text, "sign_only_lifecycle_records_equivalent"
     )
     sign_only_transition_body = rust_fn_body(
         sign_only_core_text, "transition_sign_only_lifecycle"
+    )
+    sign_only_remote_side_effect_body = rust_fn_body(
+        sign_only_core_text, "sign_only_lifecycle_has_remote_side_effect"
     )
     require_tokens(
         sign_only_equivalent_body,
@@ -1783,6 +1789,13 @@ def validate_v21_sign_only_and_runtime_models(spec: dict | None = None) -> None:
             "SignOnlyLifecycleEventKind::SignedWithoutPost",
             "SignOnlyLifecycleState::SignedDryRun",
             "CoreError::InvalidSignOnlyTransition { from, event }",
+        ],
+    )
+    require_tokens(
+        sign_only_remote_side_effect_body,
+        "v0.21 sign-only lifecycle core",
+        [
+            "!record.no_remote_side_effect",
         ],
     )
     lifecycle_adapter_text = (SDK_ADAPTER_SRC / "lifecycle.rs").read_text()

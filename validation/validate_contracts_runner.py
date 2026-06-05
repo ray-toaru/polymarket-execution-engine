@@ -80,7 +80,7 @@ VALIDATORS = [
     ValidatorSpec("v16_postgres_runtime_provider", "executor", "S1", "mixed", True, validate_v16_postgres_runtime_provider),
     ValidatorSpec("v19_redaction_and_live_guard", "executor", "S1", "mixed", True, validate_v19_redaction_and_live_guard),
     ValidatorSpec("v20_plan_storage_and_packaging", "executor", "S2", "mixed", True, validate_v20_plan_storage_and_packaging),
-    ValidatorSpec("v21_sign_only_and_runtime_models", "executor", "S2", "mixed", True, validate_v21_sign_only_and_runtime_models),
+    ValidatorSpec("v21_sign_only_and_runtime_models", "executor", "S2", "structured", True, validate_v21_sign_only_and_runtime_models),
     ValidatorSpec("store_and_backend_structure", "executor", "S2", "mixed", False, validate_store_and_backend_structure),
     ValidatorSpec("v23_lifecycle_query_and_hardening", "executor", "S1", "mixed", True, validate_v23_lifecycle_query_and_hardening),
     ValidatorSpec("current_hermes_client_surface", "governance", "S2", "structured", False, validate_current_hermes_client_surface),
