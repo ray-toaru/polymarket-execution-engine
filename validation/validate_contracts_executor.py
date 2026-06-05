@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import tomllib
+from pathlib import Path
 
 from validate_contracts_support import (
     API_E2E_TEST,
@@ -26,6 +27,7 @@ from validate_contracts_support import (
     SQL,
     STORE_SRC,
     fail,
+    import_module_from_path,
     rust_file_with_modules_text,
     rust_handler_body,
     rust_source_text,
@@ -1445,10 +1447,57 @@ def validate_v19_redaction_and_live_guard(spec: dict | None = None) -> None:
         fail("v0.19 adapter redaction tests missing redaction coverage")
     if not LIVE_SUBMIT_GUARD.exists():
         fail("missing v0.19 live-submit static guard")
-    guard_text = LIVE_SUBMIT_GUARD.read_text()
-    for needle in ["post_order", "post_orders", "public OpenAPI", "live-submit static guard passed"]:
-        if needle not in guard_text:
-            fail(f"v0.19 live-submit static guard missing token: {needle}")
+    guard_module = import_module_from_path("validate_v19_live_submit_guard", LIVE_SUBMIT_GUARD)
+    required_guard_paths = {
+        "ALLOWED_GATEWAY_POST_ORDER_FILE": "sdk_runtime/gateway.rs",
+        "ALLOWED_POST_ORDER_FILE": "sdk_runtime/live_canary.rs",
+        "ALLOWED_SERVICE_POST_ORDER_FILE": "submit/live.rs",
+        "PUBLIC_CONTRACT": "openapi/executor.v1.yaml",
+    }
+    for attr, suffix in required_guard_paths.items():
+        value = getattr(guard_module, attr, None)
+        if not isinstance(value, Path) or not str(value).endswith(suffix):
+            fail(f"v0.19 live-submit static guard missing canonical path binding: {attr}")
+    forbidden_terms = set(getattr(guard_module, "FORBIDDEN_PUBLIC_TERMS", []))
+    if not {"SignedOrderEnvelope", "signed_payload", "private_key", "clob_secret", "post_order"}.issubset(
+        forbidden_terms
+    ):
+        fail("v0.19 live-submit static guard missing forbidden public terms")
+    canary_tokens = set(getattr(guard_module, "REQUIRED_CANARY_TOKENS", []))
+    if not {
+        "validate_live_submit_canary_preconditions",
+        "validate_real_funds_canary_preconditions",
+        "raw_signed_order_exposed: false",
+        "run_real_funds_canary_gtc_post_only_cancel",
+    }.issubset(canary_tokens):
+        fail("v0.19 live-submit static guard missing canary guard token set")
+    idempotency_tokens = getattr(guard_module, "REQUIRED_IDEMPOTENCY_TOKENS", [])
+    if not any(
+        isinstance(path, Path)
+        and str(path).endswith("memory/idempotency.rs")
+        and "IDEMPOTENCY_LEASE_SECS" in tokens
+        and "IdempotencyAction::InProgress" in tokens
+        for path, tokens in idempotency_tokens
+    ):
+        fail("v0.19 live-submit static guard missing memory idempotency guard binding")
+    if not any(
+        isinstance(path, Path)
+        and str(path).endswith("postgres_idempotency/finish.rs")
+        and "AND owner_token = $4 AND status = 'PROCEEDING'" in tokens
+        for path, tokens in idempotency_tokens
+    ):
+        fail("v0.19 live-submit static guard missing postgres idempotency finish binding")
+    for helper_name in [
+        "strip_rust_comments",
+        "validate_allowed_call_sites",
+        "validate_required_tokens",
+        "validate_idempotency_guard_tokens",
+        "validate_canary_guard_tokens",
+        "validate_service_live_submit_tokens",
+        "main",
+    ]:
+        if not callable(getattr(guard_module, helper_name, None)):
+            fail(f"v0.19 live-submit static guard missing helper: {helper_name}")
     if not (EXECUTOR / "validation/run_current_gates.sh").exists():
         fail("missing current gate runner")
     for doc in [EXECUTOR / "docs/SIGNED_PAYLOAD_REDACTION.md", EXECUTOR / "docs/LIVE_SUBMIT_STATIC_GUARD.md"]:
