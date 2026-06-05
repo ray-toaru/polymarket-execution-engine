@@ -1304,10 +1304,22 @@ def validate_v19_redaction_and_live_guard(spec: dict | None = None) -> None:
     )
     if "&str" not in redact_sensitive_params or redact_sensitive_return != "String":
         fail("v0.19 adapter redaction must bind &str -> String")
+    redact_normalized_params, redact_normalized_return = rust_fn_signature(
+        redaction_text, "redact_normalized_error"
+    )
+    if "&OfficialSdkNormalizedError" not in redact_normalized_params or redact_normalized_return != "OfficialSdkNormalizedError":
+        fail("v0.19 adapter redaction must bind &OfficialSdkNormalizedError -> OfficialSdkNormalizedError")
+    redact_assignment_params, redact_assignment_return = rust_fn_signature(
+        redaction_text, "redact_assignment_value"
+    )
+    if "input: &str" not in redact_assignment_params or "key: &str" not in redact_assignment_params or redact_assignment_return != "String":
+        fail("v0.19 adapter redaction must bind redact_assignment_value(&str, &str) -> String")
     gateway_error_body = rust_fn_body(
         redaction_text, "gateway_error_from_normalized_sdk_error"
     )
     redact_sensitive_body = rust_fn_body(redaction_text, "redact_sensitive_text")
+    redact_normalized_body = rust_fn_body(redaction_text, "redact_normalized_error")
+    redact_assignment_body = rust_fn_body(redaction_text, "redact_assignment_value")
     constants_text = (SDK_ADAPTER_SRC / "model/constants.rs").read_text()
     if "REDACTED" not in rust_const_names(constants_text):
         fail("v0.19 adapter constants missing REDACTED constant")
@@ -1360,6 +1372,24 @@ def validate_v19_redaction_and_live_guard(spec: dict | None = None) -> None:
             "redact_known_env_values(input)",
             "looks_like_hex_private_key(token)",
             "\"0x[REDACTED]\".to_string()",
+        ],
+    )
+    require_tokens(
+        redact_normalized_body,
+        "v0.19 adapter redaction",
+        [
+            "let mut redacted = error.clone();",
+            "redacted.message = redact_sensitive_text(&redacted.message);",
+            "redacted",
+        ],
+    )
+    require_tokens(
+        redact_assignment_body,
+        "v0.19 adapter redaction",
+        [
+            'format!("{key}=")',
+            "out.push_str(REDACTED);",
+            "matches!(c, ',' | ';' | '&')",
         ],
     )
     require_tokens(
