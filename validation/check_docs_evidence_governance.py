@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import re
 import sys
@@ -11,6 +12,7 @@ from pathlib import Path
 SCRIPT = Path(__file__).resolve()
 EXECUTOR = SCRIPT.parents[1]
 INTEGRATION_ROOT = SCRIPT.parents[2]
+VALIDATION_DIR = SCRIPT.parent
 if (INTEGRATION_ROOT / "VERSION").exists() and (INTEGRATION_ROOT / "polymarket-execution-engine").exists():
     ROOT = INTEGRATION_ROOT
     EXECUTOR = ROOT / "polymarket-execution-engine"
@@ -25,8 +27,9 @@ PACKAGE_SCRIPT = ROOT / "scripts" / "package_release.py"
 ARTIFACT_CHECK = ROOT / "scripts" / "check_release_artifact.py"
 RELEASE_POLICY = ROOT / "scripts" / "release_policy.py"
 SCRIPTS = ROOT / "scripts"
-if str(SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS))
+for path in (VALIDATION_DIR, SCRIPTS):
+    if str(path) not in sys.path:
+        sys.path.insert(0, str(path))
 
 from release_doc_policy import (
     STALE_ROOT_DOC_PATTERNS,
@@ -55,6 +58,15 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: fh.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def import_module_from_path(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"unable to load module {name} from {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def validate_root_docs(failures: list[str]) -> None:
@@ -292,16 +304,27 @@ def validate_packaging_scripts(failures: list[str]) -> None:
     if not RELEASE_POLICY.exists():
         failures.append("release_policy.py missing")
         return
-    policy_text = RELEASE_POLICY.read_text()
+    try:
+        policy_module = import_module_from_path("pmx_release_policy", RELEASE_POLICY)
+    except Exception as exc:
+        failures.append(f"unable to load release_policy.py: {exc}")
+        return
     package_text = (ROOT / "polymarket-execution-engine" / "validation" / "package_release.py").read_text()
-    for token in [
-        "docs/archive",
-        "evidence/archive",
-        "validation/archive",
-        "polymarket-execution-engine/validation/archive",
-        "external_reviews",
-    ]:
-        if token not in policy_text:
+    required_exclusions = {
+        "docs/archive": {"docs/archive"},
+        "evidence/archive": {
+            "evidence/archive",
+            "polymarket-execution-engine/evidence/archive",
+        },
+        "validation/archive": {"validation/archive"},
+        "polymarket-execution-engine/validation/archive": {
+            "polymarket-execution-engine/validation/archive"
+        },
+        "external_reviews": {"external_reviews"},
+    }
+    excluded = getattr(policy_module, "EXCLUDED_PREFIXES", set())
+    for token, accepted_values in required_exclusions.items():
+        if excluded.isdisjoint(accepted_values):
             failures.append(f"release_policy.py must exclude {token}")
     if "from release_policy import" not in package_text:
         failures.append("package_release.py must import shared release_policy")
