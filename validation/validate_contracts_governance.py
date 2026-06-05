@@ -668,9 +668,12 @@ def validate_single_host_deployment_governance() -> None:
             fail(f"single-host deployment governance file missing: {path.relative_to(ROOT)}")
     readme = (deploy / "README.md").read_text()
     canary_service = (deploy / "systemd/pmx-real-funds-canary@.service").read_text()
-    validator = (EXECUTOR / "validation/run_single_host_deployment_drill.py").read_text()
-    candidate_validator = (EXECUTOR / "validation/run_single_host_canary_candidate_drill.py").read_text()
-    go_candidate_validator = (EXECUTOR / "validation/run_single_host_go_candidate_drill.py").read_text()
+    deployment_validator_path = EXECUTOR / "validation/run_single_host_deployment_drill.py"
+    candidate_validator_path = EXECUTOR / "validation/run_single_host_canary_candidate_drill.py"
+    go_candidate_validator_path = EXECUTOR / "validation/run_single_host_go_candidate_drill.py"
+    validator = deployment_validator_path.read_text()
+    candidate_validator = candidate_validator_path.read_text()
+    go_candidate_validator = go_candidate_validator_path.read_text()
     package_preflight = (deploy / "bin/pmx-single-host-canary-package-preflight.sh").read_text()
     gate_impl = (EXECUTOR / "validation/run_current_gates_impl.sh").read_text()
     writer = (EXECUTOR / "validation/write_current_evidence_manifest.py").read_text()
@@ -700,6 +703,69 @@ def validate_single_host_deployment_governance() -> None:
         "single-host canary service",
         ["--armed", "--allow-live-submit-config", "--allow-real-funds-canary-config"],
     )
+    deployment_module = import_module_from_path(
+        "pmx_run_single_host_deployment_drill", deployment_validator_path
+    )
+    if getattr(deployment_module, "DEPLOY", None) != deploy:
+        fail("single-host deployment validator must bind deploy/single-host root")
+    if getattr(deployment_module, "README", None) != deploy / "README.md":
+        fail("single-host deployment validator must bind README.md")
+    if getattr(deployment_module, "API_ENV", None) != deploy / "env/pmx-api.env.example":
+        fail("single-host deployment validator must bind pmx-api env example")
+    if getattr(deployment_module, "CANARY_ENV", None) != deploy / "env/pmx-real-funds-canary.env.example":
+        fail("single-host deployment validator must bind canary env example")
+    if getattr(deployment_module, "API_SERVICE", None) != deploy / "systemd/pmx-api.service":
+        fail("single-host deployment validator must bind pmx-api service")
+    if getattr(deployment_module, "CANARY_SERVICE", None) != deploy / "systemd/pmx-real-funds-canary@.service":
+        fail("single-host deployment validator must bind canary service")
+    if getattr(deployment_module, "PREFLIGHT", None) != deploy / "bin/pmx-single-host-preflight.sh":
+        fail("single-host deployment validator must bind preflight script")
+    if getattr(deployment_module, "ROLLBACK", None) != deploy / "bin/pmx-single-host-rollback.sh":
+        fail("single-host deployment validator must bind rollback script")
+    if getattr(deployment_module, "CANARY_PACKAGE_PREFLIGHT", None) != deploy / "bin/pmx-single-host-canary-package-preflight.sh":
+        fail("single-host deployment validator must bind canary package preflight script")
+    if getattr(deployment_module, "MANIFEST_WRITER", None) != EXECUTOR / "validation/write_current_evidence_manifest.py":
+        fail("single-host deployment validator must bind manifest writer")
+    if "PMX_ALLOW_REAL_FUNDS_CANARY=0" not in getattr(
+        deployment_module, "FAIL_CLOSED_FLAGS", []
+    ):
+        fail("single-host deployment validator FAIL_CLOSED_FLAGS drifted")
+    if "PMX_PRODUCTION_DEPLOYMENT_ENABLED=1" not in getattr(
+        deployment_module, "FORBIDDEN_VALUE_FRAGMENTS", []
+    ):
+        fail("single-host deployment validator FORBIDDEN_VALUE_FRAGMENTS drifted")
+    for fn_name in ["run_api_bind_smoke", "read", "main"]:
+        if not callable(getattr(deployment_module, fn_name, None)):
+            fail(f"single-host deployment validator missing callable: {fn_name}")
+
+    candidate_module = import_module_from_path(
+        "pmx_run_single_host_canary_candidate_drill", candidate_validator_path
+    )
+    if getattr(candidate_module, "CANARY_SERVICE", None) != deploy / "systemd/pmx-real-funds-canary@.service":
+        fail("single-host canary candidate validator must bind canary service")
+    if getattr(candidate_module, "MANIFEST_WRITER", None) != EXECUTOR / "validation/write_current_evidence_manifest.py":
+        fail("single-host canary candidate validator must bind manifest writer")
+    if not callable(getattr(candidate_module, "main", None)):
+        fail("single-host canary candidate validator missing main()")
+
+    go_candidate_module = import_module_from_path(
+        "pmx_run_single_host_go_candidate_drill", go_candidate_validator_path
+    )
+    if getattr(go_candidate_module, "MANIFEST_WRITER", None) != EXECUTOR / "validation/write_current_evidence_manifest.py":
+        fail("single-host go candidate validator must bind manifest writer")
+    if not callable(getattr(go_candidate_module, "main", None)):
+        fail("single-host go candidate validator missing main()")
+
+    writer_module = import_module_from_path(
+        "pmx_write_current_evidence_manifest_single_host", EXECUTOR / "validation/write_current_evidence_manifest.py"
+    )
+    sections = getattr(writer_module, "SECTIONS", {})
+    if "single_host_deployment_validation" not in sections:
+        fail("current evidence manifest writer must include single_host_deployment_validation section")
+    if "single_host_canary_candidate_validation" not in sections:
+        fail("current evidence manifest writer must include single_host_canary_candidate_validation section")
+    if "single_host_go_candidate_validation" not in sections:
+        fail("current evidence manifest writer must include single_host_go_candidate_validation section")
     for needle in [
         "single_host_deployment_validation",
         "69-single-host-deployment-drill.log",
