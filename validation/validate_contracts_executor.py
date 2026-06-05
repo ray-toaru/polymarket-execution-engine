@@ -1445,6 +1445,59 @@ def validate_v19_redaction_and_live_guard(spec: dict | None = None) -> None:
         "redacts_named_secret_assignments",
     }.issubset(liveness_error_test_names):
         fail("v0.19 adapter redaction tests missing redaction coverage")
+    named_secret_test_body = rust_fn_body(
+        liveness_error_tests, "redacts_named_secret_assignments"
+    )
+    private_key_test_body = rust_fn_body(
+        liveness_error_tests, "redacts_private_key_like_hex_tokens"
+    )
+    gateway_error_test_body = rust_fn_body(
+        liveness_error_tests, "gateway_error_conversion_redacts_sensitive_message"
+    )
+    normalized_error_test_body = rust_fn_body(
+        liveness_error_tests, "normalized_error_redaction_covers_remote_unknown_messages"
+    )
+    require_tokens(
+        named_secret_test_body,
+        "v0.19 adapter redaction tests",
+        [
+            "redact_sensitive_text(message)",
+            'contains("POLY_API_SECRET=[REDACTED]")',
+            'contains("POLY_API_PASSPHRASE=[REDACTED]")',
+            '!redacted.contains("super-secret")',
+            '!redacted.contains("pass")',
+        ],
+    )
+    require_tokens(
+        private_key_test_body,
+        "v0.19 adapter redaction tests",
+        [
+            "redact_sensitive_text(&format!(\"sdk error included {key}\"))",
+            'contains("0x[REDACTED]")',
+            '!redacted.contains("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")',
+        ],
+    )
+    require_tokens(
+        gateway_error_test_body,
+        "v0.19 adapter redaction tests",
+        [
+            "OfficialSdkErrorCategory::RemoteRejected",
+            'message: "POLY_API_SECRET=leaked-secret".into()',
+            "gateway_error_from_normalized_sdk_error(&normalized)",
+            'GatewayError::RemoteRejected("POLY_API_SECRET=[REDACTED]".into())',
+        ],
+    )
+    require_tokens(
+        normalized_error_test_body,
+        "v0.19 adapter redaction tests",
+        [
+            "OfficialSdkErrorCategory::RemoteUnknown",
+            "let redacted = redact_normalized_error(&normalized);",
+            '!redacted.message.contains("leaked-secret")',
+            "gateway_error_from_normalized_sdk_error(&redacted)",
+            'GatewayError::RemoteUnknown("timeout POLY_API_SECRET=[REDACTED]".into())',
+        ],
+    )
     if not LIVE_SUBMIT_GUARD.exists():
         fail("missing v0.19 live-submit static guard")
     guard_module = import_module_from_path("validate_v19_live_submit_guard", LIVE_SUBMIT_GUARD)

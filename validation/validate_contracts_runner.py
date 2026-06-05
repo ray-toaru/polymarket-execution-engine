@@ -78,7 +78,7 @@ VALIDATORS = [
     ValidatorSpec("v12_service_layer", "executor", "S2", "mixed", True, validate_v12_service_layer),
     ValidatorSpec("v15_admin_audit_and_runtime_provider", "executor", "S2", "mixed", True, validate_v15_admin_audit_and_runtime_provider),
     ValidatorSpec("v16_postgres_runtime_provider", "executor", "S1", "mixed", True, validate_v16_postgres_runtime_provider),
-    ValidatorSpec("v19_redaction_and_live_guard", "executor", "S1", "mixed", True, validate_v19_redaction_and_live_guard),
+    ValidatorSpec("v19_redaction_and_live_guard", "executor", "S1", "structured", True, validate_v19_redaction_and_live_guard),
     ValidatorSpec("v20_plan_storage_and_packaging", "executor", "S2", "mixed", True, validate_v20_plan_storage_and_packaging),
     ValidatorSpec("v21_sign_only_and_runtime_models", "executor", "S2", "structured", True, validate_v21_sign_only_and_runtime_models),
     ValidatorSpec("store_and_backend_structure", "executor", "S2", "mixed", False, validate_store_and_backend_structure),
