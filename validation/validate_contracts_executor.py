@@ -1803,7 +1803,13 @@ def validate_v21_sign_only_and_runtime_models(spec: dict | None = None) -> None:
         lifecycle_body,
         "v0.21 sign-only lifecycle adapter",
         [
+            "if receipt.posted {",
+            "OfficialSdkAdapterError::SafetyGate(",
             "transition_sign_only_lifecycle",
+            "SignOnlyLifecycleEventKind::PrepareReservation",
+            "SignOnlyLifecycleEventKind::RequestSigning",
+            "SignOnlyLifecycleEventKind::SignedWithoutPost",
+            "Ok(vec![",
             "no_remote_side_effect: true",
             "sign-only receipt unexpectedly indicates remote posting",
             "signed_order_ref: Some(receipt.signed_order_ref.clone())",
