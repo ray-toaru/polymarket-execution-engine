@@ -316,6 +316,7 @@ def validate_controlled_canary_release_decision_governance() -> None:
     review_script = EXECUTOR / "validation/prepare_real_funds_canary_review.py"
     review_drill = EXECUTOR / "validation/run_real_funds_canary_review_package_drill.py"
     readiness_doc = EXECUTOR / "docs/REAL_FUNDS_CANARY_OPERATIONS_READINESS.md"
+    rehearsal = EXECUTOR / "validation/run_real_funds_canary_blocked_rehearsal_package.py"
     external_template = EXECUTOR / "config/controlled-canary.external-references.template.json"
     external_example = EXECUTOR / "config/controlled-canary.external-references.example.json"
     external_invalid = EXECUTOR / "config/controlled-canary.external-references.invalid-sensitive.fixture.json"
@@ -369,25 +370,61 @@ def validate_controlled_canary_release_decision_governance() -> None:
         fail("controlled canary invalid partial fixture must exercise rejected go/live-submit path")
     if invalid_mismatched_data.get("artifact_sha256") == example_data.get("artifact_sha256"):
         fail("controlled canary invalid mismatched fixture must use a mismatched artifact hash")
-    validator_text = validator.read_text()
-    for needle in [
-        "invalid partial fixture must be rejected",
-        "invalid mismatched fixture must be rejected",
-        "go decision missing external references",
-        "go decision is expired",
-        "artifact hash does not match",
-        "market candidate hash does not match",
-        "live_submit_authorized",
-        "real_funds_canary_authorized",
-        "reviewed_release_decision_present",
+    validator_module = import_module_from_path(
+        "pmx_validate_controlled_canary_release_decision", validator
+    )
+    if getattr(validator_module, "TEMPLATE", None) != template:
+        fail("controlled canary release-decision validator must bind canonical template")
+    if getattr(validator_module, "EXAMPLE", None) != example:
+        fail("controlled canary release-decision validator must bind canonical example")
+    if getattr(validator_module, "INVALID_PARTIAL", None) != invalid:
+        fail("controlled canary release-decision validator must bind invalid partial fixture")
+    if getattr(validator_module, "INVALID_MISMATCHED", None) != invalid_mismatched:
+        fail("controlled canary release-decision validator must bind invalid mismatched fixture")
+    if getattr(validator_module, "EXPECTED_RUN_IDS", None) != {
+        "root_ci_run_id": "26268697168",
+        "hermes_ci_run_id": "26267887116",
+        "execution_engine_ci_run_id": "26268276210",
+        "credentialed_sdk_run_id": "local-current-gates-20260523",
+    }:
+        fail("controlled canary release-decision validator EXPECTED_RUN_IDS drifted")
+    if "reviewed_release_decision_present" not in getattr(
+        validator_module, "ALLOWED_TOP_LEVEL_FIELDS", set()
+    ):
+        fail("controlled canary release-decision validator must require reviewed_release_decision_present")
+    if "real_funds_canary_authorized" not in getattr(
+        validator_module, "AUTHORIZATION_FLAGS", []
+    ):
+        fail("controlled canary release-decision validator AUTHORIZATION_FLAGS drifted")
+    if not callable(getattr(validator_module, "validate_shape", None)):
+        fail("controlled canary release-decision validator missing validate_shape()")
+    if not callable(getattr(validator_module, "main", None)):
+        fail("controlled canary release-decision validator missing main()")
+
+    review_module = import_module_from_path(
+        "pmx_prepare_real_funds_canary_review", review_script
+    )
+    if getattr(review_module, "DEFAULT_RELEASE_DECISION", None) != template:
+        fail("real-funds canary review package must bind release-decision template")
+    if getattr(review_module, "DEFAULT_EXTERNAL_REFERENCES", None) != external_template:
+        fail("real-funds canary review package must bind external-references template")
+    if getattr(review_module, "DEFAULT_ROOT_CI_RUN_ID", None) != "26268697168":
+        fail("real-funds canary review package must bind default root CI run id")
+    if getattr(review_module, "DEFAULT_HERMES_CI_RUN_ID", None) != "26267887116":
+        fail("real-funds canary review package must bind default Hermes CI run id")
+    if getattr(review_module, "DEFAULT_EXECUTION_ENGINE_CI_RUN_ID", None) != "26268276210":
+        fail("real-funds canary review package must bind default execution-engine CI run id")
+    if getattr(review_module, "DEFAULT_CREDENTIALED_SDK_RUN_ID", None) != "local-current-gates-20260523":
+        fail("real-funds canary review package must bind default credentialed SDK run id")
+    for fn_name in [
+        "resolve_input_path",
+        "require_sha256",
+        "validate_candidate_market_json",
+        "main",
     ]:
-        if needle not in validator_text:
-            fail(f"controlled canary release-decision validator missing token: {needle}")
+        if not callable(getattr(review_module, fn_name, None)):
+            fail(f"real-funds canary review package missing callable: {fn_name}")
     review_text = review_script.read_text()
-    if "release-decision.json" not in review_text or "DEFAULT_RELEASE_DECISION" not in review_text:
-        fail("real-funds canary review package must include release-decision.json")
-    if "external-references.json" not in review_text or "DEFAULT_EXTERNAL_REFERENCES" not in review_text:
-        fail("real-funds canary review package must include external-references.json")
     for needle in [
         "--external-references-file",
         "--artifact-sha256",
@@ -398,31 +435,43 @@ def validate_controlled_canary_release_decision_governance() -> None:
     ]:
         if needle not in review_text:
             fail(f"real-funds canary review package missing external-reference candidate support token: {needle}")
-    for needle in [
-        "DEFAULT_ROOT_CI_RUN_ID",
-        "DEFAULT_HERMES_CI_RUN_ID",
-        "DEFAULT_EXECUTION_ENGINE_CI_RUN_ID",
-        "DEFAULT_CREDENTIALED_SDK_RUN_ID",
-    ]:
-        if needle not in review_text:
-            fail(f"real-funds canary review package must bind GitHub evidence run id token: {needle}")
+    drill_module = import_module_from_path(
+        "pmx_run_real_funds_canary_review_package_drill", review_drill
+    )
+    if getattr(drill_module, "SCRIPT", None) != review_script:
+        fail("real-funds canary review package drill must bind package script")
+    if getattr(drill_module, "DECISION_VALIDATOR", None) != validator:
+        fail("real-funds canary review package drill must bind release-decision validator")
+    if getattr(drill_module, "EXTERNAL_REFERENCES_VALIDATOR", None) != external_validator:
+        fail("real-funds canary review package drill must bind external-reference validator")
+    if getattr(drill_module, "BLOCKED_REHEARSAL", None) != rehearsal:
+        fail("real-funds canary review package drill must bind blocked rehearsal script")
+    if getattr(drill_module, "EXTERNAL_REFERENCES_EXAMPLE", None) != external_example:
+        fail("real-funds canary review package drill must bind external-reference example")
+    if getattr(drill_module, "EXTERNAL_REFERENCES_TEMPLATE", None) != external_template:
+        fail("real-funds canary review package drill must bind external-reference template")
+    if getattr(drill_module, "DOC", None) != readiness_doc:
+        fail("real-funds canary review package drill must bind readiness doc")
+    if not callable(getattr(drill_module, "main", None)):
+        fail("real-funds canary review package drill missing main()")
     drill_text = review_drill.read_text()
-    for needle in [
-        "validate_controlled_canary_release_decision.py",
-        "validate_controlled_canary_external_references.py",
-        "credentialed_sdk_run_id",
-    ]:
-        if needle not in drill_text:
-            fail(f"real-funds canary review package drill missing token: {needle}")
-    for needle in [
-        "run_real_funds_canary_blocked_rehearsal_package.py",
-        "blocked real-funds canary rehearsal package failed",
-    ]:
-        if needle not in drill_text:
-            fail(f"real-funds canary review package drill missing blocked rehearsal token: {needle}")
     for needle in ["--file", "--allow-placeholders", "must reject unresolved placeholders", "review-with-concrete-references"]:
         if needle not in drill_text:
             fail(f"real-funds canary review package drill missing external-reference candidate token: {needle}")
+    external_module = import_module_from_path(
+        "pmx_validate_controlled_canary_external_references", external_validator
+    )
+    if getattr(external_module, "EXPECTED_ARTIFACT_SHA256", None) != (
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    ):
+        fail("controlled canary external-reference validator EXPECTED_ARTIFACT_SHA256 drifted")
+    if "credentialed_sdk_run_id" not in getattr(
+        external_module, "EXPECTED_RUN_IDS", {}
+    ):
+        fail("controlled canary external-reference validator EXPECTED_RUN_IDS drifted")
+    for fn_name in ["validate_shape", "placeholder_paths", "has_placeholder", "main"]:
+        if not callable(getattr(external_module, fn_name, None)):
+            fail(f"controlled canary external-reference validator missing callable: {fn_name}")
     external_text = external_validator.read_text()
     for needle in [
         "argparse",
@@ -473,6 +522,12 @@ def validate_controlled_canary_release_decision_governance() -> None:
         evidence_ref = item.get("evidence_ref")
         if not isinstance(evidence_ref, str) or "REPLACE_WITH" not in evidence_ref:
             fail(f"controlled canary runtime-truth template dependency {item.get('name')} must use placeholder evidence_ref")
+    runtime_truth_module = import_module_from_path(
+        "pmx_validate_controlled_canary_runtime_truth", runtime_truth_validator
+    )
+    for fn_name in ["validate_shape", "placeholder_paths", "has_placeholder", "main"]:
+        if not callable(getattr(runtime_truth_module, fn_name, None)):
+            fail(f"controlled canary runtime-truth validator missing callable: {fn_name}")
     runtime_truth_validator_text = runtime_truth_validator.read_text()
     for needle in [
         "Validate an operator-supplied runtime truth candidate",
@@ -512,7 +567,6 @@ def validate_controlled_canary_release_decision_governance() -> None:
         if needle not in controlled_pipeline_text:
             fail(f"controlled canary pipeline missing runtime-truth binding token: {needle}")
     readiness_text = readiness_doc.read_text()
-    rehearsal = EXECUTOR / "validation/run_real_funds_canary_blocked_rehearsal_package.py"
     if not rehearsal.exists():
         fail("real-funds canary blocked rehearsal package script missing")
     rehearsal_text = rehearsal.read_text()
