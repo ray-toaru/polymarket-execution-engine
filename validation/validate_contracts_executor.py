@@ -27,6 +27,7 @@ from validate_contracts_support import (
     STORE_SRC,
     fail,
     rust_file_with_modules_text,
+    rust_handler_body,
     rust_source_text,
 )
 
@@ -2145,6 +2146,9 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
         reconcile_params, reconcile_return = rust_async_fn_signature(
             api_reconcile_local, "reconcile_order_local"
         )
+        cancel_params, cancel_return = rust_async_fn_signature(
+            api_cancel_route, "record_cancel_order_non_live"
+        )
     except SystemExit as exc:
         fail(f"current API route signatures malformed: {exc}")
     if "Query(query): Query<RuntimeWorkerStatusListQuery>" not in runtime_params or runtime_return != "ApiResult<RuntimeWorkerStatusReport>":
@@ -2161,6 +2165,21 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
         fail("current API sign-only construction route must bind Json<StandardSignOnlyConstructionRequest> -> ApiResult<StandardSignOnlyConstructionReceipt>")
     if "Json(req): Json<ReconcileOrderLocalRequest>" not in reconcile_params or reconcile_return != "ApiResult<ReconcileOrderLocalResponse>":
         fail("current API reconcile-order-local route must bind Json<ReconcileOrderLocalRequest> -> ApiResult<ReconcileOrderLocalResponse>")
+    if "Json(req): Json<CancelOrderRequest>" not in cancel_params or cancel_return != "ApiResult<CancelReceipt>":
+        fail("current API cancel route must bind Json<CancelOrderRequest> -> ApiResult<CancelReceipt>")
+    cancel_body = rust_handler_body("record_cancel_order_non_live")
+    require_tokens(
+        cancel_body,
+        "current API cancel route",
+        [
+            "record_non_live_cancel_request(",
+            "record_execution_lifecycle_event(ExecutionLifecycleEvent",
+            'event_type: "CANCEL_REQUESTED_NON_LIVE".into()',
+            "payload: redacted_payload_envelope(",
+            '"no_remote_side_effect": true,',
+            "Ok((StatusCode::ACCEPTED, Json(receipt)))",
+        ],
+    )
     required_by_file = {
         "core": (core, ["WorkerDegraded", "left.client_event_id == right.client_event_id"]),
         "store": (store, ["in_memory_order_lifecycle_records_cancel_requested", "in_memory_worker_heartbeat_informs_runtime_state", "sign_only_lifecycle_record_is_replay", "client_event_id reused with different event payload", "PMX_RUNTIME_OBSERVATION_TTL_SECONDS", "runtime_observation_ttl_seconds", "execution_id={}"]),
@@ -2172,7 +2191,7 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
         "api reconcile local route": (api_reconcile_local, ["api_error_with_correlation", "record_admin_audit(", "ReconcileOrderLocalResponse", "no_remote_side_effect: true"]),
         "api support error": (api_support_error, []),
         "api support audit": (api_support_audit, ["operation: &'static str", "AdminAuditEvent"]),
-        "api cancel route": (api_cancel_route, ["redacted_payload_envelope", "payload: redacted_payload_envelope(", "CancelReceipt"]),
+        "api cancel route": (api_cancel_route, []),
         "gate": (gate, ["run_current_gates.sh", "check_current_lifecycle_api.py", "check_version_consistency.py", "check_docs_evidence_governance.py", "write_current_evidence_manifest.py", "check_runtime_worker_status_query.py", "42-runtime-worker-status-query.log", "evidence/current"]),
     }
     validate_required_groups(required_by_file)
