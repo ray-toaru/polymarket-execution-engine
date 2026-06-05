@@ -1472,6 +1472,52 @@ def validate_v20_plan_storage_and_packaging(spec: dict | None = None) -> None:
         "validate_positive_quantity_for_sdk",
     }.issubset(mapping_validation_fns):
         fail("v0.20 SDK mapping validation missing required validation helpers")
+    token_id_params, token_id_return = rust_fn_signature(
+        mapping_validation_text, "validate_token_id"
+    )
+    limit_price_params, limit_price_return = rust_fn_signature(
+        mapping_validation_text, "validate_limit_price_for_sdk"
+    )
+    quantity_params, quantity_return = rust_fn_signature(
+        mapping_validation_text, "validate_positive_quantity_for_sdk"
+    )
+    if "raw: &str" not in token_id_params or token_id_return != "Result<(), OfficialSdkAdapterError>":
+        fail("v0.20 SDK mapping validation must bind validate_token_id(&str) -> Result<(), OfficialSdkAdapterError>")
+    if "raw: &str" not in limit_price_params or limit_price_return != "Result<(), OfficialSdkAdapterError>":
+        fail("v0.20 SDK mapping validation must bind validate_limit_price_for_sdk(&str) -> Result<(), OfficialSdkAdapterError>")
+    if "raw: &str" not in quantity_params or "field: &str" not in quantity_params or quantity_return != "Result<(), OfficialSdkAdapterError>":
+        fail("v0.20 SDK mapping validation must bind validate_positive_quantity_for_sdk(&str, &str) -> Result<(), OfficialSdkAdapterError>")
+    token_id_body = rust_fn_body(mapping_validation_text, "validate_token_id")
+    limit_price_body = rust_fn_body(mapping_validation_text, "validate_limit_price_for_sdk")
+    quantity_body = rust_fn_body(mapping_validation_text, "validate_positive_quantity_for_sdk")
+    require_tokens(
+        token_id_body,
+        "v0.20 SDK mapping validation",
+        [
+            "let trimmed = raw.trim();",
+            "!trimmed.chars().all(|c| c.is_ascii_digit())",
+            'OfficialSdkAdapterError::InvalidInput(format!(',
+            '"invalid token_id for official SDK order builder: {raw}"',
+        ],
+    )
+    require_tokens(
+        limit_price_body,
+        "v0.20 SDK mapping validation",
+        [
+            "validate_limit_price_decimal_string(raw).map_err(|_|",
+            'OfficialSdkAdapterError::InvalidInput(format!(',
+            '"invalid limit_price for official SDK order builder: {raw}"',
+        ],
+    )
+    require_tokens(
+        quantity_body,
+        "v0.20 SDK mapping validation",
+        [
+            "validate_positive_decimal_string(raw).map_err(|_|",
+            'OfficialSdkAdapterError::InvalidInput(format!(',
+            '"invalid {field} for official SDK order builder: {raw}"',
+        ],
+    )
     liveness_error_tests = (SDK_ADAPTER_SRC / "tests/liveness_errors.rs").read_text()
     if "normalized_error_redaction_covers_remote_unknown_messages" not in rust_fn_names(liveness_error_tests):
         fail("v0.20 SDK liveness tests missing remote unknown redaction coverage")
