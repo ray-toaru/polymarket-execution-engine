@@ -1137,6 +1137,9 @@ def validate_v16_postgres_runtime_provider(spec: dict | None = None) -> None:
         store_backed_runtime_methods = rust_inherent_impl_method_names(
             store_backed_runtime_text, "StoreBackedRuntimeStateProvider<S>"
         )
+        store_backed_runtime_truth_body = rust_impl_method_body(
+            store_backed_runtime_text, "StoreBackedRuntimeStateProvider<S>", "load_canary_runtime_truth"
+        )
         store_backed_runtime_capture_body = rust_impl_trait_method_body(
             store_backed_runtime_text,
             "RuntimeStateProvider",
@@ -1209,6 +1212,11 @@ def validate_v16_postgres_runtime_provider(spec: dict | None = None) -> None:
         postgres_runtime_worker_status_body,
         "postgres runtime worker status store",
         ["FROM worker_health", "FROM runtime_worker_observations", "RuntimeWorkerStatusReport"],
+    )
+    require_tokens(
+        store_backed_runtime_truth_body,
+        "service store-backed runtime provider",
+        [".load_canary_runtime_truth(query)", ".map_err(ServiceError::Store)"],
     )
     require_tokens(
         store_backed_runtime_capture_body,
