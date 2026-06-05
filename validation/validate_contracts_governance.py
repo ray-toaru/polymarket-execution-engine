@@ -277,15 +277,24 @@ def validate_current_docs_and_release_governance() -> None:
         )
 
     docs_guard = EXECUTOR / "validation/check_docs_evidence_governance.py"
-    docs_text = docs_guard.read_text()
-    for needle in [
-        "package_release.py",
-        "check_release_artifact.py",
-        "release_policy.py",
+    docs_module = import_module_from_path("pmx_check_docs_evidence_governance_docs", docs_guard)
+    if getattr(docs_module, "PACKAGE_SCRIPT", None) != ROOT / "scripts" / "package_release.py":
+        fail("docs/evidence governance guard must bind package_release.py")
+    if getattr(docs_module, "ARTIFACT_CHECK", None) != ROOT / "scripts" / "check_release_artifact.py":
+        fail("docs/evidence governance guard must bind check_release_artifact.py")
+    if getattr(docs_module, "RELEASE_POLICY", None) != ROOT / "scripts" / "release_policy.py":
+        fail("docs/evidence governance guard must bind release_policy.py")
+    for fn_name in [
+        "validate_root_docs",
+        "validate_evidence_layout",
+        "validate_release_binding",
+        "validate_current_manifest",
+        "validate_execution_docs_and_gates",
+        "validate_agents_guidance",
         "validate_packaging_scripts",
     ]:
-        if needle not in docs_text:
-            fail(f"docs/evidence governance guard missing release governance token: {needle}")
+        if not callable(getattr(docs_module, fn_name, None)):
+            fail(f"docs/evidence governance guard missing callable: {fn_name}")
     active_old_gates = [path.name for path in (EXECUTOR / "validation").glob("run_v0_*_gates.sh")]
     if active_old_gates:
         fail("stale gate scripts remain outside validation/archive: " + ", ".join(sorted(active_old_gates)))
