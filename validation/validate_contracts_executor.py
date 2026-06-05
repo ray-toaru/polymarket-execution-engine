@@ -1754,9 +1754,35 @@ def validate_v21_sign_only_and_runtime_models(spec: dict | None = None) -> None:
         sign_only_core_text,
         "v0.21 sign-only lifecycle core",
         [
-            "transition_sign_only_lifecycle",
             "sign_only_lifecycle_has_remote_side_effect",
-            "sign_only_lifecycle_records_equivalent",
+        ],
+    )
+    sign_only_equivalent_body = rust_fn_body(
+        sign_only_core_text, "sign_only_lifecycle_records_equivalent"
+    )
+    sign_only_transition_body = rust_fn_body(
+        sign_only_core_text, "transition_sign_only_lifecycle"
+    )
+    require_tokens(
+        sign_only_equivalent_body,
+        "v0.21 sign-only lifecycle equivalence",
+        [
+            "left.execution_id == right.execution_id",
+            "left.client_event_id == right.client_event_id",
+            "left.signed_order_ref == right.signed_order_ref",
+            "left.no_remote_side_effect == right.no_remote_side_effect",
+        ],
+    )
+    require_tokens(
+        sign_only_transition_body,
+        "v0.21 sign-only lifecycle transition",
+        [
+            "SignOnlyLifecycleState::Planned",
+            "SignOnlyLifecycleEventKind::PrepareReservation",
+            "SignOnlyLifecycleState::ReservationPrepared",
+            "SignOnlyLifecycleEventKind::SignedWithoutPost",
+            "SignOnlyLifecycleState::SignedDryRun",
+            "CoreError::InvalidSignOnlyTransition { from, event }",
         ],
     )
     lifecycle_adapter_text = (SDK_ADAPTER_SRC / "lifecycle.rs").read_text()
