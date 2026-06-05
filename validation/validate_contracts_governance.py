@@ -4,6 +4,7 @@ import inspect
 import json
 import re
 import sys
+from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -608,34 +609,92 @@ def validate_canary_candidate_market_prep_boundary() -> None:
     prep_script = EXECUTOR / "validation/prepare_canary_candidate_market.py"
     if not prep_script.exists():
         fail("execution-engine canary candidate market prep script missing")
+    prep_module = import_module_from_path("pmx_prepare_canary_candidate_market", prep_script)
+    if getattr(prep_module, "ROOT", None) != EXECUTOR:
+        fail("canary candidate market prep script ROOT must bind execution-engine root")
+    if getattr(prep_module, "INTEGRATION_ROOT", None) != ROOT:
+        fail("canary candidate market prep script INTEGRATION_ROOT must bind integration root")
+    if getattr(prep_module, "DEFAULT_GAMMA_URL", None) != "https://gamma-api.polymarket.com":
+        fail("canary candidate market prep script DEFAULT_GAMMA_URL drifted")
+    if getattr(prep_module, "DEFAULT_CLOB_URL", None) != "https://clob.polymarket.com":
+        fail("canary candidate market prep script DEFAULT_CLOB_URL drifted")
+    if getattr(prep_module, "FETCH_RETRY_ATTEMPTS", None) != 3:
+        fail("canary candidate market prep script FETCH_RETRY_ATTEMPTS drifted")
+    candidate_cls = getattr(prep_module, "Candidate", None)
+    if candidate_cls is None or not callable(getattr(candidate_cls, "to_engine_json", None)):
+        fail("canary candidate market prep script must export Candidate.to_engine_json()")
+    for func_name in [
+        "parse_args",
+        "fetch_json",
+        "fetch_json_or_error",
+        "post_only_buy_limit_price",
+        "candidate_from_market",
+        "load_market_by_slug",
+        "scan",
+        "main",
+    ]:
+        if not callable(getattr(prep_module, func_name, None)):
+            fail(f"canary candidate market prep script missing callable: {func_name}")
+    candidate_json = candidate_cls(
+        market_id="market-1",
+        token_id="token-1",
+        outcome="Yes",
+        market_slug="demo-market",
+        active=True,
+        accepting_orders=True,
+        closed=False,
+        archived=False,
+        best_ask=Decimal("0.42"),
+        limit_price=Decimal("0.41"),
+        ask_size=Decimal("25"),
+        target_size=Decimal("5"),
+        spread_bps=15,
+        min_order_size=Decimal("1"),
+        min_tick_size=Decimal("0.01"),
+        liquidity_score=123,
+        source_market_hash="a" * 64,
+        book_snapshot_timestamp="2026-01-01T00:00:00+00:00",
+        human_review_ref="https://example.invalid/review/123",
+        exchange_rule_evidence_ref="https://example.invalid/rules/123",
+        exchange_rule_valid_for_minutes=5,
+    ).to_engine_json()
+    if candidate_json.get("side") != "BUY":
+        fail("canary candidate market prep candidate JSON must bind BUY side")
+    if candidate_json.get("order_type") != "GTC":
+        fail("canary candidate market prep candidate JSON must bind GTC order type")
+    if candidate_json.get("post_only") is not True:
+        fail("canary candidate market prep candidate JSON must force post_only=true")
+    if candidate_json.get("human_review_ref") != "https://example.invalid/review/123":
+        fail("canary candidate market prep candidate JSON must preserve human_review_ref")
+    exchange_rule_snapshot = candidate_json.get("exchange_rule_snapshot")
+    if not isinstance(exchange_rule_snapshot, dict):
+        fail("canary candidate market prep candidate JSON missing exchange_rule_snapshot")
+    for key, expected in [
+        ("order_mode", "post_only_limit"),
+        ("order_type", "GTC"),
+        ("side", "BUY"),
+        ("target_size_semantics", "outcome_shares"),
+        ("evidence_ref", "https://example.invalid/rules/123"),
+    ]:
+        if exchange_rule_snapshot.get(key) != expected:
+            fail(f"canary candidate market prep exchange_rule_snapshot must bind {key}={expected!r}")
     text = prep_script.read_text()
     for needle in [
         "candidate-market.json",
         "public read-only",
         "urllib.request",
-        "remote_side_effects",
-        "authorized_for_live",
         "False",
         "/markets",
         "/book",
         "/spread",
-        "max_order_notional_usd",
-        "target_size",
-        "estimated_order_notional_usd",
-        "exchange_rule_snapshot",
-        "post_only_buy_limit_price",
         "post_only_price_unavailable",
-        "limit_price",
-        "max_spread_bps",
         "RealFundsCanaryMarketCandidate",
-        "--human-review-ref",
-        "--market-url",
-        "--outcome",
-        "human_review_ref",
-        "order_type",
     ]:
         if needle not in text:
             fail(f"canary candidate market prep script missing boundary token: {needle}")
+    for needle in ['"remote_side_effects": False', '"authorized_for_live": False']:
+        if needle not in text:
+            fail(f"canary candidate market prep script missing audit boundary token: {needle}")
     validate_absent_tokens(text, "canary candidate market prep script", [
         "post_order",
         "post_orders",
