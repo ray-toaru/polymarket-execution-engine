@@ -589,6 +589,12 @@ def validate_v09_official_adapter_boundary() -> None:
         standard_profile_fields = rust_struct_field_names(
             config_text, "OfficialSdkStandardSignOnlyProfile"
         )
+        adapter_config_default_body = rust_impl_trait_method_body(
+            config_text, "Default", "OfficialSdkAdapterConfig", "default"
+        )
+        standard_profile_default_body = rust_impl_trait_method_body(
+            config_text, "Default", "OfficialSdkStandardSignOnlyProfile", "default"
+        )
         sdk_error_variants = rust_enum_variant_names(
             sdk_error_text, "OfficialSdkErrorCategory"
         )
@@ -654,12 +660,30 @@ def validate_v09_official_adapter_boundary() -> None:
     }:
         fail("official SDK sign-only model missing SignOnlyDryRunReceipt fields")
     require_tokens(
-        config_text,
-        "official SDK adapter config",
+        adapter_config_default_body,
+        "official SDK adapter config default",
         [
+            "clob_host: CLOB_PRODUCTION_HOST.to_string()",
+            "allow_read_only_smoke: true",
+            "allow_authenticated_non_trading_smoke: false",
             "allow_sign_only_dry_run: false",
             "allow_live_submit: false",
             "allow_real_funds_canary: false",
+            "require_kill_switch_open_for_live_submit: true",
+            "require_repository_reservation_for_live_submit: true",
+            "require_reconcile_worker_for_live_submit: true",
+        ],
+    )
+    require_tokens(
+        standard_profile_default_body,
+        "official SDK standard sign-only profile default",
+        [
+            "clob_host: CLOB_PRODUCTION_HOST.into()",
+            "collateral_symbol: CLOB_V2_COLLATERAL_SYMBOL.into()",
+            "signing_protocol: CLOB_V2_SIGNING_PROTOCOL.into()",
+            "uses_deposit_wallet_order_path: true",
+            "supports_builder_attribution: true",
+            "supports_fee_metadata: true",
             "may_post_order: false",
             "may_cancel_order: false",
             "exposes_raw_signed_order: false",
