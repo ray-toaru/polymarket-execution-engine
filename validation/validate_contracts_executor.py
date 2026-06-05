@@ -1940,11 +1940,51 @@ def validate_v21_sign_only_and_runtime_models(spec: dict | None = None) -> None:
         EXECUTOR
         / "crates/pmx-runtime/src/runtime_tests/breakdown_loop/capabilities/groups.rs"
     ).read_text()
+    runtime_worker_store_write_tests_text = (
+        EXECUTOR
+        / "crates/pmx-runtime/src/runtime_tests/breakdown_loop/capabilities/store_writes.rs"
+    ).read_text()
     runtime_worker_test_fns = rust_fn_names(runtime_worker_tests_text) | rust_async_fn_names(
         runtime_worker_tests_text
     )
     if "worker_actions_mark_stale_runtime_inputs_as_fail_closed_updates" not in runtime_worker_test_fns:
         fail("v0.21 runtime worker tests missing required test function")
+    runtime_worker_groups_test_body = rust_fn_body(
+        runtime_worker_tests_text,
+        "worker_actions_mark_stale_runtime_inputs_as_fail_closed_updates",
+    )
+    runtime_worker_store_write_test_body = rust_fn_body(
+        runtime_worker_store_write_tests_text,
+        "runtime_worker_store_writes_are_fail_closed_for_bad_signals",
+    )
+    require_tokens(
+        runtime_worker_groups_test_body,
+        "v0.21 runtime worker tests",
+        [
+            "worker_actions_from_runtime_signals(&[",
+            "RuntimeSignal::HeartbeatLease",
+            "RuntimeSignal::WebSocket",
+            "assert_eq!(actions.len(), 2);",
+            "action.should_fail_closed",
+            "action.should_update_runtime_store",
+            '"heartbeat-lease"',
+            '"websocket:user"',
+        ],
+    )
+    require_tokens(
+        runtime_worker_store_write_test_body,
+        "v0.21 runtime worker tests",
+        [
+            'runtime_worker_store_writes(',
+            '"acct-worker-write"',
+            "RuntimeSignal::Geoblock",
+            "RuntimeSignal::HeartbeatLease",
+            "RuntimeSignal::ResourceRefresh",
+            "assert_eq!(writes.len(), 3);",
+            "write.should_fail_closed",
+            '"resource-refresh"',
+        ],
+    )
     for doc in [
         EXECUTOR / "validation/check_sign_only_lifecycle.py",
         EXECUTOR / "validation/check_runtime_worker_models.py",
