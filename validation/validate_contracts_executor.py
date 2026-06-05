@@ -345,7 +345,7 @@ def service_backend_method_names(text: str) -> set[str]:
 
 def rust_async_fn_signature(text: str, fn_name: str) -> tuple[str, str]:
     pattern = (
-        rf"(?s)async\s+fn\s+{re.escape(fn_name)}\s*\((.*?)\)\s*->\s*([^\{{]+)\{{"
+        rf"(?s)async\s+fn\s+{re.escape(fn_name)}(?:<[^>]+>)?\s*\((.*?)\)\s*->\s*([^\{{]+)\{{"
     )
     match = re.search(pattern, text)
     if not match:
@@ -385,6 +385,28 @@ def rust_fn_body(text: str, fn_name: str) -> str:
             if depth == 0:
                 return text[body_start + 1 : index]
     fail(f"unterminated Rust fn body: {fn_name}")
+
+
+def rust_async_fn_body(text: str, fn_name: str) -> str:
+    fn_pattern = re.compile(
+        rf"(?m)^\s*(?:pub(?:\([^)]*\))?\s+)?async\s+fn\s+{re.escape(fn_name)}(?:<[^>]+>)?\s*\(",
+    )
+    fn_match = fn_pattern.search(text)
+    if not fn_match:
+        fail(f"missing Rust async fn body: {fn_name}")
+    body_start = text.find("{", fn_match.end())
+    if body_start == -1:
+        fail(f"missing Rust async fn body: {fn_name}")
+    depth = 0
+    for index in range(body_start, len(text)):
+        char = text[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return text[body_start + 1 : index]
+    fail(f"unterminated Rust async fn body: {fn_name}")
 
 
 def cargo_toml(path: Path) -> dict:
@@ -1975,6 +1997,10 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     api_support_error = (API_SRC / "support/error.rs").read_text()
     api_support_audit = (API_SRC / "support/audit.rs").read_text()
     api_cancel_route = (API_SRC / "routes/admin/cancel.rs").read_text()
+    service_sign_only_lifecycle = (SERVICE_SRC / "sign_only/lifecycle.rs").read_text()
+    service_order_lifecycle_divergence = (
+        SERVICE_SRC / "order_lifecycle/divergence.rs"
+    ).read_text()
     required_paths = {
         "/v1/sign-only/lifecycle-events",
         "/v1/lifecycle/executions/{execution_id}/events",
@@ -2259,12 +2285,37 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
             "Ok((StatusCode::ACCEPTED, Json(receipt)))",
         ],
     )
+    sign_only_service_body = rust_async_fn_body(
+        service_sign_only_lifecycle, "record_sign_only_lifecycle_event"
+    )
+    divergence_body = rust_async_fn_body(
+        service_order_lifecycle_divergence, "reconcile_order_lifecycle_divergence"
+    )
+    require_tokens(
+        sign_only_service_body,
+        "current service sign-only lifecycle helper",
+        [
+            "record.event_id = None;",
+            "record.created_at = None;",
+            "candidate.client_event_id.as_deref() == Some(client_event_id)",
+            "sign_only_lifecycle_records_equivalent(candidate, &record)",
+        ],
+    )
+    require_tokens(
+        divergence_body,
+        "current service order lifecycle divergence helper",
+        [
+            "order lifecycle account_id does not match request",
+            "record_order_lifecycle_event(&OrderLifecycleEventRecord",
+            "payload::order_lifecycle_divergence_non_live(",
+        ],
+    )
     required_by_file = {
         "core": (core, ["WorkerDegraded", "left.client_event_id == right.client_event_id"]),
         "store": (store, ["in_memory_order_lifecycle_records_cancel_requested", "in_memory_worker_heartbeat_informs_runtime_state", "sign_only_lifecycle_record_is_replay", "client_event_id reused with different event payload", "PMX_RUNTIME_OBSERVATION_TTL_SECONDS", "runtime_observation_ttl_seconds", "execution_id={}"]),
         "postgres": (postgres, ["impl OrderLifecycleStore for PostgresStore", "postgres_records_order_lifecycle_event", "impl RuntimeWorkerHealthStore for PostgresStore", "impl RuntimeWorkerStatusStore for PostgresStore", "postgres_records_worker_heartbeat", "postgres_lists_runtime_worker_status", "principal_subject = $4", "result = $5", "pg_advisory_xact_lock", "sign_only_lifecycle_record_is_replay", "runtime_observation_ttl_seconds", "FOREIGN_KEY_VIOLATION", "CHECK_VIOLATION"]),
         "sql": (sql, ["CREATE TABLE IF NOT EXISTS orders", "CREATE TABLE IF NOT EXISTS order_events", "idx_order_events_order_created", "client_event_id TEXT", "uq_sign_only_lifecycle_client_event", "WHERE client_event_id IS NOT NULL", "ADD COLUMN IF NOT EXISTS client_event_id", "ADD COLUMN IF NOT EXISTS observed_at", "ADD COLUMN IF NOT EXISTS correlation_id"]),
-        "service": (service, ["candidate.client_event_id.as_deref()", "record.event_id = None", "record.created_at = None", "account_id does not match request"]),
+        "service": (service, []),
         "policy": (policy, ["WorkerStatus::Degraded => reasons.push(BlockReason::WorkerDegraded)", "degraded_worker_blocks_pre_live"]),
         "api runtime read route": (api_runtime_read, ["Query(query): Query<RuntimeWorkerStatusListQuery>", "list_runtime_worker_status(RuntimeWorkerStatusQuery", "StatusCode::OK"]),
         "api reconcile local route": (api_reconcile_local, ["api_error_with_correlation", "record_admin_audit(", "ReconcileOrderLocalResponse", "no_remote_side_effect: true"]),
