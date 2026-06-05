@@ -1884,7 +1884,11 @@ def validate_v21_sign_only_and_runtime_models(spec: dict | None = None) -> None:
         "v0.21 runtime worker action model",
         [
             "account_id = account_id.into()",
+            "account_id: account_id.clone()",
+            "let status = health.level.clone();",
+            'unwrap_or_else(|| format!("{status:?}"))',
             "should_fail_closed = health.blocks_submit()",
+            "capability: health.capability",
             "RuntimeWorkerStoreWrite",
         ],
     )
