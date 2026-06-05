@@ -1992,6 +1992,9 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     store_lifecycle_helpers = (STORE_SRC / "helpers/lifecycle.rs").read_text()
     store_runtime_freshness = (STORE_SRC / "helpers/runtime/freshness.rs").read_text()
     store_postgres_sign_only = (STORE_SRC / "postgres_sign_only/write.rs").read_text()
+    store_postgres_worker_heartbeat = (STORE_SRC / "postgres_worker/heartbeat.rs").read_text()
+    store_postgres_worker_status = (STORE_SRC / "postgres_worker/status.rs").read_text()
+    store_postgres_support_error = (STORE_SRC / "postgres_support/error.rs").read_text()
     api_runtime_read = (API_SRC / "routes/read/runtime.rs").read_text()
     api_lifecycle_read = (API_SRC / "routes/read/lifecycle.rs").read_text()
     api_sign_only_flow = (API_SRC / "routes/flow/sign_only.rs").read_text()
@@ -2303,6 +2306,15 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     postgres_sign_only_write_body = rust_async_fn_body(
         store_postgres_sign_only, "record_sign_only_lifecycle_event"
     )
+    postgres_worker_heartbeat_body = rust_async_fn_body(
+        store_postgres_worker_heartbeat, "record_worker_heartbeat"
+    )
+    postgres_worker_status_body = rust_async_fn_body(
+        store_postgres_worker_status, "list_runtime_worker_status"
+    )
+    postgres_map_db_error_body = rust_fn_body(
+        store_postgres_support_error, "map_db_error"
+    )
     require_tokens(
         sign_only_service_body,
         "current service sign-only lifecycle helper",
@@ -2354,10 +2366,48 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
             "PostgresStore::rollback(&client).await",
         ],
     )
+    require_tokens(
+        postgres_worker_heartbeat_body,
+        "current postgres worker heartbeat path",
+        [
+            "INSERT INTO worker_health",
+            "ON CONFLICT (worker_id) DO UPDATE SET",
+            "last_heartbeat_at = EXCLUDED.last_heartbeat_at",
+            "&heartbeat.last_error",
+            ".map_err(map_db_error)?",
+        ],
+    )
+    require_tokens(
+        postgres_worker_status_body,
+        "current postgres worker status path",
+        [
+            "let limit = query.bounded_limit() as i64;",
+            "ORDER BY last_heartbeat_at DESC, worker_id ASC",
+            "&[&limit]",
+            "WHERE account_id = $1",
+            "&query.before_observed_at",
+            "observations.reverse();",
+            "RuntimeWorkerStatusReport {",
+        ],
+    )
+    require_tokens(
+        postgres_map_db_error_body,
+        "current postgres map_db_error path",
+        [
+            "SqlState::UNIQUE_VIOLATION",
+            "StoreError::Conflict(db_error.message().to_string())",
+            "SqlState::FOREIGN_KEY_VIOLATION",
+            "StoreError::NotFound(db_error.message().to_string())",
+            "SqlState::CHECK_VIOLATION",
+            "SqlState::T_R_SERIALIZATION_FAILURE",
+            "StoreError::SerializationFailure",
+            "StoreError::DatabaseUnavailable(err.to_string())",
+        ],
+    )
     required_by_file = {
         "core": (core, ["WorkerDegraded", "left.client_event_id == right.client_event_id"]),
         "store": (store, ["in_memory_order_lifecycle_records_cancel_requested", "in_memory_worker_heartbeat_informs_runtime_state", "execution_id={}"]),
-        "postgres": (postgres, ["impl OrderLifecycleStore for PostgresStore", "postgres_records_order_lifecycle_event", "impl RuntimeWorkerHealthStore for PostgresStore", "impl RuntimeWorkerStatusStore for PostgresStore", "postgres_records_worker_heartbeat", "postgres_lists_runtime_worker_status", "principal_subject = $4", "result = $5", "FOREIGN_KEY_VIOLATION", "CHECK_VIOLATION"]),
+        "postgres": (postgres, ["impl OrderLifecycleStore for PostgresStore", "postgres_records_order_lifecycle_event", "impl RuntimeWorkerHealthStore for PostgresStore", "impl RuntimeWorkerStatusStore for PostgresStore", "principal_subject = $4", "result = $5"]),
         "sql": (sql, ["CREATE TABLE IF NOT EXISTS orders", "CREATE TABLE IF NOT EXISTS order_events", "idx_order_events_order_created", "client_event_id TEXT", "uq_sign_only_lifecycle_client_event", "WHERE client_event_id IS NOT NULL", "ADD COLUMN IF NOT EXISTS client_event_id", "ADD COLUMN IF NOT EXISTS observed_at", "ADD COLUMN IF NOT EXISTS correlation_id"]),
         "service": (service, []),
         "policy": (policy, ["WorkerStatus::Degraded => reasons.push(BlockReason::WorkerDegraded)", "degraded_worker_blocks_pre_live"]),
