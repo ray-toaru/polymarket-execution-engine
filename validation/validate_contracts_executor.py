@@ -2325,6 +2325,15 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     postgres_admin_audit_list_body = rust_async_fn_body(
         store_postgres_admin_audit, "list_admin_audit_events"
     )
+    api_runtime_read_body = rust_async_fn_body(
+        api_runtime_read, "list_runtime_worker_status"
+    )
+    api_admin_audit_body = rust_async_fn_body(
+        api_admin_audit, "list_admin_audit_events"
+    )
+    api_support_audit_body = rust_async_fn_body(
+        api_support_audit, "record_admin_audit"
+    )
     require_tokens(
         sign_only_service_body,
         "current service sign-only lifecycle helper",
@@ -2440,6 +2449,41 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
             "events.reverse();",
         ],
     )
+    require_tokens(
+        api_runtime_read_body,
+        "current runtime worker status route",
+        [
+            "require(&headers, Operation::ReadReport)?;",
+            "list_runtime_worker_status(RuntimeWorkerStatusQuery {",
+            "limit: query.limit.unwrap_or(100)",
+            "before_observed_at: query.before_observed_at",
+            "Ok((StatusCode::OK, Json(report)))",
+        ],
+    )
+    require_tokens(
+        api_admin_audit_body,
+        "current admin audit route",
+        [
+            "require(&headers, Operation::ReadAudit)?;",
+            "list_admin_audit_events(AdminAuditQuery {",
+            "before_audit_id: query.before_audit_id",
+            "principal_subject: query.principal_subject",
+            "result: query.result",
+            "correlation_id: query.correlation_id",
+            "Ok((StatusCode::OK, Json(events)))",
+        ],
+    )
+    require_tokens(
+        api_support_audit_body,
+        "current API support admin audit helper",
+        [
+            ".record_admin_audit_event(AdminAuditEvent {",
+            "principal_subject: principal.subject.clone()",
+            "operation: operation.into()",
+            "result: result.into()",
+            "created_at: None",
+        ],
+    )
     required_by_file = {
         "core": (core, ["WorkerDegraded", "left.client_event_id == right.client_event_id"]),
         "store": (store, ["in_memory_order_lifecycle_records_cancel_requested", "in_memory_worker_heartbeat_informs_runtime_state", "execution_id={}"]),
@@ -2447,10 +2491,10 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
         "sql": (sql, ["CREATE TABLE IF NOT EXISTS orders", "CREATE TABLE IF NOT EXISTS order_events", "idx_order_events_order_created", "client_event_id TEXT", "uq_sign_only_lifecycle_client_event", "WHERE client_event_id IS NOT NULL", "ADD COLUMN IF NOT EXISTS client_event_id", "ADD COLUMN IF NOT EXISTS observed_at", "ADD COLUMN IF NOT EXISTS correlation_id"]),
         "service": (service, []),
         "policy": (policy, ["WorkerStatus::Degraded => reasons.push(BlockReason::WorkerDegraded)", "degraded_worker_blocks_pre_live"]),
-        "api runtime read route": (api_runtime_read, ["Query(query): Query<RuntimeWorkerStatusListQuery>", "list_runtime_worker_status(RuntimeWorkerStatusQuery", "StatusCode::OK"]),
+        "api runtime read route": (api_runtime_read, []),
         "api reconcile local route": (api_reconcile_local, ["api_error_with_correlation", "record_admin_audit(", "ReconcileOrderLocalResponse", "no_remote_side_effect: true"]),
         "api support error": (api_support_error, []),
-        "api support audit": (api_support_audit, ["operation: &'static str", "AdminAuditEvent"]),
+        "api support audit": (api_support_audit, []),
         "api cancel route": (api_cancel_route, []),
         "gate": (gate, ["run_current_gates.sh", "check_current_lifecycle_api.py", "check_version_consistency.py", "check_docs_evidence_governance.py", "write_current_evidence_manifest.py", "check_runtime_worker_status_query.py", "42-runtime-worker-status-query.log", "evidence/current"]),
     }
