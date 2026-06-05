@@ -1821,6 +1821,44 @@ def validate_v21_sign_only_and_runtime_models(spec: dict | None = None) -> None:
         "standard_sign_only_construction_emits_only_digest_ref_and_lifecycle",
     }.issubset(sign_only_test_fns):
         fail("v0.21 sign-only lifecycle tests missing required test functions")
+    sign_only_persistable_test_body = rust_fn_body(
+        sign_only_tests_text, "sign_only_lifecycle_records_are_persistable_and_non_mutating"
+    )
+    sign_only_rejects_posted_test_body = rust_fn_body(
+        sign_only_tests_text, "sign_only_lifecycle_rejects_posted_receipt"
+    )
+    sign_only_construction_test_body = rust_fn_body(
+        sign_only_tests_text, "standard_sign_only_construction_emits_only_digest_ref_and_lifecycle"
+    )
+    require_tokens(
+        sign_only_persistable_test_body,
+        "v0.21 sign-only lifecycle tests",
+        [
+            "sign_only_lifecycle_records_from_receipt(&receipt)",
+            "assert_eq!(records.len(), 3);",
+            "record.no_remote_side_effect",
+            "SignOnlyLifecycleState::SignedDryRun",
+        ],
+    )
+    require_tokens(
+        sign_only_rejects_posted_test_body,
+        "v0.21 sign-only lifecycle tests",
+        [
+            "posted: true",
+            "sign_only_lifecycle_records_from_receipt(&receipt).is_err()",
+        ],
+    )
+    require_tokens(
+        sign_only_construction_test_body,
+        "v0.21 sign-only lifecycle tests",
+        [
+            "construction.no_remote_side_effect",
+            "!construction.raw_signed_order_exposed",
+            'starts_with("sign-only:exec-1:plan-hash-standard:digest-")',
+            "construction.lifecycle_records.len(), 3",
+            "SignOnlyLifecycleState::SignedDryRun",
+        ],
+    )
     runtime_action_text = (
         EXECUTOR / "crates/pmx-runtime/src/health/action.rs"
     ).read_text()
