@@ -1991,6 +1991,7 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     store_audit = (STORE_SRC / "model/audit.rs").read_text()
     store_lifecycle_helpers = (STORE_SRC / "helpers/lifecycle.rs").read_text()
     store_runtime_freshness = (STORE_SRC / "helpers/runtime/freshness.rs").read_text()
+    store_postgres_sign_only = (STORE_SRC / "postgres_sign_only/write.rs").read_text()
     api_runtime_read = (API_SRC / "routes/read/runtime.rs").read_text()
     api_lifecycle_read = (API_SRC / "routes/read/lifecycle.rs").read_text()
     api_sign_only_flow = (API_SRC / "routes/flow/sign_only.rs").read_text()
@@ -2299,6 +2300,9 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     runtime_ttl_body = rust_fn_body(
         store_runtime_freshness, "runtime_observation_ttl_seconds"
     )
+    postgres_sign_only_write_body = rust_async_fn_body(
+        store_postgres_sign_only, "record_sign_only_lifecycle_event"
+    )
     require_tokens(
         sign_only_service_body,
         "current service sign-only lifecycle helper",
@@ -2339,10 +2343,21 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
             "DEFAULT_RUNTIME_OBSERVATION_TTL_SECONDS",
         ],
     )
+    require_tokens(
+        postgres_sign_only_write_body,
+        "current postgres sign-only write path",
+        [
+            'execute("SELECT pg_advisory_xact_lock($1)", &[&lock.0])',
+            "match sign_only_lifecycle_record_is_replay(&existing, record)",
+            "validate_sign_only_lifecycle_append_for_store(&existing, record)",
+            'client.batch_execute("COMMIT")',
+            "PostgresStore::rollback(&client).await",
+        ],
+    )
     required_by_file = {
         "core": (core, ["WorkerDegraded", "left.client_event_id == right.client_event_id"]),
         "store": (store, ["in_memory_order_lifecycle_records_cancel_requested", "in_memory_worker_heartbeat_informs_runtime_state", "execution_id={}"]),
-        "postgres": (postgres, ["impl OrderLifecycleStore for PostgresStore", "postgres_records_order_lifecycle_event", "impl RuntimeWorkerHealthStore for PostgresStore", "impl RuntimeWorkerStatusStore for PostgresStore", "postgres_records_worker_heartbeat", "postgres_lists_runtime_worker_status", "principal_subject = $4", "result = $5", "pg_advisory_xact_lock", "sign_only_lifecycle_record_is_replay", "runtime_observation_ttl_seconds", "FOREIGN_KEY_VIOLATION", "CHECK_VIOLATION"]),
+        "postgres": (postgres, ["impl OrderLifecycleStore for PostgresStore", "postgres_records_order_lifecycle_event", "impl RuntimeWorkerHealthStore for PostgresStore", "impl RuntimeWorkerStatusStore for PostgresStore", "postgres_records_worker_heartbeat", "postgres_lists_runtime_worker_status", "principal_subject = $4", "result = $5", "FOREIGN_KEY_VIOLATION", "CHECK_VIOLATION"]),
         "sql": (sql, ["CREATE TABLE IF NOT EXISTS orders", "CREATE TABLE IF NOT EXISTS order_events", "idx_order_events_order_created", "client_event_id TEXT", "uq_sign_only_lifecycle_client_event", "WHERE client_event_id IS NOT NULL", "ADD COLUMN IF NOT EXISTS client_event_id", "ADD COLUMN IF NOT EXISTS observed_at", "ADD COLUMN IF NOT EXISTS correlation_id"]),
         "service": (service, []),
         "policy": (policy, ["WorkerStatus::Degraded => reasons.push(BlockReason::WorkerDegraded)", "degraded_worker_blocks_pre_live"]),
