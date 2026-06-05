@@ -10,6 +10,9 @@ from types import SimpleNamespace
 
 ENGINE_ROOT = Path(__file__).resolve().parents[1]
 ROOT = ENGINE_ROOT.parent
+VALIDATION_DIR = Path(__file__).resolve().parent
+if str(VALIDATION_DIR) not in sys.path:
+    sys.path.insert(0, str(VALIDATION_DIR))
 INTEGRATION_SCRIPT_DIR = ROOT / "scripts"
 if str(INTEGRATION_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(INTEGRATION_SCRIPT_DIR))
