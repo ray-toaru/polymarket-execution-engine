@@ -1998,6 +1998,7 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     store_postgres_order_lifecycle_write = (
         STORE_SRC / "postgres_order_lifecycle/write.rs"
     ).read_text()
+    store_postgres_admin_audit = (STORE_SRC / "postgres_audit/admin.rs").read_text()
     api_runtime_read = (API_SRC / "routes/read/runtime.rs").read_text()
     api_lifecycle_read = (API_SRC / "routes/read/lifecycle.rs").read_text()
     api_sign_only_flow = (API_SRC / "routes/flow/sign_only.rs").read_text()
@@ -2321,6 +2322,9 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     postgres_order_lifecycle_write_body = rust_async_fn_body(
         store_postgres_order_lifecycle_write, "record_order_lifecycle_event"
     )
+    postgres_admin_audit_list_body = rust_async_fn_body(
+        store_postgres_admin_audit, "list_admin_audit_events"
+    )
     require_tokens(
         sign_only_service_body,
         "current service sign-only lifecycle helper",
@@ -2423,10 +2427,23 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
             'client.batch_execute("COMMIT").await.map_err(map_db_error)?;',
         ],
     )
+    require_tokens(
+        postgres_admin_audit_list_body,
+        "current postgres admin audit list path",
+        [
+            "let bounded_limit = i64::try_from(query.bounded_limit()).unwrap_or(500);",
+            "AND ($4::text IS NULL OR principal_subject = $4)",
+            "AND ($5::text IS NULL OR result = $5)",
+            "&query.principal_subject",
+            "&query.result",
+            "&query.correlation_id",
+            "events.reverse();",
+        ],
+    )
     required_by_file = {
         "core": (core, ["WorkerDegraded", "left.client_event_id == right.client_event_id"]),
         "store": (store, ["in_memory_order_lifecycle_records_cancel_requested", "in_memory_worker_heartbeat_informs_runtime_state", "execution_id={}"]),
-        "postgres": (postgres, ["impl OrderLifecycleStore for PostgresStore", "impl RuntimeWorkerHealthStore for PostgresStore", "impl RuntimeWorkerStatusStore for PostgresStore", "principal_subject = $4", "result = $5"]),
+        "postgres": (postgres, ["impl OrderLifecycleStore for PostgresStore", "impl RuntimeWorkerHealthStore for PostgresStore", "impl RuntimeWorkerStatusStore for PostgresStore"]),
         "sql": (sql, ["CREATE TABLE IF NOT EXISTS orders", "CREATE TABLE IF NOT EXISTS order_events", "idx_order_events_order_created", "client_event_id TEXT", "uq_sign_only_lifecycle_client_event", "WHERE client_event_id IS NOT NULL", "ADD COLUMN IF NOT EXISTS client_event_id", "ADD COLUMN IF NOT EXISTS observed_at", "ADD COLUMN IF NOT EXISTS correlation_id"]),
         "service": (service, []),
         "policy": (policy, ["WorkerStatus::Degraded => reasons.push(BlockReason::WorkerDegraded)", "degraded_worker_blocks_pre_live"]),
