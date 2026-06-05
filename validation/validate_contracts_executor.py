@@ -1982,6 +1982,7 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     postgres = rust_source_text(STORE_SRC)
     service = rust_source_text(SERVICE_SRC)
     policy = (EXECUTOR / "crates/pmx-policy/src/lib.rs").read_text()
+    policy_runtime = (EXECUTOR / "crates/pmx-policy/src/runtime.rs").read_text()
     sql = SQL.read_text()
     gate = (EXECUTOR / "validation/run_current_gates_impl.sh").read_text()
     core_redaction = (CORE_SRC / "domain/plan/redaction.rs").read_text()
@@ -2301,6 +2302,8 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     divergence_body = rust_async_fn_body(
         service_order_lifecycle_divergence, "reconcile_order_lifecycle_divergence"
     )
+    policy_runtime_body = rust_fn_body(policy_runtime, "collect_runtime_reasons")
+    policy_degraded_test_body = rust_fn_body(policy, "degraded_worker_blocks_pre_live")
     sign_only_replay_body = rust_fn_body(
         store_lifecycle_helpers, "sign_only_lifecycle_record_is_replay"
     )
@@ -2345,6 +2348,27 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
             "record.created_at = None;",
             "candidate.client_event_id.as_deref() == Some(client_event_id)",
             "sign_only_lifecycle_records_equivalent(candidate, &record)",
+        ],
+    )
+    require_tokens(
+        policy_runtime_body,
+        "current runtime policy worker handling",
+        [
+            "if state.kill_switch_enabled",
+            "GeoblockStatus::Blocked => reasons.push(BlockReason::GeoblockBlocked)",
+            "WorkerStatus::Degraded => reasons.push(BlockReason::WorkerDegraded)",
+            "WorkerStatus::Stale => reasons.push(BlockReason::WorkerStale)",
+            "CollateralProfileStatus::ExplicitMissing => {",
+            "reasons.push(BlockReason::CollateralProfileMissing)",
+        ],
+    )
+    require_tokens(
+        policy_degraded_test_body,
+        "current degraded worker policy test",
+        [
+            "worker_status: WorkerStatus::Degraded",
+            "assert_eq!(decision.status, DecisionStatus::Block);",
+            "assert!(decision.reasons.contains(&BlockReason::WorkerDegraded));",
         ],
     )
     require_tokens(
@@ -2508,7 +2532,7 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
         "postgres": (postgres, ["impl OrderLifecycleStore for PostgresStore", "impl RuntimeWorkerHealthStore for PostgresStore", "impl RuntimeWorkerStatusStore for PostgresStore"]),
         "sql": (sql, ["CREATE TABLE IF NOT EXISTS orders", "CREATE TABLE IF NOT EXISTS order_events", "idx_order_events_order_created", "client_event_id TEXT", "uq_sign_only_lifecycle_client_event", "WHERE client_event_id IS NOT NULL", "ADD COLUMN IF NOT EXISTS client_event_id", "ADD COLUMN IF NOT EXISTS observed_at", "ADD COLUMN IF NOT EXISTS correlation_id"]),
         "service": (service, []),
-        "policy": (policy, ["WorkerStatus::Degraded => reasons.push(BlockReason::WorkerDegraded)", "degraded_worker_blocks_pre_live"]),
+        "policy": (policy, []),
         "api runtime read route": (api_runtime_read, []),
         "api reconcile local route": (api_reconcile_local, []),
         "api support error": (api_support_error, []),
