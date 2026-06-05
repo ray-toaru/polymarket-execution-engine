@@ -2334,6 +2334,9 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     api_support_audit_body = rust_async_fn_body(
         api_support_audit, "record_admin_audit"
     )
+    api_reconcile_local_body = rust_async_fn_body(
+        api_reconcile_local, "reconcile_order_local"
+    )
     require_tokens(
         sign_only_service_body,
         "current service sign-only lifecycle helper",
@@ -2484,6 +2487,21 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
             "created_at: None",
         ],
     )
+    require_tokens(
+        api_reconcile_local_body,
+        "current reconcile local route",
+        [
+            "require_local_reconcile_request(&state, &headers, &req).await?",
+            "reconcile_order_lifecycle_divergence(",
+            '"ReconcileOrderLocal"',
+            '"REJECTED missing_order"',
+            "api_error_with_correlation(",
+            '"order lifecycle not found"',
+            '"ACCEPTED kind={:?} correlation_id={}"',
+            "no_remote_side_effect: true",
+            "StatusCode::ACCEPTED",
+        ],
+    )
     required_by_file = {
         "core": (core, ["WorkerDegraded", "left.client_event_id == right.client_event_id"]),
         "store": (store, ["in_memory_order_lifecycle_records_cancel_requested", "in_memory_worker_heartbeat_informs_runtime_state", "execution_id={}"]),
@@ -2492,7 +2510,7 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
         "service": (service, []),
         "policy": (policy, ["WorkerStatus::Degraded => reasons.push(BlockReason::WorkerDegraded)", "degraded_worker_blocks_pre_live"]),
         "api runtime read route": (api_runtime_read, []),
-        "api reconcile local route": (api_reconcile_local, ["api_error_with_correlation", "record_admin_audit(", "ReconcileOrderLocalResponse", "no_remote_side_effect: true"]),
+        "api reconcile local route": (api_reconcile_local, []),
         "api support error": (api_support_error, []),
         "api support audit": (api_support_audit, []),
         "api cancel route": (api_cancel_route, []),
