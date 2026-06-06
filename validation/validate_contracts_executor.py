@@ -2607,6 +2607,9 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     sign_only_service_body = rust_async_fn_body(
         service_sign_only_lifecycle, "record_sign_only_lifecycle_event"
     )
+    sign_only_equivalent_body = rust_fn_body(
+        core_sign_only, "sign_only_lifecycle_records_equivalent"
+    )
     redacted_payload_envelope_body = rust_fn_body(
         core_redaction, "redacted_payload_envelope"
     )
@@ -2657,6 +2660,12 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     api_reconcile_local_body = rust_async_fn_body(
         api_reconcile_local, "reconcile_order_local"
     )
+    memory_order_lifecycle_tests = (
+        EXECUTOR / "crates/pmx-store/src/memory_tests/order_lifecycle/cancel_requested.rs"
+    ).read_text()
+    memory_runtime_worker_tests = (
+        EXECUTOR / "crates/pmx-store/src/memory_tests/runtime_worker_health.rs"
+    ).read_text()
     require_tokens(
         redacted_payload_envelope_body,
         "current core redaction helper",
@@ -2701,6 +2710,22 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
         ],
     )
     require_tokens(
+        sign_only_equivalent_body,
+        "current sign-only replay equivalence helper",
+        [
+            "left.execution_id == right.execution_id",
+            "left.event == right.event",
+            "left.state == right.state",
+            "left.client_event_id == right.client_event_id",
+            "left.signed_order_ref == right.signed_order_ref",
+            "left.no_remote_side_effect == right.no_remote_side_effect",
+        ],
+    )
+    if "WorkerDegraded" not in rust_enum_variant_names(
+        (CORE_SRC / "domain/plan/decision.rs").read_text(), "BlockReason"
+    ):
+        fail("current block-reason model must retain WorkerDegraded")
+    require_tokens(
         policy_runtime_body,
         "current runtime policy worker handling",
         [
@@ -2739,6 +2764,38 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
             "candidate.client_event_id.as_deref() == Some(client_event_id)",
             "sign_only_lifecycle_records_equivalent(previous, record)",
             "client_event_id reused with different event payload",
+        ],
+    )
+    if "in_memory_order_lifecycle_records_cancel_requested" not in rust_async_fn_names(
+        memory_order_lifecycle_tests
+    ):
+        fail("current in-memory order lifecycle tests must expose cancel_requested coverage")
+    if "in_memory_worker_heartbeat_informs_runtime_state" not in rust_async_fn_names(
+        memory_runtime_worker_tests
+    ):
+        fail("current in-memory runtime worker tests must expose heartbeat/runtime-state coverage")
+    require_tokens(
+        rust_async_fn_body(
+            memory_order_lifecycle_tests, "in_memory_order_lifecycle_records_cancel_requested"
+        ),
+        "current in-memory order lifecycle tests",
+        [
+            "record_order_lifecycle_event",
+            "CancelRequested",
+            "list_order_lifecycle_events",
+            "assert_eq!(\n        updated.lifecycle_state,\n        OrderLifecycleState::CancelRequested",
+        ],
+    )
+    require_tokens(
+        rust_async_fn_body(
+            memory_runtime_worker_tests, "in_memory_worker_heartbeat_informs_runtime_state"
+        ),
+        "current in-memory runtime worker tests",
+        [
+            "record_worker_heartbeat",
+            "load_runtime_state",
+            'required_capabilities: vec!["heartbeat".into()]',
+            "assert_eq!(state.worker_status, WorkerStatus::Healthy);",
         ],
     )
     require_tokens(
@@ -2877,9 +2934,9 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
         ],
     )
     required_by_file = {
-        "core": (core, ["WorkerDegraded", "left.client_event_id == right.client_event_id"]),
-        "store": (store, ["in_memory_order_lifecycle_records_cancel_requested", "in_memory_worker_heartbeat_informs_runtime_state", "execution_id={}"]),
-        "postgres": (postgres, ["impl OrderLifecycleStore for PostgresStore", "impl RuntimeWorkerHealthStore for PostgresStore", "impl RuntimeWorkerStatusStore for PostgresStore"]),
+        "core": (core, []),
+        "store": (store, []),
+        "postgres": (postgres, []),
         "sql": (sql, ["CREATE TABLE IF NOT EXISTS orders", "CREATE TABLE IF NOT EXISTS order_events", "idx_order_events_order_created", "client_event_id TEXT", "uq_sign_only_lifecycle_client_event", "WHERE client_event_id IS NOT NULL", "ADD COLUMN IF NOT EXISTS client_event_id", "ADD COLUMN IF NOT EXISTS observed_at", "ADD COLUMN IF NOT EXISTS correlation_id"]),
         "service": (service, []),
         "policy": (policy, []),
