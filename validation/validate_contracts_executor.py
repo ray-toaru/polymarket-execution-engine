@@ -1574,10 +1574,13 @@ def validate_v20_plan_storage_and_packaging(spec: dict | None = None) -> None:
     create_tables = set(re.findall(r"CREATE TABLE IF NOT EXISTS ([a-z_]+)", migration))
     if "execution_plans" not in create_tables:
         fail("v0.20 migration must create canonical execution_plans table")
-    if "DROP TABLE IF EXISTS plan_summaries" not in migration:
-        fail("v0.20 migration plan storage missing token: DROP TABLE IF EXISTS plan_summaries")
-    if "execution_plans.summary_json as canonical plan summary storage" not in migration:
-        fail("v0.20 migration plan storage missing canonical summary_json note")
+    if not re.search(r"(?mi)^\s*DROP TABLE IF EXISTS plan_summaries\s*;\s*$", migration):
+        fail("v0.20 migration plan storage must drop legacy plan_summaries table")
+    if not re.search(
+        r"(?mi)^\s*--\s*plan_summaries intentionally removed\.\s*Use execution_plans\.summary_json as canonical plan summary storage\.\s*$",
+        migration,
+    ):
+        fail("v0.20 migration plan storage must document execution_plans.summary_json as canonical storage")
     execution_plans_body = re.search(r"(?s)CREATE TABLE IF NOT EXISTS execution_plans \((.*?)\);", migration)
     if not execution_plans_body:
         fail("v0.20 migration missing execution_plans table body")
