@@ -70,7 +70,7 @@ VALIDATORS = [
     ValidatorSpec("additional_properties", "surface", "S2", "structured", True, validate_additional_properties),
     ValidatorSpec("python_field_parity", "surface", "S2", "structured", True, validate_python_field_parity),
     ValidatorSpec("sql_idempotency", "surface", "S1", "mixed", False, validate_sql_idempotency),
-    ValidatorSpec("rust_deny_unknown_fields", "surface", "S2", "mixed", False, validate_rust_deny_unknown_fields),
+    ValidatorSpec("rust_deny_unknown_fields", "surface", "S2", "structured", False, validate_rust_deny_unknown_fields),
     ValidatorSpec("v04_source_landings", "executor", "S2", "mixed", False, validate_v04_source_landings),
     ValidatorSpec("v07_source_landings", "executor", "S2", "mixed", False, validate_v07_source_landings),
     ValidatorSpec("v08_dependency_and_sdk_policy", "executor", "S2", "mixed", False, validate_v08_dependency_and_sdk_policy),
