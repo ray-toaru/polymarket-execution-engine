@@ -1645,6 +1645,20 @@ def validate_v20_plan_storage_and_packaging(spec: dict | None = None) -> None:
     liveness_error_tests = (SDK_ADAPTER_SRC / "tests/liveness_errors.rs").read_text()
     if "normalized_error_redaction_covers_remote_unknown_messages" not in rust_fn_names(liveness_error_tests):
         fail("v0.20 SDK liveness tests missing remote unknown redaction coverage")
+    liveness_remote_unknown_test_body = rust_fn_body(
+        liveness_error_tests, "normalized_error_redaction_covers_remote_unknown_messages"
+    )
+    require_tokens(
+        liveness_remote_unknown_test_body,
+        "v0.20 SDK liveness tests",
+        [
+            "OfficialSdkErrorCategory::RemoteUnknown",
+            "let redacted = redact_normalized_error(&normalized);",
+            '!redacted.message.contains("leaked-secret")',
+            "gateway_error_from_normalized_sdk_error(&redacted)",
+            'GatewayError::RemoteUnknown("timeout POLY_API_SECRET=[REDACTED]".into())',
+        ],
+    )
     runtime_signal_model_text = (EXECUTOR / "crates/pmx-runtime/src/health/signal/model.rs").read_text()
     runtime_signal_variants = rust_enum_variant_names(runtime_signal_model_text, "RuntimeSignal")
     if not {"Geoblock", "ReconcileBacklog"}.issubset(runtime_signal_variants):
@@ -1679,6 +1693,24 @@ def validate_v20_plan_storage_and_packaging(spec: dict | None = None) -> None:
     ).read_text()
     if "geoblock_unknown_and_reconcile_backlog_block_submit" not in rust_fn_names(runtime_blocking_tests):
         fail("v0.20 runtime evaluation tests missing geoblock/backlog blocking test")
+    runtime_blocking_test_body = rust_fn_body(
+        runtime_blocking_tests, "geoblock_unknown_and_reconcile_backlog_block_submit"
+    )
+    require_tokens(
+        runtime_blocking_test_body,
+        "v0.20 runtime evaluation tests",
+        [
+            'runtime_breakdown_from_signals(',
+            '"acct-runtime-v20"',
+            "RuntimeSignal::Geoblock",
+            "GeoblockStatus::Unknown",
+            "RuntimeSignal::ReconcileBacklog",
+            "remote_unknown_orders: 1",
+            'names.contains(&"geoblock")',
+            'names.contains(&"resource-refresh")',
+            'names.contains(&"reconcile-backlog")',
+        ],
+    )
     order_lifecycle_text = (CORE_SRC / "domain/lifecycle/order.rs").read_text()
     if not {"cancel_state_from_lifecycle", "lifecycle_requires_reconcile"}.issubset(
         rust_fn_names(order_lifecycle_text)
