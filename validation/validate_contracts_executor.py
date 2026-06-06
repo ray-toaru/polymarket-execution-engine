@@ -2563,6 +2563,15 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     sign_only_service_body = rust_async_fn_body(
         service_sign_only_lifecycle, "record_sign_only_lifecycle_event"
     )
+    redacted_payload_envelope_body = rust_fn_body(
+        core_redaction, "redacted_payload_envelope"
+    )
+    correlation_id_from_headers_body = rust_fn_body(
+        api_support_error, "correlation_id_from_headers"
+    )
+    api_error_with_correlation_body = rust_fn_body(
+        api_support_error, "api_error_with_correlation"
+    )
     divergence_body = rust_async_fn_body(
         service_order_lifecycle_divergence, "reconcile_order_lifecycle_divergence"
     )
@@ -2603,6 +2612,39 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     )
     api_reconcile_local_body = rust_async_fn_body(
         api_reconcile_local, "reconcile_order_local"
+    )
+    require_tokens(
+        redacted_payload_envelope_body,
+        "current core redaction helper",
+        [
+            "let envelope = RedactedPayloadEnvelope {",
+            "schema_version: 1",
+            '\"private_key\".into()',
+            '\"clob_secret\".into()',
+            '\"signed_payload\".into()',
+            '\"signed_order_envelope\".into()',
+            "serde_json::to_value(envelope).expect(",
+        ],
+    )
+    require_tokens(
+        correlation_id_from_headers_body,
+        "current API error support",
+        [
+            '.get("x-correlation-id")',
+            ".and_then(|value| value.to_str().ok())",
+            ".map(str::trim)",
+            ".filter(|value| !value.is_empty())",
+            "Uuid::new_v4().to_string()",
+        ],
+    )
+    require_tokens(
+        api_error_with_correlation_body,
+        "current API error support",
+        [
+            '"error": message.into()',
+            '"correlation_id": correlation_id.into()',
+            "Json(serde_json::json!({",
+        ],
     )
     require_tokens(
         sign_only_service_body,
