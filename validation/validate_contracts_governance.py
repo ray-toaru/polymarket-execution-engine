@@ -30,6 +30,7 @@ from validate_contracts_support import (
     import_control_client,
     import_control_models,
     import_module_from_path,
+    python_function_body,
     rust_source_text,
 )
 
@@ -679,22 +680,34 @@ def validate_canary_candidate_market_prep_boundary() -> None:
         if exchange_rule_snapshot.get(key) != expected:
             fail(f"canary candidate market prep exchange_rule_snapshot must bind {key}={expected!r}")
     text = prep_script.read_text()
-    for needle in [
-        "candidate-market.json",
-        "public read-only",
-        "urllib.request",
-        "False",
-        "/markets",
-        "/book",
-        "/spread",
-        "post_only_price_unavailable",
-        "RealFundsCanaryMarketCandidate",
-    ]:
-        if needle not in text:
-            fail(f"canary candidate market prep script missing boundary token: {needle}")
-    for needle in ['"remote_side_effects": False', '"authorized_for_live": False']:
-        if needle not in text:
-            fail(f"canary candidate market prep script missing audit boundary token: {needle}")
+    if "public read-only" not in (getattr(prep_module, "__doc__", "") or ""):
+        fail("canary candidate market prep script must describe public read-only sourcing")
+    if "RealFundsCanaryMarketCandidate" not in (getattr(prep_module, "__doc__", "") or ""):
+        fail("canary candidate market prep script must describe RealFundsCanaryMarketCandidate output shape")
+    parse_args_body = python_function_body(text, "parse_args")
+    fetch_json_body = python_function_body(text, "fetch_json")
+    candidate_from_market_body = python_function_body(text, "candidate_from_market")
+    load_market_by_slug_body = python_function_body(text, "load_market_by_slug")
+    scan_body = python_function_body(text, "scan")
+    main_body = python_function_body(text, "main")
+    for needle in ["candidate-market.json", "public read-only Polymarket APIs."]:
+        if needle not in parse_args_body:
+            fail(f"canary candidate market prep parse_args missing boundary token: {needle}")
+    for needle in ["urllib.request.Request(", "urllib.request.urlopen(", "FETCH_RETRY_ATTEMPTS"]:
+        if needle not in fetch_json_body:
+            fail(f"canary candidate market prep fetch_json missing boundary token: {needle}")
+    for needle in ["/book", "/spread", "post_only_buy_limit_price(", "selected market spread is unavailable"]:
+        if needle not in candidate_from_market_body:
+            fail(f"canary candidate market prep candidate_from_market missing boundary token: {needle}")
+    for needle in ['fetch_json(args.gamma_url, "/markets"', 'fetch_json(args.gamma_url, "/events"']:
+        if needle not in load_market_by_slug_body:
+            fail(f"canary candidate market prep load_market_by_slug missing boundary token: {needle}")
+    for needle in ["post_only_price_unavailable", '"remote_side_effects": False', '"authorized_for_live": False']:
+        if needle not in scan_body:
+            fail(f"canary candidate market prep scan missing boundary token: {needle}")
+    for needle in ['"remote_side_effects": False', '"authorized_for_live": False', '"candidate_market": str(args.output)']:
+        if needle not in main_body:
+            fail(f"canary candidate market prep main missing audit boundary token: {needle}")
     validate_absent_tokens(text, "canary candidate market prep script", [
         "post_order",
         "post_orders",

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import ast
 import re
 import sys
 from pathlib import Path
@@ -213,3 +214,17 @@ def import_module_from_path(name: str, path: Path):
             sys.modules[name] = previous
         raise
     return module
+
+
+def python_function_body(text: str, name: str) -> str:
+    try:
+        tree = ast.parse(text)
+    except SyntaxError as exc:
+        fail(f"python source malformed while locating {name}: {exc}")
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name == name:
+            if getattr(node, "end_lineno", None) is None:
+                fail(f"python function {name} missing end line metadata")
+            lines = text.splitlines()
+            return "\n".join(lines[node.lineno - 1 : node.end_lineno])
+    fail(f"python function {name} not found")
