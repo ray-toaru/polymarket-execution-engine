@@ -28,6 +28,7 @@ from validate_contracts_support import (
     STORE_SRC,
     fail,
     import_module_from_path,
+    python_function_body,
     rust_file_with_modules_text,
     rust_handler_body,
     rust_source_text,
@@ -1742,16 +1743,59 @@ def validate_v20_plan_storage_and_packaging(spec: dict | None = None) -> None:
             "OrderLifecycleState::RemoteUnknown | OrderLifecycleState::PartialRemoteUnknown",
         ],
     )
+    plan_storage_guard = EXECUTOR / "validation/check_plan_storage.py"
     for doc in [
         ROOT / "scripts/package_release.py",
         ROOT / "scripts/check_release_artifact.py",
-        EXECUTOR / "validation/check_plan_storage.py",
+        plan_storage_guard,
         EXECUTOR / "validation/run_current_gates.sh",
         EXECUTOR / "docs/PLAN_STORAGE_CANONICALIZATION.md",
         EXECUTOR / "docs/DOC_STATUS.md",
     ]:
         if not doc.exists():
             fail(f"v0.20 missing artifact: {doc.relative_to(ROOT)}")
+    plan_storage_guard_text = plan_storage_guard.read_text()
+    plan_storage_guard_module = import_module_from_path(
+        "validate_v20_check_plan_storage", plan_storage_guard
+    )
+    if getattr(plan_storage_guard_module, "ROOT", None) != EXECUTOR:
+        fail("v0.20 plan storage guard ROOT must bind execution-engine root")
+    if getattr(plan_storage_guard_module, "MIGRATION", None) != EXECUTOR / "migrations" / "0001_initial.sql":
+        fail("v0.20 plan storage guard MIGRATION must bind canonical migration")
+    if getattr(plan_storage_guard_module, "POSTGRES_ENTRYPOINT", None) != EXECUTOR / "crates" / "pmx-store" / "src" / "postgres.rs":
+        fail("v0.20 plan storage guard POSTGRES_ENTRYPOINT must bind canonical PostgresStore entrypoint")
+    if getattr(plan_storage_guard_module, "POSTGRES_EXECUTION", None) != EXECUTOR / "crates" / "pmx-store" / "src" / "postgres_execution":
+        fail("v0.20 plan storage guard POSTGRES_EXECUTION must bind canonical postgres_execution module")
+    for helper_name in ["read_postgres_store_sources", "main"]:
+        if not callable(getattr(plan_storage_guard_module, helper_name, None)):
+            fail(f"v0.20 plan storage guard missing helper: {helper_name}")
+    plan_storage_read_body = python_function_body(
+        plan_storage_guard_text, "read_postgres_store_sources"
+    )
+    require_tokens(
+        plan_storage_read_body,
+        "v0.20 plan storage guard",
+        [
+            "paths = [POSTGRES_ENTRYPOINT]",
+            "paths.extend(sorted(POSTGRES_EXECUTION.rglob(\"*.rs\")))",
+            "\"\\n\".join(path.read_text() for path in paths)",
+        ],
+    )
+    plan_storage_main_body = python_function_body(plan_storage_guard_text, "main")
+    require_tokens(
+        plan_storage_main_body,
+        "v0.20 plan storage guard",
+        [
+            "failures: list[str] = []",
+            "migration = MIGRATION.read_text()",
+            "postgres = read_postgres_store_sources()",
+            '"DROP TABLE IF EXISTS plan_summaries"',
+            '"CREATE TABLE IF NOT EXISTS plan_summaries"',
+            '"INSERT INTO plan_summaries"',
+            '"INSERT INTO execution_plans"',
+            'print("plan storage guard passed: execution_plans is canonical")',
+        ],
+    )
 
 
 def validate_v21_sign_only_and_runtime_models(spec: dict | None = None) -> None:
