@@ -934,28 +934,115 @@ def validate_v28_production_live_candidate_guard() -> None:
         if not path.exists():
             fail(f"v0.28 production-live-candidate guard file missing: {path.relative_to(ROOT)}")
     guard_text = guard.read_text()
-    for needle in [
-        'TARGET_VERSION = "0.28.0"',
+    guard_module = import_module_from_path("pmx_check_v28_production_live_candidate", guard)
+    if getattr(guard_module, "ROOT", None) != ROOT:
+        fail("v0.28 production-live-candidate guard must bind integration root")
+    if getattr(guard_module, "TARGET_VERSION", None) != "0.28.0":
+        fail('v0.28 production-live-candidate guard TARGET_VERSION must remain "0.28.0"')
+    hex64 = getattr(guard_module, "HEX64", None)
+    if getattr(hex64, "pattern", None) != r"^[0-9a-f]{64}$":
+        fail("v0.28 production-live-candidate guard HEX64 must enforce lowercase sha256")
+    required_terms = getattr(guard_module, "REQUIRED_CANDIDATE_TERMS", None)
+    if not isinstance(required_terms, list):
+        fail("v0.28 production-live-candidate guard must export REQUIRED_CANDIDATE_TERMS")
+    for term in [
         "production-live-candidate",
-        "--require-ready",
-        "release artifact evidence sidecar missing",
-        "workspace manifest snapshot referenced by release artifact evidence sidecar is missing",
-        "validated_release",
-        "production_ready",
-        "live_trading_ready",
+        "validated_release=false",
+        "production_ready=false",
+        "live_trading_ready=false",
         "operator approval",
         "runtime state healthy",
+        "kill switch open",
+        "no geoblock",
+        "idempotency reservation",
+        "rollback",
+        "incident",
+        "alert",
+        "custody",
     ]:
-        if needle not in guard_text:
-            fail(f"v0.28 production-live-candidate guard missing token: {needle}")
-    test_text = test.read_text()
+        if term not in required_terms:
+            fail(f"v0.28 production-live-candidate guard REQUIRED_CANDIDATE_TERMS missing {term}")
+    for func_name in [
+        "read_text",
+        "load_json",
+        "component_matrix_versions",
+        "require_contains",
+        "require_false",
+        "evaluate",
+        "main",
+    ]:
+        if not callable(getattr(guard_module, func_name, None)):
+            fail(f"v0.28 production-live-candidate guard missing callable: {func_name}")
+    if "Audit v0.28 production-live-candidate readiness." not in (getattr(guard_module, "__doc__", "") or ""):
+        fail("v0.28 production-live-candidate guard must describe audit-only readiness scope")
+
+    matrix_body = python_function_body(guard_text, "component_matrix_versions")
+    for needle in ["Integration suite", "Execution engine", "Hermes adapter", 'versions["suite"]', 'versions["engine"]', 'versions["adapter"]']:
+        if needle not in matrix_body:
+            fail(f"v0.28 production-live-candidate guard component_matrix_versions missing token: {needle}")
+
+    evaluate_body = python_function_body(guard_text, "evaluate")
     for needle in [
+        "external_requirements = [",
+        'root / "VERSION"',
+        'root / "COMPONENT_COMPATIBILITY.md"',
+        'root / "polymarket-execution-engine/release/manifest.json"',
+        'root / "polymarket-execution-engine/evidence/current/manifest.json"',
+        'root / "dist/INDEX.json"',
+        'artifact.with_suffix(artifact.suffix + ".evidence.json")',
+        "workspace_manifest_snapshot_path",
+        'for key in ["validated_release", "production_ready", "live_trading_ready"]',
+        '"production-live-candidate"',
+        '"not-production"',
+        '"not-live"',
+    ]:
+        if needle not in evaluate_body:
+            fail(f"v0.28 production-live-candidate guard evaluate missing token: {needle}")
+
+    main_body = python_function_body(guard_text, "main")
+    for needle in [
+        '--require-ready',
+        "evaluate(ROOT)",
+        "json.dumps(report, indent=2, sort_keys=True)",
+        'if args.require_ready and report["status"] != "ready":',
+        "return 1",
+    ]:
+        if needle not in main_body:
+            fail(f"v0.28 production-live-candidate guard main missing token: {needle}")
+
+    test_text = test.read_text()
+    for test_name in [
         "test_ready_tree_passes_when_candidate_boundary_is_explicit",
         "test_live_ready_claim_blocks_candidate",
         "test_missing_operator_and_runtime_terms_block_candidate",
     ]:
-        if needle not in test_text:
-            fail(f"v0.28 production-live-candidate tests missing token: {needle}")
+        if test_name not in test_text:
+            fail(f"v0.28 production-live-candidate tests missing function: {test_name}")
+    ready_test_body = python_function_body(test_text, "test_ready_tree_passes_when_candidate_boundary_is_explicit")
+    for needle in [
+        "report = self.module.evaluate(self.root)",
+        'self.assertEqual(report["status"], "ready")',
+        'self.assertEqual(report["blockers"], [])',
+        'self.assertEqual(report["external_evidence"]["status"], "not_locally_verifiable")',
+    ]:
+        if needle not in ready_test_body:
+            fail(f"v0.28 production-live-candidate ready-tree test missing token: {needle}")
+    live_ready_body = python_function_body(test_text, "test_live_ready_claim_blocks_candidate")
+    for needle in [
+        'manifest["release_decision"]["live_trading_ready"] = True',
+        'self.assertEqual(report["status"], "not_ready")',
+        'self.assertIn("live_trading_ready", "\\n".join(report["blockers"]))',
+    ]:
+        if needle not in live_ready_body:
+            fail(f"v0.28 production-live-candidate live-ready test missing token: {needle}")
+    missing_terms_body = python_function_body(test_text, "test_missing_operator_and_runtime_terms_block_candidate")
+    for needle in [
+        'self.assertEqual(report["status"], "not_ready")',
+        'self.assertIn("operator approval", blockers)',
+        'self.assertIn("runtime state healthy", blockers)',
+    ]:
+        if needle not in missing_terms_body:
+            fail(f"v0.28 production-live-candidate missing-terms test missing token: {needle}")
     for path in [readme, report]:
         text = path.read_text()
         if "check_v28_production_live_candidate.py" not in text:
