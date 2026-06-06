@@ -64,7 +64,7 @@ class ValidatorSpec:
 
 
 VALIDATORS = [
-    ValidatorSpec("paths_and_statuses", "surface", "S2", "mixed", True, validate_paths_and_statuses),
+    ValidatorSpec("paths_and_statuses", "surface", "S2", "structured", True, validate_paths_and_statuses),
     ValidatorSpec("critical_contract_shapes", "surface", "S1", "structured", True, validate_critical_contract_shapes),
     ValidatorSpec("no_public_forbidden_tokens", "surface", "S1", "mixed", True, validate_no_public_forbidden_tokens),
     ValidatorSpec("additional_properties", "surface", "S2", "structured", True, validate_additional_properties),
