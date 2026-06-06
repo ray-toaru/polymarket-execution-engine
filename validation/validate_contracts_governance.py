@@ -684,8 +684,11 @@ def validate_canary_candidate_market_prep_boundary() -> None:
         fail("canary candidate market prep script must describe public read-only sourcing")
     if "RealFundsCanaryMarketCandidate" not in (getattr(prep_module, "__doc__", "") or ""):
         fail("canary candidate market prep script must describe RealFundsCanaryMarketCandidate output shape")
+    candidate_to_engine_json_body = python_function_body(text, "to_engine_json")
     parse_args_body = python_function_body(text, "parse_args")
     fetch_json_body = python_function_body(text, "fetch_json")
+    fetch_json_or_error_body = python_function_body(text, "fetch_json_or_error")
+    post_only_buy_limit_price_body = python_function_body(text, "post_only_buy_limit_price")
     candidate_from_market_body = python_function_body(text, "candidate_from_market")
     load_market_by_slug_body = python_function_body(text, "load_market_by_slug")
     scan_body = python_function_body(text, "scan")
@@ -708,7 +711,21 @@ def validate_canary_candidate_market_prep_boundary() -> None:
     for needle in ['"remote_side_effects": False', '"authorized_for_live": False', '"candidate_market": str(args.output)']:
         if needle not in main_body:
             fail(f"canary candidate market prep main missing audit boundary token: {needle}")
-    validate_absent_tokens(text, "canary candidate market prep script", [
+    forbidden_scan_surface = "\n".join(
+        [
+            getattr(prep_module, "__doc__", "") or "",
+            candidate_to_engine_json_body,
+            parse_args_body,
+            fetch_json_body,
+            fetch_json_or_error_body,
+            post_only_buy_limit_price_body,
+            candidate_from_market_body,
+            load_market_by_slug_body,
+            scan_body,
+            main_body,
+        ]
+    )
+    validate_absent_tokens(forbidden_scan_surface, "canary candidate market prep script public/safe surface", [
         "post_order",
         "post_orders",
         "private_key",

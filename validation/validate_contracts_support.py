@@ -221,7 +221,7 @@ def python_function_body(text: str, name: str) -> str:
         tree = ast.parse(text)
     except SyntaxError as exc:
         fail(f"python source malformed while locating {name}: {exc}")
-    for node in tree.body:
+    for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef) and node.name == name:
             if getattr(node, "end_lineno", None) is None:
                 fail(f"python function {name} missing end line metadata")
