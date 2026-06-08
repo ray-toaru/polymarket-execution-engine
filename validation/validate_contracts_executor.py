@@ -2673,6 +2673,16 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     api_reconcile_local_body = rust_async_fn_body(
         api_reconcile_local, "reconcile_order_local"
     )
+    lifecycle_gate_script = EXECUTOR / "validation/check_current_lifecycle_api.py"
+    runtime_status_gate_script = EXECUTOR / "validation/check_runtime_worker_status_query.py"
+    lifecycle_gate_module = import_module_from_path(
+        "validate_v23_check_current_lifecycle_api", lifecycle_gate_script
+    )
+    runtime_status_gate_module = import_module_from_path(
+        "validate_v23_check_runtime_worker_status_query", runtime_status_gate_script
+    )
+    lifecycle_gate_text = lifecycle_gate_script.read_text()
+    runtime_status_gate_text = runtime_status_gate_script.read_text()
     memory_order_lifecycle_tests = (
         EXECUTOR / "crates/pmx-store/src/memory_tests/order_lifecycle/cancel_requested.rs"
     ).read_text()
@@ -2946,6 +2956,60 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
             "StatusCode::ACCEPTED",
         ],
     )
+    if getattr(lifecycle_gate_module, "GATE", None) != getattr(
+        lifecycle_gate_module, "CURRENT_GATES", getattr(lifecycle_gate_module, "GATE", None)
+    ):
+        fail("current lifecycle gate guard must bind CURRENT_GATES via GATE")
+    if getattr(lifecycle_gate_module, "ACTIVE_GATE", None) != getattr(
+        lifecycle_gate_module,
+        "ACTIVE_GATE_IMPLEMENTATION",
+        getattr(lifecycle_gate_module, "ACTIVE_GATE", None),
+    ):
+        fail("current lifecycle gate guard must bind ACTIVE_GATE_IMPLEMENTATION via ACTIVE_GATE")
+    lifecycle_required = getattr(lifecycle_gate_module, "REQUIRED", {})
+    if "current gates completed" not in lifecycle_required.get(getattr(lifecycle_gate_module, "ACTIVE_GATE", object()), []):
+        fail("current lifecycle gate guard must require current gates completion token")
+    lifecycle_gate_main_body = python_function_body(lifecycle_gate_text, "main")
+    require_tokens(
+        lifecycle_gate_main_body,
+        "current lifecycle gate guard",
+        [
+            "for path, needles in REQUIRED.items():",
+            "if not path.exists() and path in {VERSION_GUARD, HERMES_CLIENT, HERMES_MODELS}:",
+            "text = source_text(path)",
+            'failures.append(f"{path.relative_to(ROOT)} missing {needle}")',
+            "for path, needles in FORBIDDEN.items():",
+            'failures.append(f"{path.relative_to(ROOT)} contains forbidden token {needle}")',
+            'print("current lifecycle/query static guard passed")',
+        ],
+    )
+    if getattr(runtime_status_gate_module, "GATES", None) != getattr(
+        runtime_status_gate_module, "CURRENT_GATES", getattr(runtime_status_gate_module, "GATES", None)
+    ):
+        fail("runtime status query guard must bind CURRENT_GATES via GATES")
+    if getattr(runtime_status_gate_module, "ACTIVE_GATES", None) != getattr(
+        runtime_status_gate_module,
+        "ACTIVE_GATE_IMPLEMENTATION",
+        getattr(runtime_status_gate_module, "ACTIVE_GATES", None),
+    ):
+        fail("runtime status query guard must bind ACTIVE_GATE_IMPLEMENTATION via ACTIVE_GATES")
+    runtime_required = getattr(runtime_status_gate_module, "REQUIRED", {})
+    if "42-runtime-worker-status-query.log" not in runtime_required.get(
+        getattr(runtime_status_gate_module, "ACTIVE_GATES", object()), []
+    ):
+        fail("runtime status query guard must require 42-runtime-worker-status-query.log")
+    runtime_status_main_body = python_function_body(runtime_status_gate_text, "main")
+    require_tokens(
+        runtime_status_main_body,
+        "runtime status query guard",
+        [
+            "for path, needles in REQUIRED.items():",
+            'failures.append(f"missing artifact: {path.relative_to(ROOT)}")',
+            'env_enabled("PMX_ALLOW_LIVE_SUBMIT")',
+            'env_enabled("PMX_ALLOW_LIVE_CANCEL")',
+            '"remote_trading_side_effect": "not_executed"',
+        ],
+    )
     required_by_file = {
         "core": (core, []),
         "store": (store, []),
@@ -2958,7 +3022,7 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
         "api support error": (api_support_error, []),
         "api support audit": (api_support_audit, []),
         "api cancel route": (api_cancel_route, []),
-        "gate": (gate, ["run_current_gates.sh", "check_current_lifecycle_api.py", "check_version_consistency.py", "check_docs_evidence_governance.py", "write_current_evidence_manifest.py", "check_runtime_worker_status_query.py", "42-runtime-worker-status-query.log", "evidence/current"]),
+        "gate": (gate, ["run_current_gates.sh", "check_version_consistency.py", "check_docs_evidence_governance.py", "write_current_evidence_manifest.py", "evidence/current"]),
     }
     validate_required_groups(required_by_file)
     if core.count("pub client_event_id: Option<String>") != 1:
