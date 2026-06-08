@@ -110,6 +110,15 @@ def require_file_tokens(path, label: str, tokens: list[str]) -> None:
     require_tokens(path.read_text(), label, tokens)
 
 
+def require_ordered_tokens(text: str, label: str, tokens: list[str]) -> None:
+    offset = 0
+    for token in tokens:
+        index = text.find(token, offset)
+        if index == -1:
+            fail(f"{label} missing ordered token: {token}")
+        offset = index + len(token)
+
+
 def validate_absent_tokens(text: str, label: str, tokens: list[str]) -> None:
     for token in tokens:
         if token in text:
@@ -1745,11 +1754,13 @@ def validate_v20_plan_storage_and_packaging(spec: dict | None = None) -> None:
     )
     plan_storage_guard = EXECUTOR / "validation/check_plan_storage.py"
     plan_storage_doc = EXECUTOR / "docs/PLAN_STORAGE_CANONICALIZATION.md"
+    current_gates_impl = EXECUTOR / "validation/run_current_gates_impl.sh"
     for doc in [
         ROOT / "scripts/package_release.py",
         ROOT / "scripts/check_release_artifact.py",
         plan_storage_guard,
         EXECUTOR / "validation/run_current_gates.sh",
+        current_gates_impl,
         plan_storage_doc,
         EXECUTOR / "docs/DOC_STATUS.md",
     ]:
@@ -1818,6 +1829,29 @@ def validate_v20_plan_storage_and_packaging(spec: dict | None = None) -> None:
             "Current validation entrypoint:",
             "./validation/run_current_gates.sh",
             "`validation/run_current_gates_impl.sh` is the implementation used by the wrapper.",
+        ],
+    )
+    current_gates_impl_text = current_gates_impl.read_text()
+    require_tokens(
+        current_gates_impl_text,
+        "v0.20 current gates implementation",
+        [
+            'python validation/check_plan_storage.py 2>&1 | tee "${EVIDENCE_DIR}/18-plan-storage-guard.log"',
+            'python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" >/dev/null',
+            'ARTIFACT_PATH="$(python "${INTEGRATION_ROOT}/scripts/package_release.py"',
+            'python "${INTEGRATION_ROOT}/scripts/check_release_artifact.py" "${ARTIFACT_PATH}" "$(cat "${INTEGRATION_ROOT}/VERSION")"',
+        ],
+    )
+    require_ordered_tokens(
+        current_gates_impl_text,
+        "v0.20 current gates implementation",
+        [
+            'python validation/check_plan_storage.py 2>&1 | tee "${EVIDENCE_DIR}/18-plan-storage-guard.log"',
+            'python validation/check_live_submit_guard.py 2>&1 | tee "${EVIDENCE_DIR}/19-live-submit-static-guard.log"',
+            'python validation/check_sign_only_lifecycle.py 2>&1 | tee "${EVIDENCE_DIR}/20-sign-only-lifecycle-guard.log"',
+            'python validation/check_runtime_worker_models.py 2>&1 | tee "${EVIDENCE_DIR}/21-runtime-worker-model-guard.log"',
+            'python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" >/dev/null',
+            'python validation/check_current_evidence_manifest.py 2>&1 | tee "${EVIDENCE_DIR}/23-current-evidence-manifest-guard.log"',
         ],
     )
 
