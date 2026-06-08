@@ -427,16 +427,17 @@ def validate_controlled_canary_release_decision_governance() -> None:
         if not callable(getattr(review_module, fn_name, None)):
             fail(f"real-funds canary review package missing callable: {fn_name}")
     review_text = review_script.read_text()
+    review_main_body = python_function_body(review_text, "main")
     for needle in [
         "--external-references-file",
         "--artifact-sha256",
         "--evidence-manifest-sha256",
-        "release sidecar binds the final zip hash",
         "external_references_placeholders_remaining",
-        "validate_external_references_shape",
+        "validate_external_references_shape(",
+        "release sidecar binds the final zip hash",
     ]:
-        if needle not in review_text:
-            fail(f"real-funds canary review package missing external-reference candidate support token: {needle}")
+        if needle not in review_main_body:
+            fail(f"real-funds canary review package main missing token: {needle}")
     drill_module = import_module_from_path(
         "pmx_run_real_funds_canary_review_package_drill", review_drill
     )
@@ -457,9 +458,21 @@ def validate_controlled_canary_release_decision_governance() -> None:
     if not callable(getattr(drill_module, "main", None)):
         fail("real-funds canary review package drill missing main()")
     drill_text = review_drill.read_text()
-    for needle in ["--file", "--allow-placeholders", "must reject unresolved placeholders", "review-with-concrete-references"]:
-        if needle not in drill_text:
-            fail(f"real-funds canary review package drill missing external-reference candidate token: {needle}")
+    if getattr(drill_module, "EXAMPLE_REVIEW_ARTIFACT_SHA256", None) != "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6":
+        fail("real-funds canary review package drill must bind example review artifact sha256")
+    if getattr(drill_module, "MANIFEST_WRITER", None) != EXECUTOR / "validation" / "write_current_evidence_manifest.py":
+        fail("real-funds canary review package drill must bind manifest writer")
+    drill_main_body = python_function_body(drill_text, "main")
+    for needle in [
+        "--file",
+        "--allow-placeholders",
+        "must reject unresolved placeholders",
+        "review-with-concrete-references",
+        "68-real-funds-canary-review-package.log",
+        '"review_package_only_not_armed_approval"',
+    ]:
+        if needle not in drill_main_body:
+            fail(f"real-funds canary review package drill main missing token: {needle}")
     external_module = import_module_from_path(
         "pmx_validate_controlled_canary_external_references", external_validator
     )
@@ -475,21 +488,40 @@ def validate_controlled_canary_release_decision_governance() -> None:
         if not callable(getattr(external_module, fn_name, None)):
             fail(f"controlled canary external-reference validator missing callable: {fn_name}")
     external_text = external_validator.read_text()
+    for const_name, expected in [
+        ("TEMPLATE", external_template),
+        ("EXAMPLE", external_example),
+        ("INVALID_SENSITIVE", external_invalid),
+    ]:
+        if getattr(external_module, const_name, None) != expected:
+            fail(f"controlled canary external-reference validator must bind {const_name}")
+    if "rollback_runbook_ref" not in getattr(external_module, "REQUIRED_FIELDS", {}).get("runbooks", []):
+        fail("controlled canary external-reference validator REQUIRED_FIELDS must include rollback_runbook_ref")
+    if "fixture-sensitive-value-must-not-be-logged" not in getattr(external_module, "FORBIDDEN_VALUE_FRAGMENTS", ()):
+        fail("controlled canary external-reference validator FORBIDDEN_VALUE_FRAGMENTS drifted")
+    if "SignedOrderEnvelope" not in getattr(external_module, "FORBIDDEN_KEYS", set()):
+        fail("controlled canary external-reference validator FORBIDDEN_KEYS drifted")
+    external_main_body = python_function_body(external_text, "main")
     for needle in [
-        "argparse",
-        "placeholder_paths",
         "--allow-placeholders",
         "Validate an operator-supplied external reference candidate",
         "invalid sensitive fixture must be rejected",
-        "forbidden sensitive reference key",
-        "fixture-sensitive-value-must-not-be-logged",
-        "rollback_runbook_ref",
-        "incident_runbook_ref",
-        "canary_retry_policy_ref",
         "references_only_no_secret_values",
+        "placeholder_paths(candidate)",
     ]:
-        if needle not in external_text:
-            fail(f"controlled canary external-reference validator missing token: {needle}")
+        if needle not in external_main_body:
+            fail(f"controlled canary external-reference validator main missing token: {needle}")
+    validate_no_sensitive_body = python_function_body(
+        external_text, "validate_no_sensitive_material"
+    )
+    for needle in [
+        "forbidden sensitive reference key",
+        "forbidden sensitive-looking reference value",
+        "FORBIDDEN_KEYS",
+        "FORBIDDEN_VALUE_FRAGMENTS",
+    ]:
+        if needle not in validate_no_sensitive_body:
+            fail(f"controlled canary external-reference validator validate_no_sensitive_material missing token: {needle}")
     if external_example_data.get("artifact_sha256") != example_data.get("artifact_sha256"):
         fail("controlled canary external-reference example must bind the same artifact hash as the release-decision example")
     if external_example_data.get("evidence_manifest_sha256") != example_data.get("evidence_manifest_sha256"):
