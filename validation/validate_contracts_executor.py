@@ -1809,6 +1809,17 @@ def validate_v20_plan_storage_and_packaging(spec: dict | None = None) -> None:
             "`validation/check_plan_storage.py` fails if the migration recreates `plan_summaries`",
         ],
     )
+    doc_status_text = (EXECUTOR / "docs/DOC_STATUS.md").read_text()
+    require_tokens(
+        doc_status_text,
+        "v0.20 documentation status",
+        [
+            "# Execution-engine document status",
+            "Current validation entrypoint:",
+            "./validation/run_current_gates.sh",
+            "`validation/run_current_gates_impl.sh` is the implementation used by the wrapper.",
+        ],
+    )
 
 
 def validate_v21_sign_only_and_runtime_models(spec: dict | None = None) -> None:
