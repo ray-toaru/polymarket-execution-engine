@@ -1744,12 +1744,13 @@ def validate_v20_plan_storage_and_packaging(spec: dict | None = None) -> None:
         ],
     )
     plan_storage_guard = EXECUTOR / "validation/check_plan_storage.py"
+    plan_storage_doc = EXECUTOR / "docs/PLAN_STORAGE_CANONICALIZATION.md"
     for doc in [
         ROOT / "scripts/package_release.py",
         ROOT / "scripts/check_release_artifact.py",
         plan_storage_guard,
         EXECUTOR / "validation/run_current_gates.sh",
-        EXECUTOR / "docs/PLAN_STORAGE_CANONICALIZATION.md",
+        plan_storage_doc,
         EXECUTOR / "docs/DOC_STATUS.md",
     ]:
         if not doc.exists():
@@ -1794,6 +1795,18 @@ def validate_v20_plan_storage_and_packaging(spec: dict | None = None) -> None:
             '"INSERT INTO plan_summaries"',
             '"INSERT INTO execution_plans"',
             'print("plan storage guard passed: execution_plans is canonical")',
+        ],
+    )
+    plan_storage_doc_text = plan_storage_doc.read_text()
+    require_tokens(
+        plan_storage_doc_text,
+        "v0.20 plan storage documentation",
+        [
+            "`execution_plans` is the single canonical storage location for plan summaries.",
+            "`plan_summaries` is intentionally removed before deployment.",
+            "`PostgresStore::save_plan_summary()` writes to `execution_plans`.",
+            "`PostgresStore::load_plan_summary()` reads from `execution_plans.summary_json`.",
+            "`validation/check_plan_storage.py` fails if the migration recreates `plan_summaries`",
         ],
     )
 
