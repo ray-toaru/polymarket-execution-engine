@@ -479,9 +479,33 @@ def validate_v04_source_landings() -> None:
         if test_name not in idempotency_tests:
             fail(f"postgres idempotency tests missing token: {test_name}")
     reservation_tests = (STORE_SRC / "postgres_tests/receipt_reservation.rs").read_text()
-    for test_name in ["reservation_double_spend_is_prevented_concurrently", "remote_unknown_is_persisted_conservatively"]:
-        if test_name not in reservation_tests:
-            fail(f"postgres receipt/reservation tests missing token: {test_name}")
+    reservation_remote_unknown_body = rust_async_fn_body(
+        reservation_tests, "remote_unknown_is_persisted_conservatively"
+    )
+    reservation_double_spend_body = rust_async_fn_body(
+        reservation_tests, "reservation_double_spend_is_prevented_concurrently"
+    )
+    require_tokens(
+        reservation_remote_unknown_body,
+        "postgres receipt/reservation tests",
+        [
+            "SubmitStatus::RemoteUnknown",
+            "record_submit_receipt(&receipt)",
+            "SELECT status FROM submit_receipts WHERE execution_id = $1",
+            'assert_eq!(status, "REMOTE_UNKNOWN");',
+        ],
+    )
+    require_tokens(
+        reservation_double_spend_body,
+        "postgres receipt/reservation tests",
+        [
+            "tokio::join!(",
+            "save_order_reservation(&r1).await",
+            "save_order_reservation(&r2).await",
+            "SELECT COUNT(*) FROM order_reservations WHERE account_id = $1 AND execution_id = $2",
+            "assert_eq!(count, 1);",
+        ],
+    )
 
 
 def validate_v07_source_landings() -> None:
