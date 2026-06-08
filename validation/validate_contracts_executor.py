@@ -3014,6 +3014,24 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     lifecycle_required = getattr(lifecycle_gate_module, "REQUIRED", {})
     if "current gates completed" not in lifecycle_required.get(getattr(lifecycle_gate_module, "ACTIVE_GATE", object()), []):
         fail("current lifecycle gate guard must require current gates completion token")
+    for helper_name in ["source_text", "main"]:
+        if not callable(getattr(lifecycle_gate_module, helper_name, None)):
+            fail(f"current lifecycle gate guard missing helper: {helper_name}")
+    lifecycle_gate_source_text_body = python_function_body(
+        lifecycle_gate_text, "source_text"
+    )
+    require_tokens(
+        lifecycle_gate_source_text_body,
+        "current lifecycle gate guard",
+        [
+            "if path.is_dir():",
+            'return "\\n".join(source.read_text() for source in sorted(path.rglob("*.rs")))',
+            "module_dir = path.with_suffix(\"\")",
+            "if module_dir.is_dir():",
+            "[path.read_text(), *(source.read_text() for source in sorted(module_dir.rglob(\"*.rs\")))]",
+            "return path.read_text()",
+        ],
+    )
     lifecycle_gate_main_body = python_function_body(lifecycle_gate_text, "main")
     require_tokens(
         lifecycle_gate_main_body,
@@ -3043,6 +3061,34 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
         getattr(runtime_status_gate_module, "ACTIVE_GATES", object()), []
     ):
         fail("runtime status query guard must require 42-runtime-worker-status-query.log")
+    for helper_name in ["env_enabled", "source_text", "main"]:
+        if not callable(getattr(runtime_status_gate_module, helper_name, None)):
+            fail(f"runtime status query guard missing helper: {helper_name}")
+    runtime_status_env_enabled_body = python_function_body(
+        runtime_status_gate_text, "env_enabled"
+    )
+    require_tokens(
+        runtime_status_env_enabled_body,
+        "runtime status query guard",
+        [
+            'os.environ.get(name, "").strip() == "1"',
+        ],
+    )
+    runtime_status_source_text_body = python_function_body(
+        runtime_status_gate_text, "source_text"
+    )
+    require_tokens(
+        runtime_status_source_text_body,
+        "runtime status query guard",
+        [
+            "if path.is_dir():",
+            'return "\\n".join(source.read_text() for source in sorted(path.rglob("*.rs")))',
+            "module_dir = path.with_suffix(\"\")",
+            "if module_dir.is_dir():",
+            "[path.read_text(), *(source.read_text() for source in sorted(module_dir.rglob(\"*.rs\")))]",
+            "return path.read_text()",
+        ],
+    )
     runtime_status_main_body = python_function_body(runtime_status_gate_text, "main")
     require_tokens(
         runtime_status_main_body,
