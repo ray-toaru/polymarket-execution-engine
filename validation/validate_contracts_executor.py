@@ -4,6 +4,8 @@ import re
 import tomllib
 from pathlib import Path
 
+import yaml
+
 from validate_contracts_support import (
     API_E2E_TEST,
     API_POSTGRES_E2E_TEST,
@@ -581,6 +583,51 @@ def validate_v08_dependency_and_sdk_policy() -> None:
     ]:
         if not doc.exists():
             fail(f"v0.11 missing dependency/CI artifact: {doc.relative_to(ROOT)}")
+    dependabot = yaml.safe_load((ROOT / ".github/dependabot.yml").read_text())
+    if dependabot.get("version") != 2:
+        fail("dependabot config must stay on version 2")
+    updates = dependabot.get("updates")
+    if not isinstance(updates, list):
+        fail("dependabot config must expose updates as a list")
+    update_map = {
+        (entry.get("package-ecosystem"), entry.get("directory")): entry
+        for entry in updates
+        if isinstance(entry, dict)
+    }
+    for ecosystem in ["github-actions", "pip"]:
+        entry = update_map.get((ecosystem, "/"))
+        if not isinstance(entry, dict):
+            fail(f"dependabot config missing {ecosystem} root update")
+        schedule = entry.get("schedule", {})
+        if schedule.get("interval") != "weekly":
+            fail(f"dependabot {ecosystem} update schedule must stay weekly")
+        if entry.get("open-pull-requests-limit") != 5:
+            fail(f"dependabot {ecosystem} update limit must stay 5")
+    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
+    jobs = workflow.get("jobs", {})
+    if not isinstance(jobs, dict):
+        fail("root CI workflow must expose jobs mapping")
+    for job_name in [
+        "adapter-required-ci",
+        "engine-required-ci",
+        "engine-rust-locked",
+        "integration-python-compat",
+        "integration-static",
+    ]:
+        if job_name not in jobs:
+            fail(f"root CI workflow missing job: {job_name}")
+    if jobs.get("adapter-required-ci", {}).get("uses") != (
+        "ray-toaru/hermes-polymarket-executor-adapter/.github/workflows/ci.yml@"
+        "caec425b172e126365b2f521f70ac82badc60e70"
+    ):
+        fail("root CI workflow must pin adapter reusable workflow to canonical SHA")
+    if jobs.get("engine-required-ci", {}).get("uses") != (
+        "ray-toaru/polymarket-execution-engine/.github/workflows/ci.yml@"
+        "edc1b62b531b84a3297f254a48b8e17e01610f84"
+    ):
+        fail("root CI workflow must pin engine reusable workflow to canonical SHA")
+    if jobs.get("engine-rust-locked", {}).get("runs-on") != "ubuntu-latest":
+        fail("root CI workflow engine-rust-locked job must stay on ubuntu-latest")
 
 
 def validate_v09_official_adapter_boundary() -> None:
