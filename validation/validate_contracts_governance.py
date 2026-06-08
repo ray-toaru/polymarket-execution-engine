@@ -731,6 +731,22 @@ def validate_canary_candidate_market_prep_boundary() -> None:
     for needle in ["urllib.request.Request(", "urllib.request.urlopen(", "FETCH_RETRY_ATTEMPTS"]:
         if needle not in fetch_json_body:
             fail(f"canary candidate market prep fetch_json missing boundary token: {needle}")
+    for needle in [
+        "fetch_json(base_url, path, query, timeout_seconds)",
+        "audit.setdefault(\"fetch_errors\", []).append(",
+        'raise CandidateError(failure_message, audit) from exc',
+    ]:
+        if needle not in fetch_json_or_error_body:
+            fail(f"canary candidate market prep fetch_json_or_error missing boundary token: {needle}")
+    for needle in [
+        "ask_ticks = (best_ask_price / min_tick_size).to_integral_value(rounding=ROUND_FLOOR)",
+        "upper -= min_tick_size",
+        "improved_bid = ((best_bid_price / min_tick_size).to_integral_value(rounding=ROUND_FLOOR) + 1) * min_tick_size",
+        "if improved_bid < best_ask_price and improved_bid <= upper:",
+        "if bid_grid > 0 and bid_grid < best_ask_price and bid_grid <= upper:",
+    ]:
+        if needle not in post_only_buy_limit_price_body:
+            fail(f"canary candidate market prep post_only_buy_limit_price missing boundary token: {needle}")
     for needle in ["/book", "/spread", "post_only_buy_limit_price(", "selected market spread is unavailable"]:
         if needle not in candidate_from_market_body:
             fail(f"canary candidate market prep candidate_from_market missing boundary token: {needle}")
