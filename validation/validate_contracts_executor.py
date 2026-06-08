@@ -628,6 +628,28 @@ def validate_v08_dependency_and_sdk_policy() -> None:
         fail("root CI workflow must pin engine reusable workflow to canonical SHA")
     if jobs.get("engine-rust-locked", {}).get("runs-on") != "ubuntu-latest":
         fail("root CI workflow engine-rust-locked job must stay on ubuntu-latest")
+    integration_static = jobs.get("integration-static", {})
+    static_steps = integration_static.get("steps")
+    if not isinstance(static_steps, list):
+        fail("root CI workflow integration-static job must expose steps list")
+    static_step_names = {
+        step.get("name")
+        for step in static_steps
+        if isinstance(step, dict) and isinstance(step.get("name"), str)
+    }
+    for step_name in [
+        "Validate root and API contracts",
+        "Run integration Python tests",
+        "Run adapter tests",
+        "Check docs and evidence governance",
+        "Clean local artifacts",
+        "Check release hygiene",
+        "Package and validate release artifact",
+        "Upload validation proof artifacts",
+        "Enforce v0.28 production-live-candidate consistency",
+    ]:
+        if step_name not in static_step_names:
+            fail(f"root CI workflow integration-static job missing step: {step_name}")
 
 
 def validate_v09_official_adapter_boundary() -> None:
