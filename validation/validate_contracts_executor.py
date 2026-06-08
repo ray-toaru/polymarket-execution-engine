@@ -536,13 +536,62 @@ def validate_v07_source_landings() -> None:
         if needle not in signer_text:
             fail(f"gateway signer provider missing token: {needle}")
     signer_tests = (GATEWAY_SRC / "tests/signer.rs").read_text()
-    for test_name in ["disabled_signer_provider_refuses_to_materialize_signer", "signer_provider_defaults_are_production_conservative"]:
-        if test_name not in signer_tests:
-            fail(f"gateway signer tests missing token: {test_name}")
+    disabled_signer_test_body = rust_async_fn_body(
+        signer_tests, "disabled_signer_provider_refuses_to_materialize_signer"
+    )
+    signer_defaults_test_body = rust_fn_body(
+        signer_tests, "signer_provider_defaults_are_production_conservative"
+    )
+    require_tokens(
+        disabled_signer_test_body,
+        "gateway signer tests",
+        [
+            "DisabledSignerProvider",
+            '.signer_for_account(&pmx_core::AccountId("acct-disabled".into()))',
+            "GatewayError::SigningUnavailable",
+            'panic!("disabled provider must fail")',
+        ],
+    )
+    require_tokens(
+        signer_defaults_test_body,
+        "gateway signer tests",
+        [
+            "SignerProviderConfig::default()",
+            "SignerBackendKind::Disabled",
+            "!cfg.allow_local_private_key_material",
+            "cfg.require_remote_signer_in_production",
+        ],
+    )
     post_cancel_tests = (GATEWAY_SRC / "tests/post_cancel.rs").read_text()
-    for test_name in ["deterministic_signer_provider_posts_reads_and_cancels", "fake_gateway_surfaces_remote_unknown_without_local_success"]:
-        if test_name not in post_cancel_tests:
-            fail(f"gateway post/cancel tests missing token: {test_name}")
+    post_cancel_happy_body = rust_async_fn_body(
+        post_cancel_tests, "deterministic_signer_provider_posts_reads_and_cancels"
+    )
+    post_cancel_remote_unknown_body = rust_async_fn_body(
+        post_cancel_tests, "fake_gateway_surfaces_remote_unknown_without_local_success"
+    )
+    require_tokens(
+        post_cancel_happy_body,
+        "gateway post/cancel tests",
+        [
+            "DeterministicTestSignerProvider",
+            "FakeGateway::new()",
+            "gateway.post_order(&signed).await.expect(\"posted\")",
+            ".cancel_order(&account, &ack.remote_order_id)",
+            "CancelState::RemoteAccepted",
+            ".get_open_orders(&account)",
+            ".is_empty()",
+        ],
+    )
+    require_tokens(
+        post_cancel_remote_unknown_body,
+        "gateway post/cancel tests",
+        [
+            "FakeGatewayFailure::RemoteUnknown(",
+            "gateway\n        .post_order(&signed)",
+            ".expect_err(\"remote unknown\")",
+            'GatewayError::RemoteUnknown("timeout after signing".into())',
+        ],
+    )
     require_file_tokens(
         API_E2E_TEST.parent / "http_and_fake_e2e/scaffold.rs",
         "HTTP scaffold E2E",
