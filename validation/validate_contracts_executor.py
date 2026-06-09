@@ -1477,11 +1477,9 @@ def validate_v12_service_layer(spec: dict | None = None) -> None:
         actual_ref = operation_request_ref(spec, path, method) if kind == "request" else operation_response_ref(spec, path, method, kind)
         if actual_ref != expected_ref:
             fail(f"OpenAPI {method.upper()} {path} {kind} must reference {expected_ref}, got {actual_ref}")
-    require_file_tokens(
-        SERVICE_TOML,
-        "pmx-service Cargo",
-        ['name = "pmx-service"'],
-    )
+    service_manifest = cargo_toml(SERVICE_TOML)
+    if service_manifest.get("package", {}).get("name") != "pmx-service":
+        fail("pmx-service Cargo must keep canonical package name")
     service_root_text = SERVICE_RS.read_text()
     plan_route_text = (API_SRC / "routes/flow/plan.rs").read_text()
     module_names = rust_module_names(service_root_text)
@@ -1658,7 +1656,8 @@ def validate_v12_service_layer(spec: dict | None = None) -> None:
             "ServiceBackend::Postgres",
         ],
     )
-    validate_absent_tokens(api_text, "pmx-api", ["pub fn fake_snapshot"])
+    if "fake_snapshot" in rust_fn_names(api_text):
+        fail("pmx-api must not expose fake_snapshot as a function")
     if not (EXECUTOR / "validation/run_current_gates.sh").exists():
         fail("missing current gate runner")
     if not API_POSTGRES_E2E_TEST.exists():
