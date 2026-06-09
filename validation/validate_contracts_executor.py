@@ -121,6 +121,22 @@ def require_ordered_tokens(text: str, label: str, tokens: list[str]) -> None:
         offset = index + len(token)
 
 
+def markdown_section(text: str, heading: str) -> str:
+    pattern = rf"(?ms)^##\s+{re.escape(heading)}\s*\n(.*?)(?=^##\s+|\Z)"
+    match = re.search(pattern, text)
+    if not match:
+        fail(f"missing markdown section: {heading}")
+    return match.group(1)
+
+
+def markdown_fenced_block_after_heading(text: str, heading: str) -> str:
+    section = markdown_section(text, heading)
+    match = re.search(r"(?ms)```(?:[a-zA-Z0-9_+-]+)?\n(.*?)```", section)
+    if not match:
+        fail(f"missing fenced block under markdown section: {heading}")
+    return match.group(1)
+
+
 def validate_absent_tokens(text: str, label: str, tokens: list[str]) -> None:
     for token in tokens:
         if token in text:
@@ -1027,28 +1043,67 @@ def validate_v08_dependency_and_sdk_policy() -> None:
     ]:
         if not doc.exists():
             fail(f"v0.11 missing dependency/CI artifact: {doc.relative_to(ROOT)}")
-    require_file_tokens(
-        dependency_policy_doc,
+    dependency_policy_text = dependency_policy_doc.read_text()
+    try:
+        dependency_baseline_block = markdown_fenced_block_after_heading(
+            dependency_policy_text, "Current baseline"
+        )
+        dependency_policy_section = markdown_section(dependency_policy_text, "Policy")
+    except Exception as exc:
+        fail(f"dependency policy doc malformed: {exc}")
+    require_tokens(
+        dependency_baseline_block,
         "dependency policy doc",
         [
             "Official SDK crate: polymarket_client_sdk_v2",
             "Official SDK version: =0.6.0-canary.1",
+        ],
+    )
+    require_tokens(
+        dependency_policy_section,
+        "dependency policy doc",
+        [
             "Official SDK dependencies stay isolated in adapter crates.",
             "Core, policy, store, service, and public API crates must not depend directly on the official SDK.",
             "The official SDK remains exactly pinned until a newer version is separately reviewed and validated.",
         ],
     )
-    require_file_tokens(
-        sdk_plan_doc,
+    sdk_plan_text = sdk_plan_doc.read_text()
+    try:
+        sdk_plan_state_block = markdown_fenced_block_after_heading(
+            sdk_plan_text, "Current state"
+        )
+        sdk_plan_promotion_block = markdown_fenced_block_after_heading(
+            sdk_plan_text, "Promotion sequence"
+        )
+        sdk_plan_constraints_block = markdown_fenced_block_after_heading(
+            sdk_plan_text, "Non-negotiable constraints"
+        )
+    except Exception as exc:
+        fail(f"SDK first adapter plan doc malformed: {exc}")
+    require_tokens(
+        sdk_plan_state_block,
         "SDK first adapter plan doc",
         [
             "v0.7: official SDK spike + read-only smoke evidence",
             "v0.8: Rust baseline aligned with official SDK",
             "v0.11: formal official SDK adapter boundary, authenticated smoke, sign-only dry-run,",
+        ],
+    )
+    require_tokens(
+        sdk_plan_promotion_block,
+        "SDK first adapter plan doc",
+        [
             "1. SDK spike typecheck/read-only smoke: done",
             "2. official adapter crate fmt/check/clippy/test: done",
             "8. live-submit denied-path tests",
             "9. manual live-submit readiness review",
+        ],
+    )
+    require_tokens(
+        sdk_plan_constraints_block,
+        "SDK first adapter plan doc",
+        [
             "- no SDK dependency in core/policy/store",
             "- no live submit without feature + env + config + runtime gates",
         ],
