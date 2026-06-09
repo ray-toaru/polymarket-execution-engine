@@ -1625,10 +1625,19 @@ def validate_v12_service_layer(spec: dict | None = None) -> None:
         "/v1/admin/reconcile",
     }.issubset(route_paths):
         fail("API bootstrap routes missing required paths")
+    try_postgres_app_body = rust_async_fn_body(bootstrap_text, "try_postgres_app")
     require_tokens(
-        bootstrap_text,
+        try_postgres_app_body,
         "API bootstrap routes",
-        ["pub async fn try_postgres_app(", "AppState::postgres(store)"],
+        [
+            "validate_auth_config_from_env()?;",
+            "PostgresStore::connect(database_url.into())",
+            'map_err(|err| format!("postgres connect failed: {err}"))?;',
+            "if apply_schema {",
+            "apply_schema()",
+            'map_err(|err| format!("postgres schema apply failed: {err}"))?;',
+            "Ok(router_with_state(AppState::postgres(store)))",
+        ],
     )
     require_tokens(
         in_memory_body,
@@ -1655,17 +1664,42 @@ def validate_v12_service_layer(spec: dict | None = None) -> None:
     if not API_POSTGRES_E2E_TEST.exists():
         fail("missing HTTP PostgreSQL E2E test source")
     pg_test_text = rust_file_with_modules_text(API_POSTGRES_E2E_TEST)
-    for needle in [
-        'http_postgres_backed_e2e_smoke',
-        'http_postgres_rejects_cross_object_graph_and_bad_plan_hash',
-        'PMX_TEST_DATABASE_URL',
-        'try_postgres_app',
-        '"database"], "postgres"',
-        'StatusCode::ACCEPTED',
-        'StatusCode::OK',
-    ]:
-        if needle not in pg_test_text:
-            fail(f"PostgreSQL API E2E missing token: {needle}")
+    pg_smoke_body = rust_async_fn_body(pg_test_text, "http_postgres_backed_e2e_smoke")
+    pg_negative_body = rust_async_fn_body(
+        pg_test_text, "http_postgres_rejects_cross_object_graph_and_bad_plan_hash"
+    )
+    require_tokens(
+        pg_smoke_body,
+        "PostgreSQL API E2E",
+        [
+            'std::env::var("PMX_TEST_DATABASE_URL")',
+            'std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-pg-e2e")',
+            'std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-pg-e2e")',
+            "pmx_api::try_postgres_app(database_url.clone(), true)",
+            "compile_submit::compile_and_submit_blocked_plan(",
+            "sign_only::verify_sign_only_flow(",
+            "admin_lifecycle::verify_admin_cancel_and_reconcile(",
+            "public_queries::verify_public_queries(",
+        ],
+    )
+    require_tokens(
+        pg_negative_body,
+        "PostgreSQL API E2E",
+        [
+            'std::env::var("PMX_TEST_DATABASE_URL")',
+            'std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-pg-negative")',
+            'std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-pg-negative")',
+            "pmx_api::try_postgres_app(database_url, true)",
+            '"/v1/intents/normalize"',
+            "StatusCode::OK",
+            '"/v1/decisions/evaluate"',
+            "StatusCode::CONFLICT",
+            '"/v1/plans/compile"',
+            '"/v1/submissions"',
+            '"mode": "BLOCKED_DRY_RUN"',
+            '"plan_hash": "wrong-plan-hash"',
+        ],
+    )
 
 
 def validate_v15_admin_audit_and_runtime_provider(spec: dict | None = None) -> None:
