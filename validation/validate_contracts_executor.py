@@ -758,16 +758,28 @@ def validate_v08_dependency_and_sdk_policy() -> None:
             'serde = { version = "1.0.228"',
         ],
     )
-    require_file_tokens(
-        EXECUTOR / "rust-toolchain.toml",
-        "executor rust toolchain",
-        ['channel = "1.88.0"', 'components = ["rustfmt", "clippy"]', 'profile = "minimal"'],
-    )
-    require_file_tokens(
-        SDK_SPIKE_TOML,
-        "official SDK spike Cargo",
-        ['name = "pmx-official-sdk-spike"', 'rust-version = "1.88"', 'sdk-typecheck = ["dep:polymarket_client_sdk_v2"]', 'live-submit = ["sdk-typecheck"]', 'polymarket_client_sdk_v2 = { version = "=0.6.0-canary.1"'],
-    )
+    toolchain = cargo_toml(EXECUTOR / "rust-toolchain.toml")
+    toolchain_spec = toolchain.get("toolchain", {})
+    if toolchain_spec.get("channel") != "1.88.0":
+        fail("executor rust toolchain must pin channel=1.88.0")
+    if toolchain_spec.get("components") != ["rustfmt", "clippy"]:
+        fail("executor rust toolchain must keep rustfmt and clippy components")
+    if toolchain_spec.get("profile") != "minimal":
+        fail("executor rust toolchain must keep profile=minimal")
+    sdk_spike_manifest = cargo_toml(SDK_SPIKE_TOML)
+    package = sdk_spike_manifest.get("package", {})
+    if package.get("name") != "pmx-official-sdk-spike":
+        fail("official SDK spike Cargo must keep canonical package name")
+    if package.get("rust-version") != "1.88":
+        fail("official SDK spike Cargo must keep rust-version=1.88")
+    features = sdk_spike_manifest.get("features", {})
+    if features.get("sdk-typecheck") != ["dep:polymarket_client_sdk_v2"]:
+        fail("official SDK spike Cargo must keep sdk-typecheck wired to dep:polymarket_client_sdk_v2")
+    if features.get("live-submit") != ["sdk-typecheck"]:
+        fail("official SDK spike Cargo must keep live-submit gated by sdk-typecheck")
+    sdk_dep_manifest = sdk_spike_manifest.get("dependencies", {}).get("polymarket_client_sdk_v2", {})
+    if sdk_dep_manifest.get("version") != "=0.6.0-canary.1":
+        fail("official SDK spike Cargo must keep polymarket_client_sdk_v2 pinned to =0.6.0-canary.1")
     require_file_tokens(
         SDK_SPIKE_RS,
         "official SDK spike",
