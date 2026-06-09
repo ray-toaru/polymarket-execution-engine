@@ -1545,17 +1545,76 @@ def validate_v12_service_layer(spec: dict | None = None) -> None:
     )
     if not {"compile_plan", "submit_plan"}.issubset(rust_async_fn_names(plan_route_text)):
         fail("API plan flow routes missing compile/submit handlers")
-    require_file_tokens(
-        SERVICE_SRC / "submit/blocked.rs",
-        "blocked submit path",
-        ['"SUBMIT_BLOCKED_BEFORE_REMOTE"', '"no_remote_side_effect": true', '"reservation_written": false', "finish_submit_attempt(pmx_store::FinishSubmitAttempt"],
-    )
     blocked_submit = (SERVICE_SRC / "submit/blocked.rs").read_text()
+    blocked_submit_body = rust_async_fn_body(
+        blocked_submit, "blocked_submit_outcome"
+    )
+    require_tokens(
+        blocked_submit_body,
+        "blocked submit path",
+        [
+            'status: SubmitStatus::Blocked',
+            '"SUBMIT_BLOCKED_BEFORE_REMOTE".into()',
+            '"no_remote_side_effect": true',
+            '"reservation_written": false',
+            "store.record_submit_receipt(&receipt).await?;",
+            "finish_submit_attempt(pmx_store::FinishSubmitAttempt {",
+            "Ok(SubmitOutcome::Accepted(receipt))",
+        ],
+    )
     validate_absent_tokens(blocked_submit, "blocked submit path", ["save_order_reservation"])
-    require_file_tokens(
-        SERVICE_SRC / "service_tests/flow.rs",
+    flow_tests_text = (SERVICE_SRC / "service_tests/flow.rs").read_text()
+    service_flow_body = rust_async_fn_body(
+        flow_tests_text, "service_flow_persists_and_blocks_submit"
+    )
+    service_id_bound_body = rust_async_fn_body(
+        flow_tests_text, "service_id_bound_flow_persists_and_blocks_submit"
+    )
+    service_mismatch_body = rust_async_fn_body(
+        flow_tests_text, "service_rejects_object_graph_mismatch"
+    )
+    service_tampered_body = rust_async_fn_body(
+        flow_tests_text, "service_rejects_tampered_approval_hash"
+    )
+    require_tokens(
+        service_flow_body,
         "service flow tests",
-        ["service_flow_persists_and_blocks_submit", "service_id_bound_flow_persists_and_blocks_submit", "service_rejects_object_graph_mismatch", "service_rejects_tampered_approval_hash"],
+        [
+            "ExecutorService::new(InMemoryStore::default())",
+            "SubmitMode::BlockedDryRun",
+            'SubmitOutcome::Accepted(receipt) => assert_eq!(receipt.status, SubmitStatus::Blocked)',
+            '"SUBMIT_BLOCKED_BEFORE_REMOTE"',
+            'assert_eq!(blocked.payload["reservation_written"], false);',
+        ],
+    )
+    require_tokens(
+        service_id_bound_body,
+        "service flow tests",
+        [
+            "evaluate_decision_by_id(DecisionByIdRequest {",
+            "compile_plan_by_id(CompilePlanByIdCommand {",
+            'idempotency_key: "idem-id-bound-1".into()',
+            "SubmitMode::BlockedDryRun",
+            'SubmitOutcome::Accepted(receipt) => assert_eq!(receipt.status, SubmitStatus::Blocked)',
+        ],
+    )
+    require_tokens(
+        service_mismatch_body,
+        "service flow tests",
+        [
+            'snapshot.normalized_intent_id = "other".into();',
+            ".expect_err(\"mismatched snapshot must fail\")",
+            "assert!(matches!(err, ServiceError::Conflict(_)));",
+        ],
+    )
+    require_tokens(
+        service_tampered_body,
+        "service flow tests",
+        [
+            'approval.approval_hash = hash_value("tampered-approval-hash");',
+            ".expect_err(\"approval hash must be recomputed and checked\")",
+            "assert!(matches!(err, ServiceError::Conflict(_)));",
+        ],
     )
     bootstrap_text = (API_SRC / "routes/bootstrap.rs").read_text()
     route_paths = set(re.findall(r'\.route\(\s*"([^"]+)"', bootstrap_text))
