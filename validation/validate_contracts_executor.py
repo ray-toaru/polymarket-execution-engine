@@ -592,10 +592,25 @@ def validate_v07_source_landings() -> None:
             'GatewayError::RemoteUnknown("timeout after signing".into())',
         ],
     )
-    require_file_tokens(
-        API_E2E_TEST.parent / "http_and_fake_e2e/scaffold.rs",
+    scaffold_text = (API_E2E_TEST.parent / "http_and_fake_e2e/scaffold.rs").read_text()
+    scaffold_body = rust_async_fn_body(
+        scaffold_text, "full_scaffold_path_compile_submit_cancel_and_reconcile"
+    )
+    require_tokens(
+        scaffold_body,
         "HTTP scaffold E2E",
-        ["full_scaffold_path_compile_submit_cancel_and_reconcile", "compile_blocked_plan", "verify_submit_and_sign_only", "verify_non_live_admin_paths", "verify_public_queries"],
+        [
+            "env_lock().await",
+            'std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-test-v07")',
+            'std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-test-v07")',
+            "pmx_store::InMemoryStore::default()",
+            "pmx_api::try_in_memory_app_with_store(store.clone())",
+            "compile_plan::compile_blocked_plan(app.clone()).await",
+            "submit_sign_only::verify_submit_and_sign_only(app.clone(), &execution_id, &plan_hash).await",
+            'seed_in_memory_cancelable_order(&store, "acct-http-e2e-1", "order-v07-1", &execution_id).await',
+            "admin_paths::verify_non_live_admin_paths(app.clone(), &execution_id).await",
+            "public_queries::verify_public_queries(app, &execution_id).await",
+        ],
     )
     require_file_tokens(
         API_E2E_TEST.parent / "http_and_fake_e2e/scaffold/admin_paths.rs",
