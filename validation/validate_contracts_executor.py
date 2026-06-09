@@ -780,13 +780,43 @@ def validate_v08_dependency_and_sdk_policy() -> None:
     sdk_dep_manifest = sdk_spike_manifest.get("dependencies", {}).get("polymarket_client_sdk_v2", {})
     if sdk_dep_manifest.get("version") != "=0.6.0-canary.1":
         fail("official SDK spike Cargo must keep polymarket_client_sdk_v2 pinned to =0.6.0-canary.1")
-    require_file_tokens(
-        SDK_SPIKE_RS,
-        "official SDK spike",
-        ['PINNED_OFFICIAL_SDK_VERSION: &str = "=0.6.0-canary.1"', 'read_only_ok_smoke', 'default_read_only_client', 'polymarket_client_sdk_v2::clob::Client::new', 'client.server_time()'],
-    )
     sdk_text = SDK_SPIKE_RS.read_text()
     sdk_toml = SDK_SPIKE_TOML.read_text()
+    sdk_consts = rust_const_names(sdk_text)
+    for const_name in [
+        "OFFICIAL_SDK_REPOSITORY",
+        "OFFICIAL_SDK_CRATE",
+        "PINNED_OFFICIAL_SDK_VERSION",
+        "LIVE_SUBMIT_FEATURE_NAME",
+        "CLOB_PRODUCTION_HOST",
+    ]:
+        if const_name not in sdk_consts:
+            fail(f"official SDK spike missing const: {const_name}")
+    adapter_config_fields = rust_struct_field_names(
+        sdk_text, "OfficialSdkAdapterConfig"
+    )
+    if adapter_config_fields != {
+        "clob_host",
+        "use_ws",
+        "use_heartbeats",
+        "allow_live_submit",
+        "require_explicit_runtime_kill_switch_open",
+    }:
+        fail("official SDK spike must keep OfficialSdkAdapterConfig fields")
+    adapter_config_default_body = rust_impl_trait_method_body(
+        sdk_text, "Default", "OfficialSdkAdapterConfig", "default"
+    )
+    require_tokens(
+        adapter_config_default_body,
+        "official SDK spike",
+        [
+            "clob_host: CLOB_PRODUCTION_HOST.to_string()",
+            "use_ws: true",
+            "use_heartbeats: true",
+            "allow_live_submit: false",
+            "require_explicit_runtime_kill_switch_open: true",
+        ],
+    )
     if 'use std::time::Duration;' in sdk_text and '#[cfg(feature = "sdk-typecheck")]\n    use std::time::Duration;' not in sdk_text:
         fail("Duration import must be cfg-gated to avoid no-feature warning")
     if 'polymarket_client_sdk_v2 = { version = "=0.6.0-canary.1"' not in sdk_toml:
