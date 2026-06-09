@@ -980,17 +980,22 @@ def validate_v07_source_landings() -> None:
 
 
 def validate_v08_dependency_and_sdk_policy() -> None:
-    require_file_tokens(
-        ROOT_CARGO_TOML,
-        "root Cargo baseline",
-        [
-            'edition = "2024"',
-            'rust-version = "1.88"',
-            f'version = "{(ROOT / "VERSION").read_text().strip()}"',
-            'tokio = { version = "1.52.3"',
-            'serde = { version = "1.0.228"',
-        ],
-    )
+    root_cargo = cargo_toml(ROOT_CARGO_TOML)
+    workspace = root_cargo.get("workspace", {})
+    workspace_package = workspace.get("package", {})
+    workspace_dependencies = workspace.get("dependencies", {})
+    if workspace_package.get("edition") != "2024":
+        fail("root Cargo baseline must keep workspace.package.edition=2024")
+    if workspace_package.get("rust-version") != "1.88":
+        fail("root Cargo baseline must keep workspace.package.rust-version=1.88")
+    if workspace_package.get("version") != (ROOT / "VERSION").read_text().strip():
+        fail("root Cargo baseline must keep workspace.package.version aligned with VERSION")
+    tokio_dep = workspace_dependencies.get("tokio", {})
+    if tokio_dep.get("version") != "1.52.3":
+        fail("root Cargo baseline must keep tokio pinned to 1.52.3")
+    serde_dep = workspace_dependencies.get("serde", {})
+    if serde_dep.get("version") != "1.0.228":
+        fail("root Cargo baseline must keep serde pinned to 1.0.228")
     toolchain = cargo_toml(EXECUTOR / "rust-toolchain.toml")
     toolchain_spec = toolchain.get("toolchain", {})
     if toolchain_spec.get("channel") != "1.88.0":
