@@ -73,7 +73,7 @@ VALIDATORS = [
     ValidatorSpec("rust_deny_unknown_fields", "surface", "S2", "structured", False, validate_rust_deny_unknown_fields),
     ValidatorSpec("v04_source_landings", "executor", "S2", "mixed", False, validate_v04_source_landings),
     ValidatorSpec("v07_source_landings", "executor", "S2", "structured", False, validate_v07_source_landings),
-    ValidatorSpec("v08_dependency_and_sdk_policy", "executor", "S2", "mixed", False, validate_v08_dependency_and_sdk_policy),
+    ValidatorSpec("v08_dependency_and_sdk_policy", "executor", "S2", "structured", False, validate_v08_dependency_and_sdk_policy),
     ValidatorSpec("v09_official_adapter_boundary", "executor", "S1", "mixed", False, validate_v09_official_adapter_boundary),
     ValidatorSpec("v12_service_layer", "executor", "S2", "mixed", True, validate_v12_service_layer),
     ValidatorSpec("v15_admin_audit_and_runtime_provider", "executor", "S2", "mixed", True, validate_v15_admin_audit_and_runtime_provider),
