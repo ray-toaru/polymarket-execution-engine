@@ -137,6 +137,10 @@ def markdown_fenced_block_after_heading(text: str, heading: str) -> str:
     return match.group(1)
 
 
+def normalized_nonempty_lines(text: str) -> set[str]:
+    return {line.strip() for line in text.splitlines() if line.strip()}
+
+
 def validate_absent_tokens(text: str, label: str, tokens: list[str]) -> None:
     for token in tokens:
         if token in text:
@@ -1083,23 +1087,21 @@ def validate_v08_dependency_and_sdk_policy() -> None:
         dependency_policy_section = markdown_section(dependency_policy_text, "Policy")
     except Exception as exc:
         fail(f"dependency policy doc malformed: {exc}")
-    require_tokens(
-        dependency_baseline_block,
-        "dependency policy doc",
-        [
-            "Official SDK crate: polymarket_client_sdk_v2",
-            "Official SDK version: =0.6.0-canary.1",
-        ],
-    )
-    require_tokens(
-        dependency_policy_section,
-        "dependency policy doc",
-        [
-            "Official SDK dependencies stay isolated in adapter crates.",
-            "Core, policy, store, service, and public API crates must not depend directly on the official SDK.",
-            "The official SDK remains exactly pinned until a newer version is separately reviewed and validated.",
-        ],
-    )
+    dependency_baseline_lines = normalized_nonempty_lines(dependency_baseline_block)
+    dependency_policy_lines = normalized_nonempty_lines(dependency_policy_section)
+    for line in [
+        "Official SDK crate: polymarket_client_sdk_v2",
+        "Official SDK version: =0.6.0-canary.1",
+    ]:
+        if line not in dependency_baseline_lines:
+            fail(f"dependency policy doc missing baseline line: {line}")
+    for line in [
+        "- Official SDK dependencies stay isolated in adapter crates.",
+        "- Core, policy, store, service, and public API crates must not depend directly on the official SDK.",
+        "- The official SDK remains exactly pinned until a newer version is separately reviewed and validated.",
+    ]:
+        if line not in dependency_policy_lines:
+            fail(f"dependency policy doc missing policy line: {line}")
     sdk_plan_text = sdk_plan_doc.read_text()
     try:
         sdk_plan_state_block = markdown_fenced_block_after_heading(
@@ -1113,33 +1115,32 @@ def validate_v08_dependency_and_sdk_policy() -> None:
         )
     except Exception as exc:
         fail(f"SDK first adapter plan doc malformed: {exc}")
-    require_tokens(
-        sdk_plan_state_block,
-        "SDK first adapter plan doc",
-        [
-            "v0.7: official SDK spike + read-only smoke evidence",
-            "v0.8: Rust baseline aligned with official SDK",
-            "v0.11: formal official SDK adapter boundary, authenticated smoke, sign-only dry-run,",
-        ],
-    )
-    require_tokens(
-        sdk_plan_promotion_block,
-        "SDK first adapter plan doc",
-        [
-            "1. SDK spike typecheck/read-only smoke: done",
-            "2. official adapter crate fmt/check/clippy/test: done",
-            "8. live-submit denied-path tests",
-            "9. manual live-submit readiness review",
-        ],
-    )
-    require_tokens(
-        sdk_plan_constraints_block,
-        "SDK first adapter plan doc",
-        [
-            "- no SDK dependency in core/policy/store",
-            "- no live submit without feature + env + config + runtime gates",
-        ],
-    )
+    sdk_plan_state_lines = normalized_nonempty_lines(sdk_plan_state_block)
+    sdk_plan_promotion_lines = normalized_nonempty_lines(sdk_plan_promotion_block)
+    sdk_plan_constraint_lines = normalized_nonempty_lines(sdk_plan_constraints_block)
+    for line in [
+        "v0.7: official SDK spike + read-only smoke evidence",
+        "v0.8: Rust baseline aligned with official SDK",
+    ]:
+        if line not in sdk_plan_state_lines:
+            fail(f"SDK first adapter plan doc missing current-state line: {line}")
+    state_line_prefix = "v0.11: formal official SDK adapter boundary, authenticated smoke, sign-only dry-run,"
+    if not any(line.startswith(state_line_prefix) for line in sdk_plan_state_lines):
+        fail(f"SDK first adapter plan doc missing current-state line prefix: {state_line_prefix}")
+    for line in [
+        "1. SDK spike typecheck/read-only smoke: done",
+        "2. official adapter crate fmt/check/clippy/test: done",
+        "8. live-submit denied-path tests",
+        "9. manual live-submit readiness review",
+    ]:
+        if line not in sdk_plan_promotion_lines:
+            fail(f"SDK first adapter plan doc missing promotion line: {line}")
+    for line in [
+        "- no SDK dependency in core/policy/store",
+        "- no live submit without feature + env + config + runtime gates",
+    ]:
+        if line not in sdk_plan_constraint_lines:
+            fail(f"SDK first adapter plan doc missing constraint line: {line}")
     dependabot = yaml.safe_load((ROOT / ".github/dependabot.yml").read_text())
     if dependabot.get("version") != 2:
         fail("dependabot config must stay on version 2")
