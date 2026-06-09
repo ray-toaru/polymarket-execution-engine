@@ -694,15 +694,46 @@ def validate_v07_source_landings() -> None:
             "public_queries::verify_public_queries(app, &execution_id).await",
         ],
     )
-    require_file_tokens(
-        API_E2E_TEST.parent / "http_and_fake_e2e/scaffold/admin_paths.rs",
-        "HTTP scaffold admin paths",
-        ["/v1/admin/cancel-order", "/v1/admin/reconcile", "/v1/admin/reconcile-order-local", "StatusCode::ACCEPTED", "StatusCode::NOT_FOUND"],
+    scaffold_admin_paths_text = (
+        API_E2E_TEST.parent / "http_and_fake_e2e/scaffold/admin_paths.rs"
+    ).read_text()
+    scaffold_submit_sign_only_text = (
+        API_E2E_TEST.parent / "http_and_fake_e2e/scaffold/submit_sign_only.rs"
+    ).read_text()
+    scaffold_admin_paths_body = rust_async_fn_body(
+        scaffold_admin_paths_text, "verify_non_live_admin_paths"
     )
-    require_file_tokens(
-        API_E2E_TEST.parent / "http_and_fake_e2e/scaffold/submit_sign_only.rs",
+    scaffold_submit_sign_only_body = rust_async_fn_body(
+        scaffold_submit_sign_only_text, "verify_submit_and_sign_only"
+    )
+    require_tokens(
+        scaffold_admin_paths_body,
+        "HTTP scaffold admin paths",
+        [
+            "/v1/admin/cancel-order",
+            "/v1/admin/reconcile",
+            "/v1/admin/reconcile-order-local",
+            "StatusCode::FORBIDDEN",
+            "StatusCode::ACCEPTED",
+            "StatusCode::BAD_REQUEST",
+            "StatusCode::NOT_FOUND",
+            'assert_eq!(reconcile["checked_orders"], 0);',
+            'assert!(local_reconcile_missing["correlation_id"].as_str().is_some());',
+        ],
+    )
+    require_tokens(
+        scaffold_submit_sign_only_body,
         "HTTP scaffold submit/sign-only",
-        ["/v1/submissions", "/v1/sign-only/standard-constructions", "/v1/sign-only/lifecycle-events", '"mode": "BLOCKED_DRY_RUN"', "StatusCode::BAD_REQUEST"],
+        [
+            "/v1/submissions",
+            "/v1/sign-only/standard-constructions",
+            "/v1/sign-only/lifecycle-events",
+            '"mode": "BLOCKED_DRY_RUN"',
+            'assert_eq!(submit["status"], "BLOCKED");',
+            'assert_eq!(standard_sign_only["no_remote_side_effect"], true);',
+            'assert_eq!(sign_only_records[2]["state"], "SIGNED_DRY_RUN");',
+            "StatusCode::BAD_REQUEST",
+        ],
     )
     sdk_spike_text = SDK_SPIKE_RS.read_text()
     require_tokens(
