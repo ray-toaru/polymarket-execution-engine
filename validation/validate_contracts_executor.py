@@ -471,9 +471,21 @@ def validate_v04_source_landings() -> None:
         ["finish::finish_submit_attempt(self, attempt).await"],
     )
     begin_text = (STORE_SRC / "postgres_idempotency/begin.rs").read_text()
-    for needle in ["SELECT pg_advisory_xact_lock($1)", 'status == "PROCEEDING"', "IdempotencyAction::InProgress", "IdempotencyAction::Proceed"]:
-        if needle not in begin_text:
-            fail(f"postgres idempotency begin path missing token: {needle}")
+    begin_submit_attempt_body = rust_async_fn_body(begin_text, "begin_submit_attempt")
+    require_tokens(
+        begin_submit_attempt_body,
+        "postgres idempotency begin path",
+        [
+            'execute("SELECT pg_advisory_xact_lock($1)", &[&lock.0])',
+            'status == "PROCEEDING"',
+            "IdempotencyAction::InProgress {",
+            "IdempotencyAction::Proceed {",
+            "IdempotencyAction::ReplayStoredResponse {",
+            "IdempotencyAction::Conflict",
+            "PostgresStore::rollback(&client).await",
+            'client.batch_execute("COMMIT").await.map_err(map_db_error)?;',
+        ],
+    )
     idempotency_tests = (STORE_SRC / "postgres_tests/idempotency.rs").read_text()
     replay_test_body = rust_async_fn_body(
         idempotency_tests, "same_request_replay_is_persisted"
