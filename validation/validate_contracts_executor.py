@@ -821,15 +821,43 @@ def validate_v08_dependency_and_sdk_policy() -> None:
         fail("Duration import must be cfg-gated to avoid no-feature warning")
     if 'polymarket_client_sdk_v2 = { version = "=0.6.0-canary.1"' not in sdk_toml:
         fail("official SDK dependency must remain explicitly pinned in spike")
+    dependency_policy_doc = ROOT / "DEPENDENCY_POLICY.md"
+    sdk_plan_doc = EXECUTOR / "docs/SDK_FIRST_ADAPTER_PLAN.md"
     for doc in [
-        ROOT / "DEPENDENCY_POLICY.md",
-        EXECUTOR / "docs/SDK_FIRST_ADAPTER_PLAN.md",
+        dependency_policy_doc,
+        sdk_plan_doc,
         EXECUTOR / "rust-toolchain.toml",
         ROOT / ".github/dependabot.yml",
         ROOT / ".github/workflows/ci.yml",
     ]:
         if not doc.exists():
             fail(f"v0.11 missing dependency/CI artifact: {doc.relative_to(ROOT)}")
+    require_file_tokens(
+        dependency_policy_doc,
+        "dependency policy doc",
+        [
+            "Official SDK crate: polymarket_client_sdk_v2",
+            "Official SDK version: =0.6.0-canary.1",
+            "Official SDK dependencies stay isolated in adapter crates.",
+            "Core, policy, store, service, and public API crates must not depend directly on the official SDK.",
+            "The official SDK remains exactly pinned until a newer version is separately reviewed and validated.",
+        ],
+    )
+    require_file_tokens(
+        sdk_plan_doc,
+        "SDK first adapter plan doc",
+        [
+            "v0.7: official SDK spike + read-only smoke evidence",
+            "v0.8: Rust baseline aligned with official SDK",
+            "v0.11: formal official SDK adapter boundary, authenticated smoke, sign-only dry-run,",
+            "1. SDK spike typecheck/read-only smoke: done",
+            "2. official adapter crate fmt/check/clippy/test: done",
+            "8. live-submit denied-path tests",
+            "9. manual live-submit readiness review",
+            "- no SDK dependency in core/policy/store",
+            "- no live submit without feature + env + config + runtime gates",
+        ],
+    )
     dependabot = yaml.safe_load((ROOT / ".github/dependabot.yml").read_text())
     if dependabot.get("version") != 2:
         fail("dependabot config must stay on version 2")
