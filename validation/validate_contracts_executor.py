@@ -475,9 +475,32 @@ def validate_v04_source_landings() -> None:
         if needle not in begin_text:
             fail(f"postgres idempotency begin path missing token: {needle}")
     idempotency_tests = (STORE_SRC / "postgres_tests/idempotency.rs").read_text()
-    for test_name in ["same_request_replay_is_persisted", "fingerprint_mismatch_is_conflict"]:
-        if test_name not in idempotency_tests:
-            fail(f"postgres idempotency tests missing token: {test_name}")
+    replay_test_body = rust_async_fn_body(
+        idempotency_tests, "same_request_replay_is_persisted"
+    )
+    conflict_test_body = rust_async_fn_body(
+        idempotency_tests, "fingerprint_mismatch_is_conflict"
+    )
+    require_tokens(
+        replay_test_body,
+        "postgres idempotency tests",
+        [
+            '.begin_submit_attempt(&account, &execution, "idem-1", "req-1")',
+            "IdempotencyAction::Proceed {",
+            "finish_submit_attempt(FinishSubmitAttempt {",
+            '.begin_submit_attempt(&account, &execution, "idem-1", "req-1")',
+            "IdempotencyAction::ReplayStoredResponse",
+        ],
+    )
+    require_tokens(
+        conflict_test_body,
+        "postgres idempotency tests",
+        [
+            '.begin_submit_attempt(&account, &execution, "idem-1", "req-1")',
+            '.begin_submit_attempt(&account, &execution, "idem-1", "req-2")',
+            'assert_eq!(conflict, IdempotencyAction::Conflict);',
+        ],
+    )
     reservation_tests = (STORE_SRC / "postgres_tests/receipt_reservation.rs").read_text()
     reservation_remote_unknown_body = rust_async_fn_body(
         reservation_tests, "remote_unknown_is_persisted_conservatively"
