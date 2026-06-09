@@ -382,6 +382,28 @@ def rust_impl_method_body(text: str, type_name: str, fn_name: str) -> str:
     fail(f"unterminated Rust impl method body: {type_name}::{fn_name}")
 
 
+def rust_module_body(text: str, module_name: str) -> str:
+    pattern = re.compile(
+        rf"(?m)^\s*(?:#\[[^\]]+\]\s*\n)*\s*mod\s+{re.escape(module_name)}\s*\{{"
+    )
+    match = pattern.search(text)
+    if not match:
+        fail(f"missing Rust module: {module_name}")
+    body_start = text.find("{", match.end() - 1)
+    if body_start == -1:
+        fail(f"missing Rust module: {module_name}")
+    depth = 0
+    for index in range(body_start, len(text)):
+        char = text[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return text[body_start + 1 : index]
+    fail(f"unterminated Rust module: {module_name}")
+
+
 def service_backend_method_names(text: str) -> set[str]:
     if "impl ServiceBackend" not in text:
         fail("missing Rust impl: impl ServiceBackend")
@@ -992,7 +1014,6 @@ def validate_v08_dependency_and_sdk_policy() -> None:
     if sdk_dep_manifest.get("version") != "=0.6.0-canary.1":
         fail("official SDK spike Cargo must keep polymarket_client_sdk_v2 pinned to =0.6.0-canary.1")
     sdk_text = SDK_SPIKE_RS.read_text()
-    sdk_toml = SDK_SPIKE_TOML.read_text()
     sdk_consts = rust_const_names(sdk_text)
     for const_name in [
         "OFFICIAL_SDK_REPOSITORY",
@@ -1017,6 +1038,7 @@ def validate_v08_dependency_and_sdk_policy() -> None:
     adapter_config_default_body = rust_impl_trait_method_body(
         sdk_text, "Default", "OfficialSdkAdapterConfig", "default"
     )
+    sdk_tests_module_body = rust_module_body(sdk_text, "tests")
     require_tokens(
         adapter_config_default_body,
         "official SDK spike",
@@ -1028,10 +1050,15 @@ def validate_v08_dependency_and_sdk_policy() -> None:
             "require_explicit_runtime_kill_switch_open: true",
         ],
     )
-    if 'use std::time::Duration;' in sdk_text and '#[cfg(feature = "sdk-typecheck")]\n    use std::time::Duration;' not in sdk_text:
-        fail("Duration import must be cfg-gated to avoid no-feature warning")
-    if 'polymarket_client_sdk_v2 = { version = "=0.6.0-canary.1"' not in sdk_toml:
-        fail("official SDK dependency must remain explicitly pinned in spike")
+    require_tokens(
+        sdk_tests_module_body,
+        "official SDK spike",
+        [
+            '#[cfg(feature = "sdk-typecheck")]\n    use polymarket_client_sdk_v2::Result as SdkResult;',
+            '#[cfg(feature = "sdk-typecheck")]\n    use std::time::Duration;',
+            '#[cfg(feature = "sdk-typecheck")]\n    use tokio::time;',
+        ],
+    )
     dependency_policy_doc = ROOT / "DEPENDENCY_POLICY.md"
     sdk_plan_doc = EXECUTOR / "docs/SDK_FIRST_ADAPTER_PLAN.md"
     for doc in [
