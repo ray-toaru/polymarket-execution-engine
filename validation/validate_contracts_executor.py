@@ -622,10 +622,45 @@ def validate_v07_source_landings() -> None:
         "HTTP scaffold submit/sign-only",
         ["/v1/submissions", "/v1/sign-only/standard-constructions", "/v1/sign-only/lifecycle-events", '"mode": "BLOCKED_DRY_RUN"', "StatusCode::BAD_REQUEST"],
     )
-    require_file_tokens(
-        SDK_SPIKE_RS,
+    sdk_spike_text = SDK_SPIKE_RS.read_text()
+    require_tokens(
+        sdk_spike_text,
         "official SDK spike",
-        ["OFFICIAL_SDK_REPOSITORY", "PINNED_OFFICIAL_SDK_VERSION", "LIVE_SUBMIT_FEATURE_NAME", "allow_live_submit: false", "require_explicit_runtime_kill_switch_open: true", "sdk_client_type_marker"],
+        [
+            "OFFICIAL_SDK_REPOSITORY",
+            "PINNED_OFFICIAL_SDK_VERSION",
+            "LIVE_SUBMIT_FEATURE_NAME",
+            "allow_live_submit: false",
+            "require_explicit_runtime_kill_switch_open: true",
+            "sdk_client_type_marker",
+        ],
+    )
+    sdk_default_client_body = rust_fn_body(
+        sdk_spike_text, "default_read_only_client"
+    )
+    sdk_read_only_smoke_body = rust_async_fn_body(
+        sdk_spike_text, "read_only_ok_smoke"
+    )
+    require_tokens(
+        sdk_default_client_body,
+        "official SDK spike",
+        [
+            "polymarket_client_sdk_v2::clob::Client::new(",
+            "CLOB_PRODUCTION_HOST",
+            "polymarket_client_sdk_v2::clob::Config::default()",
+        ],
+    )
+    require_tokens(
+        sdk_read_only_smoke_body,
+        "official SDK spike",
+        [
+            "let client = default_read_only_client()?;",
+            "time::timeout(Duration::from_secs(10), client.ok())",
+            'anyhow::anyhow!("SDK read-only smoke timeout")',
+            'assert_eq!(status.to_uppercase(), "OK");',
+            "time::timeout(Duration::from_secs(10), client.server_time())",
+            'anyhow::anyhow!("SDK read-only smoke server time timeout")',
+        ],
     )
 
 
