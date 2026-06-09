@@ -445,14 +445,61 @@ def validate_v04_source_landings() -> None:
         fail("pmx-store advisory lock model missing token: pub struct AdvisoryLockKey")
     if not re.search(r"pub\s+fn\s+advisory_lock_key\s*\(", advisory_text):
         fail("pmx-store advisory lock model missing token: pub fn advisory_lock_key")
-    for needle in ["const FNV_OFFSET", "const FNV_PRIME", "i64::from_ne_bytes(hash.to_ne_bytes())"]:
-        if needle not in advisory_text:
-            fail(f"pmx-store advisory lock model missing token: {needle}")
+    advisory_lock_key_body = rust_fn_body(advisory_text, "advisory_lock_key")
+    require_tokens(
+        advisory_lock_key_body,
+        "pmx-store advisory lock model",
+        [
+            "const FNV_OFFSET",
+            "const FNV_PRIME",
+            "namespace.as_bytes()",
+            "account_id.as_bytes()",
+            "resource_key.as_bytes()",
+            "part.len() as u64",
+            "i64::from_ne_bytes(hash.to_ne_bytes())",
+        ],
+    )
     postgres_text = (STORE_SRC / "postgres.rs").read_text()
     if not re.search(r"pub\s+struct\s+PostgresStore\b", postgres_text):
         fail("pmx-store postgres adapter missing token: pub struct PostgresStore")
-    if "tokio_postgres::connect(&self.database_url, NoTls)" not in postgres_text:
-        fail("pmx-store postgres adapter missing token: tokio_postgres::connect(&self.database_url, NoTls)")
+    postgres_fields = rust_struct_field_names(postgres_text, "PostgresStore")
+    if postgres_fields != {"database_url"}:
+        fail("pmx-store postgres adapter must keep PostgresStore::database_url as the only field")
+    postgres_methods = rust_inherent_impl_method_names(postgres_text, "PostgresStore")
+    if not {"new", "connect", "apply_schema", "applied_schema_migrations", "client", "rollback"}.issubset(
+        postgres_methods
+    ):
+        fail("pmx-store postgres adapter missing inherent method coverage")
+    connect_body = rust_impl_method_body(postgres_text, "PostgresStore", "connect")
+    client_body = rust_impl_method_body(postgres_text, "PostgresStore", "client")
+    rollback_body = rust_impl_method_body(postgres_text, "PostgresStore", "rollback")
+    require_tokens(
+        connect_body,
+        "pmx-store postgres adapter",
+        [
+            "let store = Self::new(database_url);",
+            "let client = store.client().await?;",
+            'simple_query("SELECT 1")',
+            "map_err(map_db_error)?;",
+            "Ok(store)",
+        ],
+    )
+    require_tokens(
+        client_body,
+        "pmx-store postgres adapter",
+        [
+            "tokio_postgres::connect(&self.database_url, NoTls)",
+            "tokio::spawn(async move {",
+            "connection.await",
+            'eprintln!("postgres connection task ended with error: {err}");',
+            "Ok(client)",
+        ],
+    )
+    require_tokens(
+        rollback_body,
+        "pmx-store postgres adapter",
+        ['client.batch_execute("ROLLBACK").await'],
+    )
     if not POSTGRES_RS.exists():
         fail("missing PostgreSQL repository adapter source")
     idempotency_adapter = (STORE_SRC / "postgres_idempotency.rs").read_text()
