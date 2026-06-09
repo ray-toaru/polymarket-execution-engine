@@ -608,15 +608,66 @@ def validate_v07_source_landings() -> None:
     if reconcile_reader_methods != {"read_remote_order_observations"}:
         fail("gateway traits missing token: pub trait RemoteReconcileReader")
     signer_text = (GATEWAY_SRC / "signer.rs").read_text()
-    for needle in [
-        "pub struct DeterministicTestSignerProvider",
-        "pub struct DeterministicTestSigner",
-        "pub struct SignerProviderConfig",
-        "allow_local_private_key_material: false",
-        "require_remote_signer_in_production: true",
-    ]:
-        if needle not in signer_text:
-            fail(f"gateway signer provider missing token: {needle}")
+    signer_consts = rust_const_names(signer_text)
+    signer_backend_variants = rust_enum_variant_names(
+        signer_text, "SignerBackendKind"
+    )
+    signer_config_fields = rust_struct_field_names(
+        signer_text, "SignerProviderConfig"
+    )
+    signer_provider_default_body = rust_impl_trait_method_body(
+        signer_text, "Default", "SignerProviderConfig", "default"
+    )
+    deterministic_provider_body = rust_impl_trait_method_body(
+        signer_text,
+        "SignerProvider",
+        "DeterministicTestSignerProvider",
+        "signer_for_account",
+    )
+    deterministic_signer_body = rust_impl_trait_method_body(
+        signer_text,
+        "Signer",
+        "DeterministicTestSigner",
+        "sign_order",
+    )
+    if signer_backend_variants != {
+        "Disabled",
+        "DeterministicTest",
+        "OfficialSdkLocal",
+        "OfficialSdkRemoteKms",
+        "OfficialSdkExternal",
+    }:
+        fail("gateway signer provider must keep canonical SignerBackendKind variants")
+    if signer_config_fields != {
+        "backend",
+        "allow_local_private_key_material",
+        "require_remote_signer_in_production",
+    }:
+        fail("gateway signer provider must keep canonical SignerProviderConfig fields")
+    require_tokens(
+        signer_provider_default_body,
+        "gateway signer provider",
+        [
+            "backend: SignerBackendKind::Disabled",
+            "allow_local_private_key_material: false",
+            "require_remote_signer_in_production: true",
+        ],
+    )
+    require_tokens(
+        deterministic_provider_body,
+        "gateway signer provider",
+        ["Ok(Arc::new(DeterministicTestSigner))"],
+    )
+    require_tokens(
+        deterministic_signer_body,
+        "gateway signer provider",
+        [
+            'internal_order_id: InternalOrderId(format!("test-order-{}", order.execution_id))',
+            "account_id: order.account_id.clone()",
+            '"deterministic-test-signer:{}:{}"',
+            'signed_payload_ref: "test-only-no-real-signature".into()',
+        ],
+    )
     signer_tests = (GATEWAY_SRC / "tests/signer.rs").read_text()
     disabled_signer_test_body = rust_async_fn_body(
         signer_tests, "disabled_signer_provider_refuses_to_materialize_signer"
