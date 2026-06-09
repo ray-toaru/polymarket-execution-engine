@@ -1826,14 +1826,42 @@ def validate_v15_admin_audit_and_runtime_provider(spec: dict | None = None) -> N
         "API admin audit support",
         ["operation: &'static str", "record_admin_audit_event(AdminAuditEvent", "principal_subject: principal.subject.clone()"],
     )
-    require_file_tokens(
-        API_SRC / "routes/health.rs",
+    health_text = (API_SRC / "routes/health.rs").read_text()
+    health_body = rust_async_fn_body(health_text, "health")
+    require_tokens(
+        health_body,
         "API health route",
-        ['"service_layer": "pmx_service_server_authoritative_id_bound_admin_audit"'],
+        [
+            "require(&headers, Operation::ReadReport)?;",
+            'StatusCode::OK',
+            '"status": "NOT_READY"',
+            '"database": state.service.storage_mode()',
+            '"service_layer": "pmx_service_server_authoritative_id_bound_admin_audit"',
+        ],
     )
-    for needle in ["http_postgres_admin_routes_record_audit_events", "admin_audit_events", "KillSwitch", "CancelOrder"]:
-        if needle not in pg_test_text:
-            fail(f"PostgreSQL API audit E2E missing token: {needle}")
+    admin_audit_pg_body = rust_async_fn_body(
+        pg_test_text, "http_postgres_admin_routes_record_audit_events"
+    )
+    require_tokens(
+        admin_audit_pg_body,
+        "PostgreSQL API audit E2E",
+        [
+            'std::env::var("PMX_TEST_DATABASE_URL")',
+            'std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-pg-audit")',
+            'std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-pg-audit")',
+            "pmx_api::try_postgres_app(database_url.clone(), true)",
+            '"/v1/admin/kill-switch"',
+            "StatusCode::ACCEPTED",
+            '"/v1/admin/cancel-order"',
+            "StatusCode::BAD_REQUEST",
+            "SELECT COUNT(*)::bigint FROM admin_audit_events",
+            "KillSwitch",
+            "CancelOrder",
+            '"/v1/admin/audit-events?limit=20"',
+            "StatusCode::FORBIDDEN",
+            "StatusCode::OK",
+        ],
+    )
     if not (EXECUTOR / "validation/run_current_gates.sh").exists():
         fail("missing current gate runner")
 
