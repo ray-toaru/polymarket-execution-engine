@@ -240,6 +240,21 @@ def rust_trait_method_signatures(text: str, trait_name: str) -> set[str]:
     )
 
 
+def rust_trait_method_signature(text: str, trait_name: str, fn_name: str) -> tuple[str, str]:
+    pattern = rf"(?s)trait\s+{re.escape(trait_name)}[^\{{]*\{{(.*?)\n\}}"
+    match = re.search(pattern, text)
+    if not match:
+        fail(f"missing Rust trait: {trait_name}")
+    body = match.group(1)
+    fn_pattern = (
+        rf"(?s)async\s+fn\s+{re.escape(fn_name)}\s*\((.*?)\)\s*->\s*([^;]+);"
+    )
+    fn_match = re.search(fn_pattern, body)
+    if not fn_match:
+        fail(f"missing Rust trait method signature: {trait_name}::{fn_name}")
+    return fn_match.group(1), fn_match.group(2).strip()
+
+
 def rust_impl_block_body(text: str, impl_pattern: str, label: str) -> str:
     match = re.search(impl_pattern, text)
     if not match:
@@ -599,6 +614,18 @@ def validate_v07_source_landings() -> None:
         signer_provider_methods = rust_trait_method_signatures(traits_text, "SignerProvider")
         clob_gateway_methods = rust_trait_method_signatures(traits_text, "ClobGateway")
         reconcile_reader_methods = rust_trait_method_signatures(traits_text, "RemoteReconcileReader")
+        signer_provider_params, signer_provider_return = rust_trait_method_signature(
+            traits_text, "SignerProvider", "signer_for_account"
+        )
+        post_order_params, post_order_return = rust_trait_method_signature(
+            traits_text, "ClobGateway", "post_order"
+        )
+        cancel_order_params, cancel_order_return = rust_trait_method_signature(
+            traits_text, "ClobGateway", "cancel_order"
+        )
+        reconcile_params, reconcile_return = rust_trait_method_signature(
+            traits_text, "RemoteReconcileReader", "read_remote_order_observations"
+        )
     except SystemExit as exc:
         fail(f"gateway traits malformed: {exc}")
     if signer_provider_methods != {"signer_for_account"}:
@@ -607,6 +634,14 @@ def validate_v07_source_landings() -> None:
         fail("gateway traits missing token: async fn post_order(&self, order: &SignedOrderEnvelope)")
     if reconcile_reader_methods != {"read_remote_order_observations"}:
         fail("gateway traits missing token: pub trait RemoteReconcileReader")
+    if "&AccountId" not in signer_provider_params or "Arc<dyn Signer>" not in signer_provider_return:
+        fail("gateway traits must keep SignerProvider::signer_for_account account and signer return binding")
+    if "&SignedOrderEnvelope" not in post_order_params or "Result<PostOrderAck, GatewayError>" not in post_order_return:
+        fail("gateway traits must keep ClobGateway::post_order signed envelope -> PostOrderAck binding")
+    if "&AccountId" not in cancel_order_params or "&RemoteOrderId" not in cancel_order_params or "Result<CancelState, GatewayError>" not in cancel_order_return:
+        fail("gateway traits must keep ClobGateway::cancel_order account/remote-order cancel binding")
+    if "&RemoteReconcileReadRequest" not in reconcile_params or "Result<RemoteReconcileReadReport, GatewayError>" not in reconcile_return:
+        fail("gateway traits must keep RemoteReconcileReader::read_remote_order_observations request/report binding")
     signer_text = (GATEWAY_SRC / "signer.rs").read_text()
     signer_consts = rust_const_names(signer_text)
     signer_backend_variants = rust_enum_variant_names(
