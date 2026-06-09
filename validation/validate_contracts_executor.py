@@ -856,16 +856,60 @@ def validate_v07_source_landings() -> None:
         ],
     )
     sdk_spike_text = SDK_SPIKE_RS.read_text()
+    sdk_spike_consts = rust_const_names(sdk_spike_text)
+    for const_name in [
+        "OFFICIAL_SDK_REPOSITORY",
+        "OFFICIAL_SDK_CRATE",
+        "PINNED_OFFICIAL_SDK_VERSION",
+        "LIVE_SUBMIT_FEATURE_NAME",
+        "CLOB_PRODUCTION_HOST",
+    ]:
+        if const_name not in sdk_spike_consts:
+            fail(f"official SDK spike missing const: {const_name}")
+    sdk_spike_config_fields = rust_struct_field_names(
+        sdk_spike_text, "OfficialSdkAdapterConfig"
+    )
+    if sdk_spike_config_fields != {
+        "clob_host",
+        "use_ws",
+        "use_heartbeats",
+        "allow_live_submit",
+        "require_explicit_runtime_kill_switch_open",
+    }:
+        fail("official SDK spike must keep OfficialSdkAdapterConfig fields")
+    sdk_spike_default_body = rust_impl_trait_method_body(
+        sdk_spike_text, "Default", "OfficialSdkAdapterConfig", "default"
+    )
+    sdk_client_type_marker_body = rust_fn_body(
+        sdk_spike_text, "sdk_client_type_marker"
+    )
+    sdk_live_submit_default_test_body = rust_fn_body(
+        sdk_spike_text, "live_submit_is_disabled_by_default"
+    )
     require_tokens(
-        sdk_spike_text,
+        sdk_spike_default_body,
         "official SDK spike",
         [
-            "OFFICIAL_SDK_REPOSITORY",
-            "PINNED_OFFICIAL_SDK_VERSION",
-            "LIVE_SUBMIT_FEATURE_NAME",
+            "clob_host: CLOB_PRODUCTION_HOST.to_string()",
+            "use_ws: true",
+            "use_heartbeats: true",
             "allow_live_submit: false",
             "require_explicit_runtime_kill_switch_open: true",
-            "sdk_client_type_marker",
+        ],
+    )
+    require_tokens(
+        sdk_client_type_marker_body,
+        "official SDK spike",
+        ["std::any::type_name::<polymarket_client_sdk_v2::clob::Client>()"],
+    )
+    require_tokens(
+        sdk_live_submit_default_test_body,
+        "official SDK spike",
+        [
+            "OfficialSdkAdapterConfig::default()",
+            "!cfg.allow_live_submit",
+            "cfg.clob_host, CLOB_PRODUCTION_HOST",
+            "cfg.require_explicit_runtime_kill_switch_open",
         ],
     )
     sdk_default_client_body = rust_fn_body(
