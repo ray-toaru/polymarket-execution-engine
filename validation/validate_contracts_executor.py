@@ -699,8 +699,14 @@ def validate_v07_source_landings() -> None:
     post_cancel_happy_body = rust_async_fn_body(
         post_cancel_tests, "deterministic_signer_provider_posts_reads_and_cancels"
     )
+    post_cancel_state_machine_body = rust_async_fn_body(
+        post_cancel_tests, "fake_gateway_cancel_maps_to_order_lifecycle_state_machine"
+    )
     post_cancel_remote_unknown_body = rust_async_fn_body(
         post_cancel_tests, "fake_gateway_surfaces_remote_unknown_without_local_success"
+    )
+    post_cancel_account_scope_body = rust_async_fn_body(
+        post_cancel_tests, "fake_gateway_is_account_scoped"
     )
     require_tokens(
         post_cancel_happy_body,
@@ -723,6 +729,34 @@ def validate_v07_source_landings() -> None:
             "gateway\n        .post_order(&signed)",
             ".expect_err(\"remote unknown\")",
             'GatewayError::RemoteUnknown("timeout after signing".into())',
+        ],
+    )
+    require_tokens(
+        post_cancel_state_machine_body,
+        "gateway post/cancel tests",
+        [
+            "transition_order_state(state, OrderEventKind::Signed)",
+            "transition_order_state(state, OrderEventKind::PostRequested)",
+            "gateway.post_order(&signed).await.expect(\"posted\")",
+            "transition_order_state(state, OrderEventKind::RemotePosted)",
+            ".cancel_order(&account, &ack.remote_order_id)",
+            "transition_order_state(state, OrderEventKind::CancelRequested)",
+            "transition_order_state(state, OrderEventKind::CancelRemoteAccepted)",
+            "OrderLifecycleState::CancelRemoteAccepted",
+        ],
+    )
+    require_tokens(
+        post_cancel_account_scope_body,
+        "gateway post/cancel tests",
+        [
+            'let account_a = pmx_core::AccountId("acct-a".into());',
+            'let account_b = pmx_core::AccountId("acct-b".into());',
+            ".get_order(&account_b, &ack.remote_order_id)",
+            ".get_open_orders(&account_b)",
+            ".cancel_order(&account_b, &ack.remote_order_id)",
+            "pmx_core::CancelState::ReconcileRequired",
+            ".get_open_orders(&account_a)",
+            ".len(),\n        1",
         ],
     )
     scaffold_text = (API_E2E_TEST.parent / "http_and_fake_e2e/scaffold.rs").read_text()
