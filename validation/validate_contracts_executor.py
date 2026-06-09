@@ -1749,6 +1749,36 @@ def validate_v15_admin_audit_and_runtime_provider(spec: dict | None = None) -> N
         )
     except SystemExit as exc:
         fail(f"store admin audit model malformed: {exc}")
+    try:
+        service_audit_record_body = rust_async_fn_body(
+            service_audit_text, "record_admin_audit_event"
+        )
+        service_audit_list_body = rust_async_fn_body(
+            service_audit_text, "list_admin_audit_events"
+        )
+    except Exception as exc:
+        fail(f"service admin audit bridge malformed: {exc}")
+    try:
+        backend_audit_record_body = rust_async_fn_body(
+            api_backend_audit_text, "record_admin_audit_event"
+        )
+        backend_audit_list_body = rust_async_fn_body(
+            api_backend_audit_text, "list_admin_audit_events"
+        )
+    except Exception as exc:
+        fail(f"API admin audit backend malformed: {exc}")
+    try:
+        route_audit_list_body = rust_async_fn_body(
+            api_route_audit_text, "list_admin_audit_events"
+        )
+    except Exception as exc:
+        fail(f"API admin audit routes malformed: {exc}")
+    try:
+        support_audit_record_body = rust_async_fn_body(
+            api_support_audit_text, "record_admin_audit"
+        )
+    except Exception as exc:
+        fail(f"API admin audit support malformed: {exc}")
     if not {
         "audit_id",
         "principal_subject",
@@ -1807,24 +1837,53 @@ def validate_v15_admin_audit_and_runtime_provider(spec: dict | None = None) -> N
         ["FROM admin_audit_events", "correlation_id = $6", "query.bounded_limit()"],
     )
     require_tokens(
-        service_audit_text,
+        service_audit_record_body,
         "service admin audit bridge",
-        ["AdminAuditStore", "self.store.record_admin_audit_event(&event).await?", "pub async fn list_admin_audit_events"],
+        ["self.store.record_admin_audit_event(&event).await?;", "Ok(())"],
     )
     require_tokens(
-        api_backend_audit_text,
+        service_audit_list_body,
+        "service admin audit bridge",
+        ["self.store.list_admin_audit_events(&query).await?", "Ok("],
+    )
+    require_tokens(
+        backend_audit_record_body,
         "API admin audit backend",
-        ["Self::InMemory(service) => service.record_admin_audit_event(event).await", "Self::Postgres(service) => service.list_admin_audit_events(query).await"],
+        [
+            "Self::InMemory(service) => service.record_admin_audit_event(event).await",
+            "Self::Postgres(service) => service.record_admin_audit_event(event).await",
+        ],
     )
     require_tokens(
-        api_route_audit_text,
+        backend_audit_list_body,
+        "API admin audit backend",
+        [
+            "Self::InMemory(service) => service.list_admin_audit_events(query).await",
+            "Self::Postgres(service) => service.list_admin_audit_events(query).await",
+        ],
+    )
+    require_tokens(
+        route_audit_list_body,
         "API admin audit routes",
-        ["AdminAuditQuery", "correlation_id: query.correlation_id", "StatusCode::OK"],
+        [
+            "require(&headers, Operation::ReadAudit)?;",
+            "AdminAuditQuery {",
+            "correlation_id: query.correlation_id",
+            "Ok((StatusCode::OK, Json(events)))",
+        ],
     )
     require_tokens(
-        api_support_audit_text,
+        support_audit_record_body,
         "API admin audit support",
-        ["operation: &'static str", "record_admin_audit_event(AdminAuditEvent", "principal_subject: principal.subject.clone()"],
+        [
+            "state",
+            ".service",
+            ".record_admin_audit_event(AdminAuditEvent {",
+            "principal_subject: principal.subject.clone(),",
+            "operation: operation.into(),",
+            "correlation_id,",
+            ".map_err(service_error)",
+        ],
     )
     health_text = (API_SRC / "routes/health.rs").read_text()
     health_body = rust_async_fn_body(health_text, "health")
