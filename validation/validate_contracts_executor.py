@@ -491,12 +491,25 @@ def validate_v04_source_landings() -> None:
     if not API_E2E_TEST.exists():
         fail("missing HTTP/auth/fake E2E integration test source")
     smoke_text = (API_E2E_TEST.parent / "http_and_fake_e2e/smoke.rs").read_text()
-    for fn_name in ["http_auth_and_fake_e2e_smoke"]:
-        if fn_name not in smoke_text:
-            fail(f"HTTP/auth fake E2E smoke missing token: {fn_name}")
-    for status in ["StatusCode::UNAUTHORIZED", "StatusCode::FORBIDDEN", "StatusCode::ACCEPTED"]:
-        if status not in smoke_text:
-            fail(f"HTTP/auth fake E2E smoke missing token: {status}")
+    smoke_body = rust_async_fn_body(smoke_text, "http_auth_and_fake_e2e_smoke")
+    require_tokens(
+        smoke_body,
+        "HTTP/auth fake E2E smoke",
+        [
+            'std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-test")',
+            'std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-test")',
+            '"GET", "/v1/health", None, None',
+            'assert_eq!(status, StatusCode::UNAUTHORIZED);',
+            '"GET", "/v1/health", Some("bad-token"), None',
+            'assert_eq!(status, StatusCode::FORBIDDEN);',
+            '"/v1/intents/normalize"',
+            'assert_eq!(decision["status"], "BLOCK");',
+            '"/v1/admin/kill-switch"',
+            "StatusCode::ACCEPTED",
+            'assert_eq!(kill_switch["persisted"], true);',
+            'assert_eq!(global_kill_switch["scope"], "GLOBAL");',
+        ],
+    )
     advisory_text = (STORE_SRC / "model/advisory.rs").read_text()
     if not re.search(r"pub\s+struct\s+AdvisoryLockKey\b", advisory_text):
         fail("pmx-store advisory lock model missing token: pub struct AdvisoryLockKey")
@@ -560,18 +573,33 @@ def validate_v04_source_landings() -> None:
     if not POSTGRES_RS.exists():
         fail("missing PostgreSQL repository adapter source")
     idempotency_adapter = (STORE_SRC / "postgres_idempotency.rs").read_text()
-    if "impl IdempotencyStore for PostgresStore" not in idempotency_adapter:
-        fail("postgres idempotency adapter missing token: impl IdempotencyStore for PostgresStore")
-    ensure_match_arms(
-        idempotency_adapter.replace("async fn finish_submit_attempt", "\nasync fn finish_submit_attempt"),
-        "postgres idempotency adapter",
-        "begin_submit_attempt",
-        ["begin::begin_submit_attempt(", "request_fingerprint"],
+    idempotency_impl_methods = rust_impl_trait_method_names(
+        idempotency_adapter, "IdempotencyStore", "PostgresStore"
     )
-    ensure_match_arms(
-        idempotency_adapter.replace("async fn finish_submit_attempt", "\nasync fn finish_submit_attempt"),
+    if idempotency_impl_methods != {"begin_submit_attempt", "finish_submit_attempt"}:
+        fail("postgres idempotency adapter must keep canonical impl method set")
+    begin_impl_body = rust_impl_trait_method_body(
+        idempotency_adapter, "IdempotencyStore", "PostgresStore", "begin_submit_attempt"
+    )
+    finish_impl_body = rust_impl_trait_method_body(
+        idempotency_adapter, "IdempotencyStore", "PostgresStore", "finish_submit_attempt"
+    )
+    require_tokens(
+        begin_impl_body,
         "postgres idempotency adapter",
-        "finish_submit_attempt",
+        [
+            "begin::begin_submit_attempt(",
+            "self,",
+            "account_id,",
+            "execution_id,",
+            "idempotency_key,",
+            "request_fingerprint,",
+            ".await",
+        ],
+    )
+    require_tokens(
+        finish_impl_body,
+        "postgres idempotency adapter",
         ["finish::finish_submit_attempt(self, attempt).await"],
     )
     begin_text = (STORE_SRC / "postgres_idempotency/begin.rs").read_text()
