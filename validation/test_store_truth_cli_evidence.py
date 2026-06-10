@@ -95,6 +95,17 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
         self.assertEqual(candidate["target_size"], "5")
         self.assertEqual(candidate["estimated_order_notional_usd"], "0.1")
 
+    def test_store_truth_approval_keeps_single_attempt_notional_caps(self) -> None:
+        approval = run_real_funds_canary_store_truth_cli_preflight.approval(
+            "acct-1",
+            "1" * 64,
+            artifact_sha256="2" * 64,
+            workspace_manifest_sha256="3" * 64,
+            archived_manifest_sha256="4" * 64,
+        )
+        self.assertEqual(approval["max_order_notional_usd"], "1")
+        self.assertEqual(approval["max_daily_notional_usd"], "1")
+
     def test_store_truth_cli_injects_synthetic_active_profile_env(self) -> None:
         class Result:
             returncode = 0

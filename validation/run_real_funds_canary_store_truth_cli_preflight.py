@@ -318,7 +318,7 @@ def approval(
         "archived_manifest_sha256": archived_manifest_sha256,
         "market_candidate_sha256": market_sha,
         "max_order_notional_usd": "1",
-        "max_daily_notional_usd": "5",
+        "max_daily_notional_usd": "1",
         "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
         "operator_identity_ref": "local-store-truth-cli-preflight",
     }

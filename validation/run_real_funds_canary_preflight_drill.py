@@ -34,7 +34,7 @@ DOC_TOKENS = [
     "artifact_sha256_required = true",
     "evidence_manifest_sha256_required = true",
     "max_order_notional_usd = 1",
-    "max_daily_notional_usd = 5",
+    "max_daily_notional_usd <= max_order_notional_usd",
     "target_size_is_reviewed_candidate_input = true",
     "notional_usd_is_price_times_size = true",
     "limit_order_size_driven = true",
@@ -107,8 +107,8 @@ def main() -> int:
             failures.append("approval example must use GTC_LIMIT_POST_ONLY_CANCEL")
         if approval.get("max_order_notional_usd") != "1":
             failures.append("approval example must cap each order at 1 USD")
-        if approval.get("max_daily_notional_usd") != "5":
-            failures.append("approval example must cap daily notional at 5 USD")
+        if approval.get("max_daily_notional_usd") != "1":
+            failures.append("approval example must cap daily notional at 1 USD")
         for key in ["approval_hash", "artifact_sha256", "evidence_manifest_sha256"]:
             if not is_sha256(approval.get(key)):
                 failures.append(f"approval example must include 64-hex {key}")
@@ -152,7 +152,7 @@ def main() -> int:
         "posted": False,
         "remote_side_effects": False,
         "max_order_notional_usd": "1",
-        "max_daily_notional_usd": "5",
+        "max_daily_notional_usd": "1",
         "target_size_is_reviewed_candidate_input": True,
         "notional_usd_is_price_times_size": True,
         "limit_order_size_driven": True,
