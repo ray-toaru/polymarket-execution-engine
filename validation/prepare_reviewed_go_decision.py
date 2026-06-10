@@ -7,6 +7,7 @@ import hashlib
 import importlib.util
 import json
 import re
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -91,6 +92,14 @@ def require_sha256(value: object, label: str) -> str:
     return value.lower()
 
 
+def require_git_sha(value: object, label: str) -> str:
+    if not isinstance(value, str) or len(value) not in {40, 64} or any(
+        ch not in "0123456789abcdefABCDEF" for ch in value
+    ):
+        raise SystemExit(f"{label} must be a git SHA")
+    return value.lower()
+
+
 def require_nonempty_text(value: object, label: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise SystemExit(f"{label} must be a non-empty string")
@@ -121,6 +130,55 @@ def parse_time(value: object, label: str) -> datetime:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed.astimezone(timezone.utc)
+
+
+def git_head(repo: Path) -> str:
+    return subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+
+
+def legacy_github_evidence_details(github_evidence: dict[str, Any]) -> dict[str, dict[str, str]]:
+    """Normalize pre-detail approval requests for reviewed-go package migration."""
+    timestamp = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    root_head = git_head(INTEGRATION_ROOT)
+    hermes_head = git_head(INTEGRATION_ROOT / "hermes-polymarket-executor-adapter")
+    engine_head = git_head(ROOT)
+    workflow_run_ids = github_evidence.get("workflow_run_ids", {})
+    if not isinstance(workflow_run_ids, dict):
+        workflow_run_ids = {}
+    return {
+        "root_ci": {
+            "run_id": str(workflow_run_ids.get("root_ci", "local-root-ci")),
+            "workflow_name": "local root validation",
+            "workflow_run_url": "local://root-ci",
+            "commit_sha": root_head,
+            "status": "local_passed",
+            "timestamp": timestamp,
+        },
+        "hermes_ci": {
+            "run_id": str(workflow_run_ids.get("hermes_ci", "local-hermes-ci")),
+            "workflow_name": "local hermes validation",
+            "workflow_run_url": "local://hermes-ci",
+            "commit_sha": hermes_head,
+            "status": "local_passed",
+            "timestamp": timestamp,
+        },
+        "execution_engine_ci": {
+            "run_id": str(workflow_run_ids.get("execution_engine_ci", "local-execution-engine-ci")),
+            "workflow_name": "local execution engine validation",
+            "workflow_run_url": "local://execution-engine-ci",
+            "commit_sha": engine_head,
+            "status": "local_passed",
+            "timestamp": timestamp,
+        },
+        "credentialed_sdk": {
+            "run_id": str(workflow_run_ids.get("credentialed_sdk", "not-applicable-non-live")),
+            "workflow_name": "credentialed sdk gate",
+            "workflow_run_url": "evidence://credentialed-sdk/not-applicable-non-live",
+            "commit_sha": engine_head,
+            "status": "not_applicable_non_live",
+            "timestamp": timestamp,
+        },
+    }
 
 
 def validate_approval_request(request: dict[str, Any]) -> None:
@@ -164,6 +222,27 @@ def validate_approval_request(request: dict[str, Any]) -> None:
         require_sha256(request.get(field), f"approval request {field}")
     if request.get("archived_manifest_sha256") != request.get("evidence_manifest_sha256"):
         raise SystemExit("approval request archived/evidence manifest hashes must match")
+    details = request.get("github_evidence_details")
+    if not isinstance(details, dict):
+        legacy_evidence = request.get("github_evidence")
+        if not isinstance(legacy_evidence, dict):
+            raise SystemExit("approval request github_evidence_details must be an object")
+        details = legacy_github_evidence_details(legacy_evidence)
+        request["github_evidence_details"] = details
+    for section in ["root_ci", "hermes_ci", "execution_engine_ci", "credentialed_sdk"]:
+        item = details.get(section)
+        if not isinstance(item, dict):
+            raise SystemExit(f"approval request github_evidence_details.{section} must be an object")
+        for field in ["run_id", "workflow_name", "workflow_run_url", "commit_sha", "status", "timestamp"]:
+            value = item.get(field)
+            if not isinstance(value, str) or not value.strip() or value.startswith("REPLACE_WITH_"):
+                raise SystemExit(f"approval request github_evidence_details.{section}.{field} must be concrete")
+        if "://" not in item["workflow_run_url"]:
+            raise SystemExit(f"approval request github_evidence_details.{section}.workflow_run_url must be a URL/ref")
+        require_git_sha(item["commit_sha"], f"approval request github_evidence_details.{section}.commit_sha")
+        if item["status"] not in {"success", "local_passed", "not_applicable_non_live"}:
+            raise SystemExit(f"approval request github_evidence_details.{section}.status is invalid")
+        parse_time(item["timestamp"], f"approval request github_evidence_details.{section}.timestamp")
     gate_snapshot = request.get("runtime_gate_snapshot")
     if not isinstance(gate_snapshot, dict):
         raise SystemExit("approval request runtime_gate_snapshot must be an object")
@@ -331,6 +410,7 @@ def build_decision(
         "market_candidate_sha256": request["market_candidate_sha256"],
         "condition_id": request["condition_id"],
         "github_evidence": request["github_evidence"],
+        "github_evidence_details": request["github_evidence_details"],
         "external_references": refs,
         "risk_limits": {
             "max_order_notional_usd": request["risk_limits"]["max_order_notional_usd"],

@@ -43,5 +43,39 @@
   "remote_side_effects": false,
   "production_ready_claimed": false,
   "workspace_manifest_sha256": "REPLACE_WITH_WORKSPACE_EVIDENCE_MANIFEST_SHA256",
-  "archived_manifest_sha256": "REPLACE_WITH_ARCHIVED_EVIDENCE_MANIFEST_SHA256"
+  "archived_manifest_sha256": "REPLACE_WITH_ARCHIVED_EVIDENCE_MANIFEST_SHA256",
+  "github_evidence_details": {
+    "root_ci": {
+      "run_id": "template-root_ci",
+      "workflow_name": "ci",
+      "workflow_run_url": "template://root_ci",
+      "commit_sha": "0000000000000000000000000000000000000000",
+      "status": "not_applicable_non_live",
+      "timestamp": "1970-01-01T00:00:00Z"
+    },
+    "hermes_ci": {
+      "run_id": "template-hermes_ci",
+      "workflow_name": "ci",
+      "workflow_run_url": "template://hermes_ci",
+      "commit_sha": "0000000000000000000000000000000000000000",
+      "status": "not_applicable_non_live",
+      "timestamp": "1970-01-01T00:00:00Z"
+    },
+    "execution_engine_ci": {
+      "run_id": "template-execution_engine_ci",
+      "workflow_name": "ci",
+      "workflow_run_url": "template://execution_engine_ci",
+      "commit_sha": "0000000000000000000000000000000000000000",
+      "status": "not_applicable_non_live",
+      "timestamp": "1970-01-01T00:00:00Z"
+    },
+    "credentialed_sdk": {
+      "run_id": "template-credentialed_sdk",
+      "workflow_name": "credentialed-sdk",
+      "workflow_run_url": "template://credentialed_sdk",
+      "commit_sha": "0000000000000000000000000000000000000000",
+      "status": "not_applicable_non_live",
+      "timestamp": "1970-01-01T00:00:00Z"
+    }
+  }
 }

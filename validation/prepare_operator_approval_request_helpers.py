@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import subprocess
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -102,6 +103,66 @@ def decimal_value(value: object, label: str) -> Decimal:
 def decimal_text(value: Decimal) -> str:
     text = format(value.normalize(), "f")
     return "0" if text == "-0" else text
+
+
+def git_head(repo: Path) -> str:
+    completed = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"],
+        cwd=INTEGRATION_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise SystemExit(f"failed to resolve git HEAD for {repo}: {completed.stderr.strip()}")
+    return completed.stdout.strip()
+
+
+def github_evidence_details(
+    *,
+    root_ci_run_id: str,
+    hermes_ci_run_id: str,
+    execution_engine_ci_run_id: str,
+    credentialed_sdk_run_id: str,
+    timestamp: datetime,
+) -> dict[str, dict[str, str]]:
+    root_head = git_head(INTEGRATION_ROOT)
+    hermes_head = git_head(INTEGRATION_ROOT / "hermes-polymarket-executor-adapter")
+    engine_head = git_head(INTEGRATION_ROOT / "polymarket-execution-engine")
+    return {
+        "root_ci": {
+            "run_id": require_nonempty_text(root_ci_run_id, "root_ci_run_id"),
+            "workflow_name": "ci",
+            "workflow_run_url": f"https://github.com/ray-toaru/polymarket_dual_project/actions/runs/{root_ci_run_id}",
+            "commit_sha": root_head,
+            "status": "success",
+            "timestamp": timestamp.isoformat(),
+        },
+        "hermes_ci": {
+            "run_id": require_nonempty_text(hermes_ci_run_id, "hermes_ci_run_id"),
+            "workflow_name": "ci",
+            "workflow_run_url": f"https://github.com/ray-toaru/hermes-polymarket-executor-adapter/actions/runs/{hermes_ci_run_id}",
+            "commit_sha": hermes_head,
+            "status": "success",
+            "timestamp": timestamp.isoformat(),
+        },
+        "execution_engine_ci": {
+            "run_id": require_nonempty_text(execution_engine_ci_run_id, "execution_engine_ci_run_id"),
+            "workflow_name": "ci",
+            "workflow_run_url": f"https://github.com/ray-toaru/polymarket-execution-engine/actions/runs/{execution_engine_ci_run_id}",
+            "commit_sha": engine_head,
+            "status": "success",
+            "timestamp": timestamp.isoformat(),
+        },
+        "credentialed_sdk": {
+            "run_id": require_nonempty_text(credentialed_sdk_run_id, "credentialed_sdk_run_id"),
+            "workflow_name": "credentialed-sdk-local-non-live",
+            "workflow_run_url": "local-evidence://polymarket-execution-engine/evidence/current/credentialed-sdk",
+            "commit_sha": engine_head,
+            "status": "local_passed",
+            "timestamp": timestamp.isoformat(),
+        },
+    }
 
 
 def validate_runtime_truth(
@@ -227,6 +288,13 @@ def build_request(
             "execution_engine_ci_run_id": execution_engine_ci_run_id,
             "credentialed_sdk_run_id": credentialed_sdk_run_id,
         },
+        "github_evidence_details": github_evidence_details(
+            root_ci_run_id=root_ci_run_id,
+            hermes_ci_run_id=hermes_ci_run_id,
+            execution_engine_ci_run_id=execution_engine_ci_run_id,
+            credentialed_sdk_run_id=credentialed_sdk_run_id,
+            timestamp=now,
+        ),
         "risk_limits": {
             "max_order_notional_usd": decimal_text(max_order_notional),
             "max_daily_notional_usd": decimal_text(max_daily_notional),

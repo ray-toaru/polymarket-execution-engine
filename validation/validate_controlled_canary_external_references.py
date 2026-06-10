@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import argparse
 import tomllib
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,20 @@ EXPECTED_RUN_IDS = {
     "execution_engine_ci_run_id": "26268276210",
     "credentialed_sdk_run_id": "local-current-gates-20260523",
 }
+GITHUB_EVIDENCE_DETAIL_FIELDS = [
+    "run_id",
+    "workflow_name",
+    "workflow_run_url",
+    "commit_sha",
+    "status",
+    "timestamp",
+]
+GITHUB_EVIDENCE_DETAIL_SECTIONS = [
+    "root_ci",
+    "hermes_ci",
+    "execution_engine_ci",
+    "credentialed_sdk",
+]
 REQUIRED_FIELDS = {
     "github_evidence": [
         "root_ci_run_id",
@@ -126,6 +141,51 @@ def is_sha256(value: object) -> bool:
     return isinstance(value, str) and len(value) == 64 and all(ch in "0123456789abcdefABCDEF" for ch in value)
 
 
+def is_git_sha(value: object) -> bool:
+    return isinstance(value, str) and len(value) in {40, 64} and all(ch in "0123456789abcdefABCDEF" for ch in value)
+
+
+def is_timestamp(value: object) -> bool:
+    if not isinstance(value, str) or value.startswith("REPLACE_WITH_"):
+        return False
+    try:
+        datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return True
+
+
+def validate_github_evidence_details(data: dict[str, Any], label: str, *, allow_placeholders: bool) -> list[str]:
+    failures: list[str] = []
+    details = data.get("github_evidence_details")
+    if not isinstance(details, dict):
+        return [f"{label}: missing github_evidence_details"]
+    for section in GITHUB_EVIDENCE_DETAIL_SECTIONS:
+        item = details.get(section)
+        if not isinstance(item, dict):
+            failures.append(f"{label}: missing github_evidence_details.{section}")
+            continue
+        for field in GITHUB_EVIDENCE_DETAIL_FIELDS:
+            value = item.get(field)
+            if not isinstance(value, str) or not value.strip():
+                failures.append(f"{label}: missing github_evidence_details.{section}.{field}")
+                continue
+            if allow_placeholders and has_placeholder(value):
+                continue
+            if has_placeholder(value):
+                failures.append(f"{label}: unresolved placeholder github_evidence_details.{section}.{field}")
+                continue
+            if field == "workflow_run_url" and "://" not in value:
+                failures.append(f"{label}: github_evidence_details.{section}.{field} must be a URL/ref")
+            elif field == "commit_sha" and not is_git_sha(value):
+                failures.append(f"{label}: github_evidence_details.{section}.{field} must be a git SHA")
+            elif field == "status" and value not in {"success", "local_passed", "not_applicable_non_live"}:
+                failures.append(f"{label}: github_evidence_details.{section}.{field} must be success/local_passed/not_applicable_non_live")
+            elif field == "timestamp" and not is_timestamp(value):
+                failures.append(f"{label}: github_evidence_details.{section}.{field} must be an RFC3339 timestamp")
+    return failures
+
+
 def validate_no_sensitive_material(data: object) -> list[str]:
     failures: list[str] = []
 
@@ -170,6 +230,7 @@ def validate_shape(data: dict[str, Any], label: str, *, allow_placeholders: bool
                 failures.append(f"{label}: missing {section}.{field}")
             elif not allow_placeholders and has_placeholder(value):
                 failures.append(f"{label}: unresolved placeholder {section}.{field}")
+    failures.extend(validate_github_evidence_details(data, label, allow_placeholders=allow_placeholders))
     failures.extend(f"{label}: {failure}" for failure in validate_no_sensitive_material(data))
     if not allow_placeholders:
         if not is_sha256(data.get("artifact_sha256")):

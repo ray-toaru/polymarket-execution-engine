@@ -26,6 +26,20 @@ EXPECTED_RUN_IDS = {
     "execution_engine_ci_run_id": "26268276210",
     "credentialed_sdk_run_id": "local-current-gates-20260523",
 }
+GITHUB_EVIDENCE_DETAIL_FIELDS = [
+    "run_id",
+    "workflow_name",
+    "workflow_run_url",
+    "commit_sha",
+    "status",
+    "timestamp",
+]
+GITHUB_EVIDENCE_DETAIL_SECTIONS = [
+    "root_ci",
+    "hermes_ci",
+    "execution_engine_ci",
+    "credentialed_sdk",
+]
 AUTHORIZATION_FLAGS = [
     "live_submit_authorized",
     "live_cancel_authorized",
@@ -50,6 +64,7 @@ ALLOWED_TOP_LEVEL_FIELDS = {
     "market_candidate_sha256",
     "condition_id",
     "github_evidence",
+    "github_evidence_details",
     "external_references",
     "risk_limits",
     "runtime_gate_snapshot",
@@ -144,6 +159,40 @@ def is_sha256(value: object) -> bool:
     return isinstance(value, str) and len(value) == 64 and all(ch in "0123456789abcdefABCDEF" for ch in value)
 
 
+def is_git_sha(value: object) -> bool:
+    return isinstance(value, str) and len(value) in {40, 64} and all(ch in "0123456789abcdefABCDEF" for ch in value)
+
+
+def validate_github_evidence_details(data: dict[str, Any], label: str) -> list[str]:
+    failures: list[str] = []
+    details = data.get("github_evidence_details")
+    if not isinstance(details, dict):
+        return [f"{label}: missing github_evidence_details"]
+    for section in GITHUB_EVIDENCE_DETAIL_SECTIONS:
+        item = details.get(section)
+        if not isinstance(item, dict):
+            failures.append(f"{label}: missing github_evidence_details.{section}")
+            continue
+        for field in GITHUB_EVIDENCE_DETAIL_FIELDS:
+            value = item.get(field)
+            if not isinstance(value, str) or not value.strip():
+                failures.append(f"{label}: missing github_evidence_details.{section}.{field}")
+                continue
+            if label == "template" and has_placeholder(value):
+                continue
+            if has_placeholder(value):
+                failures.append(f"{label}: unresolved placeholder github_evidence_details.{section}.{field}")
+            elif field == "workflow_run_url" and "://" not in value:
+                failures.append(f"{label}: github_evidence_details.{section}.{field} must be a URL/ref")
+            elif field == "commit_sha" and not is_git_sha(value):
+                failures.append(f"{label}: github_evidence_details.{section}.{field} must be a git SHA")
+            elif field == "status" and value not in {"success", "local_passed", "not_applicable_non_live"}:
+                failures.append(f"{label}: github_evidence_details.{section}.{field} must be success/local_passed/not_applicable_non_live")
+            elif field == "timestamp" and parse_time(value) is None:
+                failures.append(f"{label}: github_evidence_details.{section}.{field} must be an RFC3339 timestamp")
+    return failures
+
+
 def parse_time(value: object) -> datetime | None:
     if not isinstance(value, str) or value.startswith("REPLACE_WITH_"):
         return None
@@ -195,6 +244,7 @@ def validate_shape(data: dict[str, Any], label: str) -> list[str]:
         failures.append(f"{label}: execution_style must be GTC_LIMIT_POST_ONLY_CANCEL")
     if not isinstance(data.get("condition_id"), str) or not data.get("condition_id", "").strip():
         failures.append(f"{label}: condition_id must be concrete")
+    failures.extend(validate_github_evidence_details(data, label))
     limits = data.get("risk_limits", {})
     max_order_notional = parse_positive_decimal(limits.get("max_order_notional_usd"))
     if max_order_notional is None or max_order_notional > Decimal("1"):

@@ -31,6 +31,7 @@
     "runtime_gate_snapshot",
     "runtime_gate_evidence_refs",
     "github_evidence",
+    "github_evidence_details",
     "risk_limits",
     "live_submit_authorized",
     "live_cancel_authorized",
@@ -185,6 +186,182 @@
     },
     "secrets_included": {
       "const": false
+    },
+    "github_evidence_details": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root_ci",
+        "hermes_ci",
+        "execution_engine_ci",
+        "credentialed_sdk"
+      ],
+      "properties": {
+        "root_ci": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "run_id",
+            "workflow_name",
+            "workflow_run_url",
+            "commit_sha",
+            "status",
+            "timestamp"
+          ],
+          "properties": {
+            "run_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workflow_name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workflow_run_url": {
+              "type": "string",
+              "minLength": 1
+            },
+            "commit_sha": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{7,64}$"
+            },
+            "status": {
+              "enum": [
+                "success",
+                "local_passed",
+                "not_applicable_non_live"
+              ]
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "hermes_ci": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "run_id",
+            "workflow_name",
+            "workflow_run_url",
+            "commit_sha",
+            "status",
+            "timestamp"
+          ],
+          "properties": {
+            "run_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workflow_name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workflow_run_url": {
+              "type": "string",
+              "minLength": 1
+            },
+            "commit_sha": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{7,64}$"
+            },
+            "status": {
+              "enum": [
+                "success",
+                "local_passed",
+                "not_applicable_non_live"
+              ]
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "execution_engine_ci": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "run_id",
+            "workflow_name",
+            "workflow_run_url",
+            "commit_sha",
+            "status",
+            "timestamp"
+          ],
+          "properties": {
+            "run_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workflow_name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workflow_run_url": {
+              "type": "string",
+              "minLength": 1
+            },
+            "commit_sha": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{7,64}$"
+            },
+            "status": {
+              "enum": [
+                "success",
+                "local_passed",
+                "not_applicable_non_live"
+              ]
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "credentialed_sdk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "run_id",
+            "workflow_name",
+            "workflow_run_url",
+            "commit_sha",
+            "status",
+            "timestamp"
+          ],
+          "properties": {
+            "run_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workflow_name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workflow_run_url": {
+              "type": "string",
+              "minLength": 1
+            },
+            "commit_sha": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{7,64}$"
+            },
+            "status": {
+              "enum": [
+                "success",
+                "local_passed",
+                "not_applicable_non_live"
+              ]
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        }
+      }
     }
   },
   "$defs": {
@@ -220,16 +397,36 @@
         "balance_allowance_checked"
       ],
       "properties": {
-        "preconditions_live_submit_would_pass": {"type": "boolean"},
-        "preconditions_real_funds_canary_would_pass": {"type": "boolean"},
-        "kill_switch_open": {"type": "boolean"},
-        "runtime_worker_healthy": {"type": "boolean"},
-        "geoblock_allowed": {"type": "boolean"},
-        "repository_reservation_exists": {"type": "boolean"},
-        "idempotency_key_written": {"type": "boolean"},
-        "reconcile_worker_healthy": {"type": "boolean"},
-        "cancel_only_fallback_ready": {"type": "boolean"},
-        "balance_allowance_checked": {"type": "boolean"}
+        "preconditions_live_submit_would_pass": {
+          "type": "boolean"
+        },
+        "preconditions_real_funds_canary_would_pass": {
+          "type": "boolean"
+        },
+        "kill_switch_open": {
+          "type": "boolean"
+        },
+        "runtime_worker_healthy": {
+          "type": "boolean"
+        },
+        "geoblock_allowed": {
+          "type": "boolean"
+        },
+        "repository_reservation_exists": {
+          "type": "boolean"
+        },
+        "idempotency_key_written": {
+          "type": "boolean"
+        },
+        "reconcile_worker_healthy": {
+          "type": "boolean"
+        },
+        "cancel_only_fallback_ready": {
+          "type": "boolean"
+        },
+        "balance_allowance_checked": {
+          "type": "boolean"
+        }
       }
     },
     "runtimeGateEvidenceRefs": {
@@ -246,14 +443,30 @@
         "balance_allowance_checked"
       ],
       "properties": {
-        "kill_switch_open": {"$ref": "#/$defs/nonEmptyString"},
-        "runtime_worker_healthy": {"$ref": "#/$defs/nonEmptyString"},
-        "geoblock_allowed": {"$ref": "#/$defs/nonEmptyString"},
-        "repository_reservation_exists": {"$ref": "#/$defs/nonEmptyString"},
-        "idempotency_key_written": {"$ref": "#/$defs/nonEmptyString"},
-        "reconcile_worker_healthy": {"$ref": "#/$defs/nonEmptyString"},
-        "cancel_only_fallback_ready": {"$ref": "#/$defs/nonEmptyString"},
-        "balance_allowance_checked": {"$ref": "#/$defs/nonEmptyString"}
+        "kill_switch_open": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "runtime_worker_healthy": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "geoblock_allowed": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "repository_reservation_exists": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "idempotency_key_written": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "reconcile_worker_healthy": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "cancel_only_fallback_ready": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "balance_allowance_checked": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
       }
     }
   }

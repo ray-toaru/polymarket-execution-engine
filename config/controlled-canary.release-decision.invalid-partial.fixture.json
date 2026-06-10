@@ -54,5 +54,39 @@
   "operator_identity_ref": "local-operator-approval-ref",
   "secrets_included": false,
   "workspace_manifest_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-  "archived_manifest_sha256": "a67cff633141e1c619b4d422cbc6e09e427d004d9580996c4f00e31d7bebcafd"
+  "archived_manifest_sha256": "a67cff633141e1c619b4d422cbc6e09e427d004d9580996c4f00e31d7bebcafd",
+  "github_evidence_details": {
+    "root_ci": {
+      "run_id": "26268697168",
+      "workflow_name": "ci",
+      "workflow_run_url": "https://github.com/ray-toaru/polymarket_dual_project/actions/runs/26268697168",
+      "commit_sha": "3e2e81a80337c2c4167389b144b7f18d1ba34d59",
+      "status": "success",
+      "timestamp": "2026-05-23T00:00:00Z"
+    },
+    "hermes_ci": {
+      "run_id": "26267887116",
+      "workflow_name": "ci",
+      "workflow_run_url": "https://github.com/ray-toaru/hermes-polymarket-executor-adapter/actions/runs/26267887116",
+      "commit_sha": "ed79f435f6cee78a44333e9d9d9bbfdda88fe5cd",
+      "status": "success",
+      "timestamp": "2026-05-23T00:00:00Z"
+    },
+    "execution_engine_ci": {
+      "run_id": "26268276210",
+      "workflow_name": "ci",
+      "workflow_run_url": "https://github.com/ray-toaru/polymarket-execution-engine/actions/runs/26268276210",
+      "commit_sha": "d078462f1f5a110798a69947fc484fd040976511",
+      "status": "success",
+      "timestamp": "2026-05-23T00:00:00Z"
+    },
+    "credentialed_sdk": {
+      "run_id": "local-current-gates-20260523",
+      "workflow_name": "credentialed-sdk-local-non-live",
+      "workflow_run_url": "local-evidence://polymarket-execution-engine/evidence/current/credentialed-sdk",
+      "commit_sha": "d078462f1f5a110798a69947fc484fd040976511",
+      "status": "local_passed",
+      "timestamp": "2026-05-23T00:00:00Z"
+    }
+  }
 }
