@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "release_posture": "non_live_hardened",
   "decision_id": "controlled-canary-v0.28.0-release-decision-template",
   "status": "template_not_reviewed",
   "decision": "no_go",

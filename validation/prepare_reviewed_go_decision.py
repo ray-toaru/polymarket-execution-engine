@@ -182,6 +182,8 @@ def legacy_github_evidence_details(github_evidence: dict[str, Any]) -> dict[str,
 
 
 def validate_approval_request(request: dict[str, Any]) -> None:
+    if request.get("release_posture") != "non_live_hardened":
+        raise SystemExit("approval request release_posture must be non_live_hardened")
     if request.get("status") != "operator_approval_request_not_authorization":
         raise SystemExit("approval request status must be operator_approval_request_not_authorization")
     if request.get("scope") != "REAL_FUNDS_CANARY":
@@ -289,6 +291,8 @@ def validate_dual_control_review(
     *,
     approval_request_sha256: str | None = None,
 ) -> str:
+    if review.get("release_posture") != "non_live_hardened":
+        raise SystemExit("dual-control review release_posture must be non_live_hardened")
     if review.get("schema_version") != 1:
         raise SystemExit("dual-control review schema_version must be 1")
     if review.get("status") != "approved":
@@ -395,6 +399,7 @@ def build_decision(
     }
     return {
         "schema_version": 1,
+        "release_posture": "non_live_hardened",
         "decision_id": resolved_decision_id,
         "status": "reviewed_go",
         "source_release": f"v{VERSION}",

@@ -6,6 +6,7 @@
   "additionalProperties": false,
   "required": [
     "schema_version",
+    "release_posture",
     "status",
     "approval_id",
     "approval_hash",
@@ -43,6 +44,9 @@
   "properties": {
     "schema_version": {
       "const": 1
+    },
+    "release_posture": {
+      "const": "non_live_hardened"
     },
     "status": {
       "const": "operator_approval_request_not_authorization"

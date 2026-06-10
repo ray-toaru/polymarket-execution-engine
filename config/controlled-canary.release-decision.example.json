@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "release_posture": "non_live_hardened",
   "decision_id": "controlled-canary-v0.28.0-no-go-example",
   "status": "example_no_go_not_reviewed_for_live",
   "decision": "no_go",

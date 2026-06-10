@@ -6,6 +6,7 @@
   "additionalProperties": false,
   "required": [
     "schema_version",
+    "release_posture",
     "decision_id",
     "status",
     "decision",
@@ -46,6 +47,9 @@
   "properties": {
     "schema_version": {
       "const": 1
+    },
+    "release_posture": {
+      "const": "non_live_hardened"
     },
     "decision_id": {
       "type": "string",

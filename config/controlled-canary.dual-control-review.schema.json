@@ -6,6 +6,7 @@
   "additionalProperties": false,
   "required": [
     "schema_version",
+    "release_posture",
     "status",
     "scope",
     "execution_style",
@@ -28,6 +29,7 @@
   ],
   "properties": {
     "schema_version": {"const": 1},
+    "release_posture": {"const": "non_live_hardened"},
     "status": {
       "enum": ["draft_requires_independent_reviewer", "approved"]
     },

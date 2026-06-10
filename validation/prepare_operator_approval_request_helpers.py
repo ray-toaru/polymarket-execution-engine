@@ -257,6 +257,7 @@ def build_request(
     now = datetime.now(timezone.utc)
     request = {
         "schema_version": 1,
+        "release_posture": "non_live_hardened",
         "status": "operator_approval_request_not_authorization",
         "approval_id": f"approval-request-controlled-canary-{now.strftime('%Y%m%dT%H%M%SZ')}",
         "scope": "REAL_FUNDS_CANARY",
