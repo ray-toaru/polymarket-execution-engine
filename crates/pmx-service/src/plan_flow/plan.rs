@@ -10,6 +10,16 @@ use crate::{
     verify_decision_binding, verify_snapshot_binding,
 };
 
+struct PlanBuildContext<'a> {
+    normalized: &'a NormalizedIntent,
+    snapshot: &'a FeasibilitySnapshot,
+    decision: &'a ConstraintDecision,
+    approval: &'a ApprovalReceipt,
+    executor_version: &'a str,
+    contract_version: &'a str,
+    correlation_id: Option<String>,
+}
+
 pub async fn compile_plan<S>(
     store: &S,
     req: CompilePlanCommand,
@@ -33,13 +43,15 @@ where
     store.save_decision(&decision).await?;
     build_and_save_plan(
         store,
-        &normalized_intent,
-        &snapshot,
-        &decision,
-        &approval,
-        executor_version,
-        contract_version,
-        correlation_id,
+        PlanBuildContext {
+            normalized: &normalized_intent,
+            snapshot: &snapshot,
+            decision: &decision,
+            approval: &approval,
+            executor_version,
+            contract_version,
+            correlation_id,
+        },
     )
     .await
 }
@@ -62,30 +74,35 @@ where
     verify_decision_binding(&normalized, &snapshot, &decision)?;
     build_and_save_plan(
         store,
-        &normalized,
-        &snapshot,
-        &decision,
-        &req.approval,
-        executor_version,
-        contract_version,
-        req.correlation_id,
+        PlanBuildContext {
+            normalized: &normalized,
+            snapshot: &snapshot,
+            decision: &decision,
+            approval: &req.approval,
+            executor_version,
+            contract_version,
+            correlation_id: req.correlation_id,
+        },
     )
     .await
 }
 
 async fn build_and_save_plan<S>(
     store: &S,
-    normalized: &NormalizedIntent,
-    snapshot: &FeasibilitySnapshot,
-    decision: &ConstraintDecision,
-    approval: &ApprovalReceipt,
-    executor_version: &str,
-    contract_version: &str,
-    correlation_id: Option<String>,
+    context: PlanBuildContext<'_>,
 ) -> Result<ExecutionPlanSummary, ServiceError>
 where
     S: ExecutionStore + Send + Sync,
 {
+    let PlanBuildContext {
+        normalized,
+        snapshot,
+        decision,
+        approval,
+        executor_version,
+        contract_version,
+        correlation_id,
+    } = context;
     verify_approval_binding(snapshot, decision, approval)?;
     let status = if matches!(decision.status, DecisionStatus::Allow) {
         PlanStatus::Ready

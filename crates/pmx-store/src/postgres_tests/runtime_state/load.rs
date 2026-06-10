@@ -233,6 +233,9 @@ async fn postgres_loads_canary_runtime_truth_from_runtime_rows() {
         .await
         .expect("seed runtime market");
     for capability in [
+        "heartbeat",
+        "reconcile",
+        "resource-refresh",
         "live-submit-gate",
         "idempotency-lease",
         "order-cancel-reconciliation",
