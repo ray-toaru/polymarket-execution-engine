@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import tomllib
 from pathlib import Path
 
@@ -42,6 +43,20 @@ def openapi_operation(spec: dict, path: str, method: str) -> dict:
         return spec["paths"][path][method]
     except KeyError as exc:
         fail(f"OpenAPI missing {method.upper()} {path}: {exc}")
+
+
+def git_head(repo: Path) -> str:
+    completed = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        detail = completed.stderr.strip()
+        fail(f"failed to resolve git HEAD for {repo.relative_to(ROOT)}: {detail}")
+    return completed.stdout.strip()
 
 
 def operation_parameter_names(operation: dict) -> set[str]:
@@ -1202,15 +1217,17 @@ def validate_v08_dependency_and_sdk_policy() -> None:
     ]:
         if job_name not in jobs:
             fail(f"root CI workflow missing job: {job_name}")
-    if jobs.get("adapter-required-ci", {}).get("uses") != (
+    adapter_workflow = (
         "ray-toaru/hermes-polymarket-executor-adapter/.github/workflows/ci.yml@"
-        "caec425b172e126365b2f521f70ac82badc60e70"
-    ):
-        fail("root CI workflow must pin adapter reusable workflow to canonical SHA")
-    if jobs.get("engine-required-ci", {}).get("uses") != (
+        f"{git_head(ROOT / 'hermes-polymarket-executor-adapter')}"
+    )
+    engine_workflow = (
         "ray-toaru/polymarket-execution-engine/.github/workflows/ci.yml@"
-        "edc1b62b531b84a3297f254a48b8e17e01610f84"
-    ):
+        f"{git_head(EXECUTOR)}"
+    )
+    if jobs.get("adapter-required-ci", {}).get("uses") != adapter_workflow:
+        fail("root CI workflow must pin adapter reusable workflow to canonical SHA")
+    if jobs.get("engine-required-ci", {}).get("uses") != engine_workflow:
         fail("root CI workflow must pin engine reusable workflow to canonical SHA")
     if jobs.get("engine-rust-locked", {}).get("runs-on") != "ubuntu-latest":
         fail("root CI workflow engine-rust-locked job must stay on ubuntu-latest")
