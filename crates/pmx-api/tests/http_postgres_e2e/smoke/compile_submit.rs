@@ -278,7 +278,10 @@ async fn submit_plan_propagates_header_correlation_id_into_lifecycle_events() {
         .as_array()
         .expect("lifecycle events array")
         .iter()
-        .find(|event| event["event_type"] == "SUBMIT_BLOCKED_BEFORE_REMOTE")
+        .find(|event| {
+            event["event_type"] == "SUBMIT_BLOCKED_BEFORE_REMOTE"
+                && event["payload"]["correlation_id"] == correlation_id
+        })
         .expect("blocked lifecycle event");
     assert_eq!(blocked["payload"]["correlation_id"], correlation_id);
 }
