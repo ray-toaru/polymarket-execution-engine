@@ -343,7 +343,7 @@ def main() -> int:
     failures.extend(validate_dist_index(zip_path.parent, expected_version))
     expected_root = f"polymarket_execution_suite_v{expected_version.replace('.', '_')}"
     expected_hash = sha256(zip_path)
-    expected_git = git_head(Path(__file__).resolve().parents[1])
+    expected_git = git_head(ROOT)
     expected_subs = submodule_records()
     sidecar_failures, evidence = validate_sidecars(
         zip_path,
