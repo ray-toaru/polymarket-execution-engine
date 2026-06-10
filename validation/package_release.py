@@ -36,6 +36,10 @@ def sha256(path: Path) -> str:
 
 
 def command_output(command: list[str]) -> str | None:
+    return require_command_output(command)
+
+
+def optional_command_output(command: list[str]) -> str | None:
     completed = subprocess.run(
         command,
         cwd=ROOT,
@@ -98,7 +102,7 @@ def require_command_output_bytes(command: list[str], *, cwd: Path = ROOT) -> byt
 
 
 def git_branch(path: Path = ROOT) -> str | None:
-    return command_output(["git", "-C", str(path), "branch", "--show-current"])
+    return optional_command_output(["git", "-C", str(path), "branch", "--show-current"])
 
 
 def submodule_records() -> list[dict[str, str]]:
