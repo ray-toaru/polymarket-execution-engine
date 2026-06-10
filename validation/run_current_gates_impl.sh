@@ -156,10 +156,10 @@ python validation/run_production_preflight_config_guard.py 2>&1 | tee "${EVIDENC
 python validation/run_production_preflight_config_fixture_drill.py 2>&1 | tee "${EVIDENCE_DIR}/63-production-preflight-config-fixture-drill.log"
 python validation/write_current_evidence_manifest.py "${EVIDENCE_DIR}" "${ARTIFACT_PATH}" >/dev/null
 python validation/run_real_funds_canary_preflight_drill.py 2>&1 | tee "${EVIDENCE_DIR}/65-real-funds-canary-preflight.log"
-if [[ -n "${PMX_TEST_DATABASE_URL:-}" || -n "${PMX_DATABASE_URL:-}" || -f ".env" ]]; then
+if [[ -n "${PMX_TEST_DATABASE_URL:-}" || -n "${PMX_DATABASE_URL:-}" ]]; then
   python validation/run_real_funds_canary_store_truth_cli_preflight.py 2>&1 | tee "${EVIDENCE_DIR}/72-real-funds-canary-store-truth-cli-preflight.log"
 else
-  printf '{"status":"skipped","reason":"PMX_TEST_DATABASE_URL/PMX_DATABASE_URL/.env unavailable"}\n' | tee "${EVIDENCE_DIR}/72-real-funds-canary-store-truth-cli-preflight.log"
+  printf '{"status":"skipped","reason":"PMX_TEST_DATABASE_URL and PMX_DATABASE_URL are not explicitly set"}\n' | tee "${EVIDENCE_DIR}/72-real-funds-canary-store-truth-cli-preflight.log"
 fi
 python validation/run_real_funds_canary_lifecycle_drill.py 2>&1 | tee "${EVIDENCE_DIR}/66-real-funds-canary-lifecycle-drill.log"
 python validation/run_real_funds_canary_ready_drill.py 2>&1 | tee "${EVIDENCE_DIR}/67-real-funds-canary-ready-drill.log"

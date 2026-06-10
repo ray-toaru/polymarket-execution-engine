@@ -144,6 +144,8 @@ def validate(path: Path, *, allow_missing_semantic_logs: bool = False) -> int:
         block = data.get(section, {})
         if not isinstance(block, dict):
             continue
+        if block.get("status") == "skipped":
+            continue
         for entry in block.get("logs", []) or []:
             if not isinstance(entry, dict):
                 continue

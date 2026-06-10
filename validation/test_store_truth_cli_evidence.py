@@ -40,6 +40,29 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
             },
         )
 
+    def test_manifest_guard_does_not_apply_pass_semantics_to_skipped_section(self) -> None:
+        manifest = json.loads(check_current_evidence_manifest.TEMPLATE.read_text())
+        manifest["real_funds_canary_store_truth_cli_validation"] = {
+            "status": "skipped",
+            "logs": [
+                {
+                    "path": (
+                        "polymarket-execution-engine/evidence/current/logs/"
+                        "72-real-funds-canary-store-truth-cli-preflight.log"
+                    )
+                }
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp_name:
+            path = Path(tmp_name) / "manifest.json"
+            path.write_text(json.dumps(manifest))
+            with patch.object(
+                check_current_evidence_manifest,
+                "validate_json_log_semantics",
+                side_effect=AssertionError("skipped section must not require pass semantics"),
+            ):
+                self.assertEqual(check_current_evidence_manifest.validate(path), 0)
+
     def test_manifest_writer_records_store_truth_cli_command_not_skip_fallback(self) -> None:
         self.assertEqual(
             write_current_evidence_manifest.LOG_COMMANDS.get(
@@ -168,7 +191,7 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
                     "${PMX_MISSING_FALLBACK}",
                 )
 
-    def test_load_default_env_files_does_not_auto_load_companion_secrets(self) -> None:
+    def test_load_default_env_files_only_loads_explicit_companion(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_name:
             tmp = Path(tmp_name)
             runtime_env = tmp / ".env.runtime"
@@ -188,9 +211,22 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
                         "POLY_API_SECRET",
                         run_real_funds_canary_store_truth_cli_preflight.os.environ,
                     )
+                    self.assertNotIn(
+                        "PMX_ACTIVE_ACCOUNT_PROFILE",
+                        run_real_funds_canary_store_truth_cli_preflight.os.environ,
+                    )
+                    self.assertNotIn(
+                        "PMX_DATABASE_URL",
+                        run_real_funds_canary_store_truth_cli_preflight.os.environ,
+                    )
+                    run_real_funds_canary_store_truth_cli_preflight.load_default_env_files(
+                        runtime_secrets_env_file=runtime_secrets
+                    )
                     self.assertEqual(
-                        run_real_funds_canary_store_truth_cli_preflight.os.environ["PMX_DATABASE_URL"],
-                        "postgres://pmx@localhost/pmx",
+                        run_real_funds_canary_store_truth_cli_preflight.os.environ[
+                            "POLY_API_SECRET"
+                        ],
+                        "secret",
                     )
 
     def test_database_target_summary_redacts_password_but_keeps_endpoint(self) -> None:

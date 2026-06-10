@@ -78,12 +78,8 @@ def load_env_file(path: Path) -> None:
 
 
 def load_default_env_files(*, runtime_secrets_env_file: Path | None = None) -> None:
-    # Prefer a generated runtime env when present; fall back to the broader local
-    # .env for database URLs and legacy variable references.
-    load_env_file(ROOT / ".env.runtime")
     if runtime_secrets_env_file is not None:
         load_env_file(runtime_secrets_env_file)
-    load_env_file(ROOT / ".env")
 
 
 def database_url(*, runtime_secrets_env_file: Path | None = None) -> str:
