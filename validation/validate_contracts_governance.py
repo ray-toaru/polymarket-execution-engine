@@ -607,7 +607,8 @@ def validate_controlled_canary_release_decision_governance() -> None:
     for needle in [
         "blocked_real_funds_canary_armed_no_go",
         "run_reviewed_go_canary_armed.py",
-        "real-funds canary not allowed by release decision",
+        "reviewed-go decision invalid",
+        "decision must be go",
         "release_decision_gate",
         "remote_side_effects",
         "raw_signed_order_exposed",

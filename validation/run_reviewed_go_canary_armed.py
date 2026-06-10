@@ -61,13 +61,13 @@ def build_armed_invocation(
     secrets_env_file = base.resolve(secrets_env_file) if secrets_env_file else None
     release_decision_file = base.require_file(package_dir / "release-decision.json", "release decision")
     approval_file = base.require_file(package_dir / "approval.json", "approval")
-    market_file = base.require_file(package_dir / "candidate-market.json", "candidate market")
-    runtime_truth_file = base.require_file(package_dir / "runtime-truth.json", "runtime truth")
     pipeline = base.load_module(base.PIPELINE_SCRIPT, "run_controlled_canary_pipeline")
-    env_check = base.load_module(base.ENV_CHECK_SCRIPT, "check_active_profile_consistency")
 
     decision_summary = pipeline.validate_reviewed_go_decision_file(release_decision_file)
     approval = base.validate_approval(approval_file)
+    market_file = base.require_file(package_dir / "candidate-market.json", "candidate market")
+    runtime_truth_file = base.require_file(package_dir / "runtime-truth.json", "runtime truth")
+    env_check = base.load_module(base.ENV_CHECK_SCRIPT, "check_active_profile_consistency")
     runtime_truth_summary = pipeline.validate_runtime_truth_file(
         runtime_truth_file,
         expected_account_id=approval["account_id"],

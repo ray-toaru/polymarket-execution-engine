@@ -169,10 +169,13 @@ def run_rehearsal(output_dir: Path, args: argparse.Namespace) -> tuple[list[str]
     (output_dir / "blocked-rehearsal.stderr").write_text(rehearsal.stderr)
     (output_dir / "blocked-rehearsal.exit-code").write_text(f"{rehearsal.returncode}\n")
 
-    expected_error = "real-funds canary not allowed by release decision"
+    expected_error_tokens = [
+        "reviewed-go decision invalid",
+        "decision must be go",
+    ]
     if rehearsal.returncode == 0:
         failures.append("armed no-go rehearsal must fail before posting")
-    if expected_error not in rehearsal.stderr:
+    if not all(token in rehearsal.stderr for token in expected_error_tokens):
         failures.append("armed no-go rehearsal missing release-decision block reason")
     forbidden = ["posted\": true", "remote_side_effects\": true", "raw_signed_order_exposed\": true"]
     combined_output = rehearsal.stdout + "\n" + rehearsal.stderr
@@ -217,7 +220,7 @@ def main() -> int:
         "expected_exit_code": 1,
         "observed_exit_code": observed_exit_code,
         "blocked_at": "release_decision_gate",
-        "blocked_reason": "real-funds canary not allowed by release decision",
+        "blocked_reason": "reviewed-go decision invalid: decision must be go",
         "posted": False,
         "cancelled": False,
         "live_submit_allowed": False,
