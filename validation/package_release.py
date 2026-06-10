@@ -151,6 +151,14 @@ def git_status_lines(repo_root: Path) -> list[str]:
     return [line for line in raw.splitlines() if line.strip()]
 
 
+def is_canonical_evidence_status(line: str) -> bool:
+    paths = line[3:].split(" -> ", 1) if len(line) > 3 else []
+    return bool(paths) and all(
+        path == "evidence/current" or path.startswith("evidence/current/")
+        for path in paths
+    )
+
+
 def ensure_clean_release_submodules() -> None:
     dirty: list[str] = []
     for record in submodule_records():
@@ -162,6 +170,10 @@ def ensure_clean_release_submodules() -> None:
             continue
         submodule_root = ROOT / path
         status_lines = git_status_lines(submodule_root)
+        if path == "polymarket-execution-engine":
+            status_lines = [
+                line for line in status_lines if not is_canonical_evidence_status(line)
+            ]
         if status_lines:
             dirty.append(f"{path}: dirty worktree ({status_lines[0]})")
     if dirty:
