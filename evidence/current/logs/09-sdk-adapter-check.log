@@ -1,8 +1,1 @@
-    Checking serde v1.0.228
-    Checking chrono v0.4.44
-    Checking thiserror v1.0.69
-    Checking pmx-core v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
-    Checking pmx-gateway v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
-    Checking thiserror v2.0.18
-    Checking pmx-official-sdk-adapter v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.83s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.35s

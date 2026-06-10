@@ -1,34 +1,12 @@
-   Compiling indexmap v2.14.0
-   Compiling zerocopy v0.8.48
-   Compiling alloy-sol-macro-expander v1.6.0
-   Compiling ppv-lite86 v0.2.21
-   Compiling alloy-sol-macro v1.6.0
-   Compiling alloy-sol-types v1.6.0
-   Compiling alloy-rpc-types-eth v1.6.3
-   Compiling rand_chacha v0.3.1
-   Compiling rand v0.8.6
-   Compiling rand_chacha v0.9.0
-   Compiling alloy-rpc-types-any v1.6.3
-   Compiling alloy-json-rpc v1.6.3
-   Compiling alloy-network v1.6.3
-   Compiling alloy-dyn-abi v1.6.0
-   Compiling rand v0.9.4
-   Compiling tungstenite v0.29.0
-   Compiling alloy-core v1.6.0
-   Compiling alloy-signer-local v1.6.3
-   Compiling backoff v0.4.0
-   Compiling alloy v1.6.3
-   Compiling tokio-tungstenite v0.29.0
-   Compiling polymarket_client_sdk_v2 v0.6.0-canary.1
    Compiling pmx-official-sdk-spike v0.0.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-spike)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 32.61s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.34s
      Running unittests src/lib.rs (adapters/pmx-official-sdk-spike/target/debug/deps/pmx_official_sdk_spike-acbe097443155b58)
 
 running 2 tests
 test tests::live_submit_is_disabled_by_default ... ok
 test tests::read_only_ok_smoke ... ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.73s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.26s
 
    Doc-tests pmx_official_sdk_spike
 
