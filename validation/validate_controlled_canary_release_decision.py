@@ -49,6 +49,7 @@ AUTHORIZATION_FLAGS = [
 ]
 ALLOWED_TOP_LEVEL_FIELDS = {
     "schema_version",
+    "release_posture",
     "decision_id",
     "status",
     "source_release",
@@ -235,6 +236,8 @@ def validate_shape(data: dict[str, Any], label: str) -> list[str]:
         failures.append(f"{label}: unknown fields not accepted by Rust model: {', '.join(unknown_fields)}")
     if data.get("schema_version") != 1:
         failures.append(f"{label}: schema_version must be 1")
+    if data.get("release_posture") != "non_live_hardened":
+        failures.append(f"{label}: release_posture must be non_live_hardened")
     source_release = expected_source_release()
     if data.get("source_release") != source_release:
         failures.append(f"{label}: source_release must bind {source_release}")
