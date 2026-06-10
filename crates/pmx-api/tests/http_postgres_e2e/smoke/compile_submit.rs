@@ -260,7 +260,7 @@ async fn submit_plan_propagates_header_correlation_id_into_lifecycle_events() {
     .await;
     assert_eq!(status, StatusCode::ACCEPTED, "submit response: {submit}");
 
-    let lifecycle_uri = format!("/v1/executions/{execution_id}/lifecycle-events?limit=10");
+    let lifecycle_uri = format!("/v1/lifecycle/executions/{execution_id}/events?limit=10");
     let (status, lifecycle_events) = request_json(
         app,
         "GET",
