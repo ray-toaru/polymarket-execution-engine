@@ -10,7 +10,7 @@
   "limit_order_size_driven": true,
   "live_cancel_allowed": false,
   "live_submit_allowed": false,
-  "max_daily_notional_usd": "5",
+  "max_daily_notional_usd": "1",
   "max_order_notional_usd": "1",
   "notional_usd_is_price_times_size": true,
   "posted": false,

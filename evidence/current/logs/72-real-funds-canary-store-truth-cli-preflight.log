@@ -1,13 +1,1 @@
-{
-  "failures": [],
-  "posted": false,
-  "preflight_ready": true,
-  "raw_signed_order_exposed": false,
-  "remote_side_effects": false,
-  "runtime_truth_output": null,
-  "runtime_truth_output_sha256": null,
-  "runtime_truth_source": "postgres",
-  "selected_market_id_hash_present": true,
-  "selected_token_id_hash_present": true,
-  "status": "pass"
-}
+{"status":"skipped","reason":"PMX_TEST_DATABASE_URL and PMX_DATABASE_URL are not explicitly set"}
