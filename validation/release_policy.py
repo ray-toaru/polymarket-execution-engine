@@ -61,6 +61,7 @@ ALLOWED_ROOT_FILES = {
     "RELEASE_DECISION.md",
     "REVIEW_AUDIT.md",
     "ROADMAP.md",
+    "SECURITY_MODEL.md",
     "TASKS.md",
     "VALIDATION_REPORT.md",
     "VERSION",
