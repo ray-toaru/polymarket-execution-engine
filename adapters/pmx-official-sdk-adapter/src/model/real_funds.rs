@@ -36,6 +36,7 @@ pub struct RealFundsCanaryRiskLimits {
 #[serde(deny_unknown_fields)]
 pub struct ReviewedRealFundsCanaryReleaseDecision {
     pub schema_version: u64,
+    pub release_posture: String,
     pub decision_id: String,
     pub status: String,
     pub source_release: String,

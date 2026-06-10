@@ -146,6 +146,10 @@ pub fn validate_reviewed_real_funds_canary_release_decision(
     let required = [
         (decision.schema_version == 1, "schema_version mismatch"),
         (
+            decision.release_posture == "non_live_hardened",
+            "release posture must be non_live_hardened",
+        ),
+        (
             !decision.decision_id.trim().is_empty(),
             "decision_id missing",
         ),

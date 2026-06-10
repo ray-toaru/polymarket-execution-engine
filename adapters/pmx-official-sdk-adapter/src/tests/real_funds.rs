@@ -84,6 +84,7 @@ fn reviewed_decision_fixture(
 ) -> ReviewedRealFundsCanaryReleaseDecision {
     ReviewedRealFundsCanaryReleaseDecision {
         schema_version: 1,
+        release_posture: "non_live_hardened".into(),
         decision_id: "decision-1".into(),
         status: "reviewed_go".into(),
         source_release: format!("v{}", env!("CARGO_PKG_VERSION")),
@@ -757,6 +758,25 @@ fn real_funds_canary_release_decision_rejects_not_active_go_status() {
     assert!(
         err.to_string()
             .contains("release decision status is not reviewed_go")
+    );
+}
+
+#[test]
+fn real_funds_canary_release_decision_rejects_live_release_posture() {
+    let approval = approval_fixture();
+    let mut decision = reviewed_decision_fixture(&approval);
+    decision.release_posture = "live_ready".into();
+    let err = validate_reviewed_real_funds_canary_release_decision(
+        &decision,
+        &approval,
+        &approval.artifact_sha256,
+        &approval.evidence_manifest_sha256,
+        &approval.market_candidate_sha256,
+    )
+    .expect_err("release decision posture must remain non-live");
+    assert!(
+        err.to_string()
+            .contains("release posture must be non_live_hardened")
     );
 }
 
