@@ -301,7 +301,10 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
         operator_approved: release_decision_bound
             && !approval.operator_identity_ref.trim().is_empty()
             && approval.operator_identity_sha256
-                == format!("{:x}", Sha256::digest(approval.operator_identity_ref.as_bytes())),
+                == format!(
+                    "{:x}",
+                    Sha256::digest(approval.operator_identity_ref.as_bytes())
+                ),
         cancel_only_fallback_ready: runtime_truth.cancel_only_fallback_ready(),
     };
     let preconditions =
@@ -706,9 +709,7 @@ fn load_runtime_truth_file(
         );
     }
     let expected_condition_id = args.runtime_truth_condition_id.as_ref().ok_or_else(|| {
-        anyhow::anyhow!(
-            "--runtime-truth-condition-id is required with --runtime-truth-file"
-        )
+        anyhow::anyhow!("--runtime-truth-condition-id is required with --runtime-truth-file")
     })?;
     if truth.condition_id.trim().is_empty() {
         anyhow::bail!("runtime truth condition_id is required");
@@ -1063,7 +1064,7 @@ fn sha256_hex(bytes: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pmx_official_sdk_adapter::{
+    use crate::{
         RealFundsCanaryMarketRejectionCounts, RealFundsCanaryMarketSelection,
         RealFundsCanaryPreconditions,
     };
@@ -1312,47 +1313,57 @@ mod tests {
         assert!(!truth.idempotency_lease);
         assert!(truth.order_cancel_reconciliation);
         assert_eq!(
-            truth.gate_snapshot.as_ref().and_then(|snapshot| snapshot.kill_switch_open),
+            truth
+                .gate_snapshot
+                .as_ref()
+                .and_then(|snapshot| snapshot.kill_switch_open),
             Some(true)
         );
         assert_eq!(
-            truth.gate_snapshot
+            truth
+                .gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.runtime_worker_healthy),
             Some(true)
         );
         assert_eq!(
-            truth.gate_snapshot
+            truth
+                .gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.geoblock_allowed),
             Some(true)
         );
         assert_eq!(
-            truth.gate_snapshot
+            truth
+                .gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.repository_reservation_exists),
             Some(true)
         );
         assert_eq!(
-            truth.gate_snapshot
+            truth
+                .gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.idempotency_key_written),
             Some(false)
         );
         assert_eq!(
-            truth.gate_snapshot
+            truth
+                .gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.reconcile_worker_healthy),
             Some(true)
         );
         assert_eq!(
-            truth.gate_snapshot
+            truth
+                .gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.cancel_only_fallback_ready),
             Some(true)
         );
         assert_eq!(
-            truth.gate_snapshot
+            truth
+                .gate_snapshot
                 .as_ref()
                 .and_then(|snapshot| snapshot.balance_allowance_checked),
             Some(true)
@@ -1415,8 +1426,8 @@ mod tests {
             std::env::set_var("PMX_BALANCE_ALLOWANCE_CHECKED", "0");
         }
         let args = runtime_truth_args();
-        let loaded =
-            load_runtime_truth_file(Some(&path), &args, &approval_fixture()).expect("load runtime truth");
+        let loaded = load_runtime_truth_file(Some(&path), &args, &approval_fixture())
+            .expect("load runtime truth");
         assert!(loaded.kill_switch_open());
         assert!(loaded.cancel_only_fallback_ready());
         assert!(loaded.balance_allowance_checked());
@@ -1495,19 +1506,33 @@ mod tests {
                 "idempotency_key_written": true,
                 "reconcile_worker_healthy": true,
                 "cancel_only_fallback_ready": true,
-                "balance_allowance_checked": true
+                "balance_allowance_checked": true,
+                "gate_evidence_refs": {
+                    "live_submit_allowed": "approval://runtime-gates/live-submit-authorized",
+                    "real_funds_canary_allowed": "approval://runtime-gates/real-funds-canary-authorized",
+                    "preconditions_live_submit_would_pass": "pg://truth/preflight/live-submit-preconditions",
+                    "preconditions_real_funds_canary_would_pass": "pg://truth/preflight/real-funds-preconditions",
+                    "runtime_worker_healthy": "pg://truth/worker_health/runtime-worker",
+                    "geoblock_allowed": "pg://truth/compliance/geoblock",
+                    "repository_reservation_exists": "pg://truth/repository/reservation",
+                    "idempotency_key_written": "pg://truth/worker_health/idempotency-lease",
+                    "reconcile_worker_healthy": "pg://truth/worker_health/reconcile-worker",
+                    "cancel_only_fallback_ready": "pg://truth/operations/cancel-only-fallback",
+                    "balance_allowance_checked": "pg://truth/balances/allowance-check"
+                }
             }
         });
-        std::fs::write(&path, serde_json::to_vec_pretty(&truth).expect("serialize truth file"))
-            .expect("write truth file");
+        std::fs::write(
+            &path,
+            serde_json::to_vec_pretty(&truth).expect("serialize truth file"),
+        )
+        .expect("write truth file");
         let args = runtime_truth_args();
         let error = load_runtime_truth_file(Some(&path), &args, &approval_fixture())
             .expect_err("missing gate evidence refs must fail");
-        assert!(
-            error
-                .to_string()
-                .contains("runtime truth preflight_report.gate_evidence_refs.kill_switch_open is required")
-        );
+        assert!(error.to_string().contains(
+            "runtime truth preflight_report.gate_evidence_refs.kill_switch_open is required"
+        ));
         let _ = std::fs::remove_file(&path);
     }
 
@@ -1528,12 +1553,19 @@ mod tests {
                 {"name": "order_cancel_reconciliation", "status": "durable_runtime_truth", "evidence_ref": "pg://truth/reconcile"},
             ]
         });
-        std::fs::write(&path, serde_json::to_vec_pretty(&truth).expect("serialize truth file"))
-            .expect("write truth file");
+        std::fs::write(
+            &path,
+            serde_json::to_vec_pretty(&truth).expect("serialize truth file"),
+        )
+        .expect("write truth file");
         let args = runtime_truth_args();
         let error = load_runtime_truth_file(Some(&path), &args, &approval_fixture())
             .expect_err("mismatched runtime truth bindings must fail");
-        assert!(error.to_string().contains("runtime truth account_id acct-other does not match"));
+        assert!(
+            error
+                .to_string()
+                .contains("runtime truth account_id acct-other does not match")
+        );
         let _ = std::fs::remove_file(&path);
     }
 
@@ -1582,8 +1614,11 @@ mod tests {
                 }
             }
         });
-        std::fs::write(&path, serde_json::to_vec_pretty(&truth).expect("serialize truth file"))
-            .expect("write truth file");
+        std::fs::write(
+            &path,
+            serde_json::to_vec_pretty(&truth).expect("serialize truth file"),
+        )
+        .expect("write truth file");
         let args = runtime_truth_args();
         let error = load_runtime_truth_file(Some(&path), &args, &approval_fixture())
             .expect_err("mismatched runtime truth approval gate snapshot must fail");
@@ -1616,9 +1651,9 @@ mod tests {
         .expect("parse args");
         let err = validate_canary_input_bindings(&args, &approval_fixture(), &"d".repeat(64))
             .expect_err("approval account mismatch must fail");
-        assert!(err
-            .to_string()
-            .contains("approval account_id acct-canary does not match canary account_id acct-other"));
+        assert!(err.to_string().contains(
+            "approval account_id acct-canary does not match canary account_id acct-other"
+        ));
     }
 
     #[test]
@@ -1651,8 +1686,7 @@ mod tests {
                 execution_style: "GTC_LIMIT_POST_ONLY_CANCEL".into(),
                 operator_identity_ref: "operator-local-approval".into(),
                 operator_identity_sha256:
-                    "1cde65add0b43ed4a85f3f2d9006e1cb9cb9f23709e893cd95359421301c6648"
-                        .into(),
+                    "1cde65add0b43ed4a85f3f2d9006e1cb9cb9f23709e893cd95359421301c6648".into(),
                 runtime_gate_snapshot: serde_json::json!({}),
                 runtime_gate_evidence_refs: serde_json::json!({}),
             },
@@ -1769,8 +1803,7 @@ mod tests {
                 execution_style: "GTC_LIMIT_POST_ONLY_CANCEL".into(),
                 operator_identity_ref: "operator-local-approval".into(),
                 operator_identity_sha256:
-                    "1cde65add0b43ed4a85f3f2d9006e1cb9cb9f23709e893cd95359421301c6648"
-                        .into(),
+                    "1cde65add0b43ed4a85f3f2d9006e1cb9cb9f23709e893cd95359421301c6648".into(),
                 runtime_gate_snapshot: serde_json::json!({}),
                 runtime_gate_evidence_refs: serde_json::json!({}),
             },
@@ -1942,7 +1975,8 @@ mod tests {
     #[test]
     fn missing_runtime_truth_file_argument_fails_closed() {
         let args = parse_args_from(minimal_args(&[])).expect("parse args");
-        let truth = load_runtime_truth_file(None, &args, &approval_fixture()).expect("default runtime truth");
+        let truth = load_runtime_truth_file(None, &args, &approval_fixture())
+            .expect("default runtime truth");
         assert!(!truth.kill_switch);
         assert!(!truth.live_submit_gate);
         assert!(!truth.idempotency_lease);
@@ -1984,8 +2018,8 @@ mod tests {
         )
         .expect("write runtime truth");
         let args = runtime_truth_args();
-        let truth =
-            load_runtime_truth_file(Some(&path), &args, &approval_fixture()).expect("runtime truth");
+        let truth = load_runtime_truth_file(Some(&path), &args, &approval_fixture())
+            .expect("runtime truth");
         let _ = std::fs::remove_file(&path);
         assert!(truth.kill_switch);
         assert!(truth.live_submit_gate);

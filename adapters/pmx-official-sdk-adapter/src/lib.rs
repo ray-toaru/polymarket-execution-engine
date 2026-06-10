@@ -16,9 +16,9 @@ mod lifecycle;
 mod liveness;
 mod mapping;
 mod model;
-mod redaction;
 #[cfg(feature = "live-submit")]
 pub mod real_funds_canary_cli;
+mod redaction;
 mod sdk_runtime;
 mod standard_sign_only;
 

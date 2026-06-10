@@ -250,7 +250,10 @@ pub fn validate_reviewed_real_funds_canary_release_decision(
         ),
         (
             decision.operator_identity_sha256
-                == format!("{:x}", Sha256::digest(decision.operator_identity_ref.as_bytes())),
+                == format!(
+                    "{:x}",
+                    Sha256::digest(decision.operator_identity_ref.as_bytes())
+                ),
             "operator identity sha256 does not match operator identity ref",
         ),
         (
@@ -519,7 +522,10 @@ fn valid_approval(approval: &RealFundsCanaryApproval) -> bool {
         && !approval.operator_identity_ref.trim().is_empty()
         && is_sha256(&approval.operator_identity_sha256)
         && approval.operator_identity_sha256
-            == format!("{:x}", Sha256::digest(approval.operator_identity_ref.as_bytes()))
+            == format!(
+                "{:x}",
+                Sha256::digest(approval.operator_identity_ref.as_bytes())
+            )
         && decimal_gt_zero(&approval.max_order_notional_usd)
         && decimal_gt_zero(&approval.max_daily_notional_usd)
 }

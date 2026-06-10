@@ -21,7 +21,8 @@ fn approval_fixture() -> RealFundsCanaryApproval {
         max_daily_notional_usd: "5".into(),
         execution_style: "GTC_LIMIT_POST_ONLY_CANCEL".into(),
         operator_identity_ref: "operator-local-approval".into(),
-        operator_identity_sha256: "1cde65add0b43ed4a85f3f2d9006e1cb9cb9f23709e893cd95359421301c6648".into(),
+        operator_identity_sha256:
+            "1cde65add0b43ed4a85f3f2d9006e1cb9cb9f23709e893cd95359421301c6648".into(),
         runtime_gate_snapshot: serde_json::json!({
             "live_submit_allowed": false,
             "real_funds_canary_allowed": false,
@@ -117,7 +118,8 @@ fn reviewed_decision_fixture(
         reviewed_release_decision_present: true,
         operator_identity_ref: approval.operator_identity_ref.clone(),
         operator_identity_sha256: approval.operator_identity_sha256.clone(),
-        reviewer_identity_sha256: "9644ef536b99be9273eb3a72384705f6642a461810904a1107610fe4f48e14ec".into(),
+        reviewer_identity_sha256:
+            "9644ef536b99be9273eb3a72384705f6642a461810904a1107610fe4f48e14ec".into(),
         secrets_included: false,
     }
 }
