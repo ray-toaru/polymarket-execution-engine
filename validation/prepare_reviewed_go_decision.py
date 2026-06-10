@@ -327,6 +327,16 @@ def validate_dual_control_review(
         raise SystemExit("dual-control review reviewer_identity_sha256 does not match reviewer_identity_ref")
     if reviewer == request.get("operator_identity_ref"):
         raise SystemExit("dual-control reviewer must differ from operator_identity_ref")
+    signature_ref = require_concrete_text(
+        review.get("review_signature_evidence_ref"),
+        "dual-control review review_signature_evidence_ref",
+    )
+    if any(token in signature_ref.lower() for token in ["raw_signature", "signed_order", "private_key"]):
+        raise SystemExit("dual-control review_signature_evidence_ref must not point to raw signing material")
+    require_sha256(
+        review.get("review_signature_evidence_sha256"),
+        "dual-control review review_signature_evidence_sha256",
+    )
 
     review_ref = review.get("review_ref")
     if not isinstance(review_ref, str) or not review_ref.strip() or review_ref.startswith("REPLACE_WITH_"):
@@ -359,6 +369,15 @@ def validate_dual_control_review(
     missing_checks = [key for key in REQUIRED_DUAL_CONTROL_CHECKS if checks.get(key) is not True]
     if missing_checks:
         raise SystemExit("dual-control review missing required reviewer checks: " + ", ".join(missing_checks))
+    check_refs = review.get("reviewer_check_evidence_refs")
+    if not isinstance(check_refs, dict):
+        raise SystemExit("dual-control review reviewer_check_evidence_refs must be an object")
+    check_shas = review.get("reviewer_check_evidence_sha256s")
+    if not isinstance(check_shas, dict):
+        raise SystemExit("dual-control review reviewer_check_evidence_sha256s must be an object")
+    for key in REQUIRED_DUAL_CONTROL_CHECKS:
+        require_concrete_text(check_refs.get(key), f"dual-control review reviewer_check_evidence_refs.{key}")
+        require_sha256(check_shas.get(key), f"dual-control review reviewer_check_evidence_sha256s.{key}")
     return review_ref
 
 
@@ -437,7 +456,12 @@ def build_decision(
         "reviewed_release_decision_present": True,
         "operator_identity_ref": request["operator_identity_ref"],
         "operator_identity_sha256": request["operator_identity_sha256"],
+        "reviewer_identity_ref": dual_control_review["reviewer_identity_ref"],
         "reviewer_identity_sha256": dual_control_review["reviewer_identity_sha256"],
+        "review_signature_evidence_ref": dual_control_review["review_signature_evidence_ref"],
+        "review_signature_evidence_sha256": dual_control_review["review_signature_evidence_sha256"],
+        "reviewer_check_evidence_refs": dual_control_review["reviewer_check_evidence_refs"],
+        "reviewer_check_evidence_sha256s": dual_control_review["reviewer_check_evidence_sha256s"],
         "secrets_included": False,
     }
 

@@ -25,29 +25,70 @@
     "runtime_truth_sha256",
     "risk_limits",
     "required_reviewer_checks",
-    "secrets_included"
+    "secrets_included",
+    "review_signature_evidence_ref",
+    "review_signature_evidence_sha256",
+    "reviewer_check_evidence_refs",
+    "reviewer_check_evidence_sha256s"
   ],
   "properties": {
-    "schema_version": {"const": 1},
-    "release_posture": {"const": "non_live_hardened"},
-    "status": {
-      "enum": ["draft_requires_independent_reviewer", "approved"]
+    "schema_version": {
+      "const": 1
     },
-    "scope": {"const": "REAL_FUNDS_CANARY"},
-    "execution_style": {"const": "GTC_LIMIT_POST_ONLY_CANCEL"},
-    "review_ref": {"$ref": "#/$defs/nonEmptyString"},
-    "reviewer_identity_ref": {"$ref": "#/$defs/nonEmptyString"},
-    "reviewer_identity_sha256": {"$ref": "#/$defs/nonEmptyString"},
-    "reviewed_at": {"$ref": "#/$defs/nonEmptyString"},
-    "expires_at": {"$ref": "#/$defs/dateTimeOrPlaceholder"},
-    "approval_request_sha256": {"$ref": "#/$defs/sha256OrPlaceholder"},
-    "approval_hash": {"$ref": "#/$defs/sha256"},
-    "artifact_sha256": {"$ref": "#/$defs/sha256"},
-    "workspace_manifest_sha256": {"$ref": "#/$defs/sha256"},
-    "archived_manifest_sha256": {"$ref": "#/$defs/sha256"},
-    "evidence_manifest_sha256": {"$ref": "#/$defs/sha256"},
-    "market_candidate_sha256": {"$ref": "#/$defs/sha256"},
-    "runtime_truth_sha256": {"$ref": "#/$defs/sha256"},
+    "release_posture": {
+      "const": "non_live_hardened"
+    },
+    "status": {
+      "enum": [
+        "draft_requires_independent_reviewer",
+        "approved"
+      ]
+    },
+    "scope": {
+      "const": "REAL_FUNDS_CANARY"
+    },
+    "execution_style": {
+      "const": "GTC_LIMIT_POST_ONLY_CANCEL"
+    },
+    "review_ref": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "reviewer_identity_ref": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "reviewer_identity_sha256": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "reviewed_at": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "expires_at": {
+      "$ref": "#/$defs/dateTimeOrPlaceholder"
+    },
+    "approval_request_sha256": {
+      "$ref": "#/$defs/sha256OrPlaceholder"
+    },
+    "approval_hash": {
+      "$ref": "#/$defs/sha256"
+    },
+    "artifact_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "workspace_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "archived_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "evidence_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "market_candidate_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "runtime_truth_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
     "risk_limits": {
       "type": "object",
       "additionalProperties": false,
@@ -56,11 +97,21 @@
         "max_daily_notional_usd"
       ],
       "properties": {
-        "max_order_notional_usd": {"$ref": "#/$defs/nonEmptyString"},
-        "max_daily_notional_usd": {"$ref": "#/$defs/nonEmptyString"},
-        "candidate_target_size": {"$ref": "#/$defs/nonEmptyString"},
-        "candidate_limit_price": {"$ref": "#/$defs/nonEmptyString"},
-        "candidate_estimated_order_notional_usd": {"$ref": "#/$defs/nonEmptyString"}
+        "max_order_notional_usd": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "max_daily_notional_usd": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "candidate_target_size": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "candidate_limit_price": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "candidate_estimated_order_notional_usd": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
       }
     },
     "required_reviewer_checks": {
@@ -78,25 +129,153 @@
         "reconcile_and_cancel_fallback_reviewed"
       ],
       "properties": {
-        "artifact_hash_reviewed": {"type": "boolean"},
-        "evidence_manifest_hash_reviewed": {"type": "boolean"},
-        "market_candidate_reviewed": {"type": "boolean"},
-        "runtime_truth_reviewed": {"type": "boolean"},
-        "risk_limits_reviewed": {"type": "boolean"},
-        "secret_custody_reviewed": {"type": "boolean"},
-        "alerting_reviewed": {"type": "boolean"},
-        "rollback_reviewed": {"type": "boolean"},
-        "reconcile_and_cancel_fallback_reviewed": {"type": "boolean"}
+        "artifact_hash_reviewed": {
+          "type": "boolean"
+        },
+        "evidence_manifest_hash_reviewed": {
+          "type": "boolean"
+        },
+        "market_candidate_reviewed": {
+          "type": "boolean"
+        },
+        "runtime_truth_reviewed": {
+          "type": "boolean"
+        },
+        "risk_limits_reviewed": {
+          "type": "boolean"
+        },
+        "secret_custody_reviewed": {
+          "type": "boolean"
+        },
+        "alerting_reviewed": {
+          "type": "boolean"
+        },
+        "rollback_reviewed": {
+          "type": "boolean"
+        },
+        "reconcile_and_cancel_fallback_reviewed": {
+          "type": "boolean"
+        }
       }
     },
-    "reviewer_instruction": {"type": "string"},
-    "live_submit_authorized": {"const": false},
-    "live_cancel_authorized": {"const": false},
-    "real_funds_canary_authorized": {"const": false},
-    "remote_side_effects_authorized": {"const": false},
-    "production_deployment_authorized": {"const": false},
-    "secrets_included": {"const": false},
-    "generated_at": {"$ref": "#/$defs/dateTimeOrPlaceholder"}
+    "reviewer_instruction": {
+      "type": "string"
+    },
+    "live_submit_authorized": {
+      "const": false
+    },
+    "live_cancel_authorized": {
+      "const": false
+    },
+    "real_funds_canary_authorized": {
+      "const": false
+    },
+    "remote_side_effects_authorized": {
+      "const": false
+    },
+    "production_deployment_authorized": {
+      "const": false
+    },
+    "secrets_included": {
+      "const": false
+    },
+    "generated_at": {
+      "$ref": "#/$defs/dateTimeOrPlaceholder"
+    },
+    "review_signature_evidence_ref": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "review_signature_evidence_sha256": {
+      "$ref": "#/$defs/sha256OrPlaceholder"
+    },
+    "reviewer_check_evidence_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_hash_reviewed",
+        "evidence_manifest_hash_reviewed",
+        "market_candidate_reviewed",
+        "runtime_truth_reviewed",
+        "risk_limits_reviewed",
+        "secret_custody_reviewed",
+        "alerting_reviewed",
+        "rollback_reviewed",
+        "reconcile_and_cancel_fallback_reviewed"
+      ],
+      "properties": {
+        "artifact_hash_reviewed": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "evidence_manifest_hash_reviewed": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "market_candidate_reviewed": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "runtime_truth_reviewed": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "risk_limits_reviewed": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "secret_custody_reviewed": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "alerting_reviewed": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "rollback_reviewed": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "reconcile_and_cancel_fallback_reviewed": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "reviewer_check_evidence_sha256s": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_hash_reviewed",
+        "evidence_manifest_hash_reviewed",
+        "market_candidate_reviewed",
+        "runtime_truth_reviewed",
+        "risk_limits_reviewed",
+        "secret_custody_reviewed",
+        "alerting_reviewed",
+        "rollback_reviewed",
+        "reconcile_and_cancel_fallback_reviewed"
+      ],
+      "properties": {
+        "artifact_hash_reviewed": {
+          "$ref": "#/$defs/sha256OrPlaceholder"
+        },
+        "evidence_manifest_hash_reviewed": {
+          "$ref": "#/$defs/sha256OrPlaceholder"
+        },
+        "market_candidate_reviewed": {
+          "$ref": "#/$defs/sha256OrPlaceholder"
+        },
+        "runtime_truth_reviewed": {
+          "$ref": "#/$defs/sha256OrPlaceholder"
+        },
+        "risk_limits_reviewed": {
+          "$ref": "#/$defs/sha256OrPlaceholder"
+        },
+        "secret_custody_reviewed": {
+          "$ref": "#/$defs/sha256OrPlaceholder"
+        },
+        "alerting_reviewed": {
+          "$ref": "#/$defs/sha256OrPlaceholder"
+        },
+        "rollback_reviewed": {
+          "$ref": "#/$defs/sha256OrPlaceholder"
+        },
+        "reconcile_and_cancel_fallback_reviewed": {
+          "$ref": "#/$defs/sha256OrPlaceholder"
+        }
+      }
+    }
   },
   "$defs": {
     "sha256": {

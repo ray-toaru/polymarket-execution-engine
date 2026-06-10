@@ -114,5 +114,30 @@
       "status": "not_applicable_non_live",
       "timestamp": "1970-01-01T00:00:00Z"
     }
+  },
+  "reviewer_identity_ref": "REPLACE_WITH_REVIEWER_IDENTITY_REFERENCE",
+  "review_signature_evidence_ref": "REPLACE_WITH_EXTERNAL_SIGNATURE_EVIDENCE_REFERENCE",
+  "review_signature_evidence_sha256": "REPLACE_WITH_SIGNATURE_EVIDENCE_SHA256",
+  "reviewer_check_evidence_refs": {
+    "artifact_hash_reviewed": "REPLACE_WITH_ARTIFACT_HASH_REVIEWED_EVIDENCE_REF",
+    "evidence_manifest_hash_reviewed": "REPLACE_WITH_EVIDENCE_MANIFEST_HASH_REVIEWED_EVIDENCE_REF",
+    "market_candidate_reviewed": "REPLACE_WITH_MARKET_CANDIDATE_REVIEWED_EVIDENCE_REF",
+    "runtime_truth_reviewed": "REPLACE_WITH_RUNTIME_TRUTH_REVIEWED_EVIDENCE_REF",
+    "risk_limits_reviewed": "REPLACE_WITH_RISK_LIMITS_REVIEWED_EVIDENCE_REF",
+    "secret_custody_reviewed": "REPLACE_WITH_SECRET_CUSTODY_REVIEWED_EVIDENCE_REF",
+    "alerting_reviewed": "REPLACE_WITH_ALERTING_REVIEWED_EVIDENCE_REF",
+    "rollback_reviewed": "REPLACE_WITH_ROLLBACK_REVIEWED_EVIDENCE_REF",
+    "reconcile_and_cancel_fallback_reviewed": "REPLACE_WITH_RECONCILE_AND_CANCEL_FALLBACK_REVIEWED_EVIDENCE_REF"
+  },
+  "reviewer_check_evidence_sha256s": {
+    "artifact_hash_reviewed": "REPLACE_WITH_ARTIFACT_HASH_REVIEWED_EVIDENCE_SHA256",
+    "evidence_manifest_hash_reviewed": "REPLACE_WITH_EVIDENCE_MANIFEST_HASH_REVIEWED_EVIDENCE_SHA256",
+    "market_candidate_reviewed": "REPLACE_WITH_MARKET_CANDIDATE_REVIEWED_EVIDENCE_SHA256",
+    "runtime_truth_reviewed": "REPLACE_WITH_RUNTIME_TRUTH_REVIEWED_EVIDENCE_SHA256",
+    "risk_limits_reviewed": "REPLACE_WITH_RISK_LIMITS_REVIEWED_EVIDENCE_SHA256",
+    "secret_custody_reviewed": "REPLACE_WITH_SECRET_CUSTODY_REVIEWED_EVIDENCE_SHA256",
+    "alerting_reviewed": "REPLACE_WITH_ALERTING_REVIEWED_EVIDENCE_SHA256",
+    "rollback_reviewed": "REPLACE_WITH_ROLLBACK_REVIEWED_EVIDENCE_SHA256",
+    "reconcile_and_cancel_fallback_reviewed": "REPLACE_WITH_RECONCILE_AND_CANCEL_FALLBACK_REVIEWED_EVIDENCE_SHA256"
   }
 }

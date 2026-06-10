@@ -72,6 +72,9 @@ REQUIRED_FIELDS = {
         "canary_retry_policy_ref",
     ],
 }
+REFERENCE_SHA256_SECTIONS = {
+    key: value for key, value in REQUIRED_FIELDS.items() if key != "github_evidence"
+}
 FORBIDDEN_KEYS = {
     "private_key",
     "privateKey",
@@ -186,6 +189,25 @@ def validate_github_evidence_details(data: dict[str, Any], label: str, *, allow_
     return failures
 
 
+def validate_reference_sha256s(data: dict[str, Any], label: str, *, allow_placeholders: bool) -> list[str]:
+    failures: list[str] = []
+    hashes = data.get("reference_sha256s")
+    if not isinstance(hashes, dict):
+        return [f"{label}: missing reference_sha256s"]
+    for section, fields in REFERENCE_SHA256_SECTIONS.items():
+        block = hashes.get(section)
+        if not isinstance(block, dict):
+            failures.append(f"{label}: missing reference_sha256s.{section}")
+            continue
+        for field in fields:
+            value = block.get(field)
+            if allow_placeholders and has_placeholder(value):
+                continue
+            if not is_sha256(value):
+                failures.append(f"{label}: reference_sha256s.{section}.{field} must be 64-hex")
+    return failures
+
+
 def validate_no_sensitive_material(data: object) -> list[str]:
     failures: list[str] = []
 
@@ -231,6 +253,7 @@ def validate_shape(data: dict[str, Any], label: str, *, allow_placeholders: bool
             elif not allow_placeholders and has_placeholder(value):
                 failures.append(f"{label}: unresolved placeholder {section}.{field}")
     failures.extend(validate_github_evidence_details(data, label, allow_placeholders=allow_placeholders))
+    failures.extend(validate_reference_sha256s(data, label, allow_placeholders=allow_placeholders))
     failures.extend(f"{label}: {failure}" for failure in validate_no_sensitive_material(data))
     if not allow_placeholders:
         if not is_sha256(data.get("artifact_sha256")):

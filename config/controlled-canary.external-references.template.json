@@ -77,5 +77,33 @@
       "status": "not_applicable_non_live",
       "timestamp": "1970-01-01T00:00:00Z"
     }
+  },
+  "reference_sha256s": {
+    "secret_custody": {
+      "provider_ref": "REPLACE_WITH_SECRET_CUSTODY_PROVIDER_REF_SHA256",
+      "kms_key_ref": "REPLACE_WITH_SECRET_CUSTODY_KMS_KEY_REF_SHA256",
+      "rotation_evidence_ref": "REPLACE_WITH_SECRET_CUSTODY_ROTATION_EVIDENCE_REF_SHA256",
+      "break_glass_review_ref": "REPLACE_WITH_SECRET_CUSTODY_BREAK_GLASS_REVIEW_REF_SHA256"
+    },
+    "operator_approval": {
+      "approval_id": "REPLACE_WITH_OPERATOR_APPROVAL_APPROVAL_ID_SHA256",
+      "approval_hash": "REPLACE_WITH_OPERATOR_APPROVAL_APPROVAL_HASH_SHA256",
+      "ticket_ref": "REPLACE_WITH_OPERATOR_APPROVAL_TICKET_REF_SHA256",
+      "approver_identity_ref": "REPLACE_WITH_OPERATOR_APPROVAL_APPROVER_IDENTITY_REF_SHA256",
+      "expires_at": "REPLACE_WITH_OPERATOR_APPROVAL_EXPIRES_AT_SHA256",
+      "scope": "REPLACE_WITH_OPERATOR_APPROVAL_SCOPE_SHA256"
+    },
+    "alert_routing": {
+      "provider_ref": "REPLACE_WITH_ALERT_ROUTING_PROVIDER_REF_SHA256",
+      "route_ref": "REPLACE_WITH_ALERT_ROUTING_ROUTE_REF_SHA256",
+      "pager_escalation_policy_ref": "REPLACE_WITH_ALERT_ROUTING_PAGER_ESCALATION_POLICY_REF_SHA256",
+      "dashboard_ref": "REPLACE_WITH_ALERT_ROUTING_DASHBOARD_REF_SHA256",
+      "alert_test_evidence_ref": "REPLACE_WITH_ALERT_ROUTING_ALERT_TEST_EVIDENCE_REF_SHA256"
+    },
+    "runbooks": {
+      "rollback_runbook_ref": "REPLACE_WITH_RUNBOOKS_ROLLBACK_RUNBOOK_REF_SHA256",
+      "incident_runbook_ref": "REPLACE_WITH_RUNBOOKS_INCIDENT_RUNBOOK_REF_SHA256",
+      "canary_retry_policy_ref": "REPLACE_WITH_RUNBOOKS_CANARY_RETRY_POLICY_REF_SHA256"
+    }
   }
 }

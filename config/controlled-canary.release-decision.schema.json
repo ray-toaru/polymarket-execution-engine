@@ -42,7 +42,12 @@
     "reviewer_identity_sha256",
     "secrets_included",
     "workspace_manifest_sha256",
-    "archived_manifest_sha256"
+    "archived_manifest_sha256",
+    "reviewer_identity_ref",
+    "review_signature_evidence_ref",
+    "review_signature_evidence_sha256",
+    "reviewer_check_evidence_refs",
+    "reviewer_check_evidence_sha256s"
   ],
   "properties": {
     "schema_version": {
@@ -579,6 +584,124 @@
               "format": "date-time"
             }
           }
+        }
+      }
+    },
+    "reviewer_identity_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "review_signature_evidence_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "review_signature_evidence_sha256": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reviewer_check_evidence_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_hash_reviewed",
+        "evidence_manifest_hash_reviewed",
+        "market_candidate_reviewed",
+        "runtime_truth_reviewed",
+        "risk_limits_reviewed",
+        "secret_custody_reviewed",
+        "alerting_reviewed",
+        "rollback_reviewed",
+        "reconcile_and_cancel_fallback_reviewed"
+      ],
+      "properties": {
+        "artifact_hash_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_manifest_hash_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "market_candidate_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime_truth_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "risk_limits_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "secret_custody_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "alerting_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rollback_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reconcile_and_cancel_fallback_reviewed": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "reviewer_check_evidence_sha256s": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_hash_reviewed",
+        "evidence_manifest_hash_reviewed",
+        "market_candidate_reviewed",
+        "runtime_truth_reviewed",
+        "risk_limits_reviewed",
+        "secret_custody_reviewed",
+        "alerting_reviewed",
+        "rollback_reviewed",
+        "reconcile_and_cancel_fallback_reviewed"
+      ],
+      "properties": {
+        "artifact_hash_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_manifest_hash_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "market_candidate_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime_truth_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "risk_limits_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "secret_custody_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "alerting_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rollback_reviewed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reconcile_and_cancel_fallback_reviewed": {
+          "type": "string",
+          "minLength": 1
         }
       }
     }

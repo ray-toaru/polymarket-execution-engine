@@ -84,7 +84,12 @@ ALLOWED_TOP_LEVEL_FIELDS = {
     "reviewed_release_decision_present",
     "operator_identity_ref",
     "operator_identity_sha256",
+    "reviewer_identity_ref",
     "reviewer_identity_sha256",
+    "review_signature_evidence_ref",
+    "review_signature_evidence_sha256",
+    "reviewer_check_evidence_refs",
+    "reviewer_check_evidence_sha256s",
     "secrets_included",
 }
 REQUIRED_EXTERNAL_REFS = [
@@ -104,6 +109,17 @@ REQUIRED_REVIEW_SIGNALS = [
     "alerting_reviewed",
     "rollback_reviewed",
     "runtime_health_reviewed",
+    "reconcile_and_cancel_fallback_reviewed",
+]
+REQUIRED_REVIEWER_CHECK_EVIDENCE = [
+    "artifact_hash_reviewed",
+    "evidence_manifest_hash_reviewed",
+    "market_candidate_reviewed",
+    "runtime_truth_reviewed",
+    "risk_limits_reviewed",
+    "secret_custody_reviewed",
+    "alerting_reviewed",
+    "rollback_reviewed",
     "reconcile_and_cancel_fallback_reviewed",
 ]
 PREFLIGHT_GATE_FIELDS = [
@@ -229,6 +245,31 @@ def has_placeholder(value: object) -> bool:
     return False
 
 
+def validate_ref_sha_map(data: dict[str, Any], label: str, refs_key: str, shas_key: str) -> list[str]:
+    failures: list[str] = []
+    refs = data.get(refs_key)
+    shas = data.get(shas_key)
+    if not isinstance(refs, dict):
+        failures.append(f"{label}: {refs_key} must be an object")
+        refs = {}
+    if not isinstance(shas, dict):
+        failures.append(f"{label}: {shas_key} must be an object")
+        shas = {}
+    for key in REQUIRED_REVIEWER_CHECK_EVIDENCE:
+        ref = refs.get(key)
+        digest = shas.get(key)
+        if not isinstance(ref, str) or not ref.strip():
+            failures.append(f"{label}: {refs_key}.{key} must be a non-empty string")
+        elif label != "template" and has_placeholder(ref):
+            failures.append(f"{label}: {refs_key}.{key} must be concrete")
+        if label == "template":
+            if not (has_placeholder(digest) or is_sha256(digest)):
+                failures.append(f"{label}: {shas_key}.{key} must be a placeholder or 64-hex")
+        elif not is_sha256(digest):
+            failures.append(f"{label}: {shas_key}.{key} must be 64-hex")
+    return failures
+
+
 def validate_shape(data: dict[str, Any], label: str) -> list[str]:
     failures: list[str] = []
     unknown_fields = sorted(set(data) - ALLOWED_TOP_LEVEL_FIELDS)
@@ -302,11 +343,37 @@ def validate_shape(data: dict[str, Any], label: str) -> list[str]:
     elif not is_sha256(operator_identity_sha256):
         failures.append(f"{label}: operator_identity_sha256 must be 64-hex")
     reviewer_identity_sha256 = data.get("reviewer_identity_sha256")
+    reviewer_identity_ref = data.get("reviewer_identity_ref")
+    if label == "template":
+        if not has_placeholder(reviewer_identity_ref):
+            failures.append(f"{label}: reviewer_identity_ref must remain a placeholder")
+    elif not isinstance(reviewer_identity_ref, str) or not reviewer_identity_ref.strip() or has_placeholder(reviewer_identity_ref):
+        failures.append(f"{label}: reviewer_identity_ref must be concrete")
     if label == "template":
         if not has_placeholder(reviewer_identity_sha256):
             failures.append(f"{label}: reviewer_identity_sha256 must remain a placeholder")
     elif not is_sha256(reviewer_identity_sha256):
         failures.append(f"{label}: reviewer_identity_sha256 must be 64-hex")
+    signature_ref = data.get("review_signature_evidence_ref")
+    if label == "template":
+        if not has_placeholder(signature_ref):
+            failures.append(f"{label}: review_signature_evidence_ref must remain a placeholder")
+    elif not isinstance(signature_ref, str) or not signature_ref.strip() or has_placeholder(signature_ref):
+        failures.append(f"{label}: review_signature_evidence_ref must be concrete")
+    signature_sha = data.get("review_signature_evidence_sha256")
+    if label == "template":
+        if not has_placeholder(signature_sha):
+            failures.append(f"{label}: review_signature_evidence_sha256 must remain a placeholder")
+    elif not is_sha256(signature_sha):
+        failures.append(f"{label}: review_signature_evidence_sha256 must be 64-hex")
+    failures.extend(
+        validate_ref_sha_map(
+            data,
+            label,
+            "reviewer_check_evidence_refs",
+            "reviewer_check_evidence_sha256s",
+        )
+    )
     refs = data.get("external_references")
     if not isinstance(refs, dict):
         failures.append(f"{label}: external_references must be an object")

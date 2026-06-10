@@ -88,5 +88,30 @@
       "status": "local_passed",
       "timestamp": "2026-05-23T00:00:00Z"
     }
+  },
+  "reviewer_identity_ref": "operator://second-reviewer",
+  "review_signature_evidence_ref": "sigstore://review/example",
+  "review_signature_evidence_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+  "reviewer_check_evidence_refs": {
+    "artifact_hash_reviewed": "evidence://review/artifact_hash_reviewed",
+    "evidence_manifest_hash_reviewed": "evidence://review/evidence_manifest_hash_reviewed",
+    "market_candidate_reviewed": "evidence://review/market_candidate_reviewed",
+    "runtime_truth_reviewed": "evidence://review/runtime_truth_reviewed",
+    "risk_limits_reviewed": "evidence://review/risk_limits_reviewed",
+    "secret_custody_reviewed": "evidence://review/secret_custody_reviewed",
+    "alerting_reviewed": "evidence://review/alerting_reviewed",
+    "rollback_reviewed": "evidence://review/rollback_reviewed",
+    "reconcile_and_cancel_fallback_reviewed": "evidence://review/reconcile_and_cancel_fallback_reviewed"
+  },
+  "reviewer_check_evidence_sha256s": {
+    "artifact_hash_reviewed": "8888888888888888888888888888888888888888888888888888888888888888",
+    "evidence_manifest_hash_reviewed": "8888888888888888888888888888888888888888888888888888888888888888",
+    "market_candidate_reviewed": "8888888888888888888888888888888888888888888888888888888888888888",
+    "runtime_truth_reviewed": "8888888888888888888888888888888888888888888888888888888888888888",
+    "risk_limits_reviewed": "8888888888888888888888888888888888888888888888888888888888888888",
+    "secret_custody_reviewed": "8888888888888888888888888888888888888888888888888888888888888888",
+    "alerting_reviewed": "8888888888888888888888888888888888888888888888888888888888888888",
+    "rollback_reviewed": "8888888888888888888888888888888888888888888888888888888888888888",
+    "reconcile_and_cancel_fallback_reviewed": "8888888888888888888888888888888888888888888888888888888888888888"
   }
 }
