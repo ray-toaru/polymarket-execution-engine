@@ -1,4 +1,8 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.31s
+   Compiling postgres-types v0.2.13
+   Compiling tokio-postgres v0.7.17
+   Compiling pmx-store v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
+   Compiling pmx-service v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.16s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-8f4452d29c713262)
 
 running 2 tests
@@ -142,7 +146,7 @@ test service::tests::sign_only::standard::service_records_standard_sign_only_con
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 test submit::fingerprint::tests::request_fingerprint_ignores_correlation_metadata ... ok
 
-test result: ok. 42 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+test result: ok. 42 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-a3debd94a51af313)
 

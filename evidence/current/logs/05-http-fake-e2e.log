@@ -1,4 +1,4 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.25s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.28s
      Running tests/http_and_fake_e2e.rs (target/debug/deps/http_and_fake_e2e-e857caeaa1cc6b1b)
 
 running 4 tests
