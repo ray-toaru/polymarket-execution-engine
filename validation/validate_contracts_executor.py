@@ -1209,28 +1209,53 @@ def validate_v08_dependency_and_sdk_policy() -> None:
     if not isinstance(jobs, dict):
         fail("root CI workflow must expose jobs mapping")
     for job_name in [
-        "adapter-required-ci",
-        "engine-required-ci",
         "engine-rust-locked",
+        "engine-postgres",
         "integration-python-compat",
         "integration-static",
     ]:
         if job_name not in jobs:
             fail(f"root CI workflow missing job: {job_name}")
-    adapter_workflow = (
-        "ray-toaru/hermes-polymarket-executor-adapter/.github/workflows/ci.yml@"
-        f"{git_head(ROOT / 'hermes-polymarket-executor-adapter')}"
-    )
-    engine_workflow = (
-        "ray-toaru/polymarket-execution-engine/.github/workflows/ci.yml@"
-        f"{git_head(EXECUTOR)}"
-    )
-    if jobs.get("adapter-required-ci", {}).get("uses") != adapter_workflow:
-        fail("root CI workflow must pin adapter reusable workflow to canonical SHA")
-    if jobs.get("engine-required-ci", {}).get("uses") != engine_workflow:
-        fail("root CI workflow must pin engine reusable workflow to canonical SHA")
+    for job_name, job in jobs.items():
+        if isinstance(job, dict) and "uses" in job:
+            fail(f"root CI workflow job must run pinned checkout locally: {job_name}")
     if jobs.get("engine-rust-locked", {}).get("runs-on") != "ubuntu-latest":
         fail("root CI workflow engine-rust-locked job must stay on ubuntu-latest")
+    engine_steps = jobs.get("engine-rust-locked", {}).get("steps")
+    if not isinstance(engine_steps, list):
+        fail("root CI workflow engine-rust-locked job must expose steps list")
+    engine_commands = "\n".join(
+        str(step.get("run", ""))
+        for step in engine_steps
+        if isinstance(step, dict)
+    )
+    for token in [
+        "cargo clippy --workspace --all-targets --all-features",
+        "pmx-official-sdk-spike/Cargo.toml",
+        "pmx-official-sdk-adapter/Cargo.toml",
+    ]:
+        if token not in engine_commands:
+            fail(f"root CI workflow engine-rust-locked missing command token: {token}")
+    postgres = jobs.get("engine-postgres", {})
+    services = postgres.get("services", {})
+    if services.get("postgres", {}).get("image") != "postgres:16":
+        fail("root CI workflow engine-postgres must use postgres:16 service")
+    postgres_steps = postgres.get("steps")
+    if not isinstance(postgres_steps, list):
+        fail("root CI workflow engine-postgres job must expose steps list")
+    postgres_commands = "\n".join(
+        str(step.get("run", ""))
+        for step in postgres_steps
+        if isinstance(step, dict)
+    )
+    for token in [
+        "migrations/[0-9]*.sql",
+        "postgres::postgres_tests",
+        "http_postgres_e2e",
+        "run_migration_drift_dry_run.py",
+    ]:
+        if token not in postgres_commands:
+            fail(f"root CI workflow engine-postgres missing command token: {token}")
     integration_static = jobs.get("integration-static", {})
     static_steps = integration_static.get("steps")
     if not isinstance(static_steps, list):
@@ -1244,6 +1269,7 @@ def validate_v08_dependency_and_sdk_policy() -> None:
         "Validate root and API contracts",
         "Run integration Python tests",
         "Run adapter tests",
+        "Run adapter quality and security checks",
         "Check docs and evidence governance",
         "Clean local artifacts",
         "Check release hygiene",
