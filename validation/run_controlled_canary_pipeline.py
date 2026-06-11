@@ -499,7 +499,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--root-ci-run-id", default="local-pipeline")
     parser.add_argument("--hermes-ci-run-id", default="local-pipeline")
     parser.add_argument("--execution-engine-ci-run-id", default="local-pipeline")
-    parser.add_argument("--credentialed-sdk-run-id", default="local-pipeline")
+    parser.add_argument("--credentialed-sdk-run-id", required=True)
     return parser.parse_args()
 
 

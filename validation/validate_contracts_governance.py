@@ -416,8 +416,8 @@ def validate_controlled_canary_release_decision_governance() -> None:
         fail("real-funds canary review package must bind default Hermes CI run id")
     if getattr(review_module, "DEFAULT_EXECUTION_ENGINE_CI_RUN_ID", None) != "26268276210":
         fail("real-funds canary review package must bind default execution-engine CI run id")
-    if getattr(review_module, "DEFAULT_CREDENTIALED_SDK_RUN_ID", None) != "local-current-gates-20260523":
-        fail("real-funds canary review package must bind default credentialed SDK run id")
+    if hasattr(review_module, "DEFAULT_CREDENTIALED_SDK_RUN_ID"):
+        fail("real-funds canary review package must not bind a default credentialed SDK run id")
     for fn_name in [
         "resolve_input_path",
         "require_sha256",

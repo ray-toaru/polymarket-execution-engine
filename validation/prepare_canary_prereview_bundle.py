@@ -49,7 +49,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--root-ci-run-id", required=True)
     parser.add_argument("--hermes-ci-run-id", required=True)
     parser.add_argument("--execution-engine-ci-run-id", required=True)
-    parser.add_argument("--credentialed-sdk-run-id", default="local-current-gates-20260523")
+    parser.add_argument("--credentialed-sdk-run-id", required=True)
     parser.add_argument("--operator-identity-ref", required=True)
     parser.add_argument("--approval-ticket-ref", required=True)
     parser.add_argument("--human-review-ref", required=True)
