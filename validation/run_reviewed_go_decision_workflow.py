@@ -71,6 +71,9 @@ def parse_args() -> argparse.Namespace:
         help="Also write the companion .env.runtime.secrets file. Without this flag only runtime identity is emitted.",
     )
     parser.add_argument("--approved-dual-control-review-file", type=Path)
+    parser.add_argument("--canonical-dual-control-review-file", type=Path)
+    parser.add_argument("--review-signature-file", type=Path)
+    parser.add_argument("--reviewer-registry-file", type=Path)
     parser.add_argument("--external-references-file", type=Path)
     parser.add_argument("--reviewed-go-output-dir", type=Path)
     parser.add_argument("--decision-id")
@@ -104,6 +107,9 @@ def build_workflow_plan(args: argparse.Namespace) -> dict[str, Any]:
         value is not None
         for value in (
             args.approved_dual_control_review_file,
+            args.canonical_dual_control_review_file,
+            args.review_signature_file,
+            args.reviewer_registry_file,
             args.external_references_file,
             args.reviewed_go_output_dir,
         )
@@ -118,6 +124,15 @@ def build_workflow_plan(args: argparse.Namespace) -> dict[str, Any]:
         "inputs": {
             "approved_dual_control_review_file": str(resolve(args.approved_dual_control_review_file))
             if args.approved_dual_control_review_file is not None
+            else None,
+            "canonical_dual_control_review_file": str(resolve(args.canonical_dual_control_review_file))
+            if args.canonical_dual_control_review_file is not None
+            else None,
+            "review_signature_file": str(resolve(args.review_signature_file))
+            if args.review_signature_file is not None
+            else None,
+            "reviewer_registry_file": str(resolve(args.reviewer_registry_file))
+            if args.reviewer_registry_file is not None
             else None,
             "external_references_file": str(resolve(args.external_references_file))
             if args.external_references_file is not None
@@ -188,6 +203,9 @@ def execute_workflow(args: argparse.Namespace) -> dict[str, Any]:
         value is not None
         for value in (
             args.approved_dual_control_review_file,
+            args.canonical_dual_control_review_file,
+            args.review_signature_file,
+            args.reviewer_registry_file,
             args.external_references_file,
             args.reviewed_go_output_dir,
         )
@@ -201,6 +219,9 @@ def execute_workflow(args: argparse.Namespace) -> dict[str, Any]:
     promotion_result = reviewed_go_module.prepare_reviewed_go_bundle(
         review_packet_dir=resolve(args.review_packet_output_dir),
         approved_dual_control_review_file=resolve(args.approved_dual_control_review_file),
+        canonical_dual_control_review_file=resolve(args.canonical_dual_control_review_file),
+        review_signature_file=resolve(args.review_signature_file),
+        reviewer_registry_file=resolve(args.reviewer_registry_file),
         external_references_file=resolve(args.external_references_file),
         output_dir=resolve(args.reviewed_go_output_dir),
         decision_id=args.decision_id,

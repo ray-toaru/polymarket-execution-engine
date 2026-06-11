@@ -36,6 +36,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--review-packet-dir", required=True, type=Path)
     parser.add_argument("--approved-dual-control-review-file", required=True, type=Path)
+    parser.add_argument("--canonical-dual-control-review-file", required=True, type=Path)
+    parser.add_argument("--review-signature-file", required=True, type=Path)
+    parser.add_argument("--reviewer-registry-file", required=True, type=Path)
     parser.add_argument("--external-references-file", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--decision-id")
@@ -79,6 +82,9 @@ def prepare_reviewed_go_bundle(
     *,
     review_packet_dir: Path,
     approved_dual_control_review_file: Path,
+    canonical_dual_control_review_file: Path,
+    review_signature_file: Path,
+    reviewer_registry_file: Path,
     external_references_file: Path,
     output_dir: Path,
     decision_id: str | None,
@@ -96,6 +102,9 @@ def prepare_reviewed_go_bundle(
         runtime_truth=file_from_packet(review_packet_dir, packet, "runtime_truth"),
         approval_request=file_from_packet(review_packet_dir, packet, "approval_request"),
         dual_control_review=approved_dual_control_review_file,
+        canonical_dual_control_review=canonical_dual_control_review_file,
+        review_signature=review_signature_file,
+        reviewer_registry=reviewer_registry_file,
         external_references=external_references_file,
         decision_id=decision_id or default_decision_id(),
         decision_reason=decision_reason,
@@ -115,6 +124,9 @@ def main() -> int:
     result = prepare_reviewed_go_bundle(
         review_packet_dir=resolve(args.review_packet_dir),
         approved_dual_control_review_file=resolve(args.approved_dual_control_review_file),
+        canonical_dual_control_review_file=resolve(args.canonical_dual_control_review_file),
+        review_signature_file=resolve(args.review_signature_file),
+        reviewer_registry_file=resolve(args.reviewer_registry_file),
         external_references_file=resolve(args.external_references_file),
         output_dir=resolve(args.output_dir),
         decision_id=args.decision_id,

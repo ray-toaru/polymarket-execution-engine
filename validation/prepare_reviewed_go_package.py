@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_ROOT = ROOT.parent
 REVIEWED_GO_DECISION = ROOT / "validation" / "prepare_reviewed_go_decision.py"
 REVIEW_PACKET = INTEGRATION_ROOT / "scripts" / "prepare_dual_control_review_packet.py"
+SIGNATURE_VERIFIER = ROOT / "validation" / "verify_dual_control_review_signature.py"
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -104,12 +105,16 @@ def build_package(
     runtime_truth: Path,
     approval_request: Path,
     dual_control_review: Path,
+    canonical_dual_control_review: Path,
+    review_signature: Path,
+    reviewer_registry: Path,
     external_references: Path,
     decision_id: str,
     decision_reason: str,
 ) -> dict[str, Any]:
     reviewed_go = load_module(REVIEWED_GO_DECISION, "prepare_reviewed_go_decision")
     review_packet = load_module(REVIEW_PACKET, "prepare_dual_control_review_packet")
+    signature_verifier = load_module(SIGNATURE_VERIFIER, "verify_dual_control_review_signature")
 
     sidecar = review_packet.validate_release_sidecar(release_evidence)
     review_packet.validate_candidate(candidate_market)
@@ -121,6 +126,12 @@ def build_package(
     runtime_sha = sha256(runtime_truth)
     approval_sha = reviewed_go.require_sha256(sha256(approval_request), "approval request file sha256")
     review_sha = reviewed_go.require_sha256(sha256(dual_control_review), "dual-control review file sha256")
+    signature_verification = signature_verifier.verify_review_signature(
+        approved_review_file=dual_control_review,
+        canonical_review_file=canonical_dual_control_review,
+        signature_file=review_signature,
+        reviewer_registry_file=reviewer_registry,
+    )
 
     expected_pairs = [
         ("artifact_sha256", sidecar["artifact_sha256"], approval_doc.get("artifact_sha256")),
@@ -191,6 +202,21 @@ def build_package(
             target_name="approval-request.json",
         ),
         "dual_control_review": copy_into_package(dual_control_review, output_dir, target_name="dual-control-review.json"),
+        "canonical_dual_control_review": copy_into_package(
+            canonical_dual_control_review,
+            output_dir,
+            target_name="dual-control-review.canonical.json",
+        ),
+        "review_signature": copy_into_package(
+            review_signature,
+            output_dir,
+            target_name="dual-control-review.signature",
+        ),
+        "reviewer_registry": copy_into_package(
+            reviewer_registry,
+            output_dir,
+            target_name="reviewer-registry.json",
+        ),
         "external_references": copy_into_package(external_references, output_dir),
     }
     approval_path = output_dir / "approval.json"
@@ -216,6 +242,9 @@ def build_package(
         "active_profile_ref": approval_doc.get("active_profile_ref"),
         "approval_request_sha256": approval_sha,
         "dual_control_review_sha256": review_sha,
+        "canonical_dual_control_review_sha256": signature_verification["canonical_review_sha256"],
+        "review_signature_sha256": signature_verification["signature_file_sha256"],
+        "review_signature_method": signature_verification["signature_method"],
         "live_submit_authorized": True,
         "live_cancel_authorized": True,
         "remote_side_effects_authorized": True,
@@ -252,6 +281,9 @@ def package_readme(review: dict[str, Any]) -> str:
             "- `approval.json` (canonical CLI approval)",
             "- `approval-request.json` (governance request evidence)",
             "- `dual-control-review.json`",
+            "- `dual-control-review.canonical.json`",
+            "- `dual-control-review.signature`",
+            "- `reviewer-registry.json`",
             "- `external-references.json`",
             "- `candidate-market.json`",
             "- `runtime-truth.json`",
@@ -276,6 +308,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--runtime-truth-file", required=True, type=Path)
     parser.add_argument("--approval-request-file", required=True, type=Path)
     parser.add_argument("--dual-control-review-file", required=True, type=Path)
+    parser.add_argument("--canonical-dual-control-review-file", required=True, type=Path)
+    parser.add_argument("--review-signature-file", required=True, type=Path)
+    parser.add_argument("--reviewer-registry-file", required=True, type=Path)
     parser.add_argument("--external-references-file", required=True, type=Path)
     parser.add_argument("--decision-id", required=True)
     parser.add_argument("--decision-reason", required=True)
@@ -300,6 +335,12 @@ def main() -> int:
         runtime_truth=require_file(resolve(args.runtime_truth_file), "runtime truth"),
         approval_request=require_file(resolve(args.approval_request_file), "approval request"),
         dual_control_review=require_file(resolve(args.dual_control_review_file), "dual-control review"),
+        canonical_dual_control_review=require_file(
+            resolve(args.canonical_dual_control_review_file),
+            "canonical dual-control review",
+        ),
+        review_signature=require_file(resolve(args.review_signature_file), "review signature"),
+        reviewer_registry=require_file(resolve(args.reviewer_registry_file), "reviewer registry"),
         external_references=require_file(resolve(args.external_references_file), "external references"),
         decision_id=args.decision_id,
         decision_reason=args.decision_reason,

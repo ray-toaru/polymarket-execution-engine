@@ -147,6 +147,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout-seconds", type=float, default=10.0)
     parser.add_argument("--valid-for-minutes", type=int, default=15)
     parser.add_argument("--approved-dual-control-review-file", type=Path)
+    parser.add_argument("--canonical-dual-control-review-file", type=Path)
+    parser.add_argument("--review-signature-file", type=Path)
+    parser.add_argument("--reviewer-registry-file", type=Path)
     parser.add_argument("--external-references-file", type=Path)
     parser.add_argument("--reviewed-go-output-dir", type=Path)
     parser.add_argument("--decision-id")
@@ -243,6 +246,9 @@ def build_stage_plans(args: argparse.Namespace) -> dict[str, Any]:
             timeout_seconds=args.timeout_seconds,
             valid_for_minutes=args.valid_for_minutes,
             approved_dual_control_review_file=resolve(args.approved_dual_control_review_file),
+            canonical_dual_control_review_file=resolve(args.canonical_dual_control_review_file),
+            review_signature_file=resolve(args.review_signature_file),
+            reviewer_registry_file=resolve(args.reviewer_registry_file),
             external_references_file=resolve(args.external_references_file),
             reviewed_go_output_dir=resolve(args.reviewed_go_output_dir),
             decision_id=args.decision_id,
@@ -370,6 +376,9 @@ def parse_args_for_reviewed_go(args: argparse.Namespace) -> argparse.Namespace:
         timeout_seconds=args.timeout_seconds,
         valid_for_minutes=args.valid_for_minutes,
         approved_dual_control_review_file=resolve(args.approved_dual_control_review_file),
+        canonical_dual_control_review_file=resolve(args.canonical_dual_control_review_file),
+        review_signature_file=resolve(args.review_signature_file),
+        reviewer_registry_file=resolve(args.reviewer_registry_file),
         external_references_file=resolve(args.external_references_file),
         reviewed_go_output_dir=resolve(args.reviewed_go_output_dir),
         decision_id=args.decision_id,
