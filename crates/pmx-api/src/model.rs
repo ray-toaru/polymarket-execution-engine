@@ -53,6 +53,15 @@ pub struct AuditQuery {
     pub correlation_id: Option<String>,
 }
 
+#[derive(serde::Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct AdminSessionResponse {
+    pub principal_subject: String,
+    pub scopes: Vec<pmx_authz::Scope>,
+    pub capabilities: Vec<pmx_authz::Operation>,
+    pub no_remote_side_effect: bool,
+}
+
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct CancelOrderRequest {

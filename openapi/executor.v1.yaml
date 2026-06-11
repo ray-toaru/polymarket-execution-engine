@@ -271,6 +271,17 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/RuntimeWorkerStatusReport' }
+  /v1/admin/session:
+    get:
+      operationId: getAdminSession
+      security:
+        - AdminToken: []
+      responses:
+        '200':
+          description: Authenticated admin subject and authorized capability set
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminSession' }
   /v1/admin/audit-events:
     get:
       operationId: listAdminAuditEvents
@@ -679,6 +690,25 @@ components:
           type: object
           additionalProperties: true
         created_at: { type: [string, 'null'], format: date-time, readOnly: true }
+    AdminSession:
+      type: object
+      additionalProperties: false
+      required: [principal_subject, scopes, capabilities, no_remote_side_effect]
+      properties:
+        principal_subject: { type: string, minLength: 1 }
+        scopes:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { type: string, enum: [ADMIN] }
+        capabilities:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            enum: [READ_AUDIT, CANCEL_ORDER, CANCEL_MARKET, RECONCILE, KILL_SWITCH]
+        no_remote_side_effect: { type: boolean, const: true }
     AdminAuditEvent:
       type: object
       additionalProperties: false

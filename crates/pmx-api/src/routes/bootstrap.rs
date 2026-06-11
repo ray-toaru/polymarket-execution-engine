@@ -31,6 +31,7 @@ fn router_with_state(state: AppState) -> Router {
             get(read::list_order_lifecycle_events),
         )
         .route("/v1/runtime/workers", get(read::list_runtime_worker_status))
+        .route("/v1/admin/session", get(admin::get_admin_session))
         .route(
             "/v1/admin/audit-events",
             get(admin::list_admin_audit_events),

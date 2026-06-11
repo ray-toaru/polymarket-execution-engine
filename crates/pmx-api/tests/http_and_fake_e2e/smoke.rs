@@ -64,6 +64,43 @@ async fn http_auth_and_fake_e2e_smoke() {
     .await;
     assert_eq!(status, StatusCode::FORBIDDEN);
 
+    let (status, _) = request_json(
+        app.clone(),
+        "GET",
+        "/v1/admin/session",
+        Some("service-token-test"),
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+
+    let (status, admin_session) = request_json(
+        app.clone(),
+        "GET",
+        "/v1/admin/session",
+        Some("admin-token-test"),
+        None,
+    )
+    .await;
+    assert_eq!(
+        status,
+        StatusCode::OK,
+        "admin session response: {admin_session}"
+    );
+    assert_eq!(admin_session["principal_subject"], "admin-token");
+    assert_eq!(admin_session["scopes"], json!(["ADMIN"]));
+    assert_eq!(
+        admin_session["capabilities"],
+        json!([
+            "READ_AUDIT",
+            "CANCEL_ORDER",
+            "CANCEL_MARKET",
+            "RECONCILE",
+            "KILL_SWITCH"
+        ])
+    );
+    assert_eq!(admin_session["no_remote_side_effect"], true);
+
     let (status, kill_switch) = request_json(
         app.clone(),
         "POST",
