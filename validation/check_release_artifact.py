@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import re
 import sys
 import zipfile
 from pathlib import Path
@@ -24,6 +25,51 @@ from release_doc_policy import (
     contains_release_specific_agents_marker,
 )
 
+SECRET_CONTENT_PATTERNS = (
+    re.compile(rb"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
+    re.compile(rb"(?i)POLYMARKET_PRIVATE_KEY\s*="),
+    re.compile(rb"(?i)POLY_API_SECRET\s*="),
+    re.compile(rb"(?i)POLY_API_PASSPHRASE\s*="),
+)
+SECRET_TEMPLATE_MARKERS = {
+    "polymarket-execution-engine/.env.example": (b"REPLACE_WITH_",),
+    "polymarket-execution-engine/.env.profiles.example": (b"REPLACE_WITH_",),
+    "polymarket-execution-engine/.env.runtime.secrets.example": (b"REPLACE_WITH_",),
+    "polymarket-execution-engine/deploy/single-host/env/pmx-real-funds-canary.env.example": (
+        b"REPLACE_WITH_",
+    ),
+    "polymarket-execution-engine/docs/AUTHENTICATED_NON_TRADING_SMOKE.md": (
+        b"POLYMARKET_PRIVATE_KEY=...",
+    ),
+}
+SECRET_CONTENT_TEST_FIXTURES = {
+    "tests/test_activate_pmx_profile.py": (b"class ActivatePmxProfileTests",),
+    "tests/test_active_profile_consistency.py": (b"class ActiveProfileConsistencyTests",),
+    "tests/test_prepare_canary_review_bundle.py": (b"class PrepareCanaryReviewBundleTests",),
+    "tests/test_prepare_canary_runtime_bundle.py": (b"class PrepareCanaryRuntimeBundleTests",),
+    "tests/test_prepare_operator_approval_request.py": (b"class PrepareOperatorApprovalRequestTests",),
+    "tests/test_run_reviewed_go_canary.py": (b"class RunReviewedGoCanaryTests",),
+    "tests/test_run_reviewed_go_canary_armed.py": (b"class RunReviewedGoCanaryArmedTests",),
+    "tests/test_run_reviewed_go_canary_closeout.py": (b"class RunReviewedGoCanaryCloseoutTests",),
+    "polymarket-execution-engine/adapters/pmx-official-sdk-adapter/src/tests/liveness_errors.rs": (
+        b"redacts_named_secret_assignments",
+        b"redact_sensitive_text",
+        b"[REDACTED]",
+    ),
+    "polymarket-execution-engine/validation/run_real_funds_canary_blocked_rehearsal_package.py": (
+        b"complete review package still blocks armed canary",
+    ),
+    "polymarket-execution-engine/validation/test_release_artifact_secret_scan.py": (
+        b"class ReleaseArtifactSecretScanTests",
+    ),
+    "polymarket-execution-engine/validation/test_store_truth_cli_evidence.py": (
+        b"class StoreTruthCliEvidenceTests",
+    ),
+    "polymarket-execution-engine/validation/validate_contracts_executor.py": (
+        b"def validate_v19_redaction_and_live_guard",
+    ),
+}
+
 
 def forbidden(member: str, expected_root: str | None = None) -> bool:
     return is_forbidden_release_member(member, expected_root=expected_root)
@@ -31,6 +77,27 @@ def forbidden(member: str, expected_root: str | None = None) -> bool:
 
 def outside_release_allowlist(member: str, expected_root: str | None = None) -> bool:
     return not is_allowed_release_source_path(member, expected_root=expected_root)
+
+
+def contains_forbidden_secret_content(data: bytes) -> bool:
+    return any(pattern.search(data) for pattern in SECRET_CONTENT_PATTERNS)
+
+
+def archive_rel(member: str, expected_root: str) -> str:
+    prefix = expected_root + "/"
+    return member[len(prefix) :] if member.startswith(prefix) else member
+
+
+def allowed_secret_content_test_fixture(
+    member: str,
+    expected_root: str,
+    data: bytes,
+) -> bool:
+    rel = archive_rel(member, expected_root)
+    required_markers = SECRET_TEMPLATE_MARKERS.get(rel)
+    if required_markers is None:
+        required_markers = SECRET_CONTENT_TEST_FIXTURES.get(rel)
+    return required_markers is not None and all(marker in data for marker in required_markers)
 
 
 def sha256(path: Path) -> str:
@@ -186,6 +253,20 @@ def validate_archive_members(
     outside_allowlist = sorted({name for name in names if outside_release_allowlist(name, expected_root)})
     if outside_allowlist:
         failures.append("archive members outside explicit release allowlist: " + ", ".join(outside_allowlist[:20]))
+    content_hits = sorted(
+        {
+            name
+            for name in names
+            if not name.endswith("/")
+            and contains_forbidden_secret_content(data := zf.read(name))
+            and not allowed_secret_content_test_fixture(name, expected_root, data)
+        }
+    )
+    if content_hits:
+        failures.append(
+            "forbidden secret-like content in archive members: "
+            + ", ".join(content_hits[:20])
+        )
     stale_docs = sorted({name for name in names if stale_root_doc(name, expected_root)})
     if stale_docs:
         failures.append("stale root docs in archive: " + ", ".join(stale_docs[:20]))
