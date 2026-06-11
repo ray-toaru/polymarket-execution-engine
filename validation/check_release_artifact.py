@@ -59,6 +59,11 @@ SECRET_CONTENT_TEST_FIXTURES = {
     "polymarket-execution-engine/validation/run_real_funds_canary_blocked_rehearsal_package.py": (
         b"complete review package still blocks armed canary",
     ),
+    "polymarket-execution-engine/validation/check_release_artifact.py": (
+        b"SECRET_CONTENT_PATTERNS",
+        b"SECRET_TEMPLATE_MARKERS",
+        b"contains_forbidden_secret_content",
+    ),
     "polymarket-execution-engine/validation/test_release_artifact_secret_scan.py": (
         b"class ReleaseArtifactSecretScanTests",
     ),
