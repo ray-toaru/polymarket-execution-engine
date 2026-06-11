@@ -1,0 +1,11 @@
+* @ray-toaru
+
+/.github/ @ray-toaru
+/adapters/ @ray-toaru
+/crates/pmx-authz/ @ray-toaru
+/crates/pmx-gateway/ @ray-toaru
+/crates/pmx-policy/ @ray-toaru
+/migrations/ @ray-toaru
+/openapi/ @ray-toaru
+/release/ @ray-toaru
+/validation/ @ray-toaru

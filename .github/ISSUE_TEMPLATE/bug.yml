@@ -1,0 +1,32 @@
+name: Bug report
+description: Report an execution-engine defect with synthetic or redacted evidence.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Never include credentials, keys, signatures, account identifiers, or production data.
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Observed and expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction, commit SHA, and gate output
+    validations:
+      required: true
+  - type: dropdown
+    id: boundary
+    attributes:
+      label: Boundary impact
+      options:
+        - No credential, signing, or live impact
+        - Credential handling
+        - Signing or authorization
+        - Live-submit or funds-moving boundary
+        - Unknown
+    validations:
+      required: true

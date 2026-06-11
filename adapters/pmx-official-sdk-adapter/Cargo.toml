@@ -49,7 +49,7 @@ pmx-gateway = { path = "../../crates/pmx-gateway" }
 pmx-store = { path = "../../crates/pmx-store", optional = true }
 async-trait = "0.1.89"
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.149"
+serde_json = "1.0.150"
 sha2 = "0.10.9"
 thiserror = "2.0.17"
 chrono = { version = "0.4.44", features = ["serde"] }
