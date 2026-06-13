@@ -674,6 +674,7 @@ def validate_canary_candidate_market_prep_boundary() -> None:
         token_id="token-1",
         outcome="Yes",
         market_slug="demo-market",
+        market_end_at="2026-12-31T00:00:00+00:00",
         active=True,
         accepting_orders=True,
         closed=False,

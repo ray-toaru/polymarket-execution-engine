@@ -30,6 +30,10 @@ PREFLIGHT_GATE_FIELDS = (
     "balance_allowance_checked",
 )
 PREFLIGHT_GATE_EVIDENCE_FIELDS = (
+    "live_submit_allowed",
+    "real_funds_canary_allowed",
+    "preconditions_live_submit_would_pass",
+    "preconditions_real_funds_canary_would_pass",
     "kill_switch_open",
     "runtime_worker_healthy",
     "geoblock_allowed",
@@ -184,6 +188,10 @@ def validate_runtime_truth(
         if preflight_report.get(field) is not True:
             raise SystemExit(f"runtime truth preflight_report.{field} must be true")
         gate_snapshot[field] = True
+    for field in ("live_submit_allowed", "real_funds_canary_allowed"):
+        if preflight_report.get(field) is not False:
+            raise SystemExit(f"runtime truth preflight_report.{field} must be false")
+        gate_snapshot[field] = False
     gate_evidence_refs = preflight_report.get("gate_evidence_refs")
     if not isinstance(gate_evidence_refs, dict):
         raise SystemExit("runtime truth preflight_report.gate_evidence_refs must be an object")

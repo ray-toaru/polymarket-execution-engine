@@ -337,7 +337,7 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
     };
 
     if args.preflight_only {
-        validate_real_funds_canary_preconditions(&config, &request)?;
+        validate_preflight_reportable_preconditions(&config, &request)?;
         validate_active_profile_env_for_canary(&args.account_id)?;
         let report = CanaryCliReport {
             status: "preflight_ready".into(),
@@ -1061,6 +1061,15 @@ fn sha256_hex(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
+fn validate_preflight_reportable_preconditions(
+    config: &OfficialSdkAdapterConfig,
+    request: &RealFundsCanaryRequest,
+) -> Result<(), crate::OfficialSdkAdapterError> {
+    let mut reportable = request.clone();
+    reportable.preconditions.live_canary.operator_approved = true;
+    validate_real_funds_canary_preconditions(config, &reportable)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1118,6 +1127,54 @@ mod tests {
             runtime_live_submit_gate_bound: true,
             runtime_idempotency_lease_bound: true,
             runtime_order_cancel_reconciliation_bound: true,
+        }
+    }
+
+    fn passing_request() -> RealFundsCanaryRequest {
+        RealFundsCanaryRequest {
+            account_id: AccountId("acct-canary".into()),
+            execution_id: ExecutionId("exec-canary".into()),
+            plan_hash: HashValue("plan-hash".into()),
+            idempotency_key: "idem-canary".into(),
+            approval: approval_fixture(),
+            risk_limits: RealFundsCanaryRiskLimits {
+                max_order_notional_usd: "1".into(),
+                max_daily_notional_usd: "5".into(),
+                daily_used_notional_usd: "0".into(),
+            },
+            market: RealFundsCanaryMarketSelection {
+                market_id: "market".into(),
+                token_id: "123".into(),
+                limit_price: "0.10".into(),
+                size: "5".into(),
+                notional_usd: "0.50".into(),
+                selection_reason: "unit-test".into(),
+            },
+            market_candidate_sha256: "d".repeat(64),
+            preconditions: passing_preconditions(),
+        }
+    }
+
+    #[test]
+    fn preflight_only_can_report_readiness_without_release_decision_operator_approval() {
+        unsafe {
+            std::env::set_var(ENV_ALLOW_REAL_FUNDS_CANARY, "1");
+        }
+        let config = OfficialSdkAdapterConfig {
+            allow_live_submit: true,
+            allow_real_funds_canary: true,
+            ..OfficialSdkAdapterConfig::default()
+        };
+        let mut request = passing_request();
+        request.preconditions.live_canary.operator_approved = false;
+
+        let strict_error = validate_real_funds_canary_preconditions(&config, &request)
+            .expect_err("strict live canary validation must still require operator approval");
+        assert!(strict_error.to_string().contains("operator approval is missing"));
+        validate_preflight_reportable_preconditions(&config, &request)
+            .expect("preflight reportability should not require release decision approval");
+        unsafe {
+            std::env::remove_var(ENV_ALLOW_REAL_FUNDS_CANARY);
         }
     }
 

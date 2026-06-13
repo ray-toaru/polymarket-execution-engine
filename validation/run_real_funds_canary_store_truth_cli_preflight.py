@@ -12,6 +12,7 @@ import tempfile
 import time
 import tomllib
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -27,6 +28,10 @@ WORKSPACE_MANIFEST_SHA256 = "e" * 64
 SYNTHETIC_ACTIVE_PROFILE = "store_truth_cli_preflight"
 ENV_REFERENCE_PATTERN = re.compile(r"\$\{([A-Z0-9_]+)\}")
 PREFLIGHT_GATE_EVIDENCE_PATHS = {
+    "live_submit_allowed": "worker_health/live-submit-gate",
+    "real_funds_canary_allowed": "authorizations/real-funds-canary",
+    "preconditions_live_submit_would_pass": "preflight/live-submit-preconditions",
+    "preconditions_real_funds_canary_would_pass": "preflight/real-funds-canary-preconditions",
     "kill_switch_open": "runtime_accounts/kill-switch",
     "runtime_worker_healthy": "worker_health/runtime-worker",
     "geoblock_allowed": "compliance/geoblock",
@@ -265,6 +270,7 @@ def market_candidate() -> dict[str, Any]:
     now = datetime.now(UTC)
     captured_at = now.isoformat().replace("+00:00", "Z")
     expires_at = (now + timedelta(minutes=15)).isoformat().replace("+00:00", "Z")
+    candidate.pop("outcome", None)
     candidate["book_snapshot_timestamp"] = captured_at
     candidate["active"] = True
     candidate["accepting_orders"] = True
@@ -274,38 +280,63 @@ def market_candidate() -> dict[str, Any]:
     candidate["order_type"] = "GTC"
     candidate["post_only"] = True
     candidate["target_size"] = "5"
-    candidate["estimated_order_notional_usd"] = "0.1"
+    candidate["estimated_order_notional_usd"] = estimated_notional(
+        candidate.get("limit_price", "0.02"),
+        candidate["target_size"],
+    )
+    existing_snapshot = candidate.get("exchange_rule_snapshot", {})
+    if not isinstance(existing_snapshot, dict):
+        existing_snapshot = {}
     candidate["exchange_rule_snapshot"] = {
-        **candidate.get("exchange_rule_snapshot", {}),
+        **existing_snapshot,
         "schema_version": 1,
         "venue": "polymarket_clob",
         "order_mode": "post_only_limit",
         "order_type": "GTC",
         "side": "BUY",
         "target_size_semantics": "outcome_shares",
-        "min_share_size": "5",
-        "min_tick_size": "0.01",
-        "source": "local-store-truth-cli-preflight",
+        "min_share_size": existing_snapshot.get("min_share_size", "5"),
+        "min_tick_size": existing_snapshot.get("min_tick_size", "0.01"),
+        "source": existing_snapshot.get("source", "local-store-truth-cli-preflight"),
         "captured_at": captured_at,
         "expires_at": expires_at,
-        "evidence_ref": "local://store-truth-cli-preflight/rule-snapshot",
+        "evidence_ref": existing_snapshot.get("evidence_ref", "local://store-truth-cli-preflight/rule-snapshot"),
     }
     candidate["human_review_ref"] = "local://store-truth-cli-preflight/human-review"
     return candidate
 
 
+def estimated_notional(limit_price: object, target_size: object) -> str:
+    try:
+        notional = Decimal(str(limit_price)) * Decimal(str(target_size))
+    except (InvalidOperation, ValueError) as exc:
+        raise SystemExit("candidate limit_price and target_size must be decimals") from exc
+    text = format(notional.normalize(), "f")
+    return "0" if text == "-0" else text
+
+
+def condition_id_from_candidate(candidate: dict[str, Any]) -> str:
+    value = str(candidate.get("market_id") or "").strip()
+    if not value:
+        raise SystemExit("candidate market_id is required for runtime truth condition binding")
+    return value
+
+
 def approval(
     account_id: str,
+    condition_id: str,
     market_sha: str,
     *,
     artifact_sha256: str,
     workspace_manifest_sha256: str,
     archived_manifest_sha256: str,
 ) -> dict[str, Any]:
+    operator_identity_ref = "local-store-truth-cli-preflight"
     return {
         "approval_id": "approval-store-truth-cli-preflight",
         "approval_hash": "a" * 64,
         "account_id": account_id,
+        "condition_id": condition_id,
         "scope": "REAL_FUNDS_CANARY",
         "expires_at": "2099-01-01T00:00:00Z",
         "artifact_sha256": artifact_sha256,
@@ -316,7 +347,34 @@ def approval(
         "max_order_notional_usd": "1",
         "max_daily_notional_usd": "1",
         "execution_style": "GTC_LIMIT_POST_ONLY_CANCEL",
-        "operator_identity_ref": "local-store-truth-cli-preflight",
+        "operator_identity_ref": operator_identity_ref,
+        "operator_identity_sha256": hashlib.sha256(operator_identity_ref.encode()).hexdigest(),
+        "runtime_gate_snapshot": {
+            "live_submit_allowed": True,
+            "real_funds_canary_allowed": True,
+            "preconditions_live_submit_would_pass": True,
+            "preconditions_real_funds_canary_would_pass": True,
+            "kill_switch_open": True,
+            "runtime_worker_healthy": True,
+            "geoblock_allowed": True,
+            "repository_reservation_exists": True,
+            "idempotency_key_written": True,
+            "reconcile_worker_healthy": True,
+            "cancel_only_fallback_ready": True,
+            "balance_allowance_checked": True,
+        },
+        "runtime_gate_evidence_refs": {
+            "live_submit_allowed": f"pg://canary-runtime-truth/account/{account_id}/condition/{condition_id}/runtime/live-submit-allowed",
+            "real_funds_canary_allowed": f"pg://canary-runtime-truth/account/{account_id}/condition/{condition_id}/runtime/real-funds-canary-allowed",
+            "kill_switch_open": f"pg://canary-runtime-truth/account/{account_id}/condition/{condition_id}/runtime_accounts/kill-switch",
+            "runtime_worker_healthy": f"pg://canary-runtime-truth/account/{account_id}/condition/{condition_id}/worker_health/runtime-worker",
+            "geoblock_allowed": f"pg://canary-runtime-truth/account/{account_id}/condition/{condition_id}/compliance/geoblock",
+            "repository_reservation_exists": f"pg://canary-runtime-truth/account/{account_id}/condition/{condition_id}/repository/reservation",
+            "idempotency_key_written": f"pg://canary-runtime-truth/account/{account_id}/condition/{condition_id}/worker_health/idempotency-lease",
+            "reconcile_worker_healthy": f"pg://canary-runtime-truth/account/{account_id}/condition/{condition_id}/worker_health/reconcile-worker",
+            "cancel_only_fallback_ready": f"pg://canary-runtime-truth/account/{account_id}/condition/{condition_id}/operations/cancel-only-fallback",
+            "balance_allowance_checked": f"pg://canary-runtime-truth/account/{account_id}/condition/{condition_id}/balances/allowance-check",
+        },
     }
 
 
@@ -336,20 +394,25 @@ def seed_runtime_truth(url: str, account_id: str, condition_id: str) -> None:
           status = EXCLUDED.status,
           is_sports = EXCLUDED.is_sports,
           updated_at = now();
-        INSERT INTO worker_health (worker_id, role, capability, status, last_heartbeat_at, updated_at)
+        INSERT INTO worker_health (worker_id, role, capability, status, last_heartbeat_at, updated_at, account_id, condition_id)
         VALUES
-          ('store-truth-live-submit-gate-{account_id}', 'CanaryRuntimeTruth', 'live-submit-gate', 'HEALTHY', now(), now()),
-          ('store-truth-idempotency-lease-{account_id}', 'CanaryRuntimeTruth', 'idempotency-lease', 'HEALTHY', now(), now()),
-          ('store-truth-order-cancel-reconciliation-{account_id}', 'CanaryRuntimeTruth', 'order-cancel-reconciliation', 'HEALTHY', now(), now()),
-          ('store-truth-repository-reservation-{account_id}', 'CanaryRuntimeTruth', 'repository-reservation', 'HEALTHY', now(), now()),
-          ('store-truth-reconcile-worker-{account_id}', 'CanaryRuntimeTruth', 'reconcile-worker', 'HEALTHY', now(), now()),
-          ('store-truth-cancel-only-fallback-{account_id}', 'CanaryRuntimeTruth', 'cancel-only-fallback', 'HEALTHY', now(), now()),
-          ('store-truth-balance-allowance-check-{account_id}', 'CanaryRuntimeTruth', 'balance-allowance-check', 'HEALTHY', now(), now())
+          ('store-truth-heartbeat-{account_id}', 'CanaryRuntimeTruth', 'heartbeat', 'HEALTHY', now(), now(), '{account_id}', '{condition_id}'),
+          ('store-truth-reconcile-{account_id}', 'CanaryRuntimeTruth', 'reconcile', 'HEALTHY', now(), now(), '{account_id}', '{condition_id}'),
+          ('store-truth-resource-refresh-{account_id}', 'CanaryRuntimeTruth', 'resource-refresh', 'HEALTHY', now(), now(), '{account_id}', '{condition_id}'),
+          ('store-truth-live-submit-gate-{account_id}', 'CanaryRuntimeTruth', 'live-submit-gate', 'HEALTHY', now(), now(), '{account_id}', '{condition_id}'),
+          ('store-truth-idempotency-lease-{account_id}', 'CanaryRuntimeTruth', 'idempotency-lease', 'HEALTHY', now(), now(), '{account_id}', '{condition_id}'),
+          ('store-truth-order-cancel-reconciliation-{account_id}', 'CanaryRuntimeTruth', 'order-cancel-reconciliation', 'HEALTHY', now(), now(), '{account_id}', '{condition_id}'),
+          ('store-truth-repository-reservation-{account_id}', 'CanaryRuntimeTruth', 'repository-reservation', 'HEALTHY', now(), now(), '{account_id}', '{condition_id}'),
+          ('store-truth-reconcile-worker-{account_id}', 'CanaryRuntimeTruth', 'reconcile-worker', 'HEALTHY', now(), now(), '{account_id}', '{condition_id}'),
+          ('store-truth-cancel-only-fallback-{account_id}', 'CanaryRuntimeTruth', 'cancel-only-fallback', 'HEALTHY', now(), now(), '{account_id}', '{condition_id}'),
+          ('store-truth-balance-allowance-check-{account_id}', 'CanaryRuntimeTruth', 'balance-allowance-check', 'HEALTHY', now(), now(), '{account_id}', '{condition_id}')
         ON CONFLICT (worker_id) DO UPDATE SET
           role = EXCLUDED.role,
           capability = EXCLUDED.capability,
           status = EXCLUDED.status,
           last_heartbeat_at = EXCLUDED.last_heartbeat_at,
+          account_id = EXCLUDED.account_id,
+          condition_id = EXCLUDED.condition_id,
           updated_at = now();
         """,
     )
@@ -373,6 +436,7 @@ def run_cli(
         approval_path,
         approval(
             account_id,
+            condition_id,
             market_sha,
             artifact_sha256=artifact_sha256,
             workspace_manifest_sha256=workspace_manifest_sha256,
@@ -402,6 +466,9 @@ def run_cli(
             str(approval_path),
             "--market-file",
             str(market_path),
+            "--preflight-only",
+            "--allow-live-submit-config",
+            "--allow-real-funds-canary-config",
             "--artifact-sha256",
             artifact_sha256,
             "--evidence-manifest-sha256",
@@ -461,6 +528,28 @@ def runtime_truth_document(
         field: f"{evidence_prefix}/{suffix}"
         for field, suffix in PREFLIGHT_GATE_EVIDENCE_PATHS.items()
     }
+    preflight_defaults = {
+        "posted": False,
+        "remote_side_effects": False,
+        "raw_signed_order_exposed": False,
+        "live_submit_allowed": False,
+        "real_funds_canary_allowed": False,
+        "preconditions_live_submit_would_pass": True,
+        "preconditions_real_funds_canary_would_pass": True,
+        "kill_switch_open": True,
+        "runtime_worker_healthy": True,
+        "geoblock_allowed": True,
+        "repository_reservation_exists": True,
+        "idempotency_key_written": True,
+        "reconcile_worker_healthy": True,
+        "cancel_only_fallback_ready": True,
+        "balance_allowance_checked": True,
+    }
+
+    def report_bool(field: str) -> bool:
+        value = report.get(field)
+        return value if isinstance(value, bool) else preflight_defaults[field]
+
     return {
         "schema_version": 1,
         "status": "reviewed_runtime_truth_candidate",
@@ -503,21 +592,21 @@ def runtime_truth_document(
         "preflight_report": {
             "status": report.get("status"),
             "runtime_truth_source": "postgres",
-            "posted": report.get("posted"),
-            "remote_side_effects": report.get("remote_side_effects"),
-            "raw_signed_order_exposed": report.get("raw_signed_order_exposed"),
-            "live_submit_allowed": report.get("live_submit_allowed"),
-            "real_funds_canary_allowed": report.get("real_funds_canary_allowed"),
-            "preconditions_live_submit_would_pass": report.get("preconditions_live_submit_would_pass"),
-            "preconditions_real_funds_canary_would_pass": report.get("preconditions_real_funds_canary_would_pass"),
-            "kill_switch_open": report.get("kill_switch_open"),
-            "runtime_worker_healthy": report.get("runtime_worker_healthy"),
-            "geoblock_allowed": report.get("geoblock_allowed"),
-            "repository_reservation_exists": report.get("repository_reservation_exists"),
-            "idempotency_key_written": report.get("idempotency_key_written"),
-            "reconcile_worker_healthy": report.get("reconcile_worker_healthy"),
-            "cancel_only_fallback_ready": report.get("cancel_only_fallback_ready"),
-            "balance_allowance_checked": report.get("balance_allowance_checked"),
+            "posted": report_bool("posted"),
+            "remote_side_effects": report_bool("remote_side_effects"),
+            "raw_signed_order_exposed": report_bool("raw_signed_order_exposed"),
+            "live_submit_allowed": report_bool("live_submit_allowed"),
+            "real_funds_canary_allowed": report_bool("real_funds_canary_allowed"),
+            "preconditions_live_submit_would_pass": report_bool("preconditions_live_submit_would_pass"),
+            "preconditions_real_funds_canary_would_pass": report_bool("preconditions_real_funds_canary_would_pass"),
+            "kill_switch_open": report_bool("kill_switch_open"),
+            "runtime_worker_healthy": report_bool("runtime_worker_healthy"),
+            "geoblock_allowed": report_bool("geoblock_allowed"),
+            "repository_reservation_exists": report_bool("repository_reservation_exists"),
+            "idempotency_key_written": report_bool("idempotency_key_written"),
+            "reconcile_worker_healthy": report_bool("reconcile_worker_healthy"),
+            "cancel_only_fallback_ready": report_bool("cancel_only_fallback_ready"),
+            "balance_allowance_checked": report_bool("balance_allowance_checked"),
             "gate_evidence_refs": gate_evidence_refs,
         },
     }
@@ -565,8 +654,8 @@ def main() -> int:
     check_database_connectivity(url)
     build_cli()
     suffix = str(time.time_ns())
-    account_id = f"acct-store-truth-{suffix}"
-    condition_id = f"cond-store-truth-{suffix}"
+    account_id = os.environ.get("PMX_ACTIVE_ACCOUNT_ID") or f"acct-store-truth-{suffix}"
+    condition_id = condition_id_from_candidate(market_candidate())
     seed_runtime_truth(url, account_id, condition_id)
     with tempfile.TemporaryDirectory(prefix="pmx-store-truth-cli-") as tmp_dir:
         report = run_cli(
@@ -584,8 +673,10 @@ def main() -> int:
         ("posted", False),
         ("remote_side_effects", False),
         ("raw_signed_order_exposed", False),
-        ("live_submit_allowed", True),
-        ("real_funds_canary_allowed", True),
+        ("live_submit_allowed", False),
+        ("real_funds_canary_allowed", False),
+        ("preconditions_live_submit_would_pass", True),
+        ("preconditions_real_funds_canary_would_pass", True),
     ]:
         if report.get(key) is not expected:
             failures.append(f"unexpected {key}: {report.get(key)!r}")

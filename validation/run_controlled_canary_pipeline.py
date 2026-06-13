@@ -62,7 +62,6 @@ def validate_candidate_file(
     candidate = load_json(path)
     require_text(candidate, "market_id")
     require_text(candidate, "token_id")
-    require_text(candidate, "outcome")
     require_text(candidate, "human_review_ref")
     if candidate.get("side") != "BUY":
         raise SystemExit("candidate side must be BUY")

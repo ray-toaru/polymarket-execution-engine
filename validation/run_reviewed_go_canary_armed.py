@@ -146,6 +146,8 @@ def build_armed_invocation(
         str(resolved_consumed_marker),
         "--report-file",
         str(resolved_report_file),
+        "--allow-live-submit-config",
+        "--allow-real-funds-canary-config",
     ]
     invocation = {
         "status": "ready",

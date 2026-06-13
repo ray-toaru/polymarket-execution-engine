@@ -40,6 +40,7 @@ class Candidate:
     token_id: str
     outcome: str
     market_slug: str
+    market_end_at: str
     active: bool
     accepting_orders: bool
     closed: bool
@@ -62,7 +63,6 @@ class Candidate:
         return {
             "market_id": self.market_id,
             "token_id": self.token_id,
-            "outcome": self.outcome,
             "side": "BUY",
             "order_type": "GTC",
             "post_only": True,
@@ -153,6 +153,11 @@ def parse_args() -> argparse.Namespace:
         help="Controlled canary order cap; selected target-size notional must not exceed it",
     )
     parser.add_argument("--max-spread-bps", type=int, default=100, help="Maximum allowed spread in bps")
+    parser.add_argument(
+        "--min-end-days",
+        type=int,
+        help="Require the Gamma market endDate to be at least this many days after the snapshot time.",
+    )
     parser.add_argument(
         "--exchange-rule-valid-for-minutes",
         type=int,
@@ -302,6 +307,28 @@ def parse_jsonish_list(raw: Any) -> list[str]:
 def market_id(market: dict[str, Any]) -> str:
     value = market.get("conditionId") or market.get("condition_id") or market.get("id")
     return "" if value is None else str(value)
+
+
+def parse_market_end_at(market: dict[str, Any]) -> dt.datetime | None:
+    for key in ("endDate", "endDateIso", "end_date", "end_date_iso", "gameStartTime"):
+        raw = market.get(key)
+        if raw is None:
+            continue
+        text = str(raw).strip()
+        if not text:
+            continue
+        if text.endswith("Z"):
+            text = text[:-1] + "+00:00"
+        if len(text) == 10:
+            text += "T00:00:00+00:00"
+        try:
+            parsed = dt.datetime.fromisoformat(text)
+        except ValueError:
+            continue
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=dt.UTC)
+        return parsed.astimezone(dt.UTC)
+    return None
 
 
 def best_ask(book: dict[str, Any]) -> tuple[Decimal, Decimal] | None:
@@ -522,6 +549,18 @@ def candidate_from_market(
     exchange_rule_evidence_ref: str,
     audit: dict[str, Any],
 ) -> Candidate:
+    snapshot_dt = dt.datetime.fromisoformat(snapshot_at)
+    min_end_days = getattr(args, "min_end_days", None)
+    min_end_at = snapshot_dt + dt.timedelta(days=min_end_days) if min_end_days is not None else None
+    market_end_at = parse_market_end_at(market)
+    if min_end_at is not None:
+        if market_end_at is None:
+            raise CandidateError("selected market is missing endDate required by --min-end-days", audit)
+        if market_end_at <= min_end_at:
+            raise CandidateError(
+                f"selected market endDate {market_end_at.isoformat()} is not after required minimum {min_end_at.isoformat()}",
+                audit,
+            )
     active = as_bool(market.get("active"))
     accepting_orders = as_bool(
         market.get("acceptingOrders", market.get("accepting_orders", market.get("enableOrderBook")))
@@ -596,7 +635,7 @@ def candidate_from_market(
     min_order_size = as_decimal(book.get("min_order_size"))
     if min_order_size is None or min_order_size <= 0:
         raise CandidateError("selected market min_order_size is unavailable", audit)
-    min_tick_size = as_decimal(book.get("min_tick_size"))
+    min_tick_size = as_decimal(book.get("min_tick_size", book.get("tick_size")))
     if min_tick_size is None or min_tick_size <= 0:
         raise CandidateError("selected market min_tick_size is unavailable", audit)
     limit_price = post_only_buy_limit_price(
@@ -617,11 +656,13 @@ def candidate_from_market(
     if estimated_notional > order_cap:
         raise CandidateError("selected market target-size notional is above canary order cap", audit)
     slug = str(market.get("slug") or args.market_slug or "")
+    market_end_at_text = market_end_at.isoformat() if market_end_at is not None else ""
     audit["selected"] = {
         "market_id": condition_id,
         "token_id_hash": hashlib.sha256(token_id.encode()).hexdigest(),
         "outcome": outcome,
         "market_slug": slug,
+        "market_end_at": market_end_at_text,
         "source_market_hash": market_fingerprint(market, book=book, spread=spread),
         "spread_bps": bps,
         "target_size": decimal_text(target_size),
@@ -636,6 +677,7 @@ def candidate_from_market(
         token_id=token_id,
         outcome=outcome,
         market_slug=slug,
+        market_end_at=market_end_at_text,
         active=True,
         accepting_orders=True,
         closed=False,
@@ -706,6 +748,9 @@ def scan(args: argparse.Namespace) -> tuple[Candidate, dict[str, Any]]:
     if (args.market_url or args.market_slug) and not args.outcome:
         raise CandidateError("--outcome is required with --market-url or --market-slug")
     snapshot_at = dt.datetime.now(dt.UTC).isoformat()
+    snapshot_dt = dt.datetime.fromisoformat(snapshot_at)
+    min_end_days = getattr(args, "min_end_days", None)
+    min_end_at = snapshot_dt + dt.timedelta(days=min_end_days) if min_end_days is not None else None
 
     requested_slug = args.market_slug or (slug_from_market_url(args.market_url) if args.market_url else None)
     audit: dict[str, Any] = {
@@ -729,6 +774,8 @@ def scan(args: argparse.Namespace) -> tuple[Candidate, dict[str, Any]]:
         "target_size_source": "operator_override" if target_size else "book_min_order_size",
         "max_order_notional_usd": decimal_text(order_cap),
         "max_spread_bps": args.max_spread_bps,
+        "min_end_days": min_end_days,
+        "min_end_at": min_end_at.isoformat() if min_end_at is not None else None,
         "inspected_markets": 0,
         "inspected_tokens": 0,
         "rejections": {
@@ -745,6 +792,7 @@ def scan(args: argparse.Namespace) -> tuple[Candidate, dict[str, Any]]:
             "target_notional_above_cap": 0,
             "post_only_price_unavailable": 0,
             "min_order_size_above_target_size": 0,
+            "missing_or_too_early_end_date": 0,
             "clob_request_budget_exhausted": 0,
         },
     }
@@ -765,21 +813,28 @@ def scan(args: argparse.Namespace) -> tuple[Candidate, dict[str, Any]]:
         audit["candidate_count"] = 1
         return candidate, audit
 
-    markets = fetch_json(
-        args.gamma_url,
-        "/markets",
-        {
-            "active": "true",
-            "closed": "false",
-            "archived": "false",
-            "limit": str(args.max_markets),
-            "order": "volume24hr",
-            "ascending": "false",
-        },
-        args.timeout_seconds,
-    )
-    if not isinstance(markets, list):
-        raise CandidateError("Gamma /markets response was not a JSON array")
+    markets: list[dict[str, Any]] = []
+    page_size = min(args.max_markets, 100)
+    for offset in range(0, args.max_markets, page_size):
+        page = fetch_json(
+            args.gamma_url,
+            "/markets",
+            {
+                "active": "true",
+                "closed": "false",
+                "archived": "false",
+                "limit": str(min(page_size, args.max_markets - offset)),
+                "offset": str(offset),
+                "order": "volume24hr",
+                "ascending": "false",
+            },
+            args.timeout_seconds,
+        )
+        if not isinstance(page, list):
+            raise CandidateError("Gamma /markets response was not a JSON array")
+        markets.extend(market for market in page if isinstance(market, dict))
+        if len(page) < page_size:
+            break
 
     candidates: list[Candidate] = []
     max_clob_requests = clob_request_limit(args)
@@ -804,6 +859,10 @@ def scan(args: argparse.Namespace) -> tuple[Candidate, dict[str, Any]]:
             continue
         if archived:
             audit["rejections"]["archived"] += 1
+            continue
+        market_end_at = parse_market_end_at(market)
+        if min_end_at is not None and (market_end_at is None or market_end_at <= min_end_at):
+            audit["rejections"]["missing_or_too_early_end_date"] += 1
             continue
         condition_id = market_id(market)
         if not condition_id:
@@ -834,7 +893,7 @@ def scan(args: argparse.Namespace) -> tuple[Candidate, dict[str, Any]]:
             top_ask = best_ask(book)
             top_bid = best_bid(book)
             min_order_size = as_decimal(book.get("min_order_size"))
-            min_tick_size = as_decimal(book.get("min_tick_size"))
+            min_tick_size = as_decimal(book.get("min_tick_size", book.get("tick_size")))
             if min_order_size is None or min_order_size <= 0:
                 audit["rejections"]["min_order_size_above_target_size"] += 1
                 continue
@@ -891,6 +950,7 @@ def scan(args: argparse.Namespace) -> tuple[Candidate, dict[str, Any]]:
                     token_id=token_id,
                     outcome=outcome,
                     market_slug=str(market.get("slug") or ""),
+                    market_end_at=market_end_at.isoformat() if market_end_at is not None else "",
                     active=True,
                     accepting_orders=True,
                     closed=False,
@@ -922,6 +982,7 @@ def scan(args: argparse.Namespace) -> tuple[Candidate, dict[str, Any]]:
         "token_id_hash": hashlib.sha256(selected.token_id.encode()).hexdigest(),
         "outcome": selected.outcome,
         "market_slug": selected.market_slug,
+        "market_end_at": selected.market_end_at,
         "source_market_hash": selected.source_market_hash,
         "spread_bps": selected.spread_bps,
         "target_size": decimal_text(selected.target_size),

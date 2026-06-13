@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -103,6 +104,24 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
         self.assertEqual(doc["archived_manifest_sha256"], "3" * 64)
         self.assertFalse(doc["live_submit_allowed"])
         self.assertFalse(doc["remote_side_effects"])
+        for field in [
+            "posted",
+            "remote_side_effects",
+            "raw_signed_order_exposed",
+            "live_submit_allowed",
+            "real_funds_canary_allowed",
+            "preconditions_live_submit_would_pass",
+            "preconditions_real_funds_canary_would_pass",
+            "kill_switch_open",
+            "runtime_worker_healthy",
+            "geoblock_allowed",
+            "repository_reservation_exists",
+            "idempotency_key_written",
+            "reconcile_worker_healthy",
+            "cancel_only_fallback_ready",
+            "balance_allowance_checked",
+        ]:
+            self.assertIsInstance(doc["preflight_report"][field], bool)
         self.assertEqual(
             doc["preflight_report"]["gate_evidence_refs"]["kill_switch_open"],
             "pg://canary-runtime-truth/account/acct-1/condition/cond-1/runtime_accounts/kill-switch",
@@ -118,14 +137,58 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
         self.assertEqual(candidate["target_size"], "5")
         self.assertEqual(candidate["estimated_order_notional_usd"], "0.1")
 
+    def test_store_truth_condition_id_uses_candidate_market_id(self) -> None:
+        self.assertEqual(
+            run_real_funds_canary_store_truth_cli_preflight.condition_id_from_candidate(
+                {"market_id": "0xabc"}
+            ),
+            "0xabc",
+        )
+
+    def test_store_truth_candidate_sanitizes_review_only_outcome_for_cli(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            candidate_path = Path(tmp_name) / "candidate.json"
+            candidate_path.write_text(
+                json.dumps(
+                    {
+                        "market_id": "0xabc",
+                        "token_id": "tok",
+                        "outcome": "Yes",
+                        "limit_price": "0.001",
+                        "exchange_rule_snapshot": {"min_tick_size": "0.001"},
+                    }
+                )
+            )
+            with patch.dict(
+                "run_real_funds_canary_store_truth_cli_preflight.os.environ",
+                {"PMX_STORE_TRUTH_CANDIDATE_MARKET_FILE": str(candidate_path)},
+                clear=True,
+            ):
+                candidate = run_real_funds_canary_store_truth_cli_preflight.market_candidate()
+        selfNotIn = self.assertNotIn
+        selfNotIn("outcome", candidate)
+        self.assertEqual(candidate["estimated_order_notional_usd"], "0.005")
+        self.assertEqual(candidate["exchange_rule_snapshot"]["min_tick_size"], "0.001")
+
     def test_store_truth_approval_keeps_single_attempt_notional_caps(self) -> None:
         approval = run_real_funds_canary_store_truth_cli_preflight.approval(
             "acct-1",
+            "cond-1",
             "1" * 64,
             artifact_sha256="2" * 64,
             workspace_manifest_sha256="3" * 64,
             archived_manifest_sha256="4" * 64,
         )
+        self.assertEqual(approval["condition_id"], "cond-1")
+        self.assertEqual(approval["operator_identity_ref"], "local-store-truth-cli-preflight")
+        self.assertEqual(
+            approval["operator_identity_sha256"],
+            hashlib.sha256(b"local-store-truth-cli-preflight").hexdigest(),
+        )
+        self.assertTrue(approval["runtime_gate_snapshot"]["kill_switch_open"])
+        self.assertTrue(approval["runtime_gate_snapshot"]["live_submit_allowed"])
+        self.assertTrue(approval["runtime_gate_snapshot"]["real_funds_canary_allowed"])
+        self.assertIn("kill_switch_open", approval["runtime_gate_evidence_refs"])
         self.assertEqual(approval["max_order_notional_usd"], "1")
         self.assertEqual(approval["max_daily_notional_usd"], "1")
 
@@ -159,6 +222,10 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
                     archived_manifest_sha256="c" * 64,
                 )
         env = run_mock.call_args.kwargs["env"]
+        argv = run_mock.call_args.args[0]
+        self.assertIn("--preflight-only", argv)
+        self.assertIn("--allow-live-submit-config", argv)
+        self.assertIn("--allow-real-funds-canary-config", argv)
         self.assertEqual(env["PMX_ACTIVE_ACCOUNT_PROFILE"], "store_truth_cli_preflight")
         self.assertEqual(env["PMX_ACTIVE_ACCOUNT_ID"], "acct-store-truth-test")
         self.assertEqual(env["PMX_ACTIVE_PROFILE_REF"], "local-profile://store_truth_cli_preflight")
@@ -275,6 +342,23 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
         self.assertEqual(payload["returncode"], 3)
         self.assertEqual(payload["database_target"]["hostname"], "127.0.0.1")
         self.assertEqual(payload["stderr"], "connection refused")
+
+    def test_seed_runtime_truth_scopes_worker_rows_to_account_and_condition(self) -> None:
+        captured: dict[str, str] = {}
+
+        def fake_run_psql(url: str, sql: str) -> None:
+            captured["sql"] = sql
+
+        with patch.object(run_real_funds_canary_store_truth_cli_preflight, "run_psql", fake_run_psql):
+            run_real_funds_canary_store_truth_cli_preflight.seed_runtime_truth(
+                "postgres://pmx@localhost/pmx",
+                "acct-1",
+                "cond-1",
+            )
+        self.assertIn("account_id, condition_id", captured["sql"])
+        self.assertIn("'acct-1', 'cond-1'", captured["sql"])
+        self.assertIn("'heartbeat'", captured["sql"])
+        self.assertIn("'resource-refresh'", captured["sql"])
 
 
 if __name__ == "__main__":

@@ -98,13 +98,22 @@ fn reviewed_decision_fixture(
         workspace_manifest_sha256: approval.workspace_manifest_sha256.clone(),
         archived_manifest_sha256: approval.archived_manifest_sha256.clone(),
         market_candidate_sha256: approval.market_candidate_sha256.clone(),
+        condition_id: approval.condition_id.clone(),
         github_evidence: serde_json::json!({"root_ci_run_id": "unit-test"}),
+        github_evidence_details: serde_json::json!({
+            "root_ci": {
+                "run_id": "unit-test",
+                "status": "success"
+            }
+        }),
         external_references: serde_json::json!({"operator_approval_ref": "approval://unit-test"}),
         risk_limits: serde_json::json!({
             "max_order_notional_usd": "1",
             "target_size": "5",
             "max_daily_notional_usd": "5"
         }),
+        runtime_gate_snapshot: approval.runtime_gate_snapshot.clone(),
+        runtime_gate_evidence_refs: approval.runtime_gate_evidence_refs.clone(),
         required_review_signals: serde_json::json!({"artifact_hash_reviewed": true}),
         live_submit_authorized: true,
         live_cancel_authorized: true,
@@ -119,8 +128,17 @@ fn reviewed_decision_fixture(
         reviewed_release_decision_present: true,
         operator_identity_ref: approval.operator_identity_ref.clone(),
         operator_identity_sha256: approval.operator_identity_sha256.clone(),
+        reviewer_identity_ref: "reviewer://unit-test".into(),
         reviewer_identity_sha256:
             "9644ef536b99be9273eb3a72384705f6642a461810904a1107610fe4f48e14ec".into(),
+        review_signature_evidence_ref: "reviewer-registry://unit-test/signing-key-attestation".into(),
+        review_signature_evidence_sha256: sha256_fixture('f'),
+        reviewer_check_evidence_refs: serde_json::json!({
+            "artifact_hash_reviewed": "review://unit-test/artifact"
+        }),
+        reviewer_check_evidence_sha256s: serde_json::json!({
+            "artifact_hash_reviewed": sha256_fixture('7')
+        }),
         secrets_included: false,
     }
 }
