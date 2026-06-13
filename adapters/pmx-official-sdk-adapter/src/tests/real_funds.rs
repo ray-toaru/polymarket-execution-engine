@@ -131,7 +131,8 @@ fn reviewed_decision_fixture(
         reviewer_identity_ref: "reviewer://unit-test".into(),
         reviewer_identity_sha256:
             "9644ef536b99be9273eb3a72384705f6642a461810904a1107610fe4f48e14ec".into(),
-        review_signature_evidence_ref: "reviewer-registry://unit-test/signing-key-attestation".into(),
+        review_signature_evidence_ref: "reviewer-registry://unit-test/signing-key-attestation"
+            .into(),
         review_signature_evidence_sha256: sha256_fixture('f'),
         reviewer_check_evidence_refs: serde_json::json!({
             "artifact_hash_reviewed": "review://unit-test/artifact"

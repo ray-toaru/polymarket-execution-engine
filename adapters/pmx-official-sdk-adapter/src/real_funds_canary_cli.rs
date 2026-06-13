@@ -1170,7 +1170,11 @@ mod tests {
 
         let strict_error = validate_real_funds_canary_preconditions(&config, &request)
             .expect_err("strict live canary validation must still require operator approval");
-        assert!(strict_error.to_string().contains("operator approval is missing"));
+        assert!(
+            strict_error
+                .to_string()
+                .contains("operator approval is missing")
+        );
         validate_preflight_reportable_preconditions(&config, &request)
             .expect("preflight reportability should not require release decision approval");
         unsafe {
