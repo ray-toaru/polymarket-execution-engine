@@ -19,6 +19,7 @@ EXTERNAL_REFERENCES_TEMPLATE = ROOT / "config" / "controlled-canary.external-ref
 DOC = ROOT / "docs" / "REAL_FUNDS_CANARY_OPERATIONS_READINESS.md"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
 EXAMPLE_REVIEW_ARTIFACT_SHA256 = "c0c22c91541d48c508a588b06a2fa5d7051bc6c8e29df626de67a59cc96c24e6"
+DRILL_CREDENTIALED_SDK_RUN_ID = "local-current-gates-review-package-drill"
 
 
 def main() -> int:
@@ -73,7 +74,12 @@ def main() -> int:
             f"controlled canary external-reference validation failed: {references_validator.stderr.strip() or references_validator.stdout.strip()}"
         )
     blocked_rehearsal = subprocess.run(
-        ["python", str(BLOCKED_REHEARSAL)],
+        [
+            "python",
+            str(BLOCKED_REHEARSAL),
+            "--credentialed-sdk-run-id",
+            DRILL_CREDENTIALED_SDK_RUN_ID,
+        ],
         cwd=ROOT,
         text=True,
         capture_output=True,
@@ -129,6 +135,8 @@ def main() -> int:
                 str(SCRIPT),
                 "--artifact-sha256",
                 EXAMPLE_REVIEW_ARTIFACT_SHA256,
+                "--credentialed-sdk-run-id",
+                DRILL_CREDENTIALED_SDK_RUN_ID,
                 "--output-dir",
                 str(output_dir),
             ],
@@ -198,6 +206,8 @@ def main() -> int:
                 str(SCRIPT),
                 "--artifact-sha256",
                 EXAMPLE_REVIEW_ARTIFACT_SHA256,
+                "--credentialed-sdk-run-id",
+                DRILL_CREDENTIALED_SDK_RUN_ID,
                 "--output-dir",
                 str(output_dir),
                 "--external-references-file",
