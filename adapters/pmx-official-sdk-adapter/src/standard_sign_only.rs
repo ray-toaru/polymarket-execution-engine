@@ -2,10 +2,10 @@ use crate::{
     CLOB_PRODUCTION_HOST, CLOB_V2_COLLATERAL_SYMBOL, CLOB_V2_SIGNING_PROTOCOL,
     OfficialSdkAdapterError, OfficialSdkPlanOrder, OfficialSdkStandardSignOnlyConstruction,
     OfficialSdkStandardSignOnlyPlan, OfficialSdkStandardSignOnlyProfile, SignOnlyDryRunReceipt,
-    mapping::official_sdk_plan_to_builder_mapping, sign_only_lifecycle_records_from_receipt,
+    hash::sha256_hex, mapping::official_sdk_plan_to_builder_mapping,
+    sign_only_lifecycle_records_from_receipt,
 };
 use pmx_core::HashValue;
-use sha2::{Digest, Sha256};
 
 pub fn validate_standard_sign_only_profile(
     profile: &OfficialSdkStandardSignOnlyProfile,
@@ -99,6 +99,5 @@ fn standard_sign_only_digest(
     });
     let bytes = serde_json::to_vec(&payload)
         .map_err(|err| OfficialSdkAdapterError::InvalidInput(err.to_string()))?;
-    let digest = Sha256::digest(bytes);
-    Ok(format!("{digest:x}"))
+    Ok(sha256_hex(bytes))
 }

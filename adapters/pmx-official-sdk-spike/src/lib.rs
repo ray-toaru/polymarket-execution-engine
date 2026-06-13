@@ -2,7 +2,7 @@
 //!
 //! This crate remains outside the default workspace live path because it is the
 //! official SDK boundary. The main execution engine now aligns its Rust baseline
-//! with the SDK (Rust 1.88 / edition 2024), but real trading remains gated by
+//! with the SDK (Rust 1.96 / edition 2024), but real trading remains gated by
 //! execution-plane policy, store, reservation, and live-submit controls.
 
 use serde::{Deserialize, Serialize};

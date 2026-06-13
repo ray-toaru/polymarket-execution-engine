@@ -14,7 +14,7 @@ Evidence summary as of v0.7 review:
 - Current Polymarket API reference documents order entry at `https://clob.polymarket.com/order`; live canary code must use that canonical host to avoid POST redirect/method downgrade failure.
 - README documents order build/sign/post flow through `limit_order()` / `market_order()`, `client.sign(&signer, order)`, and `client.post_order(signed_order)`.
 - README documents WebSocket streaming with the `ws` feature and authenticated user streams.
-- Cargo metadata observed from repository pins crate version `0.6.0-canary.1`, edition `2024`, and rust-version `1.88.0`.
+- Cargo metadata observed from repository pins crate version `0.6.0-canary.1`, edition `2024`, and workspace rust-version `1.96`.
 
 Implication:
 

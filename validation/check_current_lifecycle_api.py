@@ -31,9 +31,9 @@ EVIDENCE_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
 REQUIRED = {
     API: [
         "/v1/sign-only/lifecycle-events",
-        "/v1/sign-only/lifecycle-events/:execution_id",
-        "/v1/lifecycle/executions/:execution_id/events",
-        "/v1/lifecycle/orders/:order_id/events",
+        "/v1/sign-only/lifecycle-events/{execution_id}",
+        "/v1/lifecycle/executions/{execution_id}/events",
+        "/v1/lifecycle/orders/{order_id}/events",
         "/v1/admin/audit-events",
         "record_sign_only_lifecycle_event",
         "list_sign_only_lifecycle_events",

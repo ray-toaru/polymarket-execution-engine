@@ -1033,8 +1033,8 @@ def validate_v08_dependency_and_sdk_policy() -> None:
     workspace_dependencies = workspace.get("dependencies", {})
     if workspace_package.get("edition") != "2024":
         fail("root Cargo baseline must keep workspace.package.edition=2024")
-    if workspace_package.get("rust-version") != "1.88":
-        fail("root Cargo baseline must keep workspace.package.rust-version=1.88")
+    if workspace_package.get("rust-version") != "1.96":
+        fail("root Cargo baseline must keep workspace.package.rust-version=1.96")
     if workspace_package.get("version") != (ROOT / "VERSION").read_text().strip():
         fail("root Cargo baseline must keep workspace.package.version aligned with VERSION")
     tokio_dep = workspace_dependencies.get("tokio", {})
@@ -1045,8 +1045,8 @@ def validate_v08_dependency_and_sdk_policy() -> None:
         fail("root Cargo baseline must keep serde pinned to 1.0.228")
     toolchain = cargo_toml(EXECUTOR / "rust-toolchain.toml")
     toolchain_spec = toolchain.get("toolchain", {})
-    if toolchain_spec.get("channel") != "1.88.0":
-        fail("executor rust toolchain must pin channel=1.88.0")
+    if toolchain_spec.get("channel") != "1.96.0":
+        fail("executor rust toolchain must pin channel=1.96.0")
     if toolchain_spec.get("components") != ["rustfmt", "clippy"]:
         fail("executor rust toolchain must keep rustfmt and clippy components")
     if toolchain_spec.get("profile") != "minimal":
@@ -1055,8 +1055,8 @@ def validate_v08_dependency_and_sdk_policy() -> None:
     package = sdk_spike_manifest.get("package", {})
     if package.get("name") != "pmx-official-sdk-spike":
         fail("official SDK spike Cargo must keep canonical package name")
-    if package.get("rust-version") != "1.88":
-        fail("official SDK spike Cargo must keep rust-version=1.88")
+    if package.get("rust-version") != "1.96":
+        fail("official SDK spike Cargo must keep rust-version=1.96")
     features = sdk_spike_manifest.get("features", {})
     if features.get("sdk-typecheck") != ["dep:polymarket_client_sdk_v2"]:
         fail("official SDK spike Cargo must keep sdk-typecheck wired to dep:polymarket_client_sdk_v2")

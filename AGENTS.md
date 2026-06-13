@@ -13,7 +13,7 @@ Applies to this repository, the Rust execution plane. module-level `AGENTS.md` f
 
 ## Rust development rules
 
-- Workspace MSRV: Rust `1.88`, edition `2024`.
+- Workspace MSRV: Rust `1.96`, edition `2024`.
 - Keep `Cargo.lock` and adapter lockfiles consistent after dependency changes.
 - Prefer small, behavior-preserving changes unless the task explicitly requires design work.
 - Do not weaken fail-closed behavior for auth, runtime degraded status, live-submit guard, or payload redaction.

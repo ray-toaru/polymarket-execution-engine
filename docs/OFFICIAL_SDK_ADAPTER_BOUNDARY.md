@@ -11,7 +11,7 @@ The official Polymarket Rust SDK is the primary and only planned live CLOB adapt
 The adapter remains outside the default workspace until the following are proven:
 
 ```text
-1. v0.11 workspace gates pass on Rust 1.88+
+1. v0.11 workspace gates pass on Rust 1.96+
 2. SDK spike gates pass
 3. official adapter crate gates pass
 4. authenticated non-trading smoke passes

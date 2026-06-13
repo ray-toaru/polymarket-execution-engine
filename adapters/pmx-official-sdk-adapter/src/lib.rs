@@ -12,6 +12,7 @@
 //! - live submit requires the explicit `live-submit` feature and runtime safety gates.
 
 mod gates;
+mod hash;
 mod lifecycle;
 mod liveness;
 mod mapping;

@@ -63,16 +63,15 @@ pub(super) async fn begin_submit_attempt(
             });
         }
         let now = Utc::now();
-        if status == "PROCEEDING" {
-            if let Some(expires_at) = lease_expires_at {
-                if expires_at > now {
-                    PostgresStore::rollback(&client).await;
-                    return Ok(IdempotencyAction::InProgress {
-                        submit_attempt: submit_attempt as u32,
-                        retry_after_ms: (expires_at - now).num_milliseconds().max(1_000) as u64,
-                    });
-                }
-            }
+        if status == "PROCEEDING"
+            && let Some(expires_at) = lease_expires_at
+            && expires_at > now
+        {
+            PostgresStore::rollback(&client).await;
+            return Ok(IdempotencyAction::InProgress {
+                submit_attempt: submit_attempt as u32,
+                retry_after_ms: (expires_at - now).num_milliseconds().max(1_000) as u64,
+            });
         }
 
         let next_attempt = match next_submit_attempt(&client, account_id, execution_id).await {

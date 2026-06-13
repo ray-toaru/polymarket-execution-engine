@@ -2,7 +2,7 @@
 
 > Status: current v0.26.1 controlled real-funds canary source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
-Run from `polymarket-execution-engine` in an environment with Rust 1.88, Cargo, rustfmt, clippy, and optionally PostgreSQL:
+Run from `polymarket-execution-engine` in an environment with Rust 1.96, Cargo, rustfmt, clippy, and optionally PostgreSQL:
 
 ```bash
 ./validation/run_current_gates.sh

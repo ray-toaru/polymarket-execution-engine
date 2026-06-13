@@ -146,12 +146,12 @@ where
     plan.plan_hash = canonical_json_sha256(&PlanHashInput::from(&plan))
         .map_err(|err| ServiceError::Internal(err.to_string()))?;
     plan.execution_id = format!("exec-{}", &plan.plan_hash.0[..32]);
-    if let Some(bound_plan_hash) = &approval.bound_plan_hash {
-        if bound_plan_hash != &plan.plan_hash {
-            return Err(ServiceError::Conflict(
-                "approval bound_plan_hash does not match compiled plan_hash".into(),
-            ));
-        }
+    if let Some(bound_plan_hash) = &approval.bound_plan_hash
+        && bound_plan_hash != &plan.plan_hash
+    {
+        return Err(ServiceError::Conflict(
+            "approval bound_plan_hash does not match compiled plan_hash".into(),
+        ));
     }
     store.save_plan_summary(&plan).await?;
     Ok(plan)

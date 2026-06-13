@@ -19,7 +19,7 @@ Confirmed from that repository and README:
 - Repository: `Polymarket/rs-clob-client-v2`.
 - Crate: `polymarket_client_sdk_v2`.
 - Version observed in `Cargo.toml`: `0.6.0-canary.1`.
-- Cargo metadata observed: edition `2024`, rust-version `1.88.0`.
+- Cargo metadata observed: edition `2024`, workspace rust-version `1.96`.
 - README describes typed CLOB requests, dual authentication flows, a type-level state machine, `alloy::signers::Signer` support including remote signers, order builders, serde support, and async reqwest design.
 - README historically documented authenticated CLOB client construction through `Client::new("https://clob-v2.polymarket.com", Config::default())`, `authentication_builder(&signer)`, and `authenticate()`.
 - README documents order build/sign/post through `market_order()` / `limit_order()`, `client.sign(&signer, order)`, and `client.post_order(signed_order)`.
@@ -52,15 +52,15 @@ REST remains acceptable only for:
 
 ## Important constraint: MSRV mismatch
 
-The execution engine currently keeps a lower core MSRV baseline. The official SDK declares Rust `1.88.0` and edition `2024`. This creates a real engineering choice:
+The execution engine now keeps a Rust `1.96` baseline while the official SDK originally drove the Rust `1.88.0` / edition `2024` decision. This leaves the historical engineering choice:
 
 | Option | Correctness | Complexity | Maintenance | Risk | Decision |
 |---|---:|---:|---:|---:|---|
-| Raise entire execution engine MSRV to 1.88 | High | Low-medium | Simple | May exclude older build envs | Likely after SDK spike |
+| Raise entire execution engine MSRV to SDK-compatible baseline | High | Low-medium | Simple | May exclude older build envs | Likely after SDK spike |
 | Keep core MSRV lower and isolate SDK adapter | High | Medium | Slightly split | Requires two validation profiles | Current v0.7 approach |
 | Avoid official SDK to preserve lower MSRV | Lower | High | Risky | Reimplements signing/auth details | Rejected for real adapter |
 
-Current choice: isolate the SDK spike outside the default workspace until the project explicitly accepts Rust 1.88 for real-adapter builds.
+Current choice: the workspace has accepted a Rust 1.96 baseline; the SDK spike remains isolated from default live paths because live submit still requires separate gates.
 
 ## Attack / defense
 
@@ -104,7 +104,7 @@ Revision: gates are read-only smoke, authenticated non-trading smoke, dry-run si
 
 ```text
 1. v0.7 cargo gates rerun after source changes.
-2. SDK spike crate typechecks with --features sdk-typecheck in Rust 1.88+.
+2. SDK spike crate typechecks with --features sdk-typecheck in Rust 1.96+.
 3. Read-only SDK CLOB ok() smoke.
 4. Authenticated non-trading SDK smoke.
 5. PlanOrder -> SDK order builder mapping reviewed.

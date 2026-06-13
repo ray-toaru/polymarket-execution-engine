@@ -39,7 +39,7 @@ Before any live submit path is enabled:
 
 1. SDK dependency pinned.
 2. Rust/MSRV decision recorded.
-3. SDK spike compiles in Rust 1.88+.
+3. SDK spike compiles in Rust 1.96+.
 4. Read-only `ok()` smoke passes without credentials.
 5. Authenticated non-trading smoke passes.
 6. Sign-only dry-run passes without submit.

@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-use sha2::{Digest, Sha256};
 use std::cmp::Ordering;
 
 use crate::{
@@ -8,7 +7,8 @@ use crate::{
     RealFundsCanaryMarketDiagnostics, RealFundsCanaryMarketRejectionCounts,
     RealFundsCanaryMarketSelection, RealFundsCanaryMarketValidation, RealFundsCanaryPreconditions,
     RealFundsCanaryRequest, RealFundsCanaryRiskLimits, ReviewedRealFundsCanaryReleaseDecision,
-    env_flag, is_canonical_production_clob_host, validate_live_submit_canary_preconditions,
+    env_flag, hash::sha256_hex, is_canonical_production_clob_host,
+    validate_live_submit_canary_preconditions,
 };
 
 const REAL_FUNDS_CANARY_SCOPE: &str = "REAL_FUNDS_CANARY";
@@ -254,10 +254,7 @@ pub fn validate_reviewed_real_funds_canary_release_decision(
         ),
         (
             decision.operator_identity_sha256
-                == format!(
-                    "{:x}",
-                    Sha256::digest(decision.operator_identity_ref.as_bytes())
-                ),
+                == sha256_hex(decision.operator_identity_ref.as_bytes()),
             "operator identity sha256 does not match operator identity ref",
         ),
         (
@@ -526,10 +523,7 @@ fn valid_approval(approval: &RealFundsCanaryApproval) -> bool {
         && !approval.operator_identity_ref.trim().is_empty()
         && is_sha256(&approval.operator_identity_sha256)
         && approval.operator_identity_sha256
-            == format!(
-                "{:x}",
-                Sha256::digest(approval.operator_identity_ref.as_bytes())
-            )
+            == sha256_hex(approval.operator_identity_ref.as_bytes())
         && decimal_gt_zero(&approval.max_order_notional_usd)
         && decimal_gt_zero(&approval.max_daily_notional_usd)
 }

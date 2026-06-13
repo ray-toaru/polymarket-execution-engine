@@ -9,7 +9,7 @@ fn router_with_state(state: AppState) -> Router {
         .route("/v1/decisions/evaluate", post(flow::decide))
         .route("/v1/plans/compile", post(flow::compile_plan))
         .route("/v1/submissions", post(flow::submit_plan))
-        .route("/v1/submissions/:execution_id", get(read::get_submission))
+        .route("/v1/submissions/{execution_id}", get(read::get_submission))
         .route(
             "/v1/sign-only/lifecycle-events",
             post(flow::record_sign_only_lifecycle_event),
@@ -19,15 +19,15 @@ fn router_with_state(state: AppState) -> Router {
             post(flow::record_standard_sign_only_construction),
         )
         .route(
-            "/v1/sign-only/lifecycle-events/:execution_id",
+            "/v1/sign-only/lifecycle-events/{execution_id}",
             get(read::list_sign_only_lifecycle_events),
         )
         .route(
-            "/v1/lifecycle/executions/:execution_id/events",
+            "/v1/lifecycle/executions/{execution_id}/events",
             get(read::list_execution_lifecycle_events),
         )
         .route(
-            "/v1/lifecycle/orders/:order_id/events",
+            "/v1/lifecycle/orders/{order_id}/events",
             get(read::list_order_lifecycle_events),
         )
         .route("/v1/runtime/workers", get(read::list_runtime_worker_status))

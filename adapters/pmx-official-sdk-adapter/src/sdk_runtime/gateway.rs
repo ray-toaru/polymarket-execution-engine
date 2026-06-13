@@ -1,6 +1,6 @@
 use crate::{
     OfficialSdkAdapterConfig, OfficialSdkAdapterError, gateway_error_from_normalized_sdk_error,
-    normalize_sdk_error, redact_sensitive_text,
+    hash::sha256_hex, normalize_sdk_error, redact_sensitive_text,
 };
 
 use super::shared::{authenticated_sdk_client, sdk_call_timeout, signer_from_env};
@@ -14,7 +14,6 @@ use polymarket_client_sdk_v2::clob::Client as SdkClient;
 use polymarket_client_sdk_v2::clob::types::request::OrdersRequest;
 use polymarket_client_sdk_v2::clob::types::{OrderType as SdkOrderType, Side as SdkSide};
 use polymarket_client_sdk_v2::types::{Decimal as SdkDecimal, U256 as SdkU256};
-use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -251,6 +250,8 @@ fn sdk_order_type(raw: &str) -> Result<SdkOrderType, GatewayError> {
 
 fn signed_order_ref(execution_id: &str, signed: &SignedOrder) -> anyhow::Result<String> {
     let encoded = serde_json::to_vec(signed).context("serialize signed SDK order for digest")?;
-    let digest = Sha256::digest(&encoded);
-    Ok(format!("official-sdk-signed:{execution_id}:{digest:x}"))
+    Ok(format!(
+        "official-sdk-signed:{execution_id}:{}",
+        sha256_hex(encoded)
+    ))
 }

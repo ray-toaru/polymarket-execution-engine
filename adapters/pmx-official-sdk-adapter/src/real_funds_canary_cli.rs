@@ -3,7 +3,7 @@ use crate::{
     RealFundsCanaryApproval, RealFundsCanaryMarketCandidate, RealFundsCanaryMarketDiagnostics,
     RealFundsCanaryReceipt, RealFundsCanaryRequest, RealFundsCanaryRiskLimits,
     RealFundsCanaryStageReport, ReviewedRealFundsCanaryReleaseDecision,
-    build_real_funds_canary_preconditions, preflight_real_funds_canary_execution,
+    build_real_funds_canary_preconditions, hash::sha256_hex, preflight_real_funds_canary_execution,
     run_real_funds_canary_gtc_post_only_cancel_with_reporter,
     validate_active_profile_env_for_canary, validate_real_funds_canary_market_with_diagnostics,
     validate_real_funds_canary_preconditions, validate_reviewed_real_funds_canary_release_decision,
@@ -12,7 +12,6 @@ use pmx_core::{AccountId, ExecutionId, HashValue};
 use pmx_store::{CanaryRuntimeTruthQuery, CanaryRuntimeTruthStore, PostgresStore};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use sha2::{Digest, Sha256};
 use std::{
     collections::HashMap,
     fs::OpenOptions,
@@ -301,10 +300,7 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
         operator_approved: release_decision_bound
             && !approval.operator_identity_ref.trim().is_empty()
             && approval.operator_identity_sha256
-                == format!(
-                    "{:x}",
-                    Sha256::digest(approval.operator_identity_ref.as_bytes())
-                ),
+                == sha256_hex(approval.operator_identity_ref.as_bytes()),
         cancel_only_fallback_ready: runtime_truth.cancel_only_fallback_ready(),
     };
     let preconditions =
@@ -344,14 +340,8 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
             dry_run: false,
             preflight_only: true,
             armed: false,
-            selected_market_id_hash: Some(format!(
-                "{:x}",
-                sha2::Sha256::digest(market.market_id.as_bytes())
-            )),
-            selected_token_id_hash: Some(format!(
-                "{:x}",
-                sha2::Sha256::digest(market.token_id.as_bytes())
-            )),
+            selected_market_id_hash: Some(sha256_hex(market.market_id.as_bytes())),
+            selected_token_id_hash: Some(sha256_hex(market.token_id.as_bytes())),
             limit_price: Some(market.limit_price),
             size: Some(market.size),
             notional_usd: Some(market.notional_usd),
@@ -448,14 +438,8 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
         dry_run: true,
         preflight_only: false,
         armed: false,
-        selected_market_id_hash: Some(format!(
-            "{:x}",
-            sha2::Sha256::digest(market.market_id.as_bytes())
-        )),
-        selected_token_id_hash: Some(format!(
-            "{:x}",
-            sha2::Sha256::digest(market.token_id.as_bytes())
-        )),
+        selected_market_id_hash: Some(sha256_hex(market.market_id.as_bytes())),
+        selected_token_id_hash: Some(sha256_hex(market.token_id.as_bytes())),
         limit_price: Some(market.limit_price),
         size: Some(market.size),
         notional_usd: Some(market.notional_usd),
@@ -1055,10 +1039,6 @@ fn stage_history_path(path: &Path) -> PathBuf {
         .map(|extension| format!("{extension}.stages.jsonl"))
         .unwrap_or_else(|| "stages.jsonl".into());
     path.with_extension(extension)
-}
-
-fn sha256_hex(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
 }
 
 fn validate_preflight_reportable_preconditions(
