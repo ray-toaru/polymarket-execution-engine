@@ -23,6 +23,7 @@ EXTERNAL_REFERENCES = ROOT / "config" / "controlled-canary.external-references.e
 PREPARE_REVIEW = ROOT / "validation" / "prepare_real_funds_canary_review.py"
 CLI = ROOT / "adapters" / "pmx-official-sdk-adapter" / "src" / "real_funds_canary_cli.rs"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
+DRILL_CREDENTIALED_SDK_RUN_ID = "local-current-gates-20260523"
 FORBIDDEN_GO_DECISION_GLOBS = [
     "config/*go*.json",
     "deploy/**/*go*.json",
@@ -133,6 +134,8 @@ def main() -> int:
                 str(output_dir),
                 "--external-references-file",
                 str(EXTERNAL_REFERENCES),
+                "--credentialed-sdk-run-id",
+                DRILL_CREDENTIALED_SDK_RUN_ID,
                 "--artifact-sha256",
                 str(artifact_sha),
                 "--evidence-manifest-sha256",

@@ -24,6 +24,7 @@ PREPARE_REVIEW = ROOT / "validation" / "prepare_real_funds_canary_review.py"
 PACKAGE_PREFLIGHT = ROOT / "deploy" / "single-host" / "bin" / "pmx-single-host-canary-package-preflight.sh"
 CANARY_SERVICE = ROOT / "deploy" / "single-host" / "systemd" / "pmx-real-funds-canary@.service"
 MANIFEST_WRITER = ROOT / "validation" / "write_current_evidence_manifest.py"
+DRILL_CREDENTIALED_SDK_RUN_ID = "local-current-gates-20260523"
 
 
 def sha256(path: Path) -> str:
@@ -92,6 +93,8 @@ def main() -> int:
             str(output_dir),
             "--external-references-file",
             str(EXTERNAL_REFERENCES),
+            "--credentialed-sdk-run-id",
+            DRILL_CREDENTIALED_SDK_RUN_ID,
             "--artifact-sha256",
             str(artifact_sha),
             "--evidence-manifest-sha256",
