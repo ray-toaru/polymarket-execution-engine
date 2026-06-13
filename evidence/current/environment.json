@@ -1,17 +1,17 @@
 {
-  "captured_at": "2026-06-11T06:00:24.941488+00:00",
+  "captured_at": "2026-06-13T16:24:27.459126+00:00",
   "dependency_locks": {
     "polymarket-execution-engine/Cargo.lock": {
       "exists": true,
-      "sha256": "2d08725e9e1ffc7d46f5ac6852d15a685b9fa1daf453781e0ef1f0e359232261"
+      "sha256": "4a380dbaf7089844256ef4173206be601c0988fc270cae7d93180af60be34a24"
     },
     "polymarket-execution-engine/adapters/pmx-official-sdk-adapter/Cargo.lock": {
       "exists": true,
-      "sha256": "bc25463528c629d6d8a08144ec2126aeff3f6bf91f892f09bda63b1d787e0f43"
+      "sha256": "733a13330651dab0a056c868c8a7de81f643818d11f60f4b2cfb848ed90602b9"
     },
     "polymarket-execution-engine/adapters/pmx-official-sdk-spike/Cargo.lock": {
       "exists": true,
-      "sha256": "7a7c7180ea4991f3b6dbca73dbf75eb096b4ee9a3903146dc32a31bee3c59fef"
+      "sha256": "403cfc5e7a2deb737aae0511e9ee49bd06daa3e546849fdd5bb50a797932729b"
     }
   },
   "environment": {
@@ -23,27 +23,27 @@
   },
   "git": {
     "execution": {
-      "branch": "v0.28-production-live-candidate",
-      "head": "c23b0a3acd885025542c842f7d23b9d5abd1658a",
+      "branch": "main",
+      "head": "1249b87c3fddf91d975911cb46d3a911d947dc26",
       "path": "polymarket-execution-engine",
       "status_clean": true,
       "status_entry_count": 0
     },
     "hermes": {
-      "branch": "v0.28-production-live-candidate",
-      "head": "0286fa59864b6f9860835f3a29da1c395be8ea93",
+      "branch": "main",
+      "head": "9cc197837d14aad109681d916bfc199681ef0fc4",
       "path": "hermes-polymarket-executor-adapter",
       "status_clean": true,
       "status_entry_count": 0
     },
     "integration": {
-      "branch": "v0.28-production-live-candidate",
-      "head": "5d7eaced32e7f24048435f52d0a9fa96415b2f63",
+      "branch": "main",
+      "head": "364278b4793068dfe113b2c791455784523ceeb0",
       "path": ".",
       "status_clean": true,
       "status_entry_count": 0
     },
-    "submodules": "0286fa59864b6f9860835f3a29da1c395be8ea93 hermes-polymarket-executor-adapter (v0.28.0-29-g0286fa5)\n c23b0a3acd885025542c842f7d23b9d5abd1658a polymarket-execution-engine (v0.28.0-163-gc23b0a3)"
+    "submodules": "9cc197837d14aad109681d916bfc199681ef0fc4 hermes-polymarket-executor-adapter (v0.28.0-31-g9cc1978)\n 1249b87c3fddf91d975911cb46d3a911d947dc26 polymarket-execution-engine (v0.28.0-176-g1249b87)"
   },
   "integration_root": "/workspaces/universal/rust/polymarket_dual_project",
   "platform": {
@@ -76,7 +76,7 @@
       ],
       "exit_status": 0,
       "stderr": "",
-      "stdout": "annotated-types==0.7.0\nanyio==4.13.0\nast_serialize==0.5.0\nattrs==26.1.0\nbandit==1.9.4\nboolean.py==5.0\nbuild==1.4.0\nCacheControl==0.14.4\ncertifi==2026.5.20\ncharset-normalizer==3.4.7\ncyclonedx-python-lib==11.7.0\ndefusedxml==0.7.1\nfilelock==3.29.0\nh11==0.16.0\n-e git+https://github.com/ray-toaru/hermes-polymarket-executor-adapter.git@0286fa59864b6f9860835f3a29da1c395be8ea93#egg=hermes_polymarket_executor_adapter&subdirectory=../../hermes-polymarket-executor-adapter\nhttpcore==1.0.9\nhttpx==0.28.1\nidna==3.18\niniconfig==2.3.0\njsonschema==4.25.1\njsonschema-specifications==2025.9.1\nlibrt==0.11.0\nlicense-expression==30.4.4\nmarkdown-it-py==4.2.0\nmdurl==0.1.2\nmsgpack==1.1.2\nmypy==2.1.0\nmypy_extensions==1.1.0\npackageurl-python==0.17.6\npackaging==26.2\npathspec==1.1.1\npip==26.1.1\npip-api==0.0.34\npip-requirements-parser==32.0.1\npip_audit==2.10.0\nplatformdirs==4.10.0\npluggy==1.6.0\npy-serializable==2.1.0\npydantic==2.13.4\npydantic_core==2.46.4\nPygments==2.20.0\npyparsing==3.3.2\npyproject_hooks==1.2.0\npytest==9.0.3\nPyYAML==6.0.3\nreferencing==0.37.0\nrequests==2.34.2\nrich==15.0.0\nrpds-py==2026.5.1\nruff==0.15.15\nsortedcontainers==2.4.0\nstevedore==5.8.0\ntomli==2.4.1\ntomli_w==1.2.0\ntyping-inspection==0.4.2\ntyping_extensions==4.15.0\nurllib3==2.7.0"
+      "stdout": "annotated-types==0.7.0\nanyio==4.13.0\nast_serialize==0.5.0\nattrs==26.1.0\nbandit==1.9.4\nboolean.py==5.0\nbuild==1.5.0\nCacheControl==0.14.4\ncertifi==2026.5.20\ncharset-normalizer==3.4.7\ncyclonedx-python-lib==11.7.0\ndefusedxml==0.7.1\nfilelock==3.29.0\nh11==0.16.0\n-e git+https://github.com/ray-toaru/hermes-polymarket-executor-adapter.git@9cc197837d14aad109681d916bfc199681ef0fc4#egg=hermes_polymarket_executor_adapter&subdirectory=../../hermes-polymarket-executor-adapter\nhttpcore==1.0.9\nhttpx==0.28.1\nidna==3.18\niniconfig==2.3.0\njsonschema==4.25.1\njsonschema-specifications==2025.9.1\nlibrt==0.11.0\nlicense-expression==30.4.4\nmarkdown-it-py==4.2.0\nmdurl==0.1.2\nmsgpack==1.1.2\nmypy==2.1.0\nmypy_extensions==1.1.0\npackageurl-python==0.17.6\npackaging==26.2\npathspec==1.1.1\npip==26.1.2\npip-api==0.0.34\npip-requirements-parser==32.0.1\npip_audit==2.10.0\nplatformdirs==4.10.0\npluggy==1.6.0\npy-serializable==2.1.0\npydantic==2.13.4\npydantic_core==2.46.4\nPygments==2.20.0\npyparsing==3.3.2\npyproject_hooks==1.2.0\npytest==9.0.3\nPyYAML==6.0.3\nreferencing==0.37.0\nrequests==2.34.2\nrich==15.0.0\nrpds-py==2026.5.1\nruff==0.15.17\nsortedcontainers==2.4.0\nstevedore==5.8.0\ntomli==2.4.1\ntomli_w==1.2.0\ntyping-inspection==0.4.2\ntyping_extensions==4.15.0\nurllib3==2.7.0\nwheel==0.47.0"
     },
     "psql": {
       "available": true,

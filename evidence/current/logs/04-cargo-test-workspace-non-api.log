@@ -1,84 +1,5 @@
-   Compiling libc v0.2.186
-   Compiling typenum v1.20.0
-   Compiling serde_core v1.0.228
-   Compiling cfg-if v1.0.4
-   Compiling serde v1.0.228
-   Compiling memchr v2.8.0
-   Compiling rand_core v0.10.1
-   Compiling serde_json v1.0.149
-   Compiling zmij v1.0.21
-   Compiling itoa v1.0.18
-   Compiling getrandom v0.4.2
-   Compiling generic-array v0.14.7
-   Compiling thiserror v1.0.69
-   Compiling num-traits v0.2.19
-   Compiling iana-time-zone v0.1.65
-   Compiling chrono v0.4.44
-   Compiling crypto-common v0.1.7
-   Compiling block-buffer v0.10.4
-   Compiling digest v0.10.7
-   Compiling cpufeatures v0.2.17
-   Compiling sha2 v0.10.9
-   Compiling uuid v1.23.1
-   Compiling pmx-core v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
-   Compiling bytes v1.11.1
-   Compiling hybrid-array v0.4.12
-   Compiling errno v0.3.14
-   Compiling pin-project-lite v0.2.17
-   Compiling signal-hook-registry v1.4.8
-   Compiling socket2 v0.6.3
-   Compiling mio v1.2.0
-   Compiling cmov v0.5.3
-   Compiling ctutils v0.4.2
-   Compiling tokio v1.52.3
-   Compiling block-buffer v0.12.0
-   Compiling crypto-common v0.2.1
-   Compiling const-oid v0.10.2
-   Compiling digest v0.11.3
-   Compiling cpufeatures v0.3.0
-   Compiling tinyvec_macros v0.1.1
-   Compiling tinyvec v1.11.0
-   Compiling unicode-normalization v0.1.25
-   Compiling chacha20 v0.10.0
-   Compiling unicode-properties v0.1.4
-   Compiling unicode-bidi v0.3.18
-   Compiling futures-sink v0.3.32
-   Compiling futures-core v0.3.32
-   Compiling stringprep v0.1.5
-   Compiling rand v0.10.1
-   Compiling sha2 v0.11.0
-   Compiling md-5 v0.11.0
-   Compiling hmac v0.13.0
-   Compiling fallible-iterator v0.2.0
-   Compiling byteorder v1.5.0
-   Compiling base64 v0.22.1
-   Compiling smallvec v1.15.1
-   Compiling siphasher v1.0.3
-   Compiling scopeguard v1.2.0
-   Compiling lock_api v0.4.14
-   Compiling phf_shared v0.13.1
-   Compiling parking_lot_core v0.9.12
-   Compiling postgres-protocol v0.6.11
-   Compiling futures-task v0.3.32
-   Compiling futures-util v0.3.32
-   Compiling postgres-types v0.2.13
-   Compiling parking_lot v0.12.5
-   Compiling phf v0.13.1
-   Compiling futures-channel v0.3.32
-   Compiling tokio-util v0.7.18
-   Compiling whoami v2.1.2
-   Compiling log v0.4.29
-   Compiling percent-encoding v2.3.2
-   Compiling tokio-postgres v0.7.17
-   Compiling pmx-store v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
-   Compiling pmx-gateway v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
-   Compiling pmx-runtime v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
-   Compiling pmx-policy v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
-   Compiling pmx-service v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
-   Compiling pmx-authz v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-authz)
-   Compiling pmx-release v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-release)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 12s
-     Running unittests src/lib.rs (target/debug/deps/pmx_authz-8f4452d29c713262)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.25s
+     Running unittests src/lib.rs (target/debug/deps/pmx_authz-7abd4fdd11f8bd80)
 
 running 2 tests
 test tests::admin_can_cancel ... ok
@@ -86,7 +7,7 @@ test tests::service_cannot_cancel ... ok
 
 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_core-887d72b67ac7926e)
+     Running unittests src/lib.rs (target/debug/deps/pmx_core-8915ca4edd7a7eaf)
 
 running 23 tests
 test domain::domain_tests::divergence::order_lifecycle_divergence_escalates_terminal_remote_mismatch ... ok
@@ -115,7 +36,7 @@ test domain::domain_tests::lifecycle::sign_only_lifecycle_rejects_direct_sign_wi
 
 test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_gateway-7eb6dffe99064a43)
+     Running unittests src/lib.rs (target/debug/deps/pmx_gateway-ca781ceac1aee6c8)
 
 running 9 tests
 test tests::post_cancel::deterministic_signer_provider_posts_reads_and_cancels ... ok
@@ -130,7 +51,7 @@ test tests::signer::signer_provider_defaults_are_production_conservative ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_policy-bbae1514f09f4135)
+     Running unittests src/lib.rs (target/debug/deps/pmx_policy-f64a2dee7d6b12da)
 
 running 3 tests
 test tests::degraded_worker_blocks_pre_live ... ok
@@ -139,14 +60,14 @@ test tests::geoblock_unknown_blocks ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_release-4ec234eacff24393)
+     Running unittests src/lib.rs (target/debug/deps/pmx_release-f57fa93e7c4953a0)
 
 running 1 test
 test tests::rejects_release_regression ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_runtime-e3406c3c737bb530)
+     Running unittests src/lib.rs (target/debug/deps/pmx_runtime-3b6352e4bcb89a69)
 
 running 23 tests
 test non_trading_worker::tests::emit_non_trading_heartbeat_delivers_to_sink_without_trading_side_effects ... ok
@@ -175,7 +96,7 @@ test runtime_tests::evaluations::reconcile_websocket_geoblock::websocket_livenes
 
 test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_service-8a8c9a09194b48a6)
+     Running unittests src/lib.rs (target/debug/deps/pmx_service-a70b2e84098b22bf)
 
 running 42 tests
 test service::tests::flow::explicit_live_gateway_blocks_unsupported_quote_notional_without_stuck_idempotency ... ok
@@ -223,7 +144,7 @@ test submit::fingerprint::tests::request_fingerprint_ignores_correlation_metadat
 
 test result: ok. 42 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
 
-     Running unittests src/lib.rs (target/debug/deps/pmx_store-a3debd94a51af313)
+     Running unittests src/lib.rs (target/debug/deps/pmx_store-5e874a654e539b61)
 
 running 57 tests
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_paginates_and_filters_by_cursor ... ok
