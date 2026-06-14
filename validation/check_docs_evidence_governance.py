@@ -45,6 +45,16 @@ REQUIRED_SECTIONS = [
     "sdk_adapter_validation",
     "credentialed_non_trading_validation",
 ]
+DOC_STATUS_SECTIONS = (
+    "postgres_validation",
+    "credentialed_non_trading_validation",
+    "sdk_standard_sign_only_validation",
+    "real_funds_canary_store_truth_cli_validation",
+)
+CURRENT_STATUS_DOCS = (
+    "IMPLEMENTATION_STATUS.md",
+    "RELEASE_DECISION.md",
+)
 
 
 def fail(message: str) -> int:
@@ -180,6 +190,41 @@ def validate_current_manifest(failures: list[str]) -> None:
             failures.append(f"invalid status for {section}: {block.get('status')}")
         validate_log_entries(f"{section}.logs", block.get("logs", []))
     validate_log_entries("additional_logs", data.get("additional_logs", []))
+    if INTEGRATION_MODE:
+        docs = {
+            name: (ROOT / name).read_text(errors="replace")
+            for name in CURRENT_STATUS_DOCS
+            if (ROOT / name).exists()
+        }
+        failures.extend(current_status_binding_failures(data, docs))
+
+
+def current_status_binding_failures(
+    manifest: dict,
+    docs: dict[str, str],
+    *,
+    sections: tuple[str, ...] = DOC_STATUS_SECTIONS,
+) -> list[str]:
+    failures: list[str] = []
+    for doc_name, text in docs.items():
+        for section in sections:
+            match = re.search(
+                rf"`{re.escape(section)}=(pending|pass|fail|skipped|not_run)`",
+                text,
+            )
+            if match is None:
+                failures.append(
+                    f"{doc_name} missing current status binding for {section}"
+                )
+                continue
+            manifest_status = manifest.get(section, {}).get("status")
+            documented_status = match.group(1)
+            if documented_status != manifest_status:
+                failures.append(
+                    f"{doc_name} current status for {section} is "
+                    f"{documented_status}, manifest is {manifest_status}"
+                )
+    return failures
 
 
 
