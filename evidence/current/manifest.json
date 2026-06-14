@@ -90,7 +90,7 @@
     "evidence_sidecar": "polymarket-execution-suite-v0.28.0.zip.evidence.json",
     "name": "polymarket-execution-suite-v0.28.0.zip",
     "path": "dist/polymarket-execution-suite-v0.28.0.zip",
-    "sha256": "3813f3f2a4444073391e677b6ffb3240d7bfdda34935bfc7caa4e658e555626f",
+    "sha256": "fa8984e54b254f924798b8f4e372a6a5c4122f09b680649955c7910ff2960226",
     "sha256_sidecar": "polymarket-execution-suite-v0.28.0.zip.sha256"
   },
   "external_operator_approval_preflight_validation": {
