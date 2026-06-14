@@ -13,6 +13,7 @@ mod execution;
 mod idempotency;
 mod lifecycle;
 mod order_lifecycle;
+mod portfolio;
 mod real_funds_canary;
 mod runtime;
 
@@ -50,6 +51,7 @@ struct InMemoryState {
     orders: HashMap<String, OrderLifecycleRecord>,
     order_events: Vec<OrderLifecycleEventRecord>,
     order_event_counter: i64,
+    portfolio_projections: HashMap<String, pmx_core::PortfolioProjection>,
     real_funds_canary_runs: HashMap<String, RealFundsCanaryRunRecord>,
     real_funds_canary_idempotency: HashMap<String, String>,
 }

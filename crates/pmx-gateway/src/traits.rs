@@ -3,7 +3,10 @@ use crate::{
     RemoteReconcileReadRequest,
 };
 use async_trait::async_trait;
-use pmx_core::{AccountId, CancelState, RemoteOrderId, SignedOrderEnvelope};
+use pmx_core::{
+    AccountId, CancelState, ConditionId, MarketBookSnapshot, RemoteOrderId, SignedOrderEnvelope,
+    TokenId,
+};
 use std::sync::Arc;
 
 #[async_trait]
@@ -36,6 +39,15 @@ pub trait RemoteReconcileReader: Send + Sync {
         &self,
         request: &RemoteReconcileReadRequest,
     ) -> Result<RemoteReconcileReadReport, GatewayError>;
+}
+
+#[async_trait]
+pub trait MarketDataReader: Send + Sync {
+    async fn read_market_book(
+        &self,
+        condition_id: &ConditionId,
+        token_id: &TokenId,
+    ) -> Result<MarketBookSnapshot, GatewayError>;
 }
 
 #[async_trait]

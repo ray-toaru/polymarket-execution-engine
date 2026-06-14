@@ -18,4 +18,4 @@ pub use signer::{
     DeterministicTestSigner, DeterministicTestSignerProvider, SignerBackendKind,
     SignerProviderConfig,
 };
-pub use traits::{ClobGateway, RemoteReconcileReader, Signer, SignerProvider};
+pub use traits::{ClobGateway, MarketDataReader, RemoteReconcileReader, Signer, SignerProvider};

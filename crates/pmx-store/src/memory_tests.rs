@@ -45,6 +45,8 @@ mod admin_sign_only;
 mod common;
 #[path = "memory_tests/order_lifecycle.rs"]
 mod order_lifecycle;
+#[path = "memory_tests/portfolio.rs"]
+mod portfolio;
 #[path = "memory_tests/real_funds_canary.rs"]
 mod real_funds_canary;
 #[path = "memory_tests/runtime_observation.rs"]

@@ -21,3 +21,6 @@ mod signer;
 
 #[path = "tests/reconcile_reader.rs"]
 mod reconcile_reader;
+
+#[path = "tests/market_data.rs"]
+mod market_data;

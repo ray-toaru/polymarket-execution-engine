@@ -30,3 +30,6 @@ mod divergence;
 
 #[path = "domain_tests/hash_value.rs"]
 mod hash_value;
+
+#[path = "domain_tests/non_live_foundation.rs"]
+mod non_live_foundation;

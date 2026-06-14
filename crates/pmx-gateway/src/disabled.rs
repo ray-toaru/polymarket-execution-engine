@@ -72,3 +72,14 @@ impl crate::RemoteReconcileReader for DisabledGateway {
         Err(GatewayError::Disabled)
     }
 }
+
+#[async_trait]
+impl crate::MarketDataReader for DisabledGateway {
+    async fn read_market_book(
+        &self,
+        _condition_id: &pmx_core::ConditionId,
+        _token_id: &pmx_core::TokenId,
+    ) -> Result<pmx_core::MarketBookSnapshot, GatewayError> {
+        Err(GatewayError::Disabled)
+    }
+}

@@ -20,6 +20,10 @@ pub enum CoreError {
     InvalidIdentifier { field: &'static str },
     #[error("unsupported quantity bound for side: {0}")]
     UnsupportedQuantityBound(String),
+    #[error("market data is stale")]
+    StaleMarketData,
+    #[error("market data observation is future-dated")]
+    FutureDatedMarketData,
     #[error("canonical JSON serialization failed: {0}")]
     CanonicalJson(String),
     #[error("invalid state transition: {from:?} -> {event:?}")]
