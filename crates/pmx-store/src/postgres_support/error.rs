@@ -14,6 +14,11 @@ pub(crate) fn map_db_error(err: tokio_postgres::Error) -> StoreError {
         if db_error.code() == &tokio_postgres::error::SqlState::T_R_SERIALIZATION_FAILURE {
             return StoreError::SerializationFailure;
         }
+        return StoreError::DatabaseUnavailable(format!(
+            "postgres sqlstate={} message={}",
+            db_error.code().code(),
+            db_error.message()
+        ));
     }
     StoreError::DatabaseUnavailable(err.to_string())
 }
