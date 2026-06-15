@@ -44,4 +44,8 @@ pub const SCHEMA_MIGRATIONS: &[SchemaMigration] = &[
         version: "0010_real_funds_canary_gtc_post_only",
         sql: include_str!("../../../../migrations/0010_real_funds_canary_gtc_post_only.sql"),
     },
+    SchemaMigration {
+        version: "0011_portfolio_projections",
+        sql: include_str!("../../../../migrations/0011_portfolio_projections.sql"),
+    },
 ];

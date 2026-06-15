@@ -19,6 +19,29 @@ mod post_cancel;
 #[path = "tests/signer.rs"]
 mod signer;
 
+#[tokio::test]
+async fn disabled_operational_ports_fail_closed_without_secret_material() {
+    use crate::{
+        AlertEvent, AlertSink, DeploymentReadinessProvider, DisabledOperationalPorts,
+        SecretProvider,
+    };
+
+    let ports = DisabledOperationalPorts;
+    assert!(ports.resolve_reference("clob").await.is_err());
+    assert!(
+        ports
+            .publish(&AlertEvent {
+                code: "TEST".into(),
+                severity: "INFO".into(),
+                correlation_id: "corr-1".into(),
+                redacted_message: "redacted".into(),
+            })
+            .await
+            .is_err()
+    );
+    assert!(!ports.readiness().await.unwrap().ready);
+}
+
 #[path = "tests/reconcile_reader.rs"]
 mod reconcile_reader;
 

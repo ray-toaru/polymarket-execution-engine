@@ -49,10 +49,17 @@ async fn postgres_order_lifecycle_replays_same_correlation_id() {
         replayed.lifecycle_state,
         OrderLifecycleState::CancelRequested
     );
-    let mut mismatched = event;
+    let mut mismatched = event.clone();
     mismatched.event = OrderEventKind::ReconcileOpen;
     assert!(matches!(
         store.record_order_lifecycle_event(&mismatched).await,
+        Err(StoreError::Conflict(_))
+    ));
+    let mut payload_mismatch = event.clone();
+    payload_mismatch.event = OrderEventKind::CancelRequested;
+    payload_mismatch.payload = serde_json::json!({"no_remote_side_effect": false});
+    assert!(matches!(
+        store.record_order_lifecycle_event(&payload_mismatch).await,
         Err(StoreError::Conflict(_))
     ));
     let events = store

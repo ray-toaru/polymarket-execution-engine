@@ -32,6 +32,15 @@ pub struct OrderLifecycleDivergenceNonLivePayload<'a> {
     pub no_remote_side_effect: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReplaceNonLivePayload<'a> {
+    pub kind: &'a str,
+    pub correlation_id: &'a str,
+    pub replacement_ref: &'a str,
+    pub no_remote_side_effect: bool,
+}
+
 pub fn cancel_requested_non_live(
     correlation_id: Option<&str>,
     reason_len: usize,
@@ -73,4 +82,18 @@ pub fn order_lifecycle_divergence_non_live(
         no_remote_side_effect: true,
     })
     .expect("order lifecycle divergence non-live payload is serializable")
+}
+
+pub fn replace_non_live<'a>(
+    kind: &'a str,
+    correlation_id: &'a str,
+    replacement_ref: &'a str,
+) -> serde_json::Value {
+    serde_json::to_value(ReplaceNonLivePayload {
+        kind,
+        correlation_id,
+        replacement_ref,
+        no_remote_side_effect: true,
+    })
+    .expect("replace non-live payload is serializable")
 }

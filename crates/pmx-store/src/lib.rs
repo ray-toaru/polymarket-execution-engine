@@ -6,6 +6,7 @@ mod postgres_audit;
 mod postgres_execution;
 mod postgres_idempotency;
 mod postgres_order_lifecycle;
+mod postgres_portfolio;
 mod postgres_real_funds_canary;
 mod postgres_runtime;
 mod postgres_sign_only;

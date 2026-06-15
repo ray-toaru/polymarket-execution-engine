@@ -58,6 +58,23 @@ where
         .await
     }
 
+    pub async fn prepare_non_live_replace(
+        &self,
+        account_id: &str,
+        order_id: &str,
+        replacement_ref: &str,
+        correlation_id: String,
+    ) -> Result<OrderLifecycleRecord, ServiceError> {
+        crate::order_lifecycle::prepare_non_live_replace(
+            &self.store,
+            account_id,
+            order_id,
+            replacement_ref,
+            correlation_id,
+        )
+        .await
+    }
+
     pub async fn reconcile_order_lifecycle_divergence(
         &self,
         order_id: &str,

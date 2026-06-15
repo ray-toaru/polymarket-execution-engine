@@ -33,11 +33,14 @@ pub fn record_order_lifecycle_event(
                 && candidate.correlation_id.as_deref() == Some(correlation_id)
         })
     {
-        if previous.event == event.event {
+        if previous.event == event.event
+            && previous.event_source == event.event_source
+            && previous.payload == event.payload
+        {
             return Ok(current);
         }
         return Err(StoreError::Conflict(
-            "order lifecycle correlation_id reused with different event".into(),
+            "order lifecycle correlation_id reused with different event payload".into(),
         ));
     }
     let order = state

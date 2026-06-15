@@ -97,3 +97,30 @@ fn reconcile_action_tracks_remote_unknown_and_partial_unknown() {
         ReconcileAction::Noop
     );
 }
+
+#[test]
+fn replace_lifecycle_is_explicit_and_fail_closed() {
+    let requested = transition_order_state(
+        OrderLifecycleState::Posted,
+        OrderEventKind::ReplaceRequested,
+    )
+    .unwrap();
+    let prepared = transition_order_state(requested, OrderEventKind::ReplacementPrepared).unwrap();
+    let cancel_pending =
+        transition_order_state(prepared, OrderEventKind::ReplaceCancelRequested).unwrap();
+    let unknown =
+        transition_order_state(cancel_pending.clone(), OrderEventKind::ReplaceCancelUnknown)
+            .unwrap();
+    assert_eq!(unknown, OrderLifecycleState::ReplaceCancelUnknown);
+    assert!(
+        transition_order_state(
+            OrderLifecycleState::ReplaceCancelUnknown,
+            OrderEventKind::ReplacementActivated
+        )
+        .is_err()
+    );
+    assert_eq!(
+        transition_order_state(cancel_pending, OrderEventKind::ReplacementActivated).unwrap(),
+        OrderLifecycleState::Replaced
+    );
+}

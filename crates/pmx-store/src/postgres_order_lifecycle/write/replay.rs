@@ -30,7 +30,7 @@ pub(super) async fn try_replay_existing_event(
     };
     let replay = client
         .query_opt(
-            "SELECT event_type FROM order_events
+            "SELECT event_type, event_source, payload FROM order_events
              WHERE order_id = $1 AND correlation_id = $2
              ORDER BY event_id ASC
              LIMIT 1",
@@ -42,9 +42,14 @@ pub(super) async fn try_replay_existing_event(
         return Ok(None);
     };
     let previous_event: String = replay.get(0);
-    if previous_event != event_type {
+    let previous_source: String = replay.get(1);
+    let previous_payload: serde_json::Value = replay.get(2);
+    if previous_event != event_type
+        || previous_source != event.event_source
+        || previous_payload != event.payload
+    {
         return Err(StoreError::Conflict(
-            "order lifecycle correlation_id reused with different event".into(),
+            "order lifecycle correlation_id reused with different event payload".into(),
         ));
     }
     Ok(Some(OrderLifecycleRecord {

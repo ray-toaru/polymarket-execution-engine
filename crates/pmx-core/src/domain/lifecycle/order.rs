@@ -14,6 +14,12 @@ pub enum OrderLifecycleState {
     CancelRequested,
     CancelRemoteAccepted,
     CancelConfirmed,
+    ReplaceRequested,
+    ReplacementPrepared,
+    ReplaceCancelPending,
+    ReplaceCancelUnknown,
+    Replaced,
+    ReplaceRejected,
     RemoteUnknown,
     PartialRemoteUnknown,
     Failed,
@@ -32,6 +38,12 @@ pub enum OrderEventKind {
     CancelRequested,
     CancelRemoteAccepted,
     CancelConfirmed,
+    ReplaceRequested,
+    ReplacementPrepared,
+    ReplaceCancelRequested,
+    ReplaceCancelUnknown,
+    ReplacementActivated,
+    ReplaceRejected,
     ReconcileOpen,
     ReconcileMissing,
     ReconcileUnknown,
@@ -99,6 +111,28 @@ pub fn transition_order_state(
         (OrderLifecycleState::CancelRemoteAccepted, OrderEventKind::CancelConfirmed) => {
             OrderLifecycleState::CancelConfirmed
         }
+        (
+            OrderLifecycleState::Posted | OrderLifecycleState::PartiallyFilled,
+            OrderEventKind::ReplaceRequested,
+        ) => OrderLifecycleState::ReplaceRequested,
+        (OrderLifecycleState::ReplaceRequested, OrderEventKind::ReplacementPrepared) => {
+            OrderLifecycleState::ReplacementPrepared
+        }
+        (OrderLifecycleState::ReplacementPrepared, OrderEventKind::ReplaceCancelRequested) => {
+            OrderLifecycleState::ReplaceCancelPending
+        }
+        (OrderLifecycleState::ReplaceCancelPending, OrderEventKind::ReplaceCancelUnknown) => {
+            OrderLifecycleState::ReplaceCancelUnknown
+        }
+        (OrderLifecycleState::ReplaceCancelPending, OrderEventKind::ReplacementActivated) => {
+            OrderLifecycleState::Replaced
+        }
+        (
+            OrderLifecycleState::ReplaceRequested
+            | OrderLifecycleState::ReplacementPrepared
+            | OrderLifecycleState::ReplaceCancelPending,
+            OrderEventKind::ReplaceRejected,
+        ) => OrderLifecycleState::ReplaceRejected,
         (OrderLifecycleState::RemoteUnknown, OrderEventKind::ReconcileOpen) => {
             OrderLifecycleState::Posted
         }
