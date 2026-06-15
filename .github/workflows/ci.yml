@@ -48,111 +48,9 @@ permissions:
   contents: read
 
 jobs:
-  rust-locked:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
-
-      - name: Install Rust 1.96
-        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
-        with:
-          toolchain: 1.96.0
-          components: rustfmt, clippy
-
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4
-
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-
-      - name: Check workspace
-        run: cargo check --workspace --locked
-
-      - name: Run clippy
-        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
-
-      - name: Run workspace unit tests
-        run: cargo test --workspace --exclude pmx-api --locked -- --test-threads=1
-
-      - name: Run fake HTTP e2e tests
-        run: cargo test -p pmx-api --test http_and_fake_e2e --locked -- --test-threads=1
-
-      - name: Run official SDK spike tests
-        run: cargo test --manifest-path adapters/pmx-official-sdk-spike/Cargo.toml --features sdk-typecheck --locked -- --test-threads=1
-
-      - name: Run official SDK adapter tests
-        run: cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --locked -- --test-threads=1
-
-      - name: Run official SDK adapter typecheck tests
-        run: cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --features sdk-typecheck --locked -- --test-threads=1
-
   current-gates:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
-
-      - name: Install Rust 1.96
-        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
-        with:
-          toolchain: 1.96.0
-          components: rustfmt, clippy
-
-      - name: Install Python
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
-        with:
-          python-version: "3.14"
-
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4
-
-      - name: Run current gates
-        run: ./validation/run_current_gates.sh
-
-  static-guards:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
-
-      - name: Install Python
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
-        with:
-          python-version: "3.14"
-
-      - name: Compile validation scripts
-        run: python -m compileall -q validation scripts
-
-      - name: Check GitHub workflow governance
-        run: python validation/test_github_workflow_governance.py
-
-      - name: Check plan storage
-        run: python validation/check_plan_storage.py
-
-      - name: Check live-submit guard
-        run: python validation/check_live_submit_guard.py
-
-      - name: Check sign-only lifecycle guard
-        run: python validation/check_sign_only_lifecycle.py
-
-      - name: Check runtime worker models
-        run: python validation/check_runtime_worker_models.py
-
-      - name: Check migration framework
-        run: python validation/check_migration_framework.py
-
-      - name: Check SDK standard sign-only guard
-        run: python validation/check_sdk_standard_sign_only.py
-
-      - name: Check SDK regression suite
-        run: python validation/check_sdk_regression_suite.py
-
-      - name: Check production readiness guard
-        run: python validation/check_production_readiness_guard.py
-
-  postgres:
-    runs-on: ubuntu-latest
+    timeout-minutes: 35
     services:
       postgres:
         image: postgres:16
@@ -177,20 +75,16 @@ jobs:
           toolchain: 1.96.0
           components: rustfmt, clippy
 
+      - name: Install Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
+        with:
+          python-version: "3.14"
+
       - name: Cache cargo
         uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4
 
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
-      - name: Apply migrations
-        run: psql "$PMX_TEST_DATABASE_URL" -f migrations/0001_initial.sql
-
-      - name: Run store PostgreSQL tests
-        run: cargo test -p pmx-store postgres::postgres_tests --locked -- --nocapture --test-threads=1
-
-      - name: Run API PostgreSQL e2e tests
-        run: cargo test -p pmx-api --test http_postgres_e2e --locked -- --nocapture --test-threads=1
-
-      - name: Run migration drift dry-run
-        run: python validation/run_migration_drift_dry_run.py
+      - name: Run current gates
+        run: ./validation/run_current_gates.sh

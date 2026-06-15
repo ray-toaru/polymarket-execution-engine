@@ -1208,54 +1208,55 @@ def validate_v08_dependency_and_sdk_policy() -> None:
     jobs = workflow.get("jobs", {})
     if not isinstance(jobs, dict):
         fail("root CI workflow must expose jobs mapping")
-    for job_name in [
-        "engine-rust-locked",
-        "engine-postgres",
-        "integration-python-compat",
-        "integration-static",
-    ]:
+    for job_name in ["integration-python-compat", "integration-static"]:
         if job_name not in jobs:
             fail(f"root CI workflow missing job: {job_name}")
     for job_name, job in jobs.items():
         if isinstance(job, dict) and "uses" in job:
             fail(f"root CI workflow job must run pinned checkout locally: {job_name}")
-    if jobs.get("engine-rust-locked", {}).get("runs-on") != "ubuntu-latest":
-        fail("root CI workflow engine-rust-locked job must stay on ubuntu-latest")
-    engine_steps = jobs.get("engine-rust-locked", {}).get("steps")
-    if not isinstance(engine_steps, list):
-        fail("root CI workflow engine-rust-locked job must expose steps list")
-    engine_commands = "\n".join(
+    for duplicate_job in ["engine-rust-locked", "engine-postgres"]:
+        if duplicate_job in jobs:
+            fail(f"root CI workflow must not repeat execution-engine job: {duplicate_job}")
+
+    engine_workflow = yaml.safe_load(
+        (EXECUTOR / ".github/workflows/ci.yml").read_text()
+    )
+    engine_jobs = engine_workflow.get("jobs", {})
+    if set(engine_jobs) != {"current-gates"}:
+        fail("execution-engine CI must expose only the current-gates job")
+    current_gates = engine_jobs["current-gates"]
+    if current_gates.get("runs-on") != "ubuntu-latest":
+        fail("execution-engine current-gates job must stay on ubuntu-latest")
+    services = current_gates.get("services", {})
+    if services.get("postgres", {}).get("image") != "postgres:16":
+        fail("execution-engine current-gates must use postgres:16 service")
+    if not str(current_gates.get("env", {}).get("PMX_TEST_DATABASE_URL", "")).startswith(
+        "postgres://"
+    ):
+        fail("execution-engine current-gates must set PMX_TEST_DATABASE_URL")
+    current_steps = current_gates.get("steps")
+    if not isinstance(current_steps, list):
+        fail("execution-engine current-gates job must expose steps list")
+    current_commands = "\n".join(
         str(step.get("run", ""))
-        for step in engine_steps
+        for step in current_steps
         if isinstance(step, dict)
     )
+    if "./validation/run_current_gates.sh" not in current_commands:
+        fail("execution-engine current-gates must run validation/run_current_gates.sh")
+
+    gate_impl = (EXECUTOR / "validation/run_current_gates_impl.sh").read_text()
     for token in [
         "cargo clippy --workspace --all-targets --all-features",
         "pmx-official-sdk-spike/Cargo.toml",
         "pmx-official-sdk-adapter/Cargo.toml",
-    ]:
-        if token not in engine_commands:
-            fail(f"root CI workflow engine-rust-locked missing command token: {token}")
-    postgres = jobs.get("engine-postgres", {})
-    services = postgres.get("services", {})
-    if services.get("postgres", {}).get("image") != "postgres:16":
-        fail("root CI workflow engine-postgres must use postgres:16 service")
-    postgres_steps = postgres.get("steps")
-    if not isinstance(postgres_steps, list):
-        fail("root CI workflow engine-postgres job must expose steps list")
-    postgres_commands = "\n".join(
-        str(step.get("run", ""))
-        for step in postgres_steps
-        if isinstance(step, dict)
-    )
-    for token in [
         "migrations/[0-9]*.sql",
         "postgres::postgres_tests",
         "http_postgres_e2e",
         "run_migration_drift_dry_run.py",
     ]:
-        if token not in postgres_commands:
-            fail(f"root CI workflow engine-postgres missing command token: {token}")
+        if token not in gate_impl:
+            fail(f"execution-engine current gates missing command token: {token}")
     integration_static = jobs.get("integration-static", {})
     static_steps = integration_static.get("steps")
     if not isinstance(static_steps, list):
