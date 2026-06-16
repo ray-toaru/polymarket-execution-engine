@@ -9,7 +9,8 @@
     "0007_runtime_global_kill_switch": "3427ab60573c81528302aa815538f641500a82150fcb4010bca77b5e82a249f6",
     "0008_idempotency_owner_lease": "1f22cb25ef9e8199038a4abb1ed79bb05d874e7ab76d034562fb20729c3bcafd",
     "0009_runtime_scope_columns": "d5c708b4f267b7f5aba93d7410837b971a92fc7377433bf32a3565d3d887ae5d",
-    "0010_real_funds_canary_gtc_post_only": "234c104fe740c2ef5d1017e5ab2db5a1cd51bc8ef8a822d6c76f7862ab245ebb"
+    "0010_real_funds_canary_gtc_post_only": "234c104fe740c2ef5d1017e5ab2db5a1cd51bc8ef8a822d6c76f7862ab245ebb",
+    "0011_portfolio_projections": "e640e8e3128a1f3612149833896ffe15f33eec0254738d7a3060c91a68f87f5f"
   },
   "migration_order": [
     "0001_initial",
@@ -21,7 +22,8 @@
     "0007_runtime_global_kill_switch",
     "0008_idempotency_owner_lease",
     "0009_runtime_scope_columns",
-    "0010_real_funds_canary_gtc_post_only"
+    "0010_real_funds_canary_gtc_post_only",
+    "0011_portfolio_projections"
   ],
   "postgres_dry_run": {
     "reason": "PMX_TEST_DATABASE_URL not set",

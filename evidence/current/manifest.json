@@ -72,7 +72,7 @@
   "environment": {
     "bytes": 4676,
     "path": "polymarket-execution-engine/evidence/current/environment.json",
-    "sha256": "b22da345d53e21106840cd783292ac71c223c8fa479ebcac64d74c39dddc6919"
+    "sha256": "e766c209e923ee49b6b72564746effce8e3393fbb9398ff37d4f90470c6400d2"
   },
   "external_alert_routing_preflight_validation": {
     "logs": [
@@ -90,7 +90,7 @@
     "evidence_sidecar": "polymarket-execution-suite-v0.28.0.zip.evidence.json",
     "name": "polymarket-execution-suite-v0.28.0.zip",
     "path": "dist/polymarket-execution-suite-v0.28.0.zip",
-    "sha256": "f5ef2dbd2a2887baba0dbf48c3d9347369372fe8f4ba89bd6f86563b59f4bb41",
+    "sha256": "5adb377c92e1b13a307fff547782f68f714d4db2331f05946700331d5f8fd05c",
     "sha256_sidecar": "polymarket-execution-suite-v0.28.0.zip.sha256"
   },
   "external_operator_approval_preflight_validation": {
@@ -115,7 +115,7 @@
     ],
     "status": "pass"
   },
-  "generated_at": "2026-06-15T14:28:13.762007+00:00",
+  "generated_at": "2026-06-16T04:07:44.982317+00:00",
   "live_canary_blocked_validation": {
     "logs": [
       {
@@ -244,10 +244,10 @@
         "sha256": "fc2229f9e6f623b56a1b8b74005240880a763c7b50dee260083db4eab0be2846"
       },
       {
-        "bytes": 1557,
+        "bytes": 1693,
         "command": "python validation/run_migration_drift_dry_run.py",
         "path": "polymarket-execution-engine/evidence/current/logs/34-migration-drift-dry-run.log",
-        "sha256": "7dd23d415038e25acff6fbc056b8cffe6f9b2666f9f7058a86b7cf0fb7ff50af"
+        "sha256": "1c2b8391965cc38282ae7ff792af1d72b1a46412ac562be58b6fef963f7a313d"
       }
     ],
     "status": "pass"
@@ -529,7 +529,7 @@
         "bytes": 1998,
         "command": "python validation/run_reconciliation_drift_drill.py",
         "path": "polymarket-execution-engine/evidence/current/logs/31-reconciliation-drift-drill.log",
-        "sha256": "17b5111a2212a08a5b6e5108cd2c197aff8909b5e5f88c91864a2bb19dec735f"
+        "sha256": "6a53fe49079446cc1e727cc0eb891a8d7bdc80287edc88386fd9bdd50d69792a"
       }
     ],
     "status": "pass"
@@ -553,7 +553,7 @@
         "bytes": 2710,
         "command": "python validation/run_kill_switch_rollback_drill.py",
         "path": "polymarket-execution-engine/evidence/current/logs/32-kill-switch-rollback-drill.log",
-        "sha256": "2c531f4a4b43e033edf450a4126c6b2bcaddb283131a207b1179d87b63e0c2ed"
+        "sha256": "a5848ea6fafae9f248de2da9280e947d02a65110921af74386510acca01cf27c"
       }
     ],
     "status": "pass"
@@ -580,25 +580,25 @@
         "bytes": 4290,
         "command": "cargo check --workspace --locked",
         "path": "polymarket-execution-engine/evidence/current/logs/02-cargo-check.log",
-        "sha256": "5489b95cb4aa346fa62d416402ee323aeec1b0399d676e4a6917d45a1b119cfd"
+        "sha256": "300b3c348bb692701d282239384c723a25c4dd3f404c3daf0571801ea96b3dfc"
       },
       {
         "bytes": 1246,
         "command": "cargo clippy --workspace --all-targets --all-features --locked -- -D warnings",
         "path": "polymarket-execution-engine/evidence/current/logs/03-cargo-clippy.log",
-        "sha256": "170cb5629dc5dae78bfd4bc3d4b2a70c95db6b6208a73820d73dd993944b747a"
+        "sha256": "1678ee0bd261b650a4fa67f8f80b51d67c7b6cbd538bd5be26b803b7e4d613f0"
       },
       {
-        "bytes": 23474,
+        "bytes": 24210,
         "command": "cargo test --workspace --exclude pmx-api --locked -- --test-threads=1",
         "path": "polymarket-execution-engine/evidence/current/logs/04-cargo-test-workspace-non-api.log",
-        "sha256": "9eec8acaa5b9793ab0165fc8e5ac98f2ce1ba191de54c8f71451a2e93acad297"
+        "sha256": "23756fed05e769b2fbe13731c5ed6462541be42ac13cbf99c5c66ea2173905f1"
       },
       {
-        "bytes": 2858,
+        "bytes": 2713,
         "command": "cargo test -p pmx-api --test http_and_fake_e2e --locked -- --test-threads=1",
         "path": "polymarket-execution-engine/evidence/current/logs/05-http-fake-e2e.log",
-        "sha256": "12153086748e104c57585e76c4dd0c0309a39f43eb20957a95f5c5426a191a90"
+        "sha256": "eff77c3b597838b4a6fdab0d49e679fb625e090240a0daef1600051ea656cc2d"
       }
     ],
     "status": "pass"
@@ -609,13 +609,13 @@
         "bytes": 1970,
         "command": "cargo test --manifest-path adapters/pmx-official-sdk-spike/Cargo.toml --locked",
         "path": "polymarket-execution-engine/evidence/current/logs/06-sdk-spike-no-features.log",
-        "sha256": "101789cc7d96d4ec780a98ce61d17541ae29514d288a902b47db91eb3ebc1d77"
+        "sha256": "63571916d13195b4791f83fdd822f8285cd5161c1f80afff16cf7620a9987ff8"
       },
       {
         "bytes": 8645,
         "command": "cargo test --manifest-path adapters/pmx-official-sdk-spike/Cargo.toml --features sdk-typecheck --locked",
         "path": "polymarket-execution-engine/evidence/current/logs/07-sdk-spike-typecheck.log",
-        "sha256": "96d4fd9d351d5571a553296f4f53cf13273ae2a6011f874610df0851d3f77c7a"
+        "sha256": "452a9c13f64d5244398fc298ecf1218b120c36ce6e363dadced34fca885b6684"
       },
       {
         "bytes": 57,
@@ -626,25 +626,25 @@
         "bytes": 1435,
         "command": "cargo check --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --locked",
         "path": "polymarket-execution-engine/evidence/current/logs/09-sdk-adapter-check.log",
-        "sha256": "0f1d443f3f7253f0a2863e47d73e12b9026d6011d8ff8860d2dab2f0f3a993ef"
+        "sha256": "759efc39a23d9c3a3844c2396408ad5120978d727ee00fadd98ee49c3bb717c1"
       },
       {
         "bytes": 9172,
         "command": "cargo clippy --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --all-targets --all-features --locked -- -D warnings",
         "path": "polymarket-execution-engine/evidence/current/logs/10-sdk-adapter-clippy.log",
-        "sha256": "c19e74c2fa98349e72c4ca713d4e9414cea347620c68c80fad4109257a237db8"
+        "sha256": "6b9dbe9506dc7551ceb54e817013af89bac2dc1a20f0a1d89be42336dce947fc"
       },
       {
         "bytes": 6998,
         "command": "cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --locked",
         "path": "polymarket-execution-engine/evidence/current/logs/11-sdk-adapter-test.log",
-        "sha256": "8195b30e6300ecfda4e45b6985b562415d0d8ca1af2de7c0b79403a0b698b4ed"
+        "sha256": "c96795ba2e24319cb68f14d2206a62ee3885bb3762897ae553b9f0536afddbcd"
       },
       {
         "bytes": 12919,
         "command": "cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --features sdk-typecheck --locked",
         "path": "polymarket-execution-engine/evidence/current/logs/12-sdk-adapter-typecheck.log",
-        "sha256": "067976dd714a7e7fcb9dc0e98a956ee3cfdecbb7e0c97e6a452f0f65ef398406"
+        "sha256": "a608b207b6fd24be4bcd79b12793bb6feb0d9e7f1a17179ce460d279c22e032c"
       }
     ],
     "status": "pass"
@@ -677,7 +677,7 @@
         "bytes": 1175,
         "command": "python validation/run_shadow_execution_drill.py",
         "path": "polymarket-execution-engine/evidence/current/logs/29-shadow-execution-drill.log",
-        "sha256": "58c6b2eec70a0294a57f0056a1d132942c46afd0f8ab16e062618bcbfe7e0b2b"
+        "sha256": "06a82b15820541922f244afae9080e7faafd2eb3a2111a63ffbd81dd54102115"
       }
     ],
     "status": "pass"
