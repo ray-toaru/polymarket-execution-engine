@@ -1751,7 +1751,26 @@ def validate_v15_admin_audit_and_runtime_provider(spec: dict | None = None) -> N
 
         spec = yaml.safe_load(OPENAPI.read_text())
     pg_test_text = rust_file_with_modules_text(API_POSTGRES_E2E_TEST)
+    authz_text = (EXECUTOR / "crates/pmx-authz/src/lib.rs").read_text()
+    api_auth_text = (API_SRC / "support/auth.rs").read_text()
+    api_negative_text = rust_file_with_modules_text(API_E2E_TEST)
     audit_operation = openapi_operation(spec, "/v1/admin/audit-events", "get")
+    admin_session_schema = spec.get("components", {}).get("schemas", {}).get("AdminSession", {})
+    admin_scope_enum = (
+        admin_session_schema.get("properties", {})
+        .get("scopes", {})
+        .get("items", {})
+        .get("enum", [])
+    )
+    security_schemes = spec.get("components", {}).get("securitySchemes", {})
+    if not {"ADMIN", "ADMIN_READ", "ADMIN_CANCEL", "EMERGENCY_OPERATOR"}.issubset(
+        set(admin_scope_enum)
+    ):
+        fail("v0.15 AdminSession OpenAPI scopes must include split admin scopes")
+    if not {"AdminToken", "AdminReadToken", "AdminCancelToken", "EmergencyOperatorToken"}.issubset(
+        set(security_schemes)
+    ):
+        fail("v0.15 OpenAPI security schemes must include split admin bearer tokens")
     if operation_response_array_item_ref(spec, "/v1/admin/audit-events", "get", "200") != "#/components/schemas/AdminAuditEvent":
         fail("v0.15 admin audit response must be an array of AdminAuditEvent")
     if operation_request_ref(spec, "/v1/admin/kill-switch", "post") != "#/components/schemas/KillSwitchRequest":
@@ -1762,6 +1781,39 @@ def validate_v15_admin_audit_and_runtime_provider(spec: dict | None = None) -> N
     for required_param in {"before_audit_id", "operation", "principal_subject", "result", "correlation_id"}:
         if required_param not in audit_params:
             fail(f"v0.15 admin audit query must expose {required_param}")
+    require_tokens(
+        authz_text,
+        "pmx-authz split admin scopes",
+        [
+            "AdminRead",
+            "AdminCancel",
+            "EmergencyOperator",
+            "AdminReadRequired",
+            "AdminCancelRequired",
+            "EmergencyOperatorRequired",
+        ],
+    )
+    require_tokens(
+        api_auth_text,
+        "API split admin token config",
+        [
+            "PM_EXEC_ADMIN_READ_TOKEN",
+            "PM_EXEC_ADMIN_CANCEL_TOKEN",
+            "PM_EXEC_EMERGENCY_OPERATOR_TOKEN",
+            "validate_auth_config(config)",
+            "principal_from_bearer_token",
+        ],
+    )
+    require_tokens(
+        api_negative_text,
+        "API split admin E2E",
+        [
+            "admin_read_token_reports_limited_session_and_cannot_cancel",
+            'json!(["ADMIN_READ"])',
+            'json!(["READ_AUDIT"])',
+            "StatusCode::FORBIDDEN",
+        ],
+    )
     audit_model_text = (STORE_SRC / "model/audit.rs").read_text()
     memory_audit_text = (STORE_SRC / "memory/audit.rs").read_text()
     postgres_audit_text = (STORE_SRC / "postgres_audit/admin.rs").read_text()
