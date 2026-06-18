@@ -1,4 +1,5 @@
 use crate::{GatewayError, RemoteOrder};
+use pmx_core::{ConditionId, MarketBookSnapshot, TokenId};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -25,6 +26,7 @@ impl FakeGatewayFailure {
 #[derive(Default)]
 pub(crate) struct FakeGatewayInner {
     pub(crate) orders: HashMap<String, RemoteOrder>,
+    pub(crate) market_books: HashMap<(ConditionId, TokenId), MarketBookSnapshot>,
     pub(crate) post_failure: FakeGatewayFailure,
     pub(crate) cancel_failure: FakeGatewayFailure,
     pub(crate) read_failure: FakeGatewayFailure,
@@ -70,5 +72,16 @@ impl FakeGateway {
             .expect("fake gateway mutex poisoned")
             .orders
             .insert(order.remote_order_id.0.clone(), order);
+    }
+
+    pub fn insert_market_book_for_test(&self, snapshot: MarketBookSnapshot) {
+        self.inner
+            .lock()
+            .expect("fake gateway mutex poisoned")
+            .market_books
+            .insert(
+                (snapshot.condition_id.clone(), snapshot.token_id.clone()),
+                snapshot,
+            );
     }
 }
