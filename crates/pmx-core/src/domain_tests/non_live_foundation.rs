@@ -106,6 +106,39 @@ fn market_book_snapshot_fails_closed_when_stale_or_future_dated() {
 }
 
 #[test]
+fn market_book_snapshot_proves_top_liquidity_by_side_and_fails_closed_when_stale() {
+    let snapshot = MarketBookSnapshot {
+        condition_id: ConditionId("cond-1".into()),
+        token_id: TokenId("token-1".into()),
+        bids: vec![BookLevel {
+            price: DecimalString("0.49".into()),
+            shares: DecimalString("3".into()),
+        }],
+        asks: vec![BookLevel {
+            price: DecimalString("0.51".into()),
+            shares: DecimalString("5".into()),
+        }],
+        observed_at_ms: 1_000,
+        valid_for_ms: 500,
+    };
+
+    assert!(
+        snapshot
+            .has_top_liquidity_for(&Side::Buy, &DecimalString("5".into()), 1_250)
+            .unwrap()
+    );
+    assert!(
+        !snapshot
+            .has_top_liquidity_for(&Side::Sell, &DecimalString("5".into()), 1_250)
+            .unwrap()
+    );
+    assert!(matches!(
+        snapshot.has_top_liquidity_for(&Side::Buy, &DecimalString("1".into()), 1_501),
+        Err(CoreError::StaleMarketData)
+    ));
+}
+
+#[test]
 fn risk_limits_block_kill_switch_and_excess_exposure() {
     let limits = RiskLimits {
         max_gross_notional: DecimalString("10".into()),
