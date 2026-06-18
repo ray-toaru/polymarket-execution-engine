@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -41,6 +42,29 @@ def parse_args() -> argparse.Namespace:
         help="Execute the privileged armed cargo command. Without this flag the script only prints the invocation plan.",
     )
     return parser.parse_args()
+
+
+def parse_env_assignments(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for raw_line in path.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" not in line:
+            raise SystemExit(f"invalid env assignment in {path}: {raw_line}")
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key:
+            raise SystemExit(f"invalid empty env key in {path}: {raw_line}")
+        values[key] = value.strip()
+    return values
+
+
+def subprocess_env(secrets_env_file: Path | None) -> dict[str, str]:
+    env = os.environ.copy()
+    if secrets_env_file is not None:
+        env.update(parse_env_assignments(secrets_env_file))
+    return env
 
 
 def build_armed_invocation(
@@ -198,6 +222,7 @@ def main() -> int:
         invocation["command"],
         cwd=INTEGRATION_ROOT,
         text=True,
+        env=subprocess_env(args.secrets_env_file),
         check=False,
     )
     return completed.returncode
