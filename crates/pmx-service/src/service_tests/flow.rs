@@ -1,4 +1,11 @@
 use super::*;
+use async_trait::async_trait;
+use pmx_core::{AccountId, CancelState, RemoteOrderId, SignedOrderEnvelope};
+use pmx_gateway::{ClobGateway, GatewayError, PostOrderAck, RemoteOrder};
+use std::sync::{
+    Arc,
+    atomic::{AtomicUsize, Ordering},
+};
 
 #[tokio::test]
 async fn service_flow_persists_and_blocks_submit() {
@@ -666,6 +673,157 @@ async fn explicit_live_gateway_marks_operator_required_when_runtime_degrades_aft
 }
 
 #[tokio::test]
+async fn explicit_live_gateway_discards_signed_order_when_pre_post_runtime_blocks() {
+    let mut pre_post_block = allow_runtime_state();
+    pre_post_block.kill_switch_enabled = true;
+    let service = ExecutorService::with_runtime_provider(
+        InMemoryStore::default(),
+        SequencedRuntimeStateProvider::new(vec![
+            allow_runtime_state(),
+            allow_runtime_state(),
+            pre_post_block,
+        ]),
+        "test-executor".into(),
+        DEFAULT_CONTRACT_VERSION.into(),
+    );
+    let normalized = service
+        .normalize(sell_base_share_intent())
+        .await
+        .expect("normalize");
+    let snapshot = service
+        .capture_snapshot(normalized.clone())
+        .await
+        .expect("snapshot");
+    let decision = service
+        .evaluate_decision_by_id(DecisionByIdRequest {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
+        })
+        .await
+        .expect("decision");
+    let plan = service
+        .compile_plan_by_id(CompilePlanByIdCommand {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+            decision_id: decision.decision_id.clone(),
+            approval: approval_for(&snapshot, &decision),
+            correlation_id: None,
+        })
+        .await
+        .expect("plan");
+    let signer = pmx_gateway::DeterministicTestSignerProvider;
+    let gateway = DiscardTrackingGateway::default();
+    let outcome = service
+        .submit_plan_with_gateway(
+            SubmitPlanCommand {
+                execution_id: plan.execution_id.clone(),
+                plan_hash: plan.plan_hash.0.clone(),
+                idempotency_key: "idem-live-pre-post-block-discard".into(),
+                mode: SubmitMode::Live,
+                correlation_id: Some("corr-live-pre-post-block-discard".into()),
+            },
+            &signer,
+            &gateway,
+        )
+        .await
+        .expect("live submit pre-post blocked");
+    let receipt = match outcome {
+        SubmitOutcome::Accepted(receipt) => receipt,
+        SubmitOutcome::Replayed(_) => panic!("first submit cannot replay"),
+    };
+    assert_eq!(receipt.status, SubmitStatus::Blocked);
+    assert_eq!(gateway.discard_count(), 1);
+    assert_eq!(gateway.post_count(), 0);
+}
+
+#[tokio::test]
+async fn explicit_live_gateway_blocks_snapshot_required_capabilities_before_signing() {
+    let service = ExecutorService::with_runtime_provider(
+        InMemoryStore::default(),
+        StaticRuntimeStateProvider::new(allow_runtime_state()),
+        "test-executor".into(),
+        DEFAULT_CONTRACT_VERSION.into(),
+    );
+    let normalized = service
+        .normalize(buy_base_share_intent())
+        .await
+        .expect("normalize");
+    let mut snapshot = service
+        .capture_snapshot(normalized.clone())
+        .await
+        .expect("snapshot");
+    let decision = service
+        .evaluate_decision_by_id(DecisionByIdRequest {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+            correlation_id: None,
+        })
+        .await
+        .expect("decision");
+    let plan = service
+        .compile_plan_by_id(CompilePlanByIdCommand {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: snapshot.snapshot_id.clone(),
+            decision_id: decision.decision_id.clone(),
+            approval: approval_for(&snapshot, &decision),
+            correlation_id: None,
+        })
+        .await
+        .expect("plan");
+    snapshot
+        .runtime_state
+        .required_capabilities
+        .push("market_book_stale".into());
+    service
+        .store()
+        .save_snapshot(&snapshot)
+        .await
+        .expect("overwrite snapshot with required capability");
+
+    let signer = pmx_gateway::DeterministicTestSignerProvider;
+    let gateway = DiscardTrackingGateway::default();
+    let outcome = service
+        .submit_plan_with_gateway(
+            SubmitPlanCommand {
+                execution_id: plan.execution_id.clone(),
+                plan_hash: plan.plan_hash.0.clone(),
+                idempotency_key: "idem-live-snapshot-capability-block".into(),
+                mode: SubmitMode::Live,
+                correlation_id: Some("corr-live-snapshot-capability-block".into()),
+            },
+            &signer,
+            &gateway,
+        )
+        .await
+        .expect("live submit snapshot capability blocked");
+    let receipt = match outcome {
+        SubmitOutcome::Accepted(receipt) => receipt,
+        SubmitOutcome::Replayed(_) => panic!("first submit cannot replay"),
+    };
+    assert_eq!(receipt.status, SubmitStatus::Blocked);
+    assert_eq!(gateway.discard_count(), 0);
+    assert_eq!(gateway.post_count(), 0);
+    let events = service
+        .list_execution_lifecycle_events(pmx_store::ExecutionLifecycleQuery {
+            execution_id: plan.execution_id.clone(),
+            limit: 20,
+            before_event_id: None,
+        })
+        .await
+        .expect("execution lifecycle events");
+    let block_event = events
+        .iter()
+        .find(|event| event.event_type == "LIVE_SUBMIT_BLOCKED_SNAPSHOT_REQUIRED_CAPABILITIES")
+        .expect("snapshot capability block event");
+    assert_eq!(
+        block_event.payload["body"]["required_capabilities"][0],
+        "market_book_stale"
+    );
+    assert_eq!(block_event.payload["body"]["remote_side_effect"], false);
+}
+
+#[tokio::test]
 async fn explicit_live_gateway_remote_unknown_freezes_for_operator_review() {
     let service = ExecutorService::with_runtime_provider(
         InMemoryStore::default(),
@@ -733,6 +891,42 @@ async fn explicit_live_gateway_remote_unknown_freezes_for_operator_review() {
         lifecycle.lifecycle_state,
         OrderLifecycleState::RemoteUnknown
     );
+    let second = service
+        .submit_plan_with_gateway(
+            SubmitPlanCommand {
+                execution_id: plan.execution_id.clone(),
+                plan_hash: plan.plan_hash.0.clone(),
+                idempotency_key: "idem-live-remote-unknown-second".into(),
+                mode: SubmitMode::Live,
+                correlation_id: Some("corr-live-remote-unknown-second".into()),
+            },
+            &signer,
+            &pmx_gateway::FakeGateway::new(),
+        )
+        .await
+        .expect("live submit blocked by remote unknown freeze");
+    let second_receipt = match second {
+        SubmitOutcome::Accepted(receipt) => receipt,
+        SubmitOutcome::Replayed(_) => panic!("second submit first attempt cannot replay"),
+    };
+    assert_eq!(second_receipt.status, SubmitStatus::Blocked);
+    let events = service
+        .list_execution_lifecycle_events(pmx_store::ExecutionLifecycleQuery {
+            execution_id: plan.execution_id.clone(),
+            limit: 20,
+            before_event_id: None,
+        })
+        .await
+        .expect("execution lifecycle events");
+    let freeze_event = events
+        .iter()
+        .find(|event| event.event_type == "LIVE_SUBMIT_BLOCKED_REMOTE_UNKNOWN_FREEZE")
+        .expect("remote unknown freeze event");
+    assert_eq!(
+        freeze_event.payload["body"]["reason"],
+        "active_remote_unknown_freeze"
+    );
+    assert_eq!(freeze_event.payload["body"]["remote_side_effect"], false);
 }
 
 #[tokio::test]
@@ -876,6 +1070,61 @@ fn buy_base_share_intent() -> TradeIntent {
         max_shares: Some(DecimalString("5".into())),
     };
     intent
+}
+
+#[derive(Clone, Default)]
+struct DiscardTrackingGateway {
+    discarded: Arc<AtomicUsize>,
+    posted: Arc<AtomicUsize>,
+}
+
+impl DiscardTrackingGateway {
+    fn discard_count(&self) -> usize {
+        self.discarded.load(Ordering::SeqCst)
+    }
+
+    fn post_count(&self) -> usize {
+        self.posted.load(Ordering::SeqCst)
+    }
+}
+
+#[async_trait]
+impl ClobGateway for DiscardTrackingGateway {
+    async fn post_order(&self, order: &SignedOrderEnvelope) -> Result<PostOrderAck, GatewayError> {
+        self.posted.fetch_add(1, Ordering::SeqCst);
+        Ok(PostOrderAck {
+            remote_order_id: RemoteOrderId(format!("remote-{}", order.internal_order_id.0)),
+            accepted_at_ms: 0,
+        })
+    }
+
+    async fn discard_signed_order(&self, _order: &SignedOrderEnvelope) -> Result<(), GatewayError> {
+        self.discarded.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    }
+
+    async fn cancel_order(
+        &self,
+        _account_id: &AccountId,
+        _remote_order_id: &RemoteOrderId,
+    ) -> Result<CancelState, GatewayError> {
+        Ok(CancelState::RemoteAccepted)
+    }
+
+    async fn get_order(
+        &self,
+        _account_id: &AccountId,
+        _remote_order_id: &RemoteOrderId,
+    ) -> Result<Option<RemoteOrder>, GatewayError> {
+        Ok(None)
+    }
+
+    async fn get_open_orders(
+        &self,
+        _account_id: &AccountId,
+    ) -> Result<Vec<RemoteOrder>, GatewayError> {
+        Ok(Vec::new())
+    }
 }
 
 #[derive(Debug, Clone)]

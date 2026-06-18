@@ -156,6 +156,17 @@ impl ClobGateway for OfficialSdkGateway {
         })
     }
 
+    async fn discard_signed_order(
+        &self,
+        order: &SignedOrderEnvelope,
+    ) -> Result<(), GatewayError> {
+        self.signed_orders
+            .lock()
+            .map_err(|_| GatewayError::RemoteUnknown("signed order cache poisoned".into()))?
+            .remove(&order.signed_payload_ref);
+        Ok(())
+    }
+
     async fn cancel_order(
         &self,
         account_id: &AccountId,

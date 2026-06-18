@@ -47,3 +47,9 @@ mod reconcile_reader;
 
 #[path = "tests/market_data.rs"]
 mod market_data;
+
+#[path = "tests/live_read.rs"]
+mod live_read;
+
+#[path = "tests/production_assembly.rs"]
+mod production_assembly;

@@ -2,7 +2,8 @@ use pmx_core::SubmitReceipt;
 use pmx_gateway::{ClobGateway, SignerProvider};
 use pmx_store::{
     AdminAuditStore, ExecutionLifecycleStore, ExecutionStore, IdempotencyStore,
-    OrderLifecycleStore, RuntimeWorkerStatusStore, SignOnlyLifecycleStore,
+    OrderLifecycleStore, OrderReconcileBacklogStore, RuntimeWorkerStatusStore,
+    SignOnlyLifecycleStore,
 };
 
 use super::ExecutorService;
@@ -16,6 +17,7 @@ where
         + AdminAuditStore
         + ExecutionLifecycleStore
         + OrderLifecycleStore
+        + OrderReconcileBacklogStore
         + RuntimeWorkerStatusStore
         + SignOnlyLifecycleStore
         + Clone

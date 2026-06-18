@@ -1,5 +1,11 @@
 use super::super::*;
+use async_trait::async_trait;
+use pmx_core::{CancelState, RemoteOrderId, SignedOrderEnvelope};
 use pmx_gateway::{ClobGateway, SignerProvider};
+use std::sync::{
+    Arc,
+    atomic::{AtomicUsize, Ordering},
+};
 
 #[tokio::test]
 async fn service_records_non_live_cancel_and_reconcile_order_lifecycle() {
@@ -213,4 +219,76 @@ async fn service_live_cancel_gateway_records_remote_acceptance_and_unknown() {
         .await
         .expect("live cancel remote unknown");
     assert_eq!(unknown.lifecycle_state, OrderLifecycleState::RemoteUnknown);
+}
+
+#[tokio::test]
+async fn service_live_cancel_rejects_terminal_order_before_gateway_call() {
+    let store = InMemoryStore::default();
+    let mut filled = order("order-live-cancel-filled", OrderLifecycleState::Filled);
+    filled.remote_order_id = Some("remote-filled".into());
+    store
+        .upsert_order_lifecycle(&filled)
+        .await
+        .expect("upsert filled order");
+    let service = ExecutorService::new(store);
+    let gateway = CancelTrackingGateway::default();
+    let err = service
+        .cancel_order_with_gateway(
+            LiveCancelCommand {
+                account_id: "acct-1".into(),
+                order_id: "order-live-cancel-filled".into(),
+                reason: "operator cancel fallback".into(),
+                correlation_id: Some("corr-live-cancel-filled".into()),
+            },
+            &gateway,
+        )
+        .await
+        .expect_err("terminal order is not cancelable");
+    assert!(err.to_string().contains("cancelable posted"));
+    assert_eq!(gateway.cancel_count(), 0);
+}
+
+#[derive(Clone, Default)]
+struct CancelTrackingGateway {
+    cancels: Arc<AtomicUsize>,
+}
+
+impl CancelTrackingGateway {
+    fn cancel_count(&self) -> usize {
+        self.cancels.load(Ordering::SeqCst)
+    }
+}
+
+#[async_trait]
+impl ClobGateway for CancelTrackingGateway {
+    async fn post_order(
+        &self,
+        _order: &SignedOrderEnvelope,
+    ) -> Result<pmx_gateway::PostOrderAck, pmx_gateway::GatewayError> {
+        Err(pmx_gateway::GatewayError::Disabled)
+    }
+
+    async fn cancel_order(
+        &self,
+        _account_id: &AccountId,
+        _remote_order_id: &RemoteOrderId,
+    ) -> Result<CancelState, pmx_gateway::GatewayError> {
+        self.cancels.fetch_add(1, Ordering::SeqCst);
+        Ok(CancelState::RemoteAccepted)
+    }
+
+    async fn get_order(
+        &self,
+        _account_id: &AccountId,
+        _remote_order_id: &RemoteOrderId,
+    ) -> Result<Option<pmx_gateway::RemoteOrder>, pmx_gateway::GatewayError> {
+        Ok(None)
+    }
+
+    async fn get_open_orders(
+        &self,
+        _account_id: &AccountId,
+    ) -> Result<Vec<pmx_gateway::RemoteOrder>, pmx_gateway::GatewayError> {
+        Ok(Vec::new())
+    }
 }

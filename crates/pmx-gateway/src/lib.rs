@@ -12,12 +12,14 @@ pub use disabled::{DisabledGateway, DisabledSigner, DisabledSignerProvider};
 pub use error::GatewayError;
 pub use fake::{FakeGateway, FakeGatewayFailure};
 pub use model::{
-    PlanOrder, PostOrderAck, RemoteOrder, RemoteReconcileObservation, RemoteReconcileReadReport,
+    LiveReadErrorCategory, LiveReadNormalizedEvent, LiveReadOperation, LiveReadOutcome, PlanOrder,
+    PostOrderAck, RemoteOrder, RemoteReconcileObservation, RemoteReconcileReadReport,
     RemoteReconcileReadRequest,
 };
 pub use operations::{
     AlertEvent, AlertSink, DeploymentReadiness, DeploymentReadinessProvider,
-    DisabledOperationalPorts, SecretProvider, SecretReference,
+    DisabledOperationalPorts, ProductionGatewayAssemblyDecision, ProductionGatewayAssemblyRequest,
+    SecretProvider, SecretReference,
 };
 pub use signer::{
     DeterministicTestSigner, DeterministicTestSignerProvider, SignerBackendKind,

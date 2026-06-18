@@ -17,6 +17,9 @@ pub trait Signer: Send + Sync {
 #[async_trait]
 pub trait ClobGateway: Send + Sync {
     async fn post_order(&self, order: &SignedOrderEnvelope) -> Result<PostOrderAck, GatewayError>;
+    async fn discard_signed_order(&self, _order: &SignedOrderEnvelope) -> Result<(), GatewayError> {
+        Ok(())
+    }
     async fn cancel_order(
         &self,
         account_id: &AccountId,

@@ -4,7 +4,7 @@ use pmx_core::{
     RuntimeStateSummary, WorkerStatus,
 };
 use pmx_gateway::{GatewayError, PlanOrder};
-use pmx_store::{OrderLifecycleEventRecord, OrderLifecycleRecord};
+use pmx_store::{OrderLifecycleEventRecord, OrderLifecycleRecord, OrderReconcileBacklogQuery};
 
 pub struct LiveSubmitRequest<'a> {
     pub plan: &'a pmx_core::ExecutionPlanSummary,
@@ -29,6 +29,7 @@ where
         + IdempotencyStore
         + ExecutionLifecycleStore
         + OrderLifecycleStore
+        + pmx_store::OrderReconcileBacklogStore
         + Send
         + Sync,
     R: RuntimeStateProvider,
@@ -88,6 +89,53 @@ where
         )
         .await;
     }
+    let snapshot = store.load_snapshot(&req.plan.snapshot_id).await?;
+    if snapshot.snapshot_hash != req.plan.snapshot_hash {
+        return finish_live_receipt(
+            store,
+            &req,
+            SubmitStatus::Blocked,
+            "LIVE_SUBMIT_BLOCKED_SNAPSHOT_HASH_MISMATCH",
+            serde_json::json!({
+                "reason": "snapshot_hash_mismatch",
+                "snapshot_id": req.plan.snapshot_id,
+                "remote_side_effect": false,
+            }),
+        )
+        .await;
+    }
+    if !snapshot.runtime_state.required_capabilities.is_empty() {
+        return finish_live_receipt(
+            store,
+            &req,
+            SubmitStatus::Blocked,
+            "LIVE_SUBMIT_BLOCKED_SNAPSHOT_REQUIRED_CAPABILITIES",
+            serde_json::json!({
+                "reason": "snapshot_required_capabilities_not_satisfied",
+                "snapshot_id": req.plan.snapshot_id,
+                "required_capabilities": snapshot.runtime_state.required_capabilities,
+                "remote_side_effect": false,
+            }),
+        )
+        .await;
+    }
+    if let Some(frozen_order_id) = active_remote_unknown_freeze(store, req.plan).await? {
+        return finish_live_receipt(
+            store,
+            &req,
+            SubmitStatus::Blocked,
+            "LIVE_SUBMIT_BLOCKED_REMOTE_UNKNOWN_FREEZE",
+            serde_json::json!({
+                "reason": "active_remote_unknown_freeze",
+                "frozen_order_id": frozen_order_id,
+                "account_id": req.plan.account_id.0,
+                "condition_id": req.plan.condition_id.0,
+                "remote_side_effect": false,
+                "operator_required": true,
+            }),
+        )
+        .await;
+    }
 
     let signer = match signer_provider
         .signer_for_account(&req.plan.account_id)
@@ -138,6 +186,11 @@ where
         .capture_runtime_state(&normalized)
         .await;
     if let Some(reason) = runtime_submit_block_reason(&pre_post_state) {
+        gateway.discard_signed_order(&signed).await.map_err(|err| {
+            ServiceError::Internal(format!(
+                "signed order discard failed after pre-post block: {err}"
+            ))
+        })?;
         return finish_live_receipt(
             store,
             &req,
@@ -270,6 +323,25 @@ fn plan_order(plan: &pmx_core::ExecutionPlanSummary) -> Result<PlanOrder, String
         size,
         time_in_force: format!("{:?}", plan.time_in_force),
     })
+}
+
+async fn active_remote_unknown_freeze<S>(
+    store: &S,
+    plan: &pmx_core::ExecutionPlanSummary,
+) -> Result<Option<String>, ServiceError>
+where
+    S: pmx_store::OrderReconcileBacklogStore + Send + Sync,
+{
+    let backlog = store
+        .list_reconcile_backlog_orders(&OrderReconcileBacklogQuery {
+            account_id: plan.account_id.0.clone(),
+            limit: 500,
+        })
+        .await?;
+    Ok(backlog
+        .into_iter()
+        .find(|order| order.condition_id == plan.condition_id.0)
+        .map(|order| order.order_id))
 }
 
 fn runtime_submit_block_reason(state: &RuntimeStateSummary) -> Option<&'static str> {

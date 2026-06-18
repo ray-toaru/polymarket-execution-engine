@@ -1,4 +1,4 @@
-use pmx_core::{AccountId, CancelState, OrderEventKind, RemoteOrderId};
+use pmx_core::{AccountId, CancelState, OrderEventKind, OrderLifecycleState, RemoteOrderId};
 use pmx_gateway::ClobGateway;
 use pmx_store::{OrderLifecycleEventRecord, OrderLifecycleRecord, OrderLifecycleStore};
 
@@ -74,6 +74,14 @@ where
             "live cancel requires a remote_order_id".into(),
         ));
     };
+    if !matches!(
+        existing.lifecycle_state,
+        OrderLifecycleState::Posted | OrderLifecycleState::PartiallyFilled
+    ) {
+        return Err(ServiceError::Conflict(
+            "live cancel requires a cancelable posted or partially filled order".into(),
+        ));
+    }
     store
         .record_order_lifecycle_event(&OrderLifecycleEventRecord {
             event_id: None,

@@ -10,6 +10,9 @@ use crate::support::{api_error_with_correlation, correlation_id_from_headers};
 pub struct AuthTokenConfig {
     pub service_token: String,
     pub admin_token: String,
+    pub admin_read_token: Option<String>,
+    pub admin_cancel_token: Option<String>,
+    pub emergency_operator_token: Option<String>,
 }
 
 pub fn validate_auth_config_from_env() -> Result<AuthTokenConfig, String> {
@@ -21,19 +24,63 @@ pub fn validate_auth_config_from_env() -> Result<AuthTokenConfig, String> {
         .unwrap_or_default()
         .trim()
         .to_owned();
+    let config = AuthTokenConfig {
+        service_token,
+        admin_token,
+        admin_read_token: optional_env_token("PM_EXEC_ADMIN_READ_TOKEN"),
+        admin_cancel_token: optional_env_token("PM_EXEC_ADMIN_CANCEL_TOKEN"),
+        emergency_operator_token: optional_env_token("PM_EXEC_EMERGENCY_OPERATOR_TOKEN"),
+    };
+    validate_auth_config(config)
+}
+
+fn optional_env_token(key: &str) -> Option<String> {
+    let value = std::env::var(key).unwrap_or_default().trim().to_owned();
+    if value.is_empty() { None } else { Some(value) }
+}
+
+fn validate_auth_config(config: AuthTokenConfig) -> Result<AuthTokenConfig, String> {
+    let service_token = config.service_token.as_str();
+    let admin_token = config.admin_token.as_str();
     if service_token.is_empty() {
         return Err("PM_EXEC_SERVICE_TOKEN must be set".into());
     }
     if admin_token.is_empty() {
         return Err("PM_EXEC_ADMIN_TOKEN must be set".into());
     }
-    if service_token == admin_token {
-        return Err("PM_EXEC_SERVICE_TOKEN and PM_EXEC_ADMIN_TOKEN must be distinct".into());
+    let named_tokens = [
+        ("PM_EXEC_SERVICE_TOKEN", Some(service_token)),
+        ("PM_EXEC_ADMIN_TOKEN", Some(admin_token)),
+        (
+            "PM_EXEC_ADMIN_READ_TOKEN",
+            config.admin_read_token.as_deref(),
+        ),
+        (
+            "PM_EXEC_ADMIN_CANCEL_TOKEN",
+            config.admin_cancel_token.as_deref(),
+        ),
+        (
+            "PM_EXEC_EMERGENCY_OPERATOR_TOKEN",
+            config.emergency_operator_token.as_deref(),
+        ),
+    ];
+    for (idx, (left_name, left_token)) in named_tokens.iter().enumerate() {
+        let Some(left_token) = left_token else {
+            continue;
+        };
+        if left_token.is_empty() {
+            return Err(format!("{left_name} must not be empty when set"));
+        }
+        for (right_name, right_token) in named_tokens.iter().skip(idx + 1) {
+            let Some(right_token) = right_token else {
+                continue;
+            };
+            if left_token == right_token {
+                return Err(format!("{left_name} and {right_name} must be distinct"));
+            }
+        }
     }
-    Ok(AuthTokenConfig {
-        service_token,
-        admin_token,
-    })
+    Ok(config)
 }
 
 pub(crate) fn principal_from_headers(
@@ -64,23 +111,59 @@ pub(crate) fn principal_from_headers(
         ));
     };
 
-    if constant_time_eq(token.as_bytes(), auth_config.admin_token.as_bytes()) {
-        return Ok(Principal {
-            subject: "admin-token".into(),
-            scopes: vec![Scope::Admin],
-        });
-    }
-    if constant_time_eq(token.as_bytes(), auth_config.service_token.as_bytes()) {
-        return Ok(Principal {
-            subject: "service-token".into(),
-            scopes: vec![Scope::Service],
-        });
+    if let Some(principal) = principal_from_bearer_token(token, &auth_config) {
+        return Ok(principal);
     }
     Err(api_error_with_correlation(
         StatusCode::FORBIDDEN,
         "token is not authorized",
         correlation_id_from_headers(headers),
     ))
+}
+
+fn principal_from_bearer_token(token: &str, auth_config: &AuthTokenConfig) -> Option<Principal> {
+    let candidates = [
+        (
+            auth_config.admin_token.as_str(),
+            "admin-token",
+            Scope::Admin,
+        ),
+        (
+            auth_config.service_token.as_str(),
+            "service-token",
+            Scope::Service,
+        ),
+        (
+            auth_config.admin_read_token.as_deref().unwrap_or_default(),
+            "admin-read-token",
+            Scope::AdminRead,
+        ),
+        (
+            auth_config
+                .admin_cancel_token
+                .as_deref()
+                .unwrap_or_default(),
+            "admin-cancel-token",
+            Scope::AdminCancel,
+        ),
+        (
+            auth_config
+                .emergency_operator_token
+                .as_deref()
+                .unwrap_or_default(),
+            "emergency-operator-token",
+            Scope::EmergencyOperator,
+        ),
+    ];
+    for (candidate, subject, scope) in candidates {
+        if !candidate.is_empty() && constant_time_eq(token.as_bytes(), candidate.as_bytes()) {
+            return Some(Principal {
+                subject: subject.into(),
+                scopes: vec![scope],
+            });
+        }
+    }
+    None
 }
 
 pub(crate) fn require(
@@ -107,4 +190,54 @@ fn constant_time_eq(left: &[u8], right: &[u8]) -> bool {
         diff |= left_byte ^ right_byte;
     }
     diff == 0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn split_config() -> AuthTokenConfig {
+        AuthTokenConfig {
+            service_token: "svc".into(),
+            admin_token: "admin".into(),
+            admin_read_token: Some("admin-read".into()),
+            admin_cancel_token: Some("admin-cancel".into()),
+            emergency_operator_token: Some("emergency".into()),
+        }
+    }
+
+    #[test]
+    fn split_admin_tokens_resolve_to_limited_scopes() {
+        let cfg = split_config();
+        assert_eq!(
+            principal_from_bearer_token("admin-read", &cfg)
+                .unwrap()
+                .scopes,
+            vec![Scope::AdminRead]
+        );
+        assert_eq!(
+            principal_from_bearer_token("admin-cancel", &cfg)
+                .unwrap()
+                .scopes,
+            vec![Scope::AdminCancel]
+        );
+        assert_eq!(
+            principal_from_bearer_token("emergency", &cfg)
+                .unwrap()
+                .scopes,
+            vec![Scope::EmergencyOperator]
+        );
+        assert_eq!(
+            principal_from_bearer_token("admin", &cfg).unwrap().scopes,
+            vec![Scope::Admin]
+        );
+    }
+
+    #[test]
+    fn duplicate_split_admin_tokens_fail_closed() {
+        let mut cfg = split_config();
+        cfg.admin_cancel_token = Some("admin-read".into());
+        let err = validate_auth_config(cfg).expect_err("duplicate tokens must fail closed");
+        assert!(err.contains("distinct"));
+    }
 }

@@ -2,7 +2,7 @@ use pmx_core::{SubmitReceipt, SubmitStatus, canonical_json_sha256};
 use pmx_gateway::{ClobGateway, SignerProvider};
 use pmx_store::{
     ExecutionLifecycleEvent, ExecutionLifecycleStore, ExecutionStore, IdempotencyAction,
-    IdempotencyStore, OrderLifecycleStore,
+    IdempotencyStore, OrderLifecycleStore, OrderReconcileBacklogStore,
 };
 use uuid::Uuid;
 
@@ -101,6 +101,7 @@ where
         + IdempotencyStore
         + ExecutionLifecycleStore
         + OrderLifecycleStore
+        + OrderReconcileBacklogStore
         + Send
         + Sync,
     R: RuntimeStateProvider,
