@@ -1,5 +1,5 @@
 {
-  "check_count": 26,
+  "check_count": 27,
   "checks": [
     {
       "category": "surface",
@@ -135,6 +135,13 @@
       "status": "pass"
     },
     {
+      "category": "executor",
+      "id": "v28_non_live_portfolio_foundation",
+      "proof_mode": "structured",
+      "severity": "S2",
+      "status": "pass"
+    },
+    {
       "category": "governance",
       "id": "current_hermes_client_surface",
       "proof_mode": "structured",
@@ -187,14 +194,14 @@
   "failed_check_count": 0,
   "failed_check_ids": [],
   "failed_severity_counts": {},
-  "paths": 19,
+  "paths": 22,
   "proof_mode_counts": {
-    "structured": 26
+    "structured": 27
   },
-  "schemas": 45,
+  "schemas": 53,
   "severity_counts": {
     "S1": 12,
-    "S2": 14
+    "S2": 15
   },
   "status": "ok"
 }

@@ -10,12 +10,12 @@
    Compiling crypto-common v0.2.2
    Compiling rand_core v0.10.1
    Compiling memchr v2.8.2
-   Compiling serde_json v1.0.150
    Compiling const-oid v0.10.2
+   Compiling serde_json v1.0.150
    Compiling digest v0.11.3
    Compiling zmij v1.0.21
-   Compiling itoa v1.0.18
    Compiling cpufeatures v0.3.0
+   Compiling itoa v1.0.18
    Compiling getrandom v0.4.2
    Compiling thiserror v2.0.18
    Compiling num-traits v0.2.19
@@ -28,41 +28,41 @@
    Compiling errno v0.3.14
    Compiling pin-project-lite v0.2.17
    Compiling signal-hook-registry v1.4.8
-   Compiling mio v1.2.1
    Compiling socket2 v0.6.4
+   Compiling mio v1.2.1
    Compiling tokio v1.52.3
    Compiling tinyvec_macros v0.1.1
    Compiling tinyvec v1.11.0
    Compiling unicode-normalization v0.1.25
    Compiling chacha20 v0.10.0
-   Compiling futures-sink v0.3.32
-   Compiling futures-core v0.3.32
    Compiling unicode-properties v0.1.4
    Compiling unicode-bidi v0.3.18
+   Compiling futures-sink v0.3.32
+   Compiling futures-core v0.3.32
    Compiling stringprep v0.1.5
    Compiling rand v0.10.1
-   Compiling hmac v0.13.0
    Compiling md-5 v0.11.0
+   Compiling hmac v0.13.0
    Compiling fallible-iterator v0.2.0
-   Compiling byteorder v1.5.0
    Compiling siphasher v1.0.3
-   Compiling smallvec v1.15.2
-   Compiling scopeguard v1.2.0
+   Compiling byteorder v1.5.0
    Compiling base64 v0.22.1
-   Compiling postgres-protocol v0.6.12
-   Compiling lock_api v0.4.14
+   Compiling scopeguard v1.2.0
+   Compiling smallvec v1.15.2
    Compiling parking_lot_core v0.9.12
+   Compiling lock_api v0.4.14
+   Compiling postgres-protocol v0.6.12
    Compiling phf_shared v0.13.1
    Compiling futures-task v0.3.32
    Compiling futures-util v0.3.32
    Compiling phf v0.13.1
-   Compiling parking_lot v0.12.5
    Compiling postgres-types v0.2.14
+   Compiling parking_lot v0.12.5
    Compiling tokio-util v0.7.18
    Compiling futures-channel v0.3.32
    Compiling whoami v2.1.2
-   Compiling log v0.4.32
    Compiling percent-encoding v2.3.2
+   Compiling log v0.4.32
    Compiling tokio-postgres v0.7.18
    Compiling pmx-store v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
    Compiling pmx-gateway v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
@@ -71,7 +71,7 @@
    Compiling pmx-service v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
    Compiling pmx-authz v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-authz)
    Compiling pmx-release v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-release)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 51.63s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 06s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-7abd4fdd11f8bd80)
 
 running 2 tests
@@ -82,7 +82,7 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
      Running unittests src/lib.rs (target/debug/deps/pmx_core-8915ca4edd7a7eaf)
 
-running 28 tests
+running 29 tests
 test domain::domain_tests::divergence::order_lifecycle_divergence_escalates_terminal_remote_mismatch ... ok
 test domain::domain_tests::divergence::order_lifecycle_divergence_maps_remote_unknown_open_and_missing ... ok
 test domain::domain_tests::hash_value::hash_value_accepts_lowercase_sha256_hex ... ok
@@ -109,16 +109,19 @@ test domain::domain_tests::lifecycle::sign_only_lifecycle_never_models_remote_po
 test domain::domain_tests::lifecycle::sign_only_lifecycle_rejects_direct_sign_without_reservation ... ok
 test domain::domain_tests::non_live_foundation::execution_commands_model_place_cancel_and_replace_without_remote_effects ... ok
 test domain::domain_tests::non_live_foundation::market_book_snapshot_fails_closed_when_stale_or_future_dated ... ok
+test domain::domain_tests::non_live_foundation::market_book_snapshot_proves_top_liquidity_by_side_and_fails_closed_when_stale ... ok
 test domain::domain_tests::non_live_foundation::portfolio_projection_keeps_fills_positions_open_orders_and_exposure_typed ... ok
 test domain::domain_tests::non_live_foundation::risk_limits_block_kill_switch_and_excess_exposure ... ok
 
-test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_gateway-ca781ceac1aee6c8)
 
-running 11 tests
+running 13 tests
 test tests::disabled_operational_ports_fail_closed_without_secret_material ... ok
 test tests::market_data::disabled_market_data_reader_fails_closed ... ok
+test tests::market_data::fake_market_data_reader_fails_closed_for_missing_book ... ok
+test tests::market_data::fake_market_data_reader_returns_book_snapshot_by_condition_and_token ... ok
 test tests::post_cancel::deterministic_signer_provider_posts_reads_and_cancels ... ok
 test tests::post_cancel::fake_gateway_cancel_maps_to_order_lifecycle_state_machine ... ok
 test tests::post_cancel::fake_gateway_is_account_scoped ... ok
@@ -129,7 +132,7 @@ test tests::reconcile_reader::remote_reconcile_reader_rejects_side_effect_reques
 test tests::signer::disabled_signer_provider_refuses_to_materialize_signer ... ok
 test tests::signer::signer_provider_defaults_are_production_conservative ... ok
 
-test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_policy-f64a2dee7d6b12da)
 
@@ -178,7 +181,7 @@ test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fin
 
      Running unittests src/lib.rs (target/debug/deps/pmx_service-a70b2e84098b22bf)
 
-running 44 tests
+running 46 tests
 test service::tests::flow::explicit_live_gateway_blocks_unsupported_quote_notional_without_stuck_idempotency ... ok
 test service::tests::flow::explicit_live_gateway_marks_operator_required_when_runtime_degrades_after_post_ack ... ok
 test service::tests::flow::explicit_live_gateway_posts_and_records_remote_order_lifecycle ... ok
@@ -189,6 +192,7 @@ test service::tests::flow::live_submit_mode_fails_closed_until_gateway_is_wired 
 test service::tests::flow::service_flow_persists_and_blocks_submit ... ok
 test service::tests::flow::service_id_bound_flow_persists_and_blocks_submit ... ok
 test service::tests::flow::service_id_bound_flow_propagates_correlation_id_across_object_graph ... ok
+test service::tests::flow::service_market_data_snapshot_blocks_stale_or_insufficient_top_book ... ok
 test service::tests::flow::service_rejects_object_graph_mismatch ... ok
 test service::tests::flow::service_rejects_tampered_approval_hash ... ok
 test service::tests::flow::static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks ... ok
@@ -197,6 +201,7 @@ test service::tests::non_live_order_lifecycle::cancel_reconcile::service_records
 test service::tests::non_live_order_lifecycle::divergence::service_classifies_and_records_order_lifecycle_divergence_without_remote_side_effect ... ok
 test service::tests::non_live_order_lifecycle::replace::service_prepares_replace_idempotently_without_remote_side_effects ... ok
 test service::tests::non_live_order_lifecycle::replace::service_rejects_unbound_or_cross_account_replace ... ok
+test service::tests::portfolio::service_records_portfolio_projection_and_assesses_risk_limits ... ok
 test service::tests::real_funds_canary::service_freeze_blocks_live_disabled_downgrade ... ok
 test service::tests::real_funds_canary::service_real_funds_canary_replay_returns_existing_run ... ok
 test service::tests::real_funds_canary::service_records_real_funds_canary_preflight_without_remote_side_effects ... ok
@@ -224,11 +229,11 @@ test service::tests::sign_only::standard::service_records_standard_sign_only_con
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 test submit::fingerprint::tests::request_fingerprint_ignores_correlation_metadata ... ok
 
-test result: ok. 44 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+test result: ok. 46 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-5e874a654e539b61)
 
-running 61 tests
+running 62 tests
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_paginates_and_filters_by_cursor ... ok
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_records_without_exposing_secrets ... ok
 test memory::memory_tests::admin_sign_only::sign_only::happy_path::in_memory_persists_sign_only_lifecycle_records ... ok
@@ -247,6 +252,7 @@ test memory::memory_tests::order_lifecycle::cancel_requested::in_memory_order_li
 test memory::memory_tests::order_lifecycle::rejects::in_memory_order_lifecycle_rejects_invalid_transition ... ok
 test memory::memory_tests::order_lifecycle::replay::in_memory_order_lifecycle_replays_same_correlation_id ... ok
 test memory::memory_tests::order_lifecycle::replay::in_memory_replace_lifecycle_is_idempotent_by_correlation_id ... ok
+test memory::memory_tests::portfolio::in_memory_store_rejects_stale_portfolio_projection_overwrite ... ok
 test memory::memory_tests::portfolio::in_memory_store_round_trips_portfolio_projection_by_account ... ok
 test memory::memory_tests::real_funds_canary::real_funds_canary_freezes_remote_unknown_and_blocks_downgrade ... ok
 test memory::memory_tests::real_funds_canary::real_funds_canary_rejects_idempotency_payload_mismatch ... ok
@@ -291,7 +297,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 61 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+test result: ok. 62 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
 
    Doc-tests pmx_authz
 

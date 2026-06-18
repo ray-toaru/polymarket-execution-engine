@@ -5,8 +5,8 @@
    Compiling smallvec v1.15.2
    Compiling uuid v1.23.3
    Compiling http v1.4.2
-   Compiling slab v0.4.12
    Compiling futures-task v0.3.32
+   Compiling slab v0.4.12
    Compiling futures-util v0.3.32
    Compiling http-body v1.0.1
    Compiling pmx-core v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
@@ -15,13 +15,13 @@
    Compiling parking_lot_core v0.9.12
    Compiling tower-service v0.3.3
    Compiling parking_lot v0.12.5
-   Compiling tracing v0.1.44
    Compiling postgres-types v0.2.14
+   Compiling tracing v0.1.44
    Compiling httparse v1.10.1
-   Compiling tower-layer v0.3.3
-   Compiling httpdate v1.0.3
-   Compiling atomic-waker v1.1.2
    Compiling sync_wrapper v1.0.2
+   Compiling atomic-waker v1.1.2
+   Compiling httpdate v1.0.3
+   Compiling tower-layer v0.3.3
    Compiling hyper v1.10.1
    Compiling tokio-postgres v0.7.18
    Compiling http-body-util v0.1.3
@@ -34,15 +34,15 @@
    Compiling hyper-util v0.1.20
    Compiling tower v0.5.3
    Compiling pmx-gateway v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
-   Compiling pmx-runtime v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
    Compiling pmx-policy v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
+   Compiling pmx-runtime v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
    Compiling serde_path_to_error v0.1.20
    Compiling matchit v0.8.4
    Compiling axum v0.8.9
    Compiling pmx-service v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
    Compiling pmx-authz v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-authz)
    Compiling pmx-api v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 33.47s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 47.16s
      Running tests/http_and_fake_e2e.rs (target/debug/deps/http_and_fake_e2e-0c1b24865a8c9369)
 
 running 4 tests

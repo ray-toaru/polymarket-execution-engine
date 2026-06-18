@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-06-16T03:52:37.370427+00:00",
+  "captured_at": "2026-06-18T10:24:40.180173+00:00",
   "dependency_locks": {
     "polymarket-execution-engine/Cargo.lock": {
       "exists": true,
@@ -18,13 +18,13 @@
     "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE": null,
     "PMX_RUN_SIGN_ONLY_DRY_RUN": null,
     "PMX_TEST_DATABASE_URL_set": false,
-    "python_executable": "/workspaces/universal/rust/polymarket_dual_project/.venv/bin/python",
+    "python_executable": "/usr/local/python/current/bin/python",
     "python_version": "3.14.2 (main, Jan 20 2026, 13:54:38) [GCC 13.3.0]"
   },
   "git": {
     "execution": {
       "branch": "main",
-      "head": "9584348fa8e368e088c92a3d72f44569581a7e13",
+      "head": "86ed72feb77d4945b511997c4d73fc501124041d",
       "path": "polymarket-execution-engine",
       "status_clean": true,
       "status_entry_count": 0
@@ -38,12 +38,12 @@
     },
     "integration": {
       "branch": "main",
-      "head": "6b4d9aa4c28dcd3160d7c329352fca9445c34319",
+      "head": "864bf9ee710f24f5b38eb0299557280cc6a40960",
       "path": ".",
       "status_clean": true,
       "status_entry_count": 0
     },
-    "submodules": "7477c028d5c4f0f2215e7ee6c3ee4ea750331553 hermes-polymarket-executor-adapter (v0.28.0-32-g7477c02)\n 9584348fa8e368e088c92a3d72f44569581a7e13 polymarket-execution-engine (v0.28.0-186-g9584348)"
+    "submodules": "7477c028d5c4f0f2215e7ee6c3ee4ea750331553 hermes-polymarket-executor-adapter (v0.28.0-32-g7477c02)\n 86ed72feb77d4945b511997c4d73fc501124041d polymarket-execution-engine (v0.28.0-195-g86ed72f)"
   },
   "integration_root": "/workspaces/universal/rust/polymarket_dual_project",
   "platform": {
@@ -63,12 +63,12 @@
       ],
       "exit_status": 0,
       "stderr": "",
-      "stdout": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)"
+      "stdout": "cargo 1.96.0 (30a34c682 2026-05-25)"
     },
     "pip_freeze": {
       "available": true,
       "command": [
-        "/workspaces/universal/rust/polymarket_dual_project/.venv/bin/python",
+        "/usr/local/python/current/bin/python",
         "-m",
         "pip",
         "freeze",
@@ -76,7 +76,7 @@
       ],
       "exit_status": 0,
       "stderr": "",
-      "stdout": "annotated-types==0.7.0\nanyio==4.13.0\nast_serialize==0.5.0\nattrs==26.1.0\nbandit==1.9.4\nboolean.py==5.0\nbuild==1.5.0\nCacheControl==0.14.4\ncertifi==2026.5.20\ncharset-normalizer==3.4.7\ncyclonedx-python-lib==11.7.0\ndefusedxml==0.7.1\nfilelock==3.29.0\nh11==0.16.0\n-e git+https://github.com/ray-toaru/hermes-polymarket-executor-adapter.git@7477c028d5c4f0f2215e7ee6c3ee4ea750331553#egg=hermes_polymarket_executor_adapter&subdirectory=../../hermes-polymarket-executor-adapter\nhttpcore==1.0.9\nhttpx==0.28.1\nidna==3.18\niniconfig==2.3.0\njsonschema==4.25.1\njsonschema-specifications==2025.9.1\nlibrt==0.11.0\nlicense-expression==30.4.4\nmarkdown-it-py==4.2.0\nmdurl==0.1.2\nmsgpack==1.1.2\nmypy==2.1.0\nmypy_extensions==1.1.0\npackageurl-python==0.17.6\npackaging==26.2\npathspec==1.1.1\npip==26.1.2\npip-api==0.0.34\npip-requirements-parser==32.0.1\npip_audit==2.10.0\nplatformdirs==4.10.0\npluggy==1.6.0\npy-serializable==2.1.0\npydantic==2.13.4\npydantic_core==2.46.4\nPygments==2.20.0\npyparsing==3.3.2\npyproject_hooks==1.2.0\npytest==9.0.3\nPyYAML==6.0.3\nreferencing==0.37.0\nrequests==2.34.2\nrich==15.0.0\nrpds-py==2026.5.1\nruff==0.15.17\nsortedcontainers==2.4.0\nstevedore==5.8.0\ntomli==2.4.1\ntomli_w==1.2.0\ntyping-inspection==0.4.2\ntyping_extensions==4.15.0\nurllib3==2.7.0\nwheel==0.47.0"
+      "stdout": "annotated-types==0.7.0\nanyio==4.13.0\nast_serialize==0.5.0\nattrs==26.1.0\nbandit==1.9.4\ncertifi==2026.4.22\ncharset-normalizer==3.4.7\nh11==0.16.0\nhttpcore==1.0.9\nhttpx==0.28.1\nidna==3.15\njsonschema==4.26.0\njsonschema-specifications==2025.9.1\nlibrt==0.11.0\nmarkdown-it-py==4.2.0\nmdurl==0.1.2\nmypy==2.1.0\nmypy_extensions==1.1.0\npathspec==1.1.1\npip==25.3\npydantic==2.13.4\npydantic_core==2.46.4\nPygments==2.20.0\nPyYAML==6.0.3\nreferencing==0.37.0\nrequests==2.34.2\nrich==15.0.0\nrpds-py==0.30.0\nruff==0.15.15\nstevedore==5.8.0\ntyping-inspection==0.4.2\ntyping_extensions==4.15.0\nurllib3==2.7.0"
     },
     "psql": {
       "available": true,
@@ -91,7 +91,7 @@
     "python": {
       "available": true,
       "command": [
-        "/workspaces/universal/rust/polymarket_dual_project/.venv/bin/python",
+        "/usr/local/python/current/bin/python",
         "--version"
       ],
       "exit_status": 0,
@@ -106,7 +106,7 @@
       ],
       "exit_status": 0,
       "stderr": "",
-      "stdout": "rustc 1.95.0 (59807616e 2026-04-14)"
+      "stdout": "rustc 1.96.0 (ac68faa20 2026-05-25)"
     }
   }
 }

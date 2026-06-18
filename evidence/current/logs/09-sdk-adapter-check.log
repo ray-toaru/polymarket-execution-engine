@@ -1,6 +1,6 @@
    Compiling proc-macro2 v1.0.106
-   Compiling quote v1.0.45
    Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.45
    Compiling syn v2.0.117
    Compiling serde_core v1.0.228
     Checking typenum v1.20.1
@@ -8,28 +8,28 @@
    Compiling libc v0.2.186
    Compiling autocfg v1.5.1
    Compiling num-traits v0.2.19
-   Compiling zmij v1.0.21
-   Compiling getrandom v0.4.2
-   Compiling serde v1.0.228
     Checking cfg-if v1.0.4
-    Checking block-buffer v0.12.1
+   Compiling zmij v1.0.21
+   Compiling serde v1.0.228
+   Compiling getrandom v0.4.2
     Checking crypto-common v0.2.2
+    Checking block-buffer v0.12.1
    Compiling serde_derive v1.0.228
     Checking const-oid v0.10.2
-   Compiling serde_json v1.0.150
    Compiling thiserror v2.0.18
+   Compiling serde_json v1.0.150
     Checking digest v0.11.3
    Compiling thiserror-impl v2.0.18
-    Checking itoa v1.0.18
-    Checking iana-time-zone v0.1.65
-    Checking memchr v2.8.2
     Checking cpufeatures v0.3.0
-    Checking sha2 v0.11.0
+    Checking itoa v1.0.18
+    Checking memchr v2.8.2
+    Checking iana-time-zone v0.1.65
     Checking chrono v0.4.45
+    Checking sha2 v0.11.0
     Checking uuid v1.23.3
     Checking pmx-core v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
    Compiling async-trait v0.1.89
     Checking pmx-gateway v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
     Checking dotenvy v0.15.7
     Checking pmx-official-sdk-adapter v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 21.39s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 24.86s
