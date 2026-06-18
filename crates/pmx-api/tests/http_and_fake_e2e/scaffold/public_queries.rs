@@ -166,6 +166,42 @@ pub(super) async fn verify_public_queries(app: axum::Router, execution_id: &str)
     .await;
     assert_eq!(status, StatusCode::FORBIDDEN);
 
+    let (status, _) = request_json(
+        app.clone(),
+        "GET",
+        "/v1/admin/live-read-events?limit=20&account_id=acct-http-e2e-1&operation=GET_ORDER",
+        Some("service-token-test-v07"),
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+
+    let (status, live_read_events) = request_json(
+        app.clone(),
+        "GET",
+        "/v1/admin/live-read-events?limit=20&account_id=acct-http-e2e-1&operation=GET_ORDER",
+        Some("admin-read-token-test-v07"),
+        None,
+    )
+    .await;
+    assert_eq!(
+        status,
+        StatusCode::OK,
+        "live-read events: {live_read_events}"
+    );
+    assert_eq!(live_read_events.as_array().unwrap().len(), 1);
+    assert_eq!(live_read_events[0]["no_trading_side_effect"], true);
+    assert_eq!(
+        live_read_events[0]["redacted_error_summary"],
+        json!("remote unknown api_secret=[REDACTED] signature=[REDACTED]")
+    );
+    assert!(
+        live_read_events[0]["redacted_fields"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("api_secret"))
+    );
+
     let (status, audit_events) = request_json(
         app,
         "GET",

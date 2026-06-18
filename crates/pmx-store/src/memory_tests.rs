@@ -43,6 +43,8 @@ async fn seed_test_plan(store: &InMemoryStore, execution_id: &str, account_id: &
 mod admin_sign_only;
 #[path = "memory_tests/common.rs"]
 mod common;
+#[path = "memory_tests/live_read.rs"]
+mod live_read;
 #[path = "memory_tests/order_lifecycle.rs"]
 mod order_lifecycle;
 #[path = "memory_tests/portfolio.rs"]

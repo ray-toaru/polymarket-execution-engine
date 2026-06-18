@@ -5,6 +5,7 @@ pub mod postgres;
 mod postgres_audit;
 mod postgres_execution;
 mod postgres_idempotency;
+mod postgres_live_read;
 mod postgres_order_lifecycle;
 mod postgres_portfolio;
 mod postgres_real_funds_canary;
@@ -23,7 +24,8 @@ pub(crate) use helpers::{
     order_lifecycle_state_to_str, quantity_bound_to_resource_and_amount,
     real_funds_canary_state_from_str, real_funds_canary_state_to_str, reservation_state_to_str,
     runtime_observation_is_fresh, sanitize_admin_audit_event, sanitize_execution_lifecycle_event,
-    sanitize_sign_only_lifecycle_record, sign_only_lifecycle_record_is_replay,
+    sanitize_live_read_event, sanitize_sign_only_lifecycle_record,
+    sign_only_lifecycle_record_is_replay, validate_live_read_event_for_store,
     validate_real_funds_canary_transition, validate_sign_only_lifecycle_append_for_store,
     worker_status_from_heartbeats,
 };

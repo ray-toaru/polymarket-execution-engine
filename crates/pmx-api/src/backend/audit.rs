@@ -1,5 +1,5 @@
 use pmx_service::ServiceError;
-use pmx_store::{AdminAuditEvent, AdminAuditQuery};
+use pmx_store::{AdminAuditEvent, AdminAuditQuery, LiveReadEventQuery, LiveReadEventRecord};
 
 use super::ServiceBackend;
 
@@ -21,6 +21,16 @@ impl ServiceBackend {
         match self {
             Self::InMemory(service) => service.list_admin_audit_events(query).await,
             Self::Postgres(service) => service.list_admin_audit_events(query).await,
+        }
+    }
+
+    pub(crate) async fn list_live_read_events(
+        &self,
+        query: LiveReadEventQuery,
+    ) -> Result<Vec<LiveReadEventRecord>, ServiceError> {
+        match self {
+            Self::InMemory(service) => service.list_live_read_events(query).await,
+            Self::Postgres(service) => service.list_live_read_events(query).await,
         }
     }
 }

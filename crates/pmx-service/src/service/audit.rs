@@ -1,8 +1,9 @@
 use pmx_store::{
     AdminAuditEvent, AdminAuditQuery, AdminAuditStore, ExecutionLifecycleEvent,
     ExecutionLifecycleQuery, ExecutionLifecycleStore, ExecutionStore, IdempotencyStore,
-    OrderLifecycleEventRecord, OrderLifecycleStore, RuntimeWorkerStatusQuery,
-    RuntimeWorkerStatusReport, RuntimeWorkerStatusStore, SignOnlyLifecycleStore,
+    LiveReadEventQuery, LiveReadEventRecord, LiveReadEventStore, OrderLifecycleEventRecord,
+    OrderLifecycleStore, RuntimeWorkerStatusQuery, RuntimeWorkerStatusReport,
+    RuntimeWorkerStatusStore, SignOnlyLifecycleStore,
 };
 
 use super::ExecutorService;
@@ -14,6 +15,7 @@ where
     S: ExecutionStore
         + IdempotencyStore
         + AdminAuditStore
+        + LiveReadEventStore
         + ExecutionLifecycleStore
         + OrderLifecycleStore
         + RuntimeWorkerStatusStore
@@ -37,6 +39,13 @@ where
         query: AdminAuditQuery,
     ) -> Result<Vec<AdminAuditEvent>, ServiceError> {
         Ok(self.store.list_admin_audit_events(&query).await?)
+    }
+
+    pub async fn list_live_read_events(
+        &self,
+        query: LiveReadEventQuery,
+    ) -> Result<Vec<LiveReadEventRecord>, ServiceError> {
+        Ok(self.store.list_live_read_events(&query).await?)
     }
 
     pub async fn record_execution_lifecycle_event(

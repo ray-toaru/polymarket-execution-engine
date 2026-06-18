@@ -12,14 +12,16 @@ mod audit;
 mod execution;
 mod idempotency;
 mod lifecycle;
+mod live_read;
 mod order_lifecycle;
 mod portfolio;
 mod real_funds_canary;
 mod runtime;
 
 use crate::{
-    AdminAuditEvent, ExecutionLifecycleEvent, OrderLifecycleEventRecord, OrderLifecycleRecord,
-    RealFundsCanaryRunRecord, RuntimeWorkerHeartbeat, RuntimeWorkerObservation,
+    AdminAuditEvent, ExecutionLifecycleEvent, LiveReadEventRecord, OrderLifecycleEventRecord,
+    OrderLifecycleRecord, RealFundsCanaryRunRecord, RuntimeWorkerHeartbeat,
+    RuntimeWorkerObservation,
 };
 
 #[derive(Clone, Default)]
@@ -39,6 +41,8 @@ struct InMemoryState {
     attempt_counters: HashMap<String, u32>,
     admin_audit: Vec<AdminAuditEvent>,
     admin_audit_counter: i64,
+    live_read_events: Vec<LiveReadEventRecord>,
+    live_read_event_counter: i64,
     runtime_states: HashMap<String, RuntimeStateSummary>,
     global_kill_switch: Option<AccountKillSwitchState>,
     account_kill_switches: HashMap<String, AccountKillSwitchState>,

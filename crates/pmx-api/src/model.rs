@@ -1,5 +1,8 @@
 use chrono::{DateTime, Utc};
-use pmx_core::{ApprovalReceipt, OrderLifecycleDivergence, RemoteOrderObservation};
+use pmx_core::{
+    ApprovalReceipt, LiveReadOperation, LiveReadOutcome, OrderLifecycleDivergence,
+    RemoteOrderObservation,
+};
 use pmx_store::OrderLifecycleRecord;
 
 #[derive(serde::Deserialize)]
@@ -51,6 +54,17 @@ pub struct AuditQuery {
     pub principal_subject: Option<String>,
     pub result: Option<String>,
     pub correlation_id: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LiveReadEventListQuery {
+    pub limit: Option<usize>,
+    pub before_event_id: Option<i64>,
+    pub account_id: Option<String>,
+    pub operation: Option<LiveReadOperation>,
+    pub outcome: Option<LiveReadOutcome>,
+    pub remote_order_id: Option<String>,
 }
 
 #[derive(serde::Serialize)]

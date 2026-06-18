@@ -126,6 +126,29 @@ async fn seed_in_memory_cancelable_order(
         .expect("seed in-memory cancelable order");
 }
 
+async fn seed_in_memory_live_read_event(store: &pmx_store::InMemoryStore) {
+    use pmx_store::{LiveReadEventRecord, LiveReadEventStore};
+
+    store
+        .record_live_read_event(&LiveReadEventRecord {
+            event_id: None,
+            account_id: pmx_core::AccountId("acct-http-e2e-1".into()),
+            operation: pmx_core::LiveReadOperation::GetOrder,
+            outcome: pmx_core::LiveReadOutcome::RemoteUnknown,
+            remote_order_id: Some(pmx_core::RemoteOrderId("remote-http-e2e-live-read".into())),
+            remote_state: None,
+            error_category: Some(pmx_core::LiveReadErrorCategory::RemoteUnknown),
+            redacted_error_summary: Some(
+                "remote unknown api_secret=[REDACTED] signature=[REDACTED]".into(),
+            ),
+            no_trading_side_effect: true,
+            redacted_fields: pmx_core::live_read_redacted_fields(),
+            observed_at: None,
+        })
+        .await
+        .expect("seed in-memory live-read event");
+}
+
 #[path = "http_and_fake_e2e/smoke.rs"]
 mod smoke;
 

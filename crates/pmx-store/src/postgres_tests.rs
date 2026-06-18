@@ -66,6 +66,8 @@ mod admin_audit;
 mod execution_lifecycle;
 #[path = "postgres_tests/idempotency.rs"]
 mod idempotency;
+#[path = "postgres_tests/live_read.rs"]
+mod live_read;
 #[path = "postgres_tests/order_lifecycle.rs"]
 mod order_lifecycle;
 #[path = "postgres_tests/portfolio.rs"]

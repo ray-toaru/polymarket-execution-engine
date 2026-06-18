@@ -11,7 +11,7 @@ use pmx_core::*;
 use pmx_store::*;
 
 use pmx_store::{
-    AdminAuditStore, ExecutionLifecycleStore, ExecutionStore, IdempotencyStore,
+    AdminAuditStore, ExecutionLifecycleStore, ExecutionStore, IdempotencyStore, LiveReadEventStore,
     OrderLifecycleStore, RuntimeWorkerStatusStore, SignOnlyLifecycleStore,
 };
 
@@ -31,6 +31,7 @@ where
     S: ExecutionStore
         + IdempotencyStore
         + AdminAuditStore
+        + LiveReadEventStore
         + ExecutionLifecycleStore
         + OrderLifecycleStore
         + RuntimeWorkerStatusStore
@@ -55,6 +56,7 @@ where
     S: ExecutionStore
         + IdempotencyStore
         + AdminAuditStore
+        + LiveReadEventStore
         + ExecutionLifecycleStore
         + OrderLifecycleStore
         + RuntimeWorkerStatusStore

@@ -386,6 +386,49 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/AdminAuditEvent' }
+  /v1/admin/live-read-events:
+    get:
+      operationId: listLiveReadEvents
+      description: >
+        Lists normalized, redacted live-read observations. This endpoint is read-only;
+        it exposes no raw remote payloads, signatures, signed payloads, private keys,
+        CLOB secrets, or trading side-effect controls.
+      security:
+        - AdminToken: []
+        - AdminReadToken: []
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+        - in: query
+          name: before_event_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: account_id
+          required: false
+          schema: { type: string }
+        - in: query
+          name: operation
+          required: false
+          schema: { $ref: '#/components/schemas/LiveReadOperation' }
+        - in: query
+          name: outcome
+          required: false
+          schema: { $ref: '#/components/schemas/LiveReadOutcome' }
+        - in: query
+          name: remote_order_id
+          required: false
+          schema: { type: string }
+      responses:
+        '200':
+          description: Recent normalized live-read events
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/LiveReadEventRecord' }
   /v1/admin/kill-switch:
     post:
       operationId: setKillSwitch
@@ -805,6 +848,40 @@ components:
         request_fingerprint: { type: [string, 'null'] }
         correlation_id: { type: [string, 'null'] }
         result: { type: string }
+    LiveReadOperation:
+      type: string
+      enum: [GET_ORDER, LIST_OPEN_ORDERS, LIST_FILLS, LIST_POSITIONS]
+    LiveReadOutcome:
+      type: string
+      enum: [OBSERVED, MISSING, BLOCKED, REMOTE_REJECTED, REMOTE_UNKNOWN, AUTHENTICATION_FAILED]
+    LiveReadErrorCategory:
+      type: string
+      enum: [REMOTE_REJECTED, REMOTE_UNKNOWN, AUTHENTICATION_FAILED, DISABLED, SIGNING_UNAVAILABLE]
+    LiveReadEventRecord:
+      type: object
+      additionalProperties: false
+      required: [account_id, operation, outcome, no_trading_side_effect, redacted_fields]
+      properties:
+        event_id: { type: [integer, 'null'], readOnly: true }
+        account_id: { type: string }
+        operation: { $ref: '#/components/schemas/LiveReadOperation' }
+        outcome: { $ref: '#/components/schemas/LiveReadOutcome' }
+        remote_order_id: { type: [string, 'null'] }
+        remote_state: { type: [string, 'null'] }
+        error_category:
+          anyOf:
+            - $ref: '#/components/schemas/LiveReadErrorCategory'
+            - type: 'null'
+        redacted_error_summary: { type: [string, 'null'], maxLength: 240 }
+        no_trading_side_effect: { type: boolean, const: true }
+        redacted_fields:
+          type: array
+          items: { type: string }
+        observed_at: { type: [string, 'null'], format: date-time, readOnly: true }
+      description: >
+        Normalized live-read observation or read error. All raw remote payloads,
+        raw errors, signatures, signed payloads, API keys, API secrets, and API
+        passphrases are excluded or redacted before persistence.
     RuntimeWorkerHeartbeat:
       type: object
       additionalProperties: false

@@ -2,7 +2,7 @@ use super::*;
 
 #[test]
 fn normalized_live_read_error_redacts_secret_material() {
-    let event = LiveReadNormalizedEvent::from_gateway_error(
+    let event = live_read_event_from_gateway_error(
         pmx_core::AccountId("acct-live-read".into()),
         LiveReadOperation::GetOrder,
         Some(pmx_core::RemoteOrderId("remote-live-read".into())),
@@ -28,7 +28,7 @@ fn normalized_live_read_error_redacts_secret_material() {
 
 #[test]
 fn normalized_live_read_error_redacts_assignment_keys_case_insensitively() {
-    let event = LiveReadNormalizedEvent::from_gateway_error(
+    let event = live_read_event_from_gateway_error(
         pmx_core::AccountId("acct-live-read".into()),
         LiveReadOperation::GetOrder,
         None,

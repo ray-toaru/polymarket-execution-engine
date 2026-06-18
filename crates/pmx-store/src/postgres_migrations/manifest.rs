@@ -48,4 +48,8 @@ pub const SCHEMA_MIGRATIONS: &[SchemaMigration] = &[
         version: "0011_portfolio_projections",
         sql: include_str!("../../../../migrations/0011_portfolio_projections.sql"),
     },
+    SchemaMigration {
+        version: "0012_live_read_events",
+        sql: include_str!("../../../../migrations/0012_live_read_events.sql"),
+    },
 ];

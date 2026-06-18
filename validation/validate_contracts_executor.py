@@ -1755,6 +1755,7 @@ def validate_v15_admin_audit_and_runtime_provider(spec: dict | None = None) -> N
     api_auth_text = (API_SRC / "support/auth.rs").read_text()
     api_negative_text = rust_file_with_modules_text(API_E2E_TEST)
     audit_operation = openapi_operation(spec, "/v1/admin/audit-events", "get")
+    live_read_operation = openapi_operation(spec, "/v1/admin/live-read-events", "get")
     admin_session_schema = spec.get("components", {}).get("schemas", {}).get("AdminSession", {})
     admin_scope_enum = (
         admin_session_schema.get("properties", {})
@@ -1773,6 +1774,8 @@ def validate_v15_admin_audit_and_runtime_provider(spec: dict | None = None) -> N
         fail("v0.15 OpenAPI security schemes must include split admin bearer tokens")
     if operation_response_array_item_ref(spec, "/v1/admin/audit-events", "get", "200") != "#/components/schemas/AdminAuditEvent":
         fail("v0.15 admin audit response must be an array of AdminAuditEvent")
+    if operation_response_array_item_ref(spec, "/v1/admin/live-read-events", "get", "200") != "#/components/schemas/LiveReadEventRecord":
+        fail("v0.15 live-read event response must be an array of LiveReadEventRecord")
     if operation_request_ref(spec, "/v1/admin/kill-switch", "post") != "#/components/schemas/KillSwitchRequest":
         fail("v0.15 kill-switch request must reference KillSwitchRequest")
     if operation_response_ref(spec, "/v1/admin/kill-switch", "post", "202") != "#/components/schemas/KillSwitchReceipt":
@@ -1781,6 +1784,53 @@ def validate_v15_admin_audit_and_runtime_provider(spec: dict | None = None) -> N
     for required_param in {"before_audit_id", "operation", "principal_subject", "result", "correlation_id"}:
         if required_param not in audit_params:
             fail(f"v0.15 admin audit query must expose {required_param}")
+    live_read_params = operation_parameter_names(live_read_operation)
+    for required_param in {"before_event_id", "account_id", "operation", "outcome", "remote_order_id"}:
+        if required_param not in live_read_params:
+            fail(f"v0.15 live-read event query must expose {required_param}")
+    live_read_required = schema_required_names(spec, "LiveReadEventRecord")
+    if not {"account_id", "operation", "outcome", "no_trading_side_effect", "redacted_fields"}.issubset(live_read_required):
+        fail("v0.15 LiveReadEventRecord schema missing required redacted read-only fields")
+    live_read_props = schema_property_names(spec, "LiveReadEventRecord")
+    if not {
+        "event_id",
+        "account_id",
+        "operation",
+        "outcome",
+        "remote_order_id",
+        "remote_state",
+        "error_category",
+        "redacted_error_summary",
+        "no_trading_side_effect",
+        "redacted_fields",
+        "observed_at",
+    }.issubset(live_read_props):
+        fail("v0.15 LiveReadEventRecord schema missing normalized event fields")
+    live_read_schemas = spec.get("components", {}).get("schemas", {})
+    if live_read_schemas.get("LiveReadOperation", {}).get("enum") != [
+        "GET_ORDER",
+        "LIST_OPEN_ORDERS",
+        "LIST_FILLS",
+        "LIST_POSITIONS",
+    ]:
+        fail("v0.15 LiveReadOperation schema must match Rust SCREAMING_SNAKE_CASE serde values")
+    if live_read_schemas.get("LiveReadOutcome", {}).get("enum") != [
+        "OBSERVED",
+        "MISSING",
+        "BLOCKED",
+        "REMOTE_REJECTED",
+        "REMOTE_UNKNOWN",
+        "AUTHENTICATION_FAILED",
+    ]:
+        fail("v0.15 LiveReadOutcome schema must match Rust SCREAMING_SNAKE_CASE serde values")
+    if live_read_schemas.get("LiveReadErrorCategory", {}).get("enum") != [
+        "REMOTE_REJECTED",
+        "REMOTE_UNKNOWN",
+        "AUTHENTICATION_FAILED",
+        "DISABLED",
+        "SIGNING_UNAVAILABLE",
+    ]:
+        fail("v0.15 LiveReadErrorCategory schema must match Rust SCREAMING_SNAKE_CASE serde values")
     require_tokens(
         authz_text,
         "pmx-authz split admin scopes",
@@ -1815,6 +1865,10 @@ def validate_v15_admin_audit_and_runtime_provider(spec: dict | None = None) -> N
         ],
     )
     audit_model_text = (STORE_SRC / "model/audit.rs").read_text()
+    core_live_read_text = (CORE_SRC / "domain/live_read.rs").read_text()
+    live_read_model_text = (STORE_SRC / "model/live_read.rs").read_text()
+    memory_live_read_text = (STORE_SRC / "memory/live_read.rs").read_text()
+    postgres_live_read_text = (STORE_SRC / "postgres_live_read.rs").read_text()
     memory_audit_text = (STORE_SRC / "memory/audit.rs").read_text()
     postgres_audit_text = (STORE_SRC / "postgres_audit/admin.rs").read_text()
     service_audit_text = (SERVICE_SRC / "service/audit.rs").read_text()
@@ -1845,6 +1899,30 @@ def validate_v15_admin_audit_and_runtime_provider(spec: dict | None = None) -> N
         )
     except SystemExit as exc:
         fail(f"store admin audit model malformed: {exc}")
+    try:
+        live_read_event_fields = rust_struct_field_names(live_read_model_text, "LiveReadEventRecord")
+        live_read_query_fields = rust_struct_field_names(live_read_model_text, "LiveReadEventQuery")
+        live_read_store_methods = rust_trait_method_signatures(live_read_model_text, "LiveReadEventStore")
+        memory_live_read_impl_methods = rust_impl_trait_method_names(
+            memory_live_read_text, "LiveReadEventStore", "InMemoryStore"
+        )
+        memory_live_read_record_body = rust_impl_trait_method_body(
+            memory_live_read_text, "LiveReadEventStore", "InMemoryStore", "record_live_read_event"
+        )
+        memory_live_read_list_body = rust_impl_trait_method_body(
+            memory_live_read_text, "LiveReadEventStore", "InMemoryStore", "list_live_read_events"
+        )
+        postgres_live_read_impl_methods = rust_impl_trait_method_names(
+            postgres_live_read_text, "LiveReadEventStore", "PostgresStore"
+        )
+        postgres_live_read_record_body = rust_impl_trait_method_body(
+            postgres_live_read_text, "LiveReadEventStore", "PostgresStore", "record_live_read_event"
+        )
+        postgres_live_read_list_body = rust_impl_trait_method_body(
+            postgres_live_read_text, "LiveReadEventStore", "PostgresStore", "list_live_read_events"
+        )
+    except SystemExit as exc:
+        fail(f"store live-read event model malformed: {exc}")
     try:
         service_audit_record_body = rust_async_fn_body(
             service_audit_text, "record_admin_audit_event"
@@ -1896,6 +1974,45 @@ def validate_v15_admin_audit_and_runtime_provider(spec: dict | None = None) -> N
         fail("store admin audit model missing AdminAuditQuery fields")
     if audit_store_methods != {"record_admin_audit_event", "list_admin_audit_events"}:
         fail("store admin audit model missing AdminAuditStore methods")
+    if not {
+        "event_id",
+        "account_id",
+        "operation",
+        "outcome",
+        "remote_order_id",
+        "remote_state",
+        "error_category",
+        "redacted_error_summary",
+        "no_trading_side_effect",
+        "redacted_fields",
+        "observed_at",
+    }.issubset(live_read_event_fields):
+        fail("store live-read model missing LiveReadEventRecord fields")
+    if not {
+        "limit",
+        "before_event_id",
+        "account_id",
+        "operation",
+        "outcome",
+        "remote_order_id",
+    }.issubset(live_read_query_fields):
+        fail("store live-read model missing LiveReadEventQuery fields")
+    if live_read_store_methods != {"record_live_read_event", "list_live_read_events"}:
+        fail("store live-read model missing LiveReadEventStore methods")
+    require_tokens(
+        core_live_read_text,
+        "pmx-core live-read normalized event",
+        [
+            "pub struct LiveReadNormalizedEvent",
+            "pub enum LiveReadOperation",
+            "pub enum LiveReadOutcome",
+            "pub enum LiveReadErrorCategory",
+            "pub fn live_read_redacted_fields()",
+            "raw_remote_payload",
+            "api_secret",
+            "signed_payload",
+        ],
+    )
     if "record_admin_audit_event" not in rust_async_fn_names(service_audit_text):
         fail("service admin audit bridge missing record_admin_audit_event")
     if "list_admin_audit_events" not in rust_async_fn_names(service_audit_text):
@@ -2015,6 +2132,93 @@ def validate_v15_admin_audit_and_runtime_provider(spec: dict | None = None) -> N
             '"/v1/admin/audit-events?limit=20"',
             "StatusCode::FORBIDDEN",
             "StatusCode::OK",
+        ],
+    )
+    if "list_live_read_events" not in rust_async_fn_names(service_audit_text):
+        fail("service live-read event bridge missing list_live_read_events")
+    if "list_live_read_events" not in rust_async_fn_names(api_backend_audit_text):
+        fail("API live-read event backend missing list_live_read_events")
+    if "list_live_read_events" not in rust_async_fn_names(api_route_audit_text):
+        fail("API live-read event route missing list_live_read_events")
+    if memory_live_read_impl_methods != {"record_live_read_event", "list_live_read_events"}:
+        fail("in-memory live-read event store missing LiveReadEventStore impl methods")
+    if postgres_live_read_impl_methods != {"record_live_read_event", "list_live_read_events"}:
+        fail("postgres live-read event store missing LiveReadEventStore impl methods")
+    require_tokens(
+        memory_live_read_record_body,
+        "in-memory live-read event store",
+        [
+            "validate_live_read_event_for_store(event)?",
+            "sanitize_live_read_event",
+            "stored.observed_at = Some(Utc::now())",
+        ],
+    )
+    require_tokens(
+        memory_live_read_list_body,
+        "in-memory live-read event store",
+        [
+            "before_event_id",
+            "&event.account_id == account_id",
+            "&event.operation == operation",
+            "query.bounded_limit()",
+        ],
+    )
+    require_tokens(
+        postgres_live_read_record_body,
+        "postgres live-read event store",
+        [
+            "validate_live_read_event_for_store(event)?",
+            "INSERT INTO live_read_events",
+            "redacted_fields",
+            "TRUE",
+        ],
+    )
+    require_tokens(
+        postgres_live_read_list_body,
+        "postgres live-read event store",
+        [
+            "FROM live_read_events",
+            "account_id = $3",
+            "operation = $4",
+            "remote_order_id = $6",
+            "query.bounded_limit()",
+        ],
+    )
+    service_live_read_list_body = rust_async_fn_body(service_audit_text, "list_live_read_events")
+    require_tokens(
+        service_live_read_list_body,
+        "service live-read event bridge",
+        ["self.store.list_live_read_events(&query).await?", "Ok("],
+    )
+    try:
+        backend_live_read_list_body = rust_async_fn_body(
+            api_backend_audit_text, "list_live_read_events"
+        )
+    except Exception as exc:
+        fail(f"API live-read event backend malformed: {exc}")
+    require_tokens(
+        backend_live_read_list_body,
+        "API live-read event backend",
+        [
+            "Self::InMemory(service) => service.list_live_read_events(query).await",
+            "Self::Postgres(service) => service.list_live_read_events(query).await",
+        ],
+    )
+    try:
+        route_live_read_list_body = rust_async_fn_body(
+            api_route_audit_text, "list_live_read_events"
+        )
+    except Exception as exc:
+        fail(f"API live-read event routes malformed: {exc}")
+    require_tokens(
+        route_live_read_list_body,
+        "API live-read event routes",
+        [
+            "require(&headers, Operation::ReadAudit)?;",
+            "LiveReadEventQuery {",
+            "account_id: query.account_id.map(pmx_core::AccountId)",
+            "remote_order_id: query.remote_order_id.map(pmx_core::RemoteOrderId)",
+            "Ok((StatusCode::OK, Json(events)))",
         ],
     )
     if not (EXECUTOR / "validation/run_current_gates.sh").exists():
@@ -4167,7 +4371,19 @@ def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None
     validate_required_groups(required_by_file)
     if core.count("pub client_event_id: Option<String>") != 1:
         fail("current SignOnlyLifecycleRecord must have exactly one client_event_id field")
-    if store.count("pub observed_at: Option<DateTime<Utc>>") != 1:
+    runtime_observation_match = re.search(
+        r"(?s)struct\s+RuntimeWorkerObservation[^\{]*\{(.*?)\n\}",
+        store,
+    )
+    if not runtime_observation_match:
+        fail("current RuntimeWorkerObservation model missing")
+    runtime_observation_body = runtime_observation_match.group(1)
+    if len(
+        re.findall(
+            r"(?m)^\s*pub\s+observed_at\s*:\s*Option<DateTime<Utc>>\s*,",
+            runtime_observation_body,
+        )
+    ) != 1:
         fail("current RuntimeWorkerObservation must have exactly one observed_at field")
     openapi_text = OPENAPI.read_text()
     if "SignedOrderEnvelope" in openapi_text or "signed_payload" in openapi_text:

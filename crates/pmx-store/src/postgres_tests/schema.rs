@@ -35,4 +35,9 @@ async fn postgres_records_schema_migrations() {
     assert!(migrations.iter().any(|(version, checksum)| {
         version == "0011_portfolio_projections" && checksum.len() == 64
     }));
+    assert!(
+        migrations
+            .iter()
+            .any(|(version, checksum)| version == "0012_live_read_events" && checksum.len() == 64)
+    );
 }

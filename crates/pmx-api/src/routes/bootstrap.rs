@@ -48,6 +48,10 @@ fn router_with_state(state: AppState) -> Router {
             "/v1/admin/audit-events",
             get(admin::list_admin_audit_events),
         )
+        .route(
+            "/v1/admin/live-read-events",
+            get(admin::list_live_read_events),
+        )
         .route("/v1/admin/kill-switch", post(admin::set_kill_switch))
         .route(
             "/v1/admin/cancel-order",
