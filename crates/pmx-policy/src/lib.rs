@@ -2,6 +2,10 @@ mod decision;
 mod runtime;
 
 pub use decision::*;
+pub use runtime::{
+    CAP_MARKET_BOOK_FUTURE_DATED, CAP_MARKET_BOOK_INSUFFICIENT_TOP_LIQUIDITY,
+    CAP_MARKET_BOOK_QUANTITY_UNSUPPORTED, CAP_MARKET_BOOK_STALE, CAP_MARKET_BOOK_UNAVAILABLE,
+};
 
 // Contract validation compatibility anchor:
 // WorkerStatus::Degraded => reasons.push(BlockReason::WorkerDegraded)

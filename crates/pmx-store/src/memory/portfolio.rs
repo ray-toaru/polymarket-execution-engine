@@ -9,11 +9,16 @@ impl PortfolioProjectionStore for InMemoryStore {
         &self,
         projection: &PortfolioProjection,
     ) -> Result<(), StoreError> {
-        self.inner
-            .lock()
-            .expect("in-memory store poisoned")
+        let mut inner = self.inner.lock().expect("in-memory store poisoned");
+        let should_update = inner
             .portfolio_projections
-            .insert(projection.account_id.0.clone(), projection.clone());
+            .get(&projection.account_id.0)
+            .is_none_or(|existing| existing.observed_at_ms < projection.observed_at_ms);
+        if should_update {
+            inner
+                .portfolio_projections
+                .insert(projection.account_id.0.clone(), projection.clone());
+        }
         Ok(())
     }
 

@@ -290,6 +290,82 @@ async fn static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks() 
 }
 
 #[tokio::test]
+async fn service_market_data_snapshot_blocks_stale_or_insufficient_top_book() {
+    let service = ExecutorService::with_runtime_provider(
+        InMemoryStore::default(),
+        StaticRuntimeStateProvider::new(allow_runtime_state()),
+        "test-executor".into(),
+        DEFAULT_CONTRACT_VERSION.into(),
+    );
+    let normalized = service.normalize(buy_base_share_intent()).await.unwrap();
+    let gateway = pmx_gateway::FakeGateway::new();
+    gateway.insert_market_book_for_test(MarketBookSnapshot {
+        condition_id: normalized.market.condition_id.clone(),
+        token_id: normalized.token_id.clone(),
+        bids: vec![BookLevel {
+            price: DecimalString("0.49".into()),
+            shares: DecimalString("10".into()),
+        }],
+        asks: vec![BookLevel {
+            price: DecimalString("0.5".into()),
+            shares: DecimalString("1".into()),
+        }],
+        observed_at_ms: 1_000,
+        valid_for_ms: 100,
+    });
+
+    let stale_snapshot = service
+        .capture_snapshot_with_market_data(normalized.clone(), &gateway, 1_500)
+        .await
+        .expect("stale market-data snapshot");
+    assert!(
+        stale_snapshot
+            .runtime_state
+            .required_capabilities
+            .contains(&"market_book_stale".to_string())
+    );
+    let stale_decision = service
+        .evaluate_decision_by_id(DecisionByIdRequest {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: stale_snapshot.snapshot_id,
+            correlation_id: None,
+        })
+        .await
+        .expect("stale decision");
+    assert_eq!(stale_decision.status, DecisionStatus::Block);
+    assert!(
+        stale_decision
+            .reasons
+            .contains(&BlockReason::StaleMarketData)
+    );
+
+    let insufficient_snapshot = service
+        .capture_snapshot_with_market_data(normalized.clone(), &gateway, 1_050)
+        .await
+        .expect("insufficient market-data snapshot");
+    assert!(
+        insufficient_snapshot
+            .runtime_state
+            .required_capabilities
+            .contains(&"market_book_insufficient_top_liquidity".to_string())
+    );
+    let insufficient_decision = service
+        .evaluate_decision_by_id(DecisionByIdRequest {
+            normalized_intent_id: normalized.normalized_intent_id.clone(),
+            snapshot_id: insufficient_snapshot.snapshot_id,
+            correlation_id: None,
+        })
+        .await
+        .expect("insufficient decision");
+    assert_eq!(insufficient_decision.status, DecisionStatus::Block);
+    assert!(
+        insufficient_decision
+            .reasons
+            .contains(&BlockReason::InsufficientTopBookLiquidity)
+    );
+}
+
+#[tokio::test]
 async fn live_submit_mode_fails_closed_until_gateway_is_wired() {
     let service = ExecutorService::with_runtime_provider(
         InMemoryStore::default(),

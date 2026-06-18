@@ -1,6 +1,7 @@
 use pmx_core::{
     ConstraintDecision, ExecutionPlanSummary, FeasibilitySnapshot, NormalizedIntent, TradeIntent,
 };
+use pmx_gateway::MarketDataReader;
 use pmx_store::{
     AdminAuditStore, ExecutionLifecycleStore, ExecutionStore, IdempotencyStore,
     OrderLifecycleStore, RuntimeWorkerStatusStore, SignOnlyLifecycleStore,
@@ -62,6 +63,26 @@ where
             &self.runtime_state_provider,
             normalized,
             correlation_id,
+        )
+        .await
+    }
+
+    pub async fn capture_snapshot_with_market_data<M>(
+        &self,
+        normalized: NormalizedIntent,
+        market_data_reader: &M,
+        now_ms: i64,
+    ) -> Result<FeasibilitySnapshot, ServiceError>
+    where
+        M: MarketDataReader,
+    {
+        crate::plan_flow::capture_snapshot_with_market_data(
+            &self.store,
+            &self.runtime_state_provider,
+            market_data_reader,
+            normalized,
+            now_ms,
+            None,
         )
         .await
     }

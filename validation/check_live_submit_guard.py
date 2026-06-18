@@ -194,6 +194,18 @@ def validate_service_live_submit_tokens() -> list[str]:
     service_text = "\n".join(path.read_text() for path in service_source_files())
     if "submit_plan_with_gateway" not in service_text:
         failures.append("pmx-service live gateway path must require explicit submit_plan_with_gateway")
+    failures.extend(
+        validate_required_tokens(
+            service_text,
+            tokens=[
+                "capture_snapshot_with_market_data",
+                "MarketDataReader",
+                "CAP_MARKET_BOOK_STALE",
+                "CAP_MARKET_BOOK_INSUFFICIENT_TOP_LIQUIDITY",
+            ],
+            failure_prefix="pmx-service market-data snapshot guard missing token",
+        )
+    )
     if ALLOWED_SERVICE_POST_ORDER_FILE.exists():
         service_live_text = strip_rust_comments(ALLOWED_SERVICE_POST_ORDER_FILE.read_text())
         failures.extend(

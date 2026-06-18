@@ -23,6 +23,11 @@ pub enum BlockReason {
     WorkerUnknown,
     CollateralProfileMissing,
     CollateralProfileUnknown,
+    StaleMarketData,
+    FutureDatedMarketData,
+    MarketBookUnavailable,
+    InsufficientTopBookLiquidity,
+    MarketBookQuantityUnsupported,
     UnsupportedQuantityBound,
 }
 
