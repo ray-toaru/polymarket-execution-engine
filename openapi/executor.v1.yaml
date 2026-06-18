@@ -271,6 +271,70 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/RuntimeWorkerStatusReport' }
+  /v1/portfolio/projections:
+    post:
+      operationId: recordPortfolioProjection
+      description: >
+        Non-live portfolio projection preparation endpoint. Records local fills,
+        positions, open orders, and exposure projection state for later readback
+        and risk-limit assessment; it does not sign, submit, cancel, or call CLOB.
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PortfolioProjection' }
+      responses:
+        '202':
+          description: Portfolio projection accepted into local executor store
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PortfolioProjectionRecordResponse' }
+  /v1/portfolio/{account_id}/projection:
+    get:
+      operationId: getPortfolioProjection
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      parameters:
+        - in: path
+          name: account_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Last accepted local portfolio projection for an account
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PortfolioProjection' }
+  /v1/portfolio/{account_id}/risk-assessments:
+    post:
+      operationId: assessPortfolioRisk
+      description: >
+        Non-live risk-limit assessment against the stored local portfolio
+        projection. The endpoint returns a decision only; it does not authorize
+        live submit/cancel or perform remote side effects.
+      security:
+        - ServiceToken: []
+        - AdminToken: []
+      parameters:
+        - in: path
+          name: account_id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RiskLimits' }
+      responses:
+        '200':
+          description: Risk decision derived from stored local exposure projection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RiskDecision' }
   /v1/admin/session:
     get:
       operationId: getAdminSession
@@ -755,6 +819,91 @@ components:
         observations:
           type: array
           items: { $ref: '#/components/schemas/RuntimeWorkerObservation' }
+    FillRecord:
+      type: object
+      additionalProperties: false
+      required: [fill_id, order_id, token_id, side, price, shares, observed_at_ms]
+      properties:
+        fill_id: { type: string }
+        order_id: { type: string }
+        token_id: { type: string }
+        side: { type: string, enum: [BUY, SELL] }
+        price: { $ref: '#/components/schemas/CanonicalDecimal' }
+        shares: { $ref: '#/components/schemas/CanonicalDecimal' }
+        observed_at_ms: { type: integer }
+    PositionProjection:
+      type: object
+      additionalProperties: false
+      required: [token_id, shares, average_price]
+      properties:
+        token_id: { type: string }
+        shares: { $ref: '#/components/schemas/CanonicalDecimal' }
+        average_price: { $ref: '#/components/schemas/CanonicalDecimal' }
+    OpenOrderProjection:
+      type: object
+      additionalProperties: false
+      required: [order_id, token_id, side, remaining_shares, limit_price]
+      properties:
+        order_id: { type: string }
+        token_id: { type: string }
+        side: { type: string, enum: [BUY, SELL] }
+        remaining_shares: { $ref: '#/components/schemas/CanonicalDecimal' }
+        limit_price: { $ref: '#/components/schemas/CanonicalDecimal' }
+    ExposureProjection:
+      type: object
+      additionalProperties: false
+      required: [gross_notional, open_order_notional]
+      properties:
+        gross_notional: { $ref: '#/components/schemas/CanonicalDecimal' }
+        open_order_notional: { $ref: '#/components/schemas/CanonicalDecimal' }
+    PortfolioProjection:
+      type: object
+      additionalProperties: false
+      required: [account_id, fills, positions, open_orders, exposure, observed_at_ms]
+      properties:
+        account_id: { type: string }
+        fills:
+          type: array
+          items: { $ref: '#/components/schemas/FillRecord' }
+        positions:
+          type: array
+          items: { $ref: '#/components/schemas/PositionProjection' }
+        open_orders:
+          type: array
+          items: { $ref: '#/components/schemas/OpenOrderProjection' }
+        exposure: { $ref: '#/components/schemas/ExposureProjection' }
+        observed_at_ms: { type: integer }
+    PortfolioProjectionRecordResponse:
+      type: object
+      additionalProperties: false
+      required: [account_id, observed_at_ms, no_remote_side_effect]
+      properties:
+        account_id: { type: string }
+        observed_at_ms: { type: integer }
+        no_remote_side_effect: { type: boolean, const: true }
+    RiskLimits:
+      type: object
+      additionalProperties: false
+      required: [max_gross_notional, max_open_order_notional, kill_switch_active]
+      properties:
+        max_gross_notional: { $ref: '#/components/schemas/CanonicalDecimal' }
+        max_open_order_notional: { $ref: '#/components/schemas/CanonicalDecimal' }
+        kill_switch_active: { type: boolean }
+    RiskDecision:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [decision]
+          properties:
+            decision: { type: string, enum: [ALLOW] }
+        - type: object
+          additionalProperties: false
+          required: [decision, reason]
+          properties:
+            decision: { type: string, enum: [BLOCK] }
+            reason:
+              type: string
+              enum: [KILL_SWITCH_ACTIVE, GROSS_EXPOSURE_EXCEEDED, OPEN_ORDER_EXPOSURE_EXCEEDED]
     CancelOrderRequest:
       type: object
       additionalProperties: false

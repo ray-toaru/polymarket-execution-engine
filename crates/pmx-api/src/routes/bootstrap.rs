@@ -23,6 +23,18 @@ fn router_with_state(state: AppState) -> Router {
             get(read::list_sign_only_lifecycle_events),
         )
         .route(
+            "/v1/portfolio/projections",
+            post(read::record_portfolio_projection),
+        )
+        .route(
+            "/v1/portfolio/{account_id}/projection",
+            get(read::get_portfolio_projection),
+        )
+        .route(
+            "/v1/portfolio/{account_id}/risk-assessments",
+            post(read::assess_portfolio_risk),
+        )
+        .route(
             "/v1/lifecycle/executions/{execution_id}/events",
             get(read::list_execution_lifecycle_events),
         )

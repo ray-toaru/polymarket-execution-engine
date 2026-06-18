@@ -88,3 +88,11 @@ pub struct ReconcileOrderLocalResponse {
     pub updated_order: Option<OrderLifecycleRecord>,
     pub no_remote_side_effect: bool,
 }
+
+#[derive(serde::Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PortfolioProjectionRecordResponse {
+    pub account_id: String,
+    pub observed_at_ms: i64,
+    pub no_remote_side_effect: bool,
+}

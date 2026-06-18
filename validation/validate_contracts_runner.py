@@ -31,6 +31,7 @@ from validate_contracts_executor import (
     validate_v20_plan_storage_and_packaging,
     validate_v21_sign_only_and_runtime_models,
     validate_v23_lifecycle_query_and_hardening,
+    validate_v28_non_live_portfolio_foundation,
 )
 from validate_contracts_governance import (
     validate_canary_candidate_market_prep_boundary,
@@ -83,6 +84,7 @@ VALIDATORS = [
     ValidatorSpec("v21_sign_only_and_runtime_models", "executor", "S2", "structured", True, validate_v21_sign_only_and_runtime_models),
     ValidatorSpec("store_and_backend_structure", "executor", "S2", "structured", False, validate_store_and_backend_structure),
     ValidatorSpec("v23_lifecycle_query_and_hardening", "executor", "S1", "structured", True, validate_v23_lifecycle_query_and_hardening),
+    ValidatorSpec("v28_non_live_portfolio_foundation", "executor", "S2", "structured", True, validate_v28_non_live_portfolio_foundation),
     ValidatorSpec("current_hermes_client_surface", "governance", "S2", "structured", False, validate_current_hermes_client_surface),
     ValidatorSpec("current_evidence_manifest_guard", "governance", "S1", "structured", False, validate_current_evidence_manifest_guard),
     ValidatorSpec("current_docs_and_release_governance", "governance", "S1", "structured", False, validate_current_docs_and_release_governance),

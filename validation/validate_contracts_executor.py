@@ -3216,6 +3216,125 @@ def validate_store_and_backend_structure() -> None:
     )
 
 
+def validate_v28_non_live_portfolio_foundation(spec: dict | None = None) -> None:
+    if spec is None:
+        spec = yaml.safe_load(OPENAPI.read_text())
+    required_paths = {
+        "/v1/portfolio/projections",
+        "/v1/portfolio/{account_id}/projection",
+        "/v1/portfolio/{account_id}/risk-assessments",
+    }
+    missing_paths = required_paths - set(spec["paths"].keys())
+    if missing_paths:
+        fail(f"v0.28 non-live portfolio OpenAPI missing paths: {sorted(missing_paths)}")
+    if (
+        operation_request_ref(spec, "/v1/portfolio/projections", "post")
+        != "#/components/schemas/PortfolioProjection"
+    ):
+        fail("v0.28 portfolio projection record request must bind PortfolioProjection")
+    if (
+        operation_response_ref(spec, "/v1/portfolio/projections", "post", "202")
+        != "#/components/schemas/PortfolioProjectionRecordResponse"
+    ):
+        fail("v0.28 portfolio projection record response must bind PortfolioProjectionRecordResponse")
+    if (
+        operation_response_ref(spec, "/v1/portfolio/{account_id}/projection", "get", "200")
+        != "#/components/schemas/PortfolioProjection"
+    ):
+        fail("v0.28 portfolio projection readback response must bind PortfolioProjection")
+    if (
+        operation_request_ref(spec, "/v1/portfolio/{account_id}/risk-assessments", "post")
+        != "#/components/schemas/RiskLimits"
+    ):
+        fail("v0.28 portfolio risk assessment request must bind RiskLimits")
+    if (
+        operation_response_ref(spec, "/v1/portfolio/{account_id}/risk-assessments", "post", "200")
+        != "#/components/schemas/RiskDecision"
+    ):
+        fail("v0.28 portfolio risk assessment response must bind RiskDecision")
+    if not {"fills", "positions", "open_orders", "exposure"}.issubset(
+        schema_property_names(spec, "PortfolioProjection")
+    ):
+        fail("v0.28 PortfolioProjection must expose fills/positions/open_orders/exposure")
+    response_schema = spec["components"]["schemas"].get("PortfolioProjectionRecordResponse", {})
+    no_side_effect = response_schema.get("properties", {}).get("no_remote_side_effect", {})
+    if no_side_effect.get("const") is not True:
+        fail("v0.28 PortfolioProjectionRecordResponse must pin no_remote_side_effect=true")
+
+    api_routes = rust_source_text(API_SRC)
+    api_backend = (API_SRC / "backend/portfolio.rs").read_text()
+    api_read = (API_SRC / "routes/read/portfolio.rs").read_text()
+    service_portfolio = (SERVICE_SRC / "service/portfolio.rs").read_text()
+    service_portfolio_tests = (SERVICE_SRC / "service_tests/portfolio.rs").read_text()
+    api_e2e = rust_file_with_modules_text(API_E2E_TEST)
+    require_tokens(
+        api_routes,
+        "v0.28 portfolio API router",
+        [
+            '"/v1/portfolio/projections"',
+            '"/v1/portfolio/{account_id}/projection"',
+            '"/v1/portfolio/{account_id}/risk-assessments"',
+            "record_portfolio_projection",
+            "get_portfolio_projection",
+            "assess_portfolio_risk",
+        ],
+    )
+    require_tokens(
+        api_backend,
+        "v0.28 portfolio API backend bridge",
+        [
+            "record_portfolio_projection",
+            "load_portfolio_projection",
+            "assess_portfolio_risk",
+            "Self::InMemory(service)",
+            "Self::Postgres(service)",
+        ],
+    )
+    require_tokens(
+        api_read,
+        "v0.28 portfolio API read/prep handlers",
+        [
+            "Json(projection): Json<PortfolioProjection>",
+            "Operation::CaptureSnapshot",
+            "Operation::ReadReport",
+            "no_remote_side_effect: true",
+            "Json(limits): Json<RiskLimits>",
+        ],
+    )
+    require_tokens(
+        service_portfolio,
+        "v0.28 portfolio service facade",
+        [
+            "PortfolioProjectionStore",
+            "save_portfolio_projection",
+            "load_portfolio_projection",
+            "assess_exposure",
+        ],
+    )
+    require_tokens(
+        service_portfolio_tests,
+        "v0.28 portfolio service tests",
+        [
+            "service_records_portfolio_projection_and_assesses_risk_limits",
+            "FillRecord",
+            "PositionProjection",
+            "OpenOrderProjection",
+            "RiskDecision::Block",
+        ],
+    )
+    require_tokens(
+        api_e2e,
+        "v0.28 portfolio HTTP scaffold tests",
+        [
+            "/v1/portfolio/projections",
+            "/v1/portfolio/acct-http-e2e-1/projection",
+            "/v1/portfolio/acct-http-e2e-1/risk-assessments",
+            '"no_remote_side_effect"',
+            "OPEN_ORDER_EXPOSURE_EXCEEDED",
+        ],
+    )
+
+
 def validate_v23_lifecycle_query_and_hardening(spec: dict | None = None) -> None:
     if spec is None:
         import yaml

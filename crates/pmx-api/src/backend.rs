@@ -1,6 +1,7 @@
 mod audit;
 mod flow;
 mod lifecycle;
+mod portfolio;
 mod runtime;
 mod sign_only;
 mod submit;

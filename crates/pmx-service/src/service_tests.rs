@@ -127,6 +127,9 @@ mod non_live_order_lifecycle;
 #[path = "service_tests/real_funds_canary.rs"]
 mod real_funds_canary;
 
+#[path = "service_tests/portfolio.rs"]
+mod portfolio;
+
 #[path = "service_tests/runtime_worker_basic.rs"]
 mod runtime_worker_basic;
 

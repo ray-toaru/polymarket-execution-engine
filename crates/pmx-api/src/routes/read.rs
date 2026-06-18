@@ -17,6 +17,9 @@ use pmx_store::{
 #[path = "read/lifecycle.rs"]
 mod lifecycle;
 
+#[path = "read/portfolio.rs"]
+mod portfolio;
+
 #[path = "read/runtime.rs"]
 mod runtime;
 
@@ -25,6 +28,9 @@ mod submission;
 
 pub(crate) use lifecycle::{
     list_execution_lifecycle_events, list_order_lifecycle_events, list_sign_only_lifecycle_events,
+};
+pub(crate) use portfolio::{
+    assess_portfolio_risk, get_portfolio_projection, record_portfolio_projection,
 };
 pub(crate) use runtime::list_runtime_worker_status;
 pub(crate) use submission::get_submission;

@@ -81,6 +81,81 @@ pub(super) async fn verify_public_queries(app: axum::Router, execution_id: &str)
             .is_empty()
     );
 
+    let portfolio_projection = json!({
+        "account_id": "acct-http-e2e-1",
+        "fills": [{
+            "fill_id": "fill-http-e2e-1",
+            "order_id": "order-v07-1",
+            "token_id": "token-http-e2e-1",
+            "side": "BUY",
+            "price": "0.50",
+            "shares": "2",
+            "observed_at_ms": 1_000
+        }],
+        "positions": [{
+            "token_id": "token-http-e2e-1",
+            "shares": "2",
+            "average_price": "0.50"
+        }],
+        "open_orders": [{
+            "order_id": "order-v07-2",
+            "token_id": "token-http-e2e-2",
+            "side": "SELL",
+            "remaining_shares": "3",
+            "limit_price": "0.60"
+        }],
+        "exposure": {
+            "gross_notional": "1.00",
+            "open_order_notional": "1.80"
+        },
+        "observed_at_ms": 2_000
+    });
+    let (status, recorded_projection) = request_json(
+        app.clone(),
+        "POST",
+        "/v1/portfolio/projections",
+        Some("service-token-test-v07"),
+        Some(portfolio_projection.clone()),
+    )
+    .await;
+    assert_eq!(
+        status,
+        StatusCode::ACCEPTED,
+        "record portfolio projection: {recorded_projection}"
+    );
+    assert_eq!(recorded_projection["no_remote_side_effect"], true);
+
+    let (status, loaded_projection) = request_json(
+        app.clone(),
+        "GET",
+        "/v1/portfolio/acct-http-e2e-1/projection",
+        Some("service-token-test-v07"),
+        None,
+    )
+    .await;
+    assert_eq!(
+        status,
+        StatusCode::OK,
+        "load portfolio projection: {loaded_projection}"
+    );
+    assert_eq!(loaded_projection, portfolio_projection);
+
+    let (status, risk_decision) = request_json(
+        app.clone(),
+        "POST",
+        "/v1/portfolio/acct-http-e2e-1/risk-assessments",
+        Some("service-token-test-v07"),
+        Some(json!({
+            "max_gross_notional": "2",
+            "max_open_order_notional": "1",
+            "kill_switch_active": false
+        })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "risk decision: {risk_decision}");
+    assert_eq!(risk_decision["decision"], "BLOCK");
+    assert_eq!(risk_decision["reason"], "OPEN_ORDER_EXPOSURE_EXCEEDED");
+
     let (status, _) = request_json(
         app.clone(),
         "GET",
