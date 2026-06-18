@@ -1,6 +1,8 @@
 # Polymarket Execution Engine Architecture
 
-> Status: current v0.26.1 controlled real-funds canary source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+Status: current v0.28.0 production-live-candidate architecture documentation.
+Historical gate-specific notes are archived under `docs/archive/`; current
+validation entrypoint is `validation/run_current_gates.sh`.
 
 ## Role
 
@@ -54,3 +56,10 @@ The OpenAPI draft lives at `openapi/executor.v1.yaml`. It intentionally excludes
 ## Production Truth Source
 
 PostgreSQL only. SQLite is not part of the production design.
+
+## Future Live Gateway Boundary
+
+Future real gateway, production submit/cancel, and generic live readback work
+must follow `docs/PRODUCTION_LIVE_GATEWAY_SECURITY_DESIGN.md`. That design is
+not current production wiring and does not override the existing blocked live
+submit/cancel release posture.
