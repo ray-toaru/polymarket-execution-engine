@@ -30,6 +30,24 @@ SECRET_CONTENT_PATTERNS = (
     re.compile(rb"(?i)POLYMARKET_PRIVATE_KEY\s*="),
     re.compile(rb"(?i)POLY_API_SECRET\s*="),
     re.compile(rb"(?i)POLY_API_PASSPHRASE\s*="),
+    re.compile(
+        rb"(?imx)"
+        rb"(?:^|[{\[,(;]|[\"'])"
+        rb"(?:"
+        rb"api[_-]?secret|"
+        rb"poly[_-]?api[_-]?secret|"
+        rb"poly[_-]?api[_-]?passphrase|"
+        rb"private[_-]?key|"
+        rb"clob[_-]?secret|"
+        rb"clobsecret|"
+        rb"signed[_-]?payload|"
+        rb"signature|"
+        rb"passphrase"
+        rb")"
+        rb"(?:\"|')?[ \t]*(?:=|:)[ \t]*(?:\"|')?"
+        rb"(?!(?:\"|')?(?:\.\.\.|\[REDACTED\]|REPLACE_WITH_|&))"
+        rb"[^ \t\r\n,;}]{4,}"
+    ),
 )
 SECRET_TEMPLATE_MARKERS = {
     "polymarket-execution-engine/.env.example": (b"REPLACE_WITH_",),
@@ -48,13 +66,47 @@ SECRET_CONTENT_TEST_FIXTURES = {
     "tests/test_prepare_canary_review_bundle.py": (b"class PrepareCanaryReviewBundleTests",),
     "tests/test_prepare_canary_runtime_bundle.py": (b"class PrepareCanaryRuntimeBundleTests",),
     "tests/test_prepare_operator_approval_request.py": (b"class PrepareOperatorApprovalRequestTests",),
+    "tests/test_prepare_canary_reviewed_go_bundle.py": (
+        b"class PrepareCanaryReviewedGoBundleTests",
+    ),
+    "tests/test_prepare_reviewed_go_package.py": (
+        b"class PrepareReviewedGoPackageTests",
+    ),
     "tests/test_run_reviewed_go_canary.py": (b"class RunReviewedGoCanaryTests",),
     "tests/test_run_reviewed_go_canary_armed.py": (b"class RunReviewedGoCanaryArmedTests",),
     "tests/test_run_reviewed_go_canary_closeout.py": (b"class RunReviewedGoCanaryCloseoutTests",),
+    "tests/test_verify_dual_control_review_signature.py": (
+        b"class VerifyDualControlReviewSignatureTests",
+    ),
+    "hermes-polymarket-executor-adapter/tests/test_client.py": (
+        b"test_executor_error_does_not_leak_remote_message_or_text",
+    ),
+    "hermes-polymarket-executor-adapter/tests/test_models.py": (
+        b"test_live_read_event_requires_read_only_redacted_boundary",
+    ),
+    "hermes-polymarket-executor-adapter/tests/test_no_secret_boundary.py": (
+        b"test_executor_adapter_has_no_secret_or_live_clob_terms",
+    ),
     "polymarket-execution-engine/adapters/pmx-official-sdk-adapter/src/tests/liveness_errors.rs": (
         b"redacts_named_secret_assignments",
         b"redact_sensitive_text",
         b"[REDACTED]",
+    ),
+    "polymarket-execution-engine/config/controlled-canary.external-references.invalid-sensitive.fixture.json": (
+        b"fixture-sensitive-value-must-not-be-logged",
+    ),
+    "polymarket-execution-engine/config/controlled-canary.runtime-truth.invalid-sensitive.fixture.json": (
+        b"fixture-sensitive-value-must-not-be-logged",
+    ),
+    "polymarket-execution-engine/config/production-preflight.candidate.invalid-sensitive.fixture.json": (
+        b"candidate-sensitive-value-must-not-be-logged",
+    ),
+    "polymarket-execution-engine/config/production-preflight.invalid-sensitive.fixture.json": (
+        b"fixture-sensitive-value-must-not-be-logged",
+    ),
+    "polymarket-execution-engine/validation/run_production_audit_export_drill.py": (
+        b"build_export_record",
+        b"redacted_export",
     ),
     "polymarket-execution-engine/validation/run_real_funds_canary_blocked_rehearsal_package.py": (
         b"complete review package still blocks armed canary",
@@ -72,6 +124,13 @@ SECRET_CONTENT_TEST_FIXTURES = {
     ),
     "polymarket-execution-engine/validation/validate_contracts_executor.py": (
         b"def validate_v19_redaction_and_live_guard",
+    ),
+    "polymarket-execution-engine/validation/validate_contracts_support.py": (
+        b"FORBIDDEN_PUBLIC_TOKEN_PATTERNS",
+    ),
+    "scripts/activate_pmx_profile.py": (
+        b"SECRET_KEYS",
+        b"required_fields",
     ),
 }
 

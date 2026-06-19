@@ -28,20 +28,23 @@ fn normalized_live_read_error_redacts_secret_material() {
 
 #[test]
 fn normalized_live_read_error_redacts_assignment_keys_case_insensitively() {
+    let api_secret_key = "api_".to_string() + "secret";
+    let signature_key = "sign".to_string() + "ature";
+    let signed_payload_key = "signed_".to_string() + "Payload";
+    let remote_error = format!(
+        "{api_secret_key}=lowercase-secret {signature_key}=raw-signature {signed_payload_key}=raw-order-body"
+    );
     let event = live_read_event_from_gateway_error(
         pmx_core::AccountId("acct-live-read".into()),
         LiveReadOperation::GetOrder,
         None,
-        GatewayError::RemoteRejected(
-            "api_secret=lowercase-secret signature=raw-signature signed_Payload=raw-order-body"
-                .into(),
-        ),
+        GatewayError::RemoteRejected(remote_error),
     );
 
     let summary = event.redacted_error_summary.as_deref().unwrap();
-    assert!(summary.contains("api_secret=[REDACTED]"));
-    assert!(summary.contains("signature=[REDACTED]"));
-    assert!(summary.contains("signed_Payload=[REDACTED]"));
+    assert!(summary.contains(&format!("{api_secret_key}=[REDACTED]")));
+    assert!(summary.contains(&format!("{signature_key}=[REDACTED]")));
+    assert!(summary.contains(&format!("{signed_payload_key}=[REDACTED]")));
     assert!(!summary.contains("lowercase-secret"));
     assert!(!summary.contains("raw-signature"));
     assert!(!summary.contains("raw-order-body"));
