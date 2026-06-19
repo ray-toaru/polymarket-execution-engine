@@ -335,7 +335,14 @@ def write_dist_index(
     workspace_manifest_snapshot_path: str | None,
 ) -> None:
     DIST.mkdir(parents=True, exist_ok=True)
-    current_release_files = {OUT.name, OUT.with_suffix(OUT.suffix + ".sha256").name, OUT.with_suffix(OUT.suffix + ".evidence.json").name}
+    current_release_files = {
+        OUT.name,
+        OUT.with_suffix(OUT.suffix + ".sha256").name,
+        OUT.with_suffix(OUT.suffix + ".evidence.json").name,
+        OUT.with_suffix(OUT.suffix + ".provenance.json").name,
+    }
+    if workspace_manifest_snapshot_path:
+        current_release_files.add(workspace_manifest_snapshot_path)
     local_material = []
     for path in sorted(DIST.iterdir()):
         if path.name in current_release_files or path.name in {"INDEX.json", "README.md"}:
