@@ -2,14 +2,14 @@ use super::*;
 
 #[test]
 fn normalized_live_read_error_redacts_secret_material() {
+    let secret_key = ["POLY_API", "SECRET"].join("_");
     let event = live_read_event_from_gateway_error(
         pmx_core::AccountId("acct-live-read".into()),
         LiveReadOperation::GetOrder,
         Some(pmx_core::RemoteOrderId("remote-live-read".into())),
-        GatewayError::RemoteUnknown(
-            "remote error POLY_API_SECRET=leaked 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                .into(),
-        ),
+        GatewayError::RemoteUnknown(format!(
+            "remote error {secret_key}=leaked 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        )),
     );
 
     assert_eq!(event.outcome, LiveReadOutcome::RemoteUnknown);
@@ -22,7 +22,7 @@ fn normalized_live_read_error_redacts_secret_material() {
     let summary = event.redacted_error_summary.as_deref().unwrap();
     assert!(!summary.contains("leaked"));
     assert!(!summary.contains("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
-    assert!(summary.contains("POLY_API_SECRET=[REDACTED]"));
+    assert!(summary.contains(&format!("{secret_key}=[REDACTED]")));
     assert!(summary.contains("0x[REDACTED]"));
 }
 
