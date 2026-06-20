@@ -467,6 +467,53 @@ def market_disambiguation_summary(market: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def token_id_tail(token_id: str) -> str:
+    return token_id[-6:] if len(token_id) > 6 else token_id
+
+
+def selected_candidate_summary(candidate: Candidate, *, target_size_source: str) -> dict[str, Any]:
+    return {
+        "market_id": candidate.market_id,
+        "market_slug": candidate.market_slug,
+        "outcome": candidate.outcome,
+        "token_id_hash": hashlib.sha256(candidate.token_id.encode()).hexdigest(),
+        "token_id_tail": token_id_tail(candidate.token_id),
+        "book_snapshot_timestamp": candidate.book_snapshot_timestamp,
+        "market_end_at": candidate.market_end_at,
+        "source_market_hash": candidate.source_market_hash,
+        "candidate_output_fields": [
+            "market_id",
+            "token_id",
+            "side",
+            "order_type",
+            "post_only",
+            "limit_price",
+            "target_size",
+            "book_snapshot_timestamp",
+            "human_review_ref",
+        ],
+        "orderability_evidence": {
+            "active": candidate.active,
+            "accepting_orders": candidate.accepting_orders,
+            "closed": candidate.closed,
+            "archived": candidate.archived,
+            "top_ask_available": candidate.best_ask > 0 and candidate.ask_size > 0,
+            "post_only_limit_price_available": candidate.limit_price > 0,
+            "spread_bps": candidate.spread_bps,
+            "min_order_size": decimal_text(candidate.min_order_size),
+            "min_tick_size": decimal_text(candidate.min_tick_size),
+        },
+        "price_size_summary": {
+            "best_ask": decimal_text(candidate.best_ask),
+            "ask_size": decimal_text(candidate.ask_size),
+            "limit_price": decimal_text(candidate.limit_price),
+            "target_size": decimal_text(candidate.target_size),
+            "target_size_source": target_size_source,
+            "estimated_order_notional_usd": decimal_text(candidate.limit_price * candidate.target_size),
+        },
+    }
+
+
 def is_concrete_external_ref(value: str) -> bool:
     text = value.strip()
     if not text or "REPLACE_WITH" in text:
@@ -672,7 +719,7 @@ def candidate_from_market(
         "top_ask_notional_usd": decimal_text(price * size),
         "liquidity_score": liquidity_score(size, price, bps),
     }
-    return Candidate(
+    candidate = Candidate(
         market_id=condition_id,
         token_id=token_id,
         outcome=outcome,
@@ -696,6 +743,11 @@ def candidate_from_market(
         exchange_rule_evidence_ref=exchange_rule_evidence_ref,
         exchange_rule_valid_for_minutes=args.exchange_rule_valid_for_minutes,
     )
+    audit["selected_candidate_summary"] = selected_candidate_summary(
+        candidate,
+        target_size_source="operator_override" if requested_target_size else "book_min_order_size",
+    )
+    return candidate
 
 
 def load_market_by_slug(args: argparse.Namespace, slug: str, requested_outcome: str) -> dict[str, Any]:
@@ -992,6 +1044,10 @@ def scan(args: argparse.Namespace) -> tuple[Candidate, dict[str, Any]]:
         "top_ask_notional_usd": decimal_text(selected.best_ask * selected.ask_size),
         "liquidity_score": selected.liquidity_score,
     }
+    audit["selected_candidate_summary"] = selected_candidate_summary(
+        selected,
+        target_size_source="operator_override" if target_size else "book_min_order_size",
+    )
     return selected, audit
 
 
