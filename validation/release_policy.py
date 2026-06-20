@@ -32,7 +32,7 @@ FORBIDDEN_SUFFIXES = {
 }
 FORBIDDEN_FILENAMES = {".env", "config/secrets.json"}
 FORBIDDEN_NAME_PREFIXES = (".env.",)
-FORBIDDEN_NAME_SUFFIXES = (".local.json",)
+FORBIDDEN_NAME_SUFFIXES = (".local.json", ".invalid-sensitive.fixture.json")
 EXCLUDED_PREFIXES = {
     "docs/archive",
     "external_reviews",
@@ -55,6 +55,7 @@ ALLOWED_ROOT_FILES = {
     "DEVELOPMENT_HANDOFF.md",
     "DOC_STATUS.md",
     "IMPLEMENTATION_STATUS.md",
+    "Makefile",
     "NO_LOCAL_ACTIONS_REMAINING.md",
     "OFFLINE_INDEPENDENT_REVIEW_MANUAL.md",
     "PROJECT_ARCHITECTURE.md",

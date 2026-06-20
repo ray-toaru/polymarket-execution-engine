@@ -5,6 +5,7 @@ from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -25,6 +26,17 @@ ARCHIVE_ROOT = f"polymarket_execution_suite_v{VERSION.replace('.', '_')}"
 DIST = ROOT / "dist"
 OUT = DIST / f"polymarket-execution-suite-v{VERSION}.zip"
 DETERMINISTIC_MTIME = (1980, 1, 1, 0, 0, 0)
+SECRET_SCAN_SUFFIXES = {".json", ".toml", ".yaml", ".yml", ".ini", ".cfg", ".conf"}
+SECRET_SCAN_NAMES = {".env"}
+SECRET_SCAN_EXEMPT_NAME_SUFFIXES = (".example", ".sample", ".template")
+SECRET_LIKE_ASSIGNMENT_RE = re.compile(
+    r"(?im)"
+    r"(?:^|[\"'\s{,])"
+    r"(api_secret|api_key|clob_secret|private_key|raw_signature|signed_payload|signature|token)"
+    r"[\"']?\s*(?::|=)\s*[\"']"
+    r"(?!(?:<[^>]+>|REDACTED|redacted|example|placeholder|changeme|dummy|test|none|null)[\"'])"
+    r"[^\"'\s]{4,}"
+)
 
 
 def sha256(path: Path) -> str:
@@ -189,6 +201,7 @@ def release_source_files() -> list[Path]:
         if not path.is_file():
             continue
         if allowed(path) and path not in seen:
+            ensure_no_secret_like_content(path)
             seen.add(path)
             files.append(path)
     for record in submodule_records():
@@ -197,6 +210,7 @@ def release_source_files() -> list[Path]:
             if not path.is_file():
                 continue
             if allowed(path) and path not in seen:
+                ensure_no_secret_like_content(path)
                 seen.add(path)
                 files.append(path)
     return sorted(files)
@@ -205,6 +219,28 @@ def release_source_files() -> list[Path]:
 def allowed(path: Path) -> bool:
     rel = path.relative_to(ROOT)
     return is_allowed_release_source_path(rel) and not is_forbidden_release_member(rel)
+
+
+def should_scan_for_secret_like_content(path: Path) -> bool:
+    name = path.name
+    if any(name.endswith(suffix) for suffix in SECRET_SCAN_EXEMPT_NAME_SUFFIXES):
+        return False
+    return name in SECRET_SCAN_NAMES or path.suffix.lower() in SECRET_SCAN_SUFFIXES
+
+
+def ensure_no_secret_like_content(path: Path) -> None:
+    if not should_scan_for_secret_like_content(path):
+        return
+    try:
+        data = path.read_text(errors="replace")
+    except OSError as exc:
+        raise SystemExit(f"cannot read release source file for secret-like content scan: {path}: {exc}") from exc
+    match = SECRET_LIKE_ASSIGNMENT_RE.search(data)
+    if match:
+        rel = path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
+        raise SystemExit(
+            f"release packaging rejected secret-like content in {rel}: sensitive key {match.group(1)!r}"
+        )
 
 
 def executable_in_archive(path: Path) -> bool:
