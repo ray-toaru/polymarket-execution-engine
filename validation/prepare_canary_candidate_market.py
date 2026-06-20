@@ -13,6 +13,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import re
 import sys
 import time
 import urllib.error
@@ -32,6 +33,10 @@ VERSION = (INTEGRATION_ROOT / "VERSION").read_text().strip()
 USER_AGENT = f"pmx-canary-candidate-prep/{VERSION}"
 MAX_PRICE = Decimal("1")
 FETCH_RETRY_ATTEMPTS = 3
+SENSITIVE_ERROR_ASSIGNMENT_RE = re.compile(
+    r"\b(api[_-]?secret|api[_-]?key|private[_-]?key|signed[_-]?payload|signature|secret)=([^\s&]+)",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -231,6 +236,10 @@ def audit_url_ref(url: str) -> dict[str, str]:
         "origin": origin,
         "sha256": hashlib.sha256(url.encode("utf-8")).hexdigest(),
     }
+
+
+def redacted_error_summary(message: str) -> str:
+    return SENSITIVE_ERROR_ASSIGNMENT_RE.sub(lambda match: f"{match.group(1)}=<redacted>", message)
 
 
 def as_bool(value: Any) -> bool:
@@ -540,7 +549,7 @@ def fetch_json_or_error(
             {
                 "path": path,
                 "query": query,
-                "error": f"{type(exc).__name__}: {exc}",
+                "error": redacted_error_summary(f"{type(exc).__name__}: {exc}"),
             }
         )
         raise CandidateError(failure_message, audit) from exc
