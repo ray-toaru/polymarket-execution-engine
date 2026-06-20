@@ -1051,8 +1051,9 @@ def validate_v28_production_live_candidate_guard() -> None:
 
     main_body = python_function_body(guard_text, "main")
     for needle in [
+        '--target-version',
         '--require-ready',
-        "evaluate(ROOT)",
+        "evaluate(ROOT, args.target_version)",
         "json.dumps(report, indent=2, sort_keys=True)",
         'if args.require_ready and report["status"] != "ready":',
         "return 1",
