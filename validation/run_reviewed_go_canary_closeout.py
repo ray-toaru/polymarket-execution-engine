@@ -75,7 +75,8 @@ def resolve_account_address(runtime_env: dict[str, str], explicit: str | None) -
     if funder:
         return funder
     raise SystemExit(
-        "account address is required for Data API readback; pass --account-address or provide PMX_CLOB_FUNDER in the runtime env"
+        "account address is required for Data API readback; pass --account-address or provide "
+        "PMX_CLOB_FUNDER in the runtime env or --secrets-env-file"
     )
 
 
