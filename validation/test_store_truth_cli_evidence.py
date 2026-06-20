@@ -229,6 +229,28 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
         self.assertEqual(env["PMX_ACTIVE_ACCOUNT_PROFILE"], "store_truth_cli_preflight")
         self.assertEqual(env["PMX_ACTIVE_ACCOUNT_ID"], "acct-store-truth-test")
         self.assertEqual(env["PMX_ACTIVE_PROFILE_REF"], "local-profile://store_truth_cli_preflight")
+        self.assertEqual(env["POLYMARKET_PRIVATE_KEY"], "synthetic-preflight-private-key-not-used")
+        self.assertEqual(env["POLY_API_KEY"], "123e4567-e89b-12d3-a456-426614174000")
+        self.assertEqual(env["POLY_API_SECRET"], "synthetic-preflight-api-secret-not-used")
+        self.assertEqual(env["POLY_API_PASSPHRASE"], "synthetic-preflight-passphrase-not-used")
+        self.assertEqual(env["PMX_CLOB_SIGNATURE_TYPE"], "EOA")
+        self.assertEqual(env["PMX_CLOB_FUNDER"], "0x0000000000000000000000000000000000000000")
+
+    def test_store_truth_cli_synthetic_profile_overrides_ambient_secret_names(self) -> None:
+        env = run_real_funds_canary_store_truth_cli_preflight.with_synthetic_active_profile_env(
+            {
+                "POLYMARKET_PRIVATE_KEY": "ambient-private-key",
+                "POLY_API_SECRET": "ambient-api-secret",
+                "POLY_API_PASSPHRASE": "ambient-passphrase",
+                "PMX_CLOB_SIGNATURE_TYPE": "POLY_1271",
+            },
+            "acct-store-truth-test",
+        )
+
+        self.assertEqual(env["POLYMARKET_PRIVATE_KEY"], "synthetic-preflight-private-key-not-used")
+        self.assertEqual(env["POLY_API_SECRET"], "synthetic-preflight-api-secret-not-used")
+        self.assertEqual(env["POLY_API_PASSPHRASE"], "synthetic-preflight-passphrase-not-used")
+        self.assertEqual(env["PMX_CLOB_SIGNATURE_TYPE"], "EOA")
 
     def test_load_env_file_expands_local_references(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_name:

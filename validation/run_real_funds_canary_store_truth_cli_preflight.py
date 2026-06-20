@@ -222,6 +222,15 @@ def with_synthetic_active_profile_env(env: dict[str, str], account_id: str) -> d
     updated["PMX_ACTIVE_ACCOUNT_PROFILE"] = SYNTHETIC_ACTIVE_PROFILE
     updated["PMX_ACTIVE_ACCOUNT_ID"] = account_id
     updated["PMX_ACTIVE_PROFILE_REF"] = f"local-profile://{SYNTHETIC_ACTIVE_PROFILE}"
+    # Preflight-only execution validates active profile completeness without
+    # signing or submitting. Override these names so ambient real credentials
+    # are never inherited by the local store-truth gate.
+    updated["POLYMARKET_PRIVATE_KEY"] = "synthetic-preflight-private-key-not-used"
+    updated["POLY_API_KEY"] = "123e4567-e89b-12d3-a456-426614174000"
+    updated["POLY_API_SECRET"] = "synthetic-preflight-api-secret-not-used"
+    updated["POLY_API_PASSPHRASE"] = "synthetic-preflight-passphrase-not-used"
+    updated["PMX_CLOB_SIGNATURE_TYPE"] = "EOA"
+    updated["PMX_CLOB_FUNDER"] = "0x0000000000000000000000000000000000000000"
     return updated
 
 
