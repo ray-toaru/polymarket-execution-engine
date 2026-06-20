@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_ROOT = ROOT.parent
 BASE_SCRIPT = INTEGRATION_ROOT / "scripts" / "run_reviewed_go_canary.py"
+REQUIRED_GATE_ENV_VARS = ["PMX_ALLOW_LIVE_SUBMIT", "PMX_ALLOW_REAL_FUNDS_CANARY"]
 
 
 def load_base():
@@ -65,6 +66,11 @@ def subprocess_env(secrets_env_file: Path | None) -> dict[str, str]:
     if secrets_env_file is not None:
         env.update(parse_env_assignments(secrets_env_file))
     return env
+
+
+def missing_gate_env_vars(env: dict[str, str] | None = None) -> list[str]:
+    values = os.environ if env is None else env
+    return [name for name in REQUIRED_GATE_ENV_VARS if values.get(name, "").strip() != "1"]
 
 
 def build_armed_invocation(
@@ -188,8 +194,9 @@ def build_armed_invocation(
         "runtime_gate_snapshot": gate_snapshot,
         "runtime_gate_evidence_refs": gate_evidence_refs,
         "command": command,
-        "required_gate_env_vars": [],
-        "missing_gate_env_vars": [],
+        "required_gate_env_vars": REQUIRED_GATE_ENV_VARS,
+        "missing_gate_env_vars": missing_gate_env_vars(),
+        "required_operator_env_prefix": " ".join(f"{name}=1" for name in REQUIRED_GATE_ENV_VARS),
         "includes_live_config_overrides": False,
         "requires_explicit_live_config_overrides": False,
         "report_file": str(resolved_report_file),
