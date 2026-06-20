@@ -194,11 +194,11 @@
   "failed_check_count": 0,
   "failed_check_ids": [],
   "failed_severity_counts": {},
-  "paths": 22,
+  "paths": 23,
   "proof_mode_counts": {
     "structured": 27
   },
-  "schemas": 53,
+  "schemas": 57,
   "severity_counts": {
     "S1": 12,
     "S2": 15

@@ -10,7 +10,8 @@
     "0008_idempotency_owner_lease": "1f22cb25ef9e8199038a4abb1ed79bb05d874e7ab76d034562fb20729c3bcafd",
     "0009_runtime_scope_columns": "d5c708b4f267b7f5aba93d7410837b971a92fc7377433bf32a3565d3d887ae5d",
     "0010_real_funds_canary_gtc_post_only": "234c104fe740c2ef5d1017e5ab2db5a1cd51bc8ef8a822d6c76f7862ab245ebb",
-    "0011_portfolio_projections": "e640e8e3128a1f3612149833896ffe15f33eec0254738d7a3060c91a68f87f5f"
+    "0011_portfolio_projections": "e640e8e3128a1f3612149833896ffe15f33eec0254738d7a3060c91a68f87f5f",
+    "0012_live_read_events": "8a4a9ceccd3e27d316efc799ae07fb0544bb9cc6020f844441b492c7aa5d6d10"
   },
   "migration_order": [
     "0001_initial",
@@ -23,11 +24,15 @@
     "0008_idempotency_owner_lease",
     "0009_runtime_scope_columns",
     "0010_real_funds_canary_gtc_post_only",
-    "0011_portfolio_projections"
+    "0011_portfolio_projections",
+    "0012_live_read_events"
   ],
   "postgres_dry_run": {
-    "reason": "PMX_TEST_DATABASE_URL not set",
-    "status": "skipped"
+    "drift_detection": "bad checksum fixture created; production runner must fail closed on mismatch",
+    "drift_schema": "pmx_migration_drift_1781920785613_710728",
+    "fresh_schema": "pmx_migration_fresh_1781920785613_710728",
+    "status": "pass",
+    "upgraded_schema": "pmx_migration_upgraded_1781920785613_710728"
   },
   "status": "pass"
 }

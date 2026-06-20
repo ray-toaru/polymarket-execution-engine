@@ -1,0 +1,157 @@
+applying migrations/0001_initial.sql
+psql:migrations/0001_initial.sql:4: NOTICE:  table "plan_summaries" does not exist, skipping
+DROP TABLE
+psql:migrations/0001_initial.sql:12: NOTICE:  relation "runtime_accounts" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:24: NOTICE:  relation "runtime_markets" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:35: NOTICE:  relation "collateral_profiles" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:45: NOTICE:  relation "worker_health" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:53: NOTICE:  relation "normalized_intents" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:61: NOTICE:  relation "feasibility_snapshots" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:71: NOTICE:  relation "constraint_decisions" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:84: NOTICE:  relation "execution_plans" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:100: NOTICE:  relation "idempotency_records" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:114: NOTICE:  relation "orders" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:123: NOTICE:  relation "order_events" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:135: NOTICE:  relation "order_reservations" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:145: NOTICE:  relation "execution_lifecycle_events" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:148: NOTICE:  relation "idx_execution_lifecycle_execution_created" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:151: NOTICE:  relation "idx_execution_lifecycle_execution_event_id" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:165: NOTICE:  relation "sign_only_lifecycle_events" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:176: NOTICE:  relation "runtime_worker_observations" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:187: NOTICE:  relation "reconcile_runs" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:200: NOTICE:  relation "submit_receipts" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:211: NOTICE:  relation "admin_audit_events" already exists, skipping
+CREATE TABLE
+psql:migrations/0001_initial.sql:217: NOTICE:  column "client_event_id" of relation "sign_only_lifecycle_events" already exists, skipping
+ALTER TABLE
+psql:migrations/0001_initial.sql:219: NOTICE:  column "signed_order_ref" of relation "sign_only_lifecycle_events" already exists, skipping
+ALTER TABLE
+psql:migrations/0001_initial.sql:221: NOTICE:  column "no_remote_side_effect" of relation "sign_only_lifecycle_events" already exists, skipping
+ALTER TABLE
+psql:migrations/0001_initial.sql:223: NOTICE:  column "payload" of relation "sign_only_lifecycle_events" already exists, skipping
+ALTER TABLE
+psql:migrations/0001_initial.sql:225: NOTICE:  column "observed_at" of relation "runtime_worker_observations" already exists, skipping
+ALTER TABLE
+psql:migrations/0001_initial.sql:227: NOTICE:  column "correlation_id" of relation "admin_audit_events" already exists, skipping
+ALTER TABLE
+psql:migrations/0001_initial.sql:230: NOTICE:  relation "idx_sign_only_lifecycle_execution_created" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:232: NOTICE:  relation "idx_sign_only_lifecycle_execution_event_id" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:235: NOTICE:  relation "uq_sign_only_lifecycle_client_event" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:237: NOTICE:  relation "idx_runtime_worker_observations_account_created" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:239: NOTICE:  relation "idx_runtime_worker_observations_account_capability_observed" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:240: NOTICE:  relation "idx_orders_account_state" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:241: NOTICE:  relation "idx_order_events_order_created" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:242: NOTICE:  relation "idx_reservations_account_state" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:245: NOTICE:  relation "uq_active_reservation_execution_resource" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:246: NOTICE:  relation "idx_worker_health_capability" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:247: NOTICE:  relation "idx_decisions_snapshot" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:248: NOTICE:  relation "idx_idempotency_execution" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:249: NOTICE:  relation "idx_admin_audit_operation" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:251: NOTICE:  relation "idx_admin_audit_operation_audit_id" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:254: NOTICE:  relation "idx_admin_audit_principal_audit_id" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:256: NOTICE:  relation "idx_admin_audit_result_audit_id" already exists, skipping
+CREATE INDEX
+psql:migrations/0001_initial.sql:258: NOTICE:  relation "idx_admin_audit_correlation_id" already exists, skipping
+CREATE INDEX
+applying migrations/0002_migration_framework.sql
+psql:migrations/0002_migration_framework.sql:6: NOTICE:  relation "schema_migrations" already exists, skipping
+CREATE TABLE
+applying migrations/0003_order_event_trace.sql
+psql:migrations/0003_order_event_trace.sql:2: NOTICE:  column "correlation_id" of relation "order_events" already exists, skipping
+ALTER TABLE
+psql:migrations/0003_order_event_trace.sql:6: NOTICE:  relation "idx_order_events_order_correlation" already exists, skipping
+CREATE INDEX
+applying migrations/0004_real_funds_canary.sql
+psql:migrations/0004_real_funds_canary.sql:28: NOTICE:  relation "real_funds_canary_runs" already exists, skipping
+CREATE TABLE
+psql:migrations/0004_real_funds_canary.sql:31: NOTICE:  relation "idx_real_funds_canary_account_created" already exists, skipping
+CREATE INDEX
+psql:migrations/0004_real_funds_canary.sql:34: NOTICE:  relation "idx_real_funds_canary_execution" already exists, skipping
+CREATE INDEX
+applying migrations/0005_constraint_decision_snapshot_nullable.sql
+ALTER TABLE
+applying migrations/0006_runtime_kill_switch_scope.sql
+psql:migrations/0006_runtime_kill_switch_scope.sql:2: NOTICE:  column "kill_switch_version" of relation "runtime_accounts" already exists, skipping
+ALTER TABLE
+psql:migrations/0006_runtime_kill_switch_scope.sql:5: NOTICE:  column "kill_switch_reason" of relation "runtime_accounts" already exists, skipping
+ALTER TABLE
+psql:migrations/0006_runtime_kill_switch_scope.sql:8: NOTICE:  column "kill_switch_updated_at" of relation "runtime_accounts" already exists, skipping
+ALTER TABLE
+psql:migrations/0006_runtime_kill_switch_scope.sql:11: NOTICE:  relation "idx_runtime_accounts_kill_switch" already exists, skipping
+CREATE INDEX
+applying migrations/0007_runtime_global_kill_switch.sql
+psql:migrations/0007_runtime_global_kill_switch.sql:7: NOTICE:  relation "runtime_global_controls" already exists, skipping
+CREATE TABLE
+applying migrations/0008_idempotency_owner_lease.sql
+psql:migrations/0008_idempotency_owner_lease.sql:3: NOTICE:  column "owner_token" of relation "idempotency_records" already exists, skipping
+psql:migrations/0008_idempotency_owner_lease.sql:3: NOTICE:  column "lease_expires_at" of relation "idempotency_records" already exists, skipping
+ALTER TABLE
+psql:migrations/0008_idempotency_owner_lease.sql:6: NOTICE:  relation "idx_idempotency_owner_lease" already exists, skipping
+CREATE INDEX
+applying migrations/0009_runtime_scope_columns.sql
+psql:migrations/0009_runtime_scope_columns.sql:3: NOTICE:  column "account_id" of relation "collateral_profiles" already exists, skipping
+psql:migrations/0009_runtime_scope_columns.sql:3: NOTICE:  column "condition_id" of relation "collateral_profiles" already exists, skipping
+ALTER TABLE
+psql:migrations/0009_runtime_scope_columns.sql:6: NOTICE:  relation "idx_collateral_profiles_scope" already exists, skipping
+CREATE INDEX
+psql:migrations/0009_runtime_scope_columns.sql:11: NOTICE:  column "account_id" of relation "worker_health" already exists, skipping
+psql:migrations/0009_runtime_scope_columns.sql:11: NOTICE:  column "condition_id" of relation "worker_health" already exists, skipping
+psql:migrations/0009_runtime_scope_columns.sql:11: NOTICE:  column "worker_group" of relation "worker_health" already exists, skipping
+ALTER TABLE
+psql:migrations/0009_runtime_scope_columns.sql:14: NOTICE:  relation "idx_worker_health_scope_capability" already exists, skipping
+CREATE INDEX
+applying migrations/0010_real_funds_canary_gtc_post_only.sql
+psql:migrations/0010_real_funds_canary_gtc_post_only.sql:2: NOTICE:  constraint "real_funds_canary_runs_execution_style_check" of relation "real_funds_canary_runs" does not exist, skipping
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+applying migrations/0011_portfolio_projections.sql
+psql:migrations/0011_portfolio_projections.sql:6: NOTICE:  relation "portfolio_projections" already exists, skipping
+CREATE TABLE
+psql:migrations/0011_portfolio_projections.sql:9: NOTICE:  relation "idx_portfolio_projections_observed_at" already exists, skipping
+CREATE INDEX
+applying migrations/0012_live_read_events.sql
+psql:migrations/0012_live_read_events.sql:14: NOTICE:  relation "live_read_events" already exists, skipping
+CREATE TABLE
+psql:migrations/0012_live_read_events.sql:17: NOTICE:  relation "idx_live_read_events_account_event_id" already exists, skipping
+CREATE INDEX
+psql:migrations/0012_live_read_events.sql:19: NOTICE:  relation "idx_live_read_events_operation_event_id" already exists, skipping
+CREATE INDEX
+psql:migrations/0012_live_read_events.sql:21: NOTICE:  relation "idx_live_read_events_outcome_event_id" already exists, skipping
+CREATE INDEX
+psql:migrations/0012_live_read_events.sql:23: NOTICE:  relation "idx_live_read_events_remote_order_id" already exists, skipping
+CREATE INDEX

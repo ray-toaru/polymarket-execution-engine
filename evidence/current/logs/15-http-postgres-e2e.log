@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.32s
+     Running tests/http_postgres_e2e.rs (target/debug/deps/http_postgres_e2e-a084a7e49e17af30)
+
+running 6 tests
+test admin_audit::http_postgres_admin_routes_record_audit_events ... ok
+test negative::http_postgres_rejects_cross_object_graph_and_bad_plan_hash ... ok
+test runtime::http_postgres_runtime_rows_can_reach_ready_plan_but_submit_still_blocks ... ok
+test smoke::compile_submit::compile_flow_propagates_header_correlation_id_across_object_graph ... ok
+test smoke::compile_submit::submit_plan_propagates_header_correlation_id_into_lifecycle_events ... ok
+test smoke::http_postgres_backed_e2e_smoke ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.41s
+

@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-06-18T10:24:40.180173+00:00",
+  "captured_at": "2026-06-20T01:58:49.573559+00:00",
   "dependency_locks": {
     "polymarket-execution-engine/Cargo.lock": {
       "exists": true,
@@ -17,33 +17,33 @@
   "environment": {
     "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE": null,
     "PMX_RUN_SIGN_ONLY_DRY_RUN": null,
-    "PMX_TEST_DATABASE_URL_set": false,
+    "PMX_TEST_DATABASE_URL_set": true,
     "python_executable": "/usr/local/python/current/bin/python",
     "python_version": "3.14.2 (main, Jan 20 2026, 13:54:38) [GCC 13.3.0]"
   },
   "git": {
     "execution": {
       "branch": "main",
-      "head": "86ed72feb77d4945b511997c4d73fc501124041d",
+      "head": "eacd6dbb94802e0402d213361c06649caaaf6386",
       "path": "polymarket-execution-engine",
       "status_clean": true,
       "status_entry_count": 0
     },
     "hermes": {
       "branch": "main",
-      "head": "7477c028d5c4f0f2215e7ee6c3ee4ea750331553",
+      "head": "49fb4b6c209e744f57b87b255bbf92003eacb557",
       "path": "hermes-polymarket-executor-adapter",
       "status_clean": true,
       "status_entry_count": 0
     },
     "integration": {
       "branch": "main",
-      "head": "864bf9ee710f24f5b38eb0299557280cc6a40960",
+      "head": "91b5eba56decb1a76706d5c2ed2a55d5ee11baf5",
       "path": ".",
       "status_clean": true,
       "status_entry_count": 0
     },
-    "submodules": "7477c028d5c4f0f2215e7ee6c3ee4ea750331553 hermes-polymarket-executor-adapter (v0.28.0-32-g7477c02)\n 86ed72feb77d4945b511997c4d73fc501124041d polymarket-execution-engine (v0.28.0-195-g86ed72f)"
+    "submodules": "49fb4b6c209e744f57b87b255bbf92003eacb557 hermes-polymarket-executor-adapter (v0.28.0-34-g49fb4b6)\n eacd6dbb94802e0402d213361c06649caaaf6386 polymarket-execution-engine (v0.28.0-206-geacd6db)"
   },
   "integration_root": "/workspaces/universal/rust/polymarket_dual_project",
   "platform": {

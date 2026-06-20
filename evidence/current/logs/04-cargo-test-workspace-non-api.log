@@ -1,84 +1,14 @@
-   Compiling libc v0.2.186
-   Compiling serde_core v1.0.228
-   Compiling cfg-if v1.0.4
-   Compiling typenum v1.20.1
-   Compiling hybrid-array v0.4.12
-   Compiling serde v1.0.228
-   Compiling cmov v0.5.4
-   Compiling ctutils v0.4.2
-   Compiling block-buffer v0.12.1
-   Compiling crypto-common v0.2.2
-   Compiling rand_core v0.10.1
-   Compiling memchr v2.8.2
-   Compiling const-oid v0.10.2
-   Compiling serde_json v1.0.150
-   Compiling digest v0.11.3
-   Compiling zmij v1.0.21
-   Compiling cpufeatures v0.3.0
-   Compiling itoa v1.0.18
-   Compiling getrandom v0.4.2
-   Compiling thiserror v2.0.18
-   Compiling num-traits v0.2.19
-   Compiling sha2 v0.11.0
-   Compiling iana-time-zone v0.1.65
-   Compiling chrono v0.4.45
-   Compiling uuid v1.23.3
-   Compiling pmx-core v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-core)
-   Compiling bytes v1.11.1
-   Compiling errno v0.3.14
-   Compiling pin-project-lite v0.2.17
-   Compiling signal-hook-registry v1.4.8
-   Compiling socket2 v0.6.4
-   Compiling mio v1.2.1
-   Compiling tokio v1.52.3
-   Compiling tinyvec_macros v0.1.1
-   Compiling tinyvec v1.11.0
-   Compiling unicode-normalization v0.1.25
-   Compiling chacha20 v0.10.0
-   Compiling unicode-properties v0.1.4
-   Compiling unicode-bidi v0.3.18
-   Compiling futures-sink v0.3.32
-   Compiling futures-core v0.3.32
-   Compiling stringprep v0.1.5
-   Compiling rand v0.10.1
-   Compiling md-5 v0.11.0
-   Compiling hmac v0.13.0
-   Compiling fallible-iterator v0.2.0
-   Compiling siphasher v1.0.3
-   Compiling byteorder v1.5.0
-   Compiling base64 v0.22.1
-   Compiling scopeguard v1.2.0
-   Compiling smallvec v1.15.2
-   Compiling parking_lot_core v0.9.12
-   Compiling lock_api v0.4.14
-   Compiling postgres-protocol v0.6.12
-   Compiling phf_shared v0.13.1
-   Compiling futures-task v0.3.32
-   Compiling futures-util v0.3.32
-   Compiling phf v0.13.1
-   Compiling postgres-types v0.2.14
-   Compiling parking_lot v0.12.5
-   Compiling tokio-util v0.7.18
-   Compiling futures-channel v0.3.32
-   Compiling whoami v2.1.2
-   Compiling percent-encoding v2.3.2
-   Compiling log v0.4.32
-   Compiling tokio-postgres v0.7.18
-   Compiling pmx-store v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-store)
-   Compiling pmx-gateway v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-gateway)
-   Compiling pmx-runtime v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-runtime)
-   Compiling pmx-policy v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-policy)
-   Compiling pmx-service v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-service)
-   Compiling pmx-authz v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-authz)
-   Compiling pmx-release v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-release)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 06s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.29s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-7abd4fdd11f8bd80)
 
-running 2 tests
+running 5 tests
 test tests::admin_can_cancel ... ok
+test tests::admin_cancel_scope_cannot_read_audit_or_kill_switch ... ok
+test tests::admin_read_scope_cannot_cancel_or_kill_switch ... ok
+test tests::emergency_operator_scope_is_limited_to_kill_switch ... ok
 test tests::service_cannot_cancel ... ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_core-8915ca4edd7a7eaf)
 
@@ -117,8 +47,11 @@ test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fin
 
      Running unittests src/lib.rs (target/debug/deps/pmx_gateway-ca781ceac1aee6c8)
 
-running 13 tests
+running 18 tests
 test tests::disabled_operational_ports_fail_closed_without_secret_material ... ok
+test tests::live_read::normalized_live_read_error_redacts_assignment_keys_case_insensitively ... ok
+test tests::live_read::normalized_live_read_error_redacts_secret_material ... ok
+test tests::live_read::normalized_live_read_order_observation_is_allowlisted_and_read_only ... ok
 test tests::market_data::disabled_market_data_reader_fails_closed ... ok
 test tests::market_data::fake_market_data_reader_fails_closed_for_missing_book ... ok
 test tests::market_data::fake_market_data_reader_returns_book_snapshot_by_condition_and_token ... ok
@@ -126,13 +59,15 @@ test tests::post_cancel::deterministic_signer_provider_posts_reads_and_cancels .
 test tests::post_cancel::fake_gateway_cancel_maps_to_order_lifecycle_state_machine ... ok
 test tests::post_cancel::fake_gateway_is_account_scoped ... ok
 test tests::post_cancel::fake_gateway_surfaces_remote_unknown_without_local_success ... ok
+test tests::production_assembly::production_gateway_assembly_accepts_only_complete_references ... ok
+test tests::production_assembly::production_gateway_assembly_fails_closed_with_missing_bindings ... ok
 test tests::reconcile_reader::disabled_gateway_reconcile_reader_is_disabled ... ok
 test tests::reconcile_reader::fake_remote_reconcile_reader_is_read_only_and_account_scoped ... ok
 test tests::reconcile_reader::remote_reconcile_reader_rejects_side_effect_requests ... ok
 test tests::signer::disabled_signer_provider_refuses_to_materialize_signer ... ok
 test tests::signer::signer_provider_defaults_are_production_conservative ... ok
 
-test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_policy-f64a2dee7d6b12da)
 
@@ -181,8 +116,10 @@ test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fin
 
      Running unittests src/lib.rs (target/debug/deps/pmx_service-a70b2e84098b22bf)
 
-running 46 tests
+running 49 tests
+test service::tests::flow::explicit_live_gateway_blocks_snapshot_required_capabilities_before_signing ... ok
 test service::tests::flow::explicit_live_gateway_blocks_unsupported_quote_notional_without_stuck_idempotency ... ok
+test service::tests::flow::explicit_live_gateway_discards_signed_order_when_pre_post_runtime_blocks ... ok
 test service::tests::flow::explicit_live_gateway_marks_operator_required_when_runtime_degrades_after_post_ack ... ok
 test service::tests::flow::explicit_live_gateway_posts_and_records_remote_order_lifecycle ... ok
 test service::tests::flow::explicit_live_gateway_posts_buy_size_and_records_quote_exposure ... ok
@@ -197,6 +134,7 @@ test service::tests::flow::service_rejects_object_graph_mismatch ... ok
 test service::tests::flow::service_rejects_tampered_approval_hash ... ok
 test service::tests::flow::static_runtime_provider_can_reach_ready_plan_but_submit_still_blocks ... ok
 test service::tests::non_live_order_lifecycle::cancel_reconcile::service_live_cancel_gateway_records_remote_acceptance_and_unknown ... ok
+test service::tests::non_live_order_lifecycle::cancel_reconcile::service_live_cancel_rejects_terminal_order_before_gateway_call ... ok
 test service::tests::non_live_order_lifecycle::cancel_reconcile::service_records_non_live_cancel_and_reconcile_order_lifecycle ... ok
 test service::tests::non_live_order_lifecycle::divergence::service_classifies_and_records_order_lifecycle_divergence_without_remote_side_effect ... ok
 test service::tests::non_live_order_lifecycle::replace::service_prepares_replace_idempotently_without_remote_side_effects ... ok
@@ -229,11 +167,11 @@ test service::tests::sign_only::standard::service_records_standard_sign_only_con
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 test submit::fingerprint::tests::request_fingerprint_ignores_correlation_metadata ... ok
 
-test result: ok. 46 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+test result: ok. 49 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.70s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-5e874a654e539b61)
 
-running 62 tests
+running 66 tests
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_paginates_and_filters_by_cursor ... ok
 test memory::memory_tests::admin_sign_only::admin_audit::in_memory_admin_audit_records_without_exposing_secrets ... ok
 test memory::memory_tests::admin_sign_only::sign_only::happy_path::in_memory_persists_sign_only_lifecycle_records ... ok
@@ -247,6 +185,8 @@ test memory::memory_tests::common::in_memory_finish_requires_current_owner_token
 test memory::memory_tests::common::in_memory_same_request_without_response_is_in_progress ... ok
 test memory::memory_tests::common::maps_plan_status_for_db ... ok
 test memory::memory_tests::common::runtime_state_query_key_includes_sorted_required_capabilities ... ok
+test memory::memory_tests::live_read::in_memory_live_read_events_are_redacted_read_only_and_queryable ... ok
+test memory::memory_tests::live_read::in_memory_live_read_events_reject_side_effect_capable_records ... ok
 test memory::memory_tests::order_lifecycle::backlog::in_memory_lists_reconcile_backlog_orders ... ok
 test memory::memory_tests::order_lifecycle::cancel_requested::in_memory_order_lifecycle_records_cancel_requested ... ok
 test memory::memory_tests::order_lifecycle::rejects::in_memory_order_lifecycle_rejects_invalid_transition ... ok
@@ -275,6 +215,8 @@ test postgres::postgres_tests::idempotency::fingerprint_mismatch_is_conflict ...
 test postgres::postgres_tests::idempotency::finish_requires_current_owner_token ... ok
 test postgres::postgres_tests::idempotency::in_progress_replay_does_not_return_proceed ... ok
 test postgres::postgres_tests::idempotency::same_request_replay_is_persisted ... ok
+test postgres::postgres_tests::live_read::postgres_live_read_events_are_redacted_read_only_and_queryable ... ok
+test postgres::postgres_tests::live_read::postgres_live_read_events_reject_side_effect_capable_records ... ok
 test postgres::postgres_tests::order_lifecycle::backlog::postgres_lists_reconcile_backlog_orders ... ok
 test postgres::postgres_tests::order_lifecycle::persistence::postgres_records_order_lifecycle_event ... ok
 test postgres::postgres_tests::order_lifecycle::replay::postgres_order_lifecycle_replays_same_correlation_id ... ok
@@ -297,7 +239,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 62 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+test result: ok. 66 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.67s
 
    Doc-tests pmx_authz
 
