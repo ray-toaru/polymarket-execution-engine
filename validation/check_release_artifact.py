@@ -63,6 +63,7 @@ SECRET_TEMPLATE_MARKERS = {
 SECRET_CONTENT_TEST_FIXTURES = {
     "tests/test_activate_pmx_profile.py": (b"class ActivatePmxProfileTests",),
     "tests/test_active_profile_consistency.py": (b"class ActiveProfileConsistencyTests",),
+    "tests/test_check_release_artifact.py": (b"class CheckReleaseArtifactTests",),
     "tests/test_prepare_canary_review_bundle.py": (b"class PrepareCanaryReviewBundleTests",),
     "tests/test_prepare_canary_runtime_bundle.py": (b"class PrepareCanaryRuntimeBundleTests",),
     "tests/test_prepare_operator_approval_request.py": (b"class PrepareOperatorApprovalRequestTests",),

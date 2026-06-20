@@ -81,6 +81,66 @@ def resolve_manifest_path(rel: str) -> Path:
     return ROOT.parent / path
 
 
+def resolve_artifact_sibling_path(artifact_path: Path, rel: str) -> Path:
+    path = Path(rel)
+    if path.is_absolute():
+        return path
+    if "/" not in rel:
+        return artifact_path.parent / rel
+    return resolve_manifest_path(rel)
+
+
+def load_json_object(path: Path) -> dict | None:
+    try:
+        data = json.loads(path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def validate_post_package_workspace_snapshot(
+    *,
+    data: dict,
+    artifact_path: Path,
+    artifact_sha256: str,
+    external_artifact: dict,
+) -> str | None:
+    if data.get("artifact_kind") != "source_candidate":
+        return "only source_candidate manifests may use post-package workspace snapshots"
+    evidence_sidecar = external_artifact.get("evidence_sidecar")
+    if not isinstance(evidence_sidecar, str) or not evidence_sidecar:
+        return "external_artifact_sidecar.evidence_sidecar is required for post-package snapshot binding"
+    evidence_path = resolve_artifact_sibling_path(artifact_path, evidence_sidecar)
+    evidence = load_json_object(evidence_path)
+    if evidence is None:
+        return f"evidence sidecar not found or invalid: {evidence_sidecar}"
+    if evidence.get("artifact", {}).get("sha256") != artifact_sha256:
+        return "evidence sidecar artifact.sha256 does not match artifact file"
+    canonical = evidence.get("canonical_evidence", {})
+    if canonical.get("workspace_manifest_binding_kind") != "post_package_workspace_snapshot":
+        return "evidence sidecar workspace_manifest_binding_kind is invalid"
+    workspace_path_name = canonical.get("workspace_manifest_snapshot_path")
+    workspace_sha = canonical.get("workspace_manifest_sha256")
+    if not isinstance(workspace_path_name, str) or not workspace_path_name:
+        return "evidence sidecar workspace_manifest_snapshot_path is required"
+    if not isinstance(workspace_sha, str) or not re.fullmatch(r"[0-9a-f]{64}", workspace_sha):
+        return "evidence sidecar workspace_manifest_sha256 must be lowercase sha256 hex"
+    workspace_path = resolve_artifact_sibling_path(artifact_path, workspace_path_name)
+    workspace = load_json_object(workspace_path)
+    if workspace is None:
+        return f"workspace manifest snapshot not found or invalid: {workspace_path_name}"
+    if sha256(workspace_path) != workspace_sha:
+        return "evidence sidecar workspace_manifest_sha256 does not match snapshot"
+    workspace_external = workspace.get("external_artifact_sidecar", {})
+    if not isinstance(workspace_external, dict):
+        return "workspace manifest snapshot missing external_artifact_sidecar"
+    if workspace_external.get("sha256") != artifact_sha256:
+        return "workspace manifest snapshot external_artifact_sidecar.sha256 does not match artifact"
+    if workspace_external.get("path") != external_artifact.get("path"):
+        return "workspace manifest snapshot external_artifact_sidecar.path does not match canonical manifest"
+    return None
+
+
 def expected_version() -> str:
     for path in VERSION_PATHS:
         if path.exists():
@@ -114,8 +174,19 @@ def validate(path: Path, *, allow_missing_semantic_logs: bool = False) -> int:
         artifact_path = resolve_manifest_path(external_path)
         if not artifact_path.exists():
             return fail(f"external artifact not found: {external_path}")
-        if sha256(artifact_path) != external_sha:
-            return fail("external_artifact_sidecar.sha256 does not match artifact file")
+        artifact_sha = sha256(artifact_path)
+        if artifact_sha != external_sha:
+            snapshot_error = validate_post_package_workspace_snapshot(
+                data=data,
+                artifact_path=artifact_path,
+                artifact_sha256=artifact_sha,
+                external_artifact=external_artifact,
+            )
+            if snapshot_error is not None:
+                return fail(
+                    "external_artifact_sidecar.sha256 does not match artifact file; "
+                    f"{snapshot_error}"
+                )
     for section in REQUIRED_SECTIONS:
         block = data.get(section)
         if not isinstance(block, dict):
