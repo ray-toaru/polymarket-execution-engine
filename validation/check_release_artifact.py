@@ -132,6 +132,12 @@ SECRET_CONTENT_TEST_FIXTURES = {
         b"SECRET_KEYS",
         b"required_fields",
     ),
+    "tests/test_package_release_index.py": (
+        b"class PackageReleaseIndexTests",
+    ),
+    "tests/test_prepare_canary_candidate_market.py": (
+        b"class PrepareCanaryCandidateMarketTests",
+    ),
 }
 
 
