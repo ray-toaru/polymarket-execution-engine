@@ -1,18 +1,6 @@
 {
   "additional_logs": [
     {
-      "bytes": 93,
-      "command": "echo \"PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE not set to 1; credentialed non-trading smoke skipped\"",
-      "path": "polymarket-execution-engine/evidence/current/logs/16-authenticated-smoke-skipped.log",
-      "sha256": "4a1f0af2d195c4abb0eaef7538cfe09eccbce139c112023a89b963f6e040b87c"
-    },
-    {
-      "bytes": 66,
-      "command": "echo \"PMX_RUN_SIGN_ONLY_DRY_RUN not set to 1; sign-only dry-run skipped\"",
-      "path": "polymarket-execution-engine/evidence/current/logs/17-sign-only-dry-run-skipped.log",
-      "sha256": "4054a6e84ae0214117af173872ac08cc7ab45d7a0a2e9ce168951ae05d188c2a"
-    },
-    {
       "bytes": 95,
       "command": "python \"${INTEGRATION_ROOT}/scripts/package_release.py\"",
       "path": "polymarket-execution-engine/evidence/current/logs/27-package-release.log",
@@ -48,20 +36,19 @@
   "credentialed_non_trading_validation": {
     "logs": [
       {
-        "bytes": 93,
-        "command": "echo \"PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE not set to 1; credentialed non-trading smoke skipped\"",
-        "path": "polymarket-execution-engine/evidence/current/logs/16-authenticated-smoke-skipped.log",
-        "sha256": "4a1f0af2d195c4abb0eaef7538cfe09eccbce139c112023a89b963f6e040b87c"
+        "bytes": 10095,
+        "command": "cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --features authenticated-smoke --locked authenticated_non_trading_smoke -- --nocapture --test-threads=1",
+        "path": "polymarket-execution-engine/evidence/current/logs/16-authenticated-smoke.log",
+        "sha256": "b455f16737a343bf9742911772809a9fbad39e9d755eaafedd1e0c835f0e290b"
       },
       {
-        "bytes": 66,
-        "command": "echo \"PMX_RUN_SIGN_ONLY_DRY_RUN not set to 1; sign-only dry-run skipped\"",
-        "path": "polymarket-execution-engine/evidence/current/logs/17-sign-only-dry-run-skipped.log",
-        "sha256": "4054a6e84ae0214117af173872ac08cc7ab45d7a0a2e9ce168951ae05d188c2a"
+        "bytes": 3718,
+        "command": "PMX_ALLOW_SIGN_ONLY_DRY_RUN=1 cargo test --manifest-path adapters/pmx-official-sdk-adapter/Cargo.toml --features sign-only-dry-run --locked sign_only_dry_run -- --nocapture --test-threads=1",
+        "path": "polymarket-execution-engine/evidence/current/logs/17-sign-only-dry-run.log",
+        "sha256": "88de41e2ab1f0689301bc67698880b53f4e3a6adb60144bd73d7ce7d7851e0db"
       }
     ],
-    "skipped_reason": "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE not set to 1; credentialed non-trading smoke skipped | PMX_RUN_SIGN_ONLY_DRY_RUN not set to 1; sign-only dry-run skipped",
-    "status": "skipped"
+    "status": "pass"
   },
   "environment": {
     "bytes": 3885,
@@ -84,7 +71,7 @@
     "evidence_sidecar": "polymarket-execution-suite-v0.28.0.zip.evidence.json",
     "name": "polymarket-execution-suite-v0.28.0.zip",
     "path": "dist/polymarket-execution-suite-v0.28.0.zip",
-    "sha256": "a53bcb8ef9efcbc4294bfa83b339c798fef6675792dcbc2a83addb4b7ad4fc9c",
+    "sha256": "5b2de2c4cc876754b2c06578c87cca882ec06a837c11b69c0df4dece69b4c968",
     "sha256_sidecar": "polymarket-execution-suite-v0.28.0.zip.sha256"
   },
   "external_operator_approval_preflight_validation": {
@@ -109,7 +96,7 @@
     ],
     "status": "pass"
   },
-  "generated_at": "2026-06-20T02:00:00.842350+00:00",
+  "generated_at": "2026-06-21T04:17:06.002712+00:00",
   "live_canary_blocked_validation": {
     "logs": [
       {
@@ -541,12 +528,13 @@
   "release_decision": {
     "live_trading_ready": false,
     "production_ready": false,
-    "reason": "Production-live-candidate local refresh. Current evidence binds source, Rust, PostgreSQL, SDK, local static, drill, governance, and artifact checks, but does not refresh external sections skipped in this environment: credentialed_non_trading_validation. Production and live trading remain explicitly unapproved by default.",
+    "reason": "Production-live-candidate. Required source, Rust, PostgreSQL, SDK, credentialed smoke, sign-only dry-run, local static, drill, governance, and artifact checks are bound in current evidence; production and live trading remain explicitly unapproved by default.",
     "required_non_optional_sections": [
       "local_static_validation",
       "rust_workspace_validation",
       "postgres_validation",
-      "sdk_adapter_validation"
+      "sdk_adapter_validation",
+      "credentialed_non_trading_validation"
     ],
     "status": "production-live-candidate",
     "validated_release": false

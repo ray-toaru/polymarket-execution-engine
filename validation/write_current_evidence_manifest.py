@@ -454,6 +454,7 @@ def main(argv: list[str]) -> int:
         "rust_workspace_validation",
         "postgres_validation",
         "sdk_adapter_validation",
+        "credentialed_non_trading_validation",
     ]
     skipped_sections = [
         section
