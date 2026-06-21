@@ -208,6 +208,16 @@ def main() -> int:
     ]:
         if token not in preflight:
             failures.append(f"single-host preflight missing runtime config check: {token}")
+    for legacy_token in [
+        "PM_EXEC_SERVICE_TOKEN",
+        "PM_EXEC_ADMIN_TOKEN",
+        "PMX_SERVICE_TOKEN",
+        "PMX_ADMIN_TOKEN",
+    ]:
+        if legacy_token in "\n".join([api_env, api_service, preflight]):
+            failures.append(
+                f"single-host API deployment must not use legacy/non-canonical auth env {legacy_token}"
+            )
     for token in [
         'PMX_LIVE_SUBMIT_ENABLED:-0}" == "1"',
         'PMX_ALLOW_LIVE_SUBMIT:-0}" == "1"',

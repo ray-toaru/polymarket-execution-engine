@@ -8,8 +8,18 @@ from pathlib import Path
 FORBIDDEN_PARTS = {".venv", "venv", "__pycache__", ".pytest_cache", ".mypy_cache", "target"}
 FORBIDDEN_SUFFIXES = {".pyc", ".pyo", ".sqlite", ".sqlite3", ".db"}
 FORBIDDEN_FILENAMES = {".env"}
+FORBIDDEN_NAME_PREFIXES = (".env.",)
+FORBIDDEN_NAME_EXEMPT_SUFFIXES = (".example",)
 DEV_WORKTREE_ALLOWED_FILENAMES = {".env"}
 DEV_WORKTREE_ALLOWED_ROOT_DIRS = {".venv", "venv"}
+
+
+def local_env_file(name: str) -> bool:
+    if name in FORBIDDEN_FILENAMES:
+        return True
+    if any(name.startswith(prefix) for prefix in FORBIDDEN_NAME_PREFIXES):
+        return not any(name.endswith(suffix) for suffix in FORBIDDEN_NAME_EXEMPT_SUFFIXES)
+    return False
 
 
 def forbidden(path: str, *, dev_worktree: bool = False) -> bool:
@@ -21,11 +31,14 @@ def forbidden(path: str, *, dev_worktree: bool = False) -> bool:
         forbidden_filenames = forbidden_filenames - DEV_WORKTREE_ALLOWED_FILENAMES
         if parts and parts[0] in DEV_WORKTREE_ALLOWED_ROOT_DIRS:
             return False
+        if local_env_file(name):
+            return False
     return (
         any(part in FORBIDDEN_PARTS for part in parts)
         or any(part.endswith(".egg-info") for part in parts)
         or suffix in FORBIDDEN_SUFFIXES
         or name in forbidden_filenames
+        or local_env_file(name)
     )
 
 
