@@ -8,8 +8,8 @@ async fn http_postgres_rejects_cross_object_graph_and_bad_plan_hash() {
         return;
     };
     unsafe {
-        std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-pg-negative");
-        std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-pg-negative");
+        std::env::set_var("PMX_API_SERVICE_TOKEN", "service-token-pg-negative");
+        std::env::set_var("PMX_API_ADMIN_TOKEN", "admin-token-pg-negative");
     }
 
     let app = pmx_api::try_postgres_app(database_url, true)

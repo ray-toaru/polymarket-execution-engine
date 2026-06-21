@@ -69,8 +69,8 @@ def run_api_bind_smoke(failures: list[str]) -> bool:
             "PMX_API_BIND_ADDR": f"127.0.0.1:{port}",
             "PMX_API_PROFILE": "local",
             "PMX_API_STORAGE": "in_memory_scaffold",
-            "PM_EXEC_SERVICE_TOKEN": "single-host-smoke-service-token",
-            "PM_EXEC_ADMIN_TOKEN": "single-host-smoke-admin-token",
+            "PMX_API_SERVICE_TOKEN": "single-host-smoke-service-token",
+            "PMX_API_ADMIN_TOKEN": "single-host-smoke-admin-token",
             "PMX_ALLOW_LIVE_SUBMIT": "0",
             "PMX_ALLOW_LIVE_CANCEL": "0",
             "PMX_ALLOW_REAL_FUNDS_CANARY": "0",
@@ -202,8 +202,8 @@ def main() -> int:
         if guard not in preflight:
             failures.append(f"single-host preflight missing guard {guard}")
     for token in [
-        "PM_EXEC_SERVICE_TOKEN",
-        "PM_EXEC_ADMIN_TOKEN",
+        "PMX_API_SERVICE_TOKEN",
+        "PMX_API_ADMIN_TOKEN",
         "PMX_API_STORAGE must be postgres",
     ]:
         if token not in preflight:

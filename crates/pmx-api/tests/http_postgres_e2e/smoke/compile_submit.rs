@@ -137,8 +137,8 @@ async fn compile_flow_propagates_header_correlation_id_across_object_graph() {
         return;
     };
     unsafe {
-        std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-pg-e2e");
-        std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-pg-e2e");
+        std::env::set_var("PMX_API_SERVICE_TOKEN", "service-token-pg-e2e");
+        std::env::set_var("PMX_API_ADMIN_TOKEN", "admin-token-pg-e2e");
     }
     let suffix = unique_suffix("compile-correlation");
     let app = pmx_api::try_postgres_app(database_url.clone(), true)
@@ -225,8 +225,8 @@ async fn submit_plan_propagates_header_correlation_id_into_lifecycle_events() {
         return;
     };
     unsafe {
-        std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-pg-e2e");
-        std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-pg-e2e");
+        std::env::set_var("PMX_API_SERVICE_TOKEN", "service-token-pg-e2e");
+        std::env::set_var("PMX_API_ADMIN_TOKEN", "admin-token-pg-e2e");
     }
     let suffix = unique_suffix("submit-correlation");
     let app = pmx_api::try_postgres_app(database_url.clone(), true)

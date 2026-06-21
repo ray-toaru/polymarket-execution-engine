@@ -280,15 +280,17 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
                     "${PMX_MISSING_FALLBACK}",
                 )
 
-    def test_load_default_env_files_only_loads_explicit_companion(self) -> None:
+    def test_load_default_env_files_loads_runtime_and_validation_but_only_explicit_companion_secrets(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_name:
             tmp = Path(tmp_name)
             runtime_env = tmp / ".env.runtime"
             runtime_secrets = tmp / ".env.runtime.secrets"
             fallback_env = tmp / ".env"
+            validation_env = tmp / ".env.validation"
             runtime_env.write_text("PMX_ACTIVE_ACCOUNT_PROFILE=acct_b\n")
             runtime_secrets.write_text("POLY_API_SECRET=secret\n")
             fallback_env.write_text("PMX_DATABASE_URL=postgres://pmx@localhost/pmx\n")
+            validation_env.write_text("PMX_TEST_DATABASE_URL=postgres://pmx@localhost/pmx_test\n")
             with patch.object(run_real_funds_canary_store_truth_cli_preflight, "ROOT", tmp):
                 with patch.dict(
                     "run_real_funds_canary_store_truth_cli_preflight.os.environ",
@@ -304,9 +306,17 @@ class StoreTruthCliEvidenceTests(unittest.TestCase):
                         "PMX_ACTIVE_ACCOUNT_PROFILE",
                         run_real_funds_canary_store_truth_cli_preflight.os.environ,
                     )
-                    self.assertNotIn(
-                        "PMX_DATABASE_URL",
-                        run_real_funds_canary_store_truth_cli_preflight.os.environ,
+                    self.assertEqual(
+                        run_real_funds_canary_store_truth_cli_preflight.os.environ[
+                            "PMX_DATABASE_URL"
+                        ],
+                        "postgres://pmx@localhost/pmx",
+                    )
+                    self.assertEqual(
+                        run_real_funds_canary_store_truth_cli_preflight.os.environ[
+                            "PMX_TEST_DATABASE_URL"
+                        ],
+                        "postgres://pmx@localhost/pmx_test",
                     )
                     run_real_funds_canary_store_truth_cli_preflight.load_default_env_files(
                         runtime_secrets_env_file=runtime_secrets

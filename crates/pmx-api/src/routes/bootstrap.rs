@@ -79,7 +79,7 @@ pub fn try_in_memory_app_with_store(store: InMemoryStore) -> Result<Router, Stri
 }
 
 pub fn app() -> Router {
-    try_app().expect("PM_EXEC_SERVICE_TOKEN and PM_EXEC_ADMIN_TOKEN must be non-empty and distinct")
+    try_app().expect("PMX_API_SERVICE_TOKEN and PMX_API_ADMIN_TOKEN must be non-empty and distinct")
 }
 
 /// Build an HTTP API backed by a PostgreSQL store.

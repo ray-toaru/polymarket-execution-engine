@@ -4,20 +4,33 @@ use super::*;
 async fn equal_service_and_admin_tokens_fail_closed_at_app_construction() {
     let _guard = env_lock().await;
     unsafe {
-        std::env::set_var("PM_EXEC_SERVICE_TOKEN", "same-token-test");
-        std::env::set_var("PM_EXEC_ADMIN_TOKEN", "same-token-test");
+        std::env::set_var("PMX_API_SERVICE_TOKEN", "same-token-test");
+        std::env::set_var("PMX_API_ADMIN_TOKEN", "same-token-test");
     }
     let err = pmx_api::try_app().expect_err("equal tokens must fail closed");
     assert!(err.contains("distinct"));
 }
 
 #[tokio::test]
+async fn legacy_executor_client_tokens_do_not_configure_engine_api() {
+    let _guard = env_lock().await;
+    unsafe {
+        std::env::remove_var("PMX_API_SERVICE_TOKEN");
+        std::env::remove_var("PMX_API_ADMIN_TOKEN");
+        std::env::set_var("PM_EXEC_SERVICE_TOKEN", "legacy-client-service-token");
+        std::env::set_var("PM_EXEC_ADMIN_TOKEN", "legacy-client-admin-token");
+    }
+    let err = pmx_api::try_app().expect_err("legacy client tokens must not configure pmx-api");
+    assert!(err.contains("PMX_API_SERVICE_TOKEN"));
+}
+
+#[tokio::test]
 async fn admin_read_token_reports_limited_session_and_cannot_cancel() {
     let _guard = env_lock().await;
     unsafe {
-        std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-admin-read-split");
-        std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-admin-read-split");
-        std::env::set_var("PM_EXEC_ADMIN_READ_TOKEN", "admin-read-token-split");
+        std::env::set_var("PMX_API_SERVICE_TOKEN", "service-token-admin-read-split");
+        std::env::set_var("PMX_API_ADMIN_TOKEN", "admin-token-admin-read-split");
+        std::env::set_var("PMX_API_ADMIN_READ_TOKEN", "admin-read-token-split");
     }
     let app = pmx_api::app();
     let (status, session) = request_json(
@@ -51,8 +64,8 @@ async fn admin_read_token_reports_limited_session_and_cannot_cancel() {
 async fn mismatched_object_graph_is_rejected() {
     let _guard = env_lock().await;
     unsafe {
-        std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-mismatch");
-        std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-mismatch");
+        std::env::set_var("PMX_API_SERVICE_TOKEN", "service-token-mismatch");
+        std::env::set_var("PMX_API_ADMIN_TOKEN", "admin-token-mismatch");
     }
     let app = pmx_api::app();
     let (status, normalized) = request_json(

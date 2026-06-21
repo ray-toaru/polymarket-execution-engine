@@ -28,7 +28,7 @@ PMX_TEST_DATABASE_URL=postgres://pmx@127.0.0.1:55431/pmx \
   cargo test -p pmx-api --test http_postgres_e2e -- --nocapture --test-threads=1
 ```
 
-`validation/run_current_gates.sh` runs this after migration and `pmx-store` repository proof when `PMX_TEST_DATABASE_URL` is set.
+`validation/run_current_gates.sh` runs this after migration and `pmx-store` repository proof when `PMX_TEST_DATABASE_URL` is set. For repeated local runs, keep that DSN in `.env.validation` instead of the runtime/API `.env`; explicit shell exports still override the file.
 
 ## Safety boundary
 

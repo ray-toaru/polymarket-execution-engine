@@ -16,9 +16,9 @@ mod submit_sign_only;
 async fn full_scaffold_path_compile_submit_cancel_and_reconcile() {
     let _guard = env_lock().await;
     unsafe {
-        std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-test-v07");
-        std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-test-v07");
-        std::env::set_var("PM_EXEC_ADMIN_READ_TOKEN", "admin-read-token-test-v07");
+        std::env::set_var("PMX_API_SERVICE_TOKEN", "service-token-test-v07");
+        std::env::set_var("PMX_API_ADMIN_TOKEN", "admin-token-test-v07");
+        std::env::set_var("PMX_API_ADMIN_READ_TOKEN", "admin-read-token-test-v07");
     }
 
     let store = pmx_store::InMemoryStore::default();

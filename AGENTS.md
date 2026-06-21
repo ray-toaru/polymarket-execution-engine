@@ -49,7 +49,7 @@ cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 cargo test --workspace --locked -- --test-threads=1
 ```
 
-Optional environment-gated checks require explicit variables such as `PMX_TEST_DATABASE_URL`, `PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE`, and `PMX_RUN_SIGN_ONLY_DRY_RUN`.
+Optional environment-gated checks require explicit variables such as `PMX_TEST_DATABASE_URL`, `PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE`, and `PMX_RUN_SIGN_ONLY_DRY_RUN`. Keep local validation-only values in `.env.validation`, not the runtime/API `.env`.
 
 ## Evidence and docs
 

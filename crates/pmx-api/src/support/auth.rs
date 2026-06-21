@@ -16,26 +16,22 @@ pub struct AuthTokenConfig {
 }
 
 pub fn validate_auth_config_from_env() -> Result<AuthTokenConfig, String> {
-    let admin_token = std::env::var("PM_EXEC_ADMIN_TOKEN")
-        .unwrap_or_default()
-        .trim()
-        .to_owned();
-    let service_token = std::env::var("PM_EXEC_SERVICE_TOKEN")
-        .unwrap_or_default()
-        .trim()
-        .to_owned();
     let config = AuthTokenConfig {
-        service_token,
-        admin_token,
-        admin_read_token: optional_env_token("PM_EXEC_ADMIN_READ_TOKEN"),
-        admin_cancel_token: optional_env_token("PM_EXEC_ADMIN_CANCEL_TOKEN"),
-        emergency_operator_token: optional_env_token("PM_EXEC_EMERGENCY_OPERATOR_TOKEN"),
+        service_token: required_env_token("PMX_API_SERVICE_TOKEN"),
+        admin_token: required_env_token("PMX_API_ADMIN_TOKEN"),
+        admin_read_token: optional_env_token("PMX_API_ADMIN_READ_TOKEN"),
+        admin_cancel_token: optional_env_token("PMX_API_ADMIN_CANCEL_TOKEN"),
+        emergency_operator_token: optional_env_token("PMX_API_EMERGENCY_OPERATOR_TOKEN"),
     };
     validate_auth_config(config)
 }
 
+fn required_env_token(key: &str) -> String {
+    std::env::var(key).unwrap_or_default().trim().to_owned()
+}
+
 fn optional_env_token(key: &str) -> Option<String> {
-    let value = std::env::var(key).unwrap_or_default().trim().to_owned();
+    let value = required_env_token(key);
     if value.is_empty() { None } else { Some(value) }
 }
 
@@ -43,24 +39,24 @@ fn validate_auth_config(config: AuthTokenConfig) -> Result<AuthTokenConfig, Stri
     let service_token = config.service_token.as_str();
     let admin_token = config.admin_token.as_str();
     if service_token.is_empty() {
-        return Err("PM_EXEC_SERVICE_TOKEN must be set".into());
+        return Err("PMX_API_SERVICE_TOKEN must be set".into());
     }
     if admin_token.is_empty() {
-        return Err("PM_EXEC_ADMIN_TOKEN must be set".into());
+        return Err("PMX_API_ADMIN_TOKEN must be set".into());
     }
     let named_tokens = [
-        ("PM_EXEC_SERVICE_TOKEN", Some(service_token)),
-        ("PM_EXEC_ADMIN_TOKEN", Some(admin_token)),
+        ("PMX_API_SERVICE_TOKEN", Some(service_token)),
+        ("PMX_API_ADMIN_TOKEN", Some(admin_token)),
         (
-            "PM_EXEC_ADMIN_READ_TOKEN",
+            "PMX_API_ADMIN_READ_TOKEN",
             config.admin_read_token.as_deref(),
         ),
         (
-            "PM_EXEC_ADMIN_CANCEL_TOKEN",
+            "PMX_API_ADMIN_CANCEL_TOKEN",
             config.admin_cancel_token.as_deref(),
         ),
         (
-            "PM_EXEC_EMERGENCY_OPERATOR_TOKEN",
+            "PMX_API_EMERGENCY_OPERATOR_TOKEN",
             config.emergency_operator_token.as_deref(),
         ),
     ];

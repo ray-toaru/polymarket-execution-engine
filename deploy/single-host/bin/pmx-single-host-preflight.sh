@@ -19,12 +19,12 @@ if [[ "${PMX_PRODUCTION_DEPLOYMENT_ENABLED:-0}" == "1" ]]; then
   exit 1
 fi
 
-if [[ -z "${PM_EXEC_SERVICE_TOKEN:-}" || -z "${PM_EXEC_ADMIN_TOKEN:-}" ]]; then
-  echo "single-host preflight refused: PM_EXEC_SERVICE_TOKEN and PM_EXEC_ADMIN_TOKEN are required" >&2
+if [[ -z "${PMX_API_SERVICE_TOKEN:-}" || -z "${PMX_API_ADMIN_TOKEN:-}" ]]; then
+  echo "single-host preflight refused: PMX_API_SERVICE_TOKEN and PMX_API_ADMIN_TOKEN are required" >&2
   exit 1
 fi
 
-if [[ "${PM_EXEC_SERVICE_TOKEN}" == "${PM_EXEC_ADMIN_TOKEN}" ]]; then
+if [[ "${PMX_API_SERVICE_TOKEN}" == "${PMX_API_ADMIN_TOKEN}" ]]; then
   echo "single-host preflight refused: service/admin tokens must be distinct" >&2
   exit 1
 fi

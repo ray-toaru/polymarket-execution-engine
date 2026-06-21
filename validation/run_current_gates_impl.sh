@@ -10,6 +10,32 @@ EVIDENCE_DIR="${EVIDENCE_ROOT}/logs"
 rm -rf "${EVIDENCE_DIR}"
 mkdir -p "${EVIDENCE_DIR}"
 
+load_local_env_file() {
+  local env_file="$1"
+  [[ -f "${env_file}" ]] || return 0
+  while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
+    local line="${raw_line#"${raw_line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    [[ -n "${line}" && "${line}" != \#* && "${line}" == *=* ]] || continue
+    local key="${line%%=*}"
+    local value="${line#*=}"
+    key="${key%"${key##*[![:space:]]}"}"
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    if [[ "${value}" == \"*\" && "${value}" == *\" ]]; then
+      value="${value:1:${#value}-2}"
+    elif [[ "${value}" == \'*\' && "${value}" == *\' ]]; then
+      value="${value:1:${#value}-2}"
+    fi
+    if [[ -n "${key}" && -z "${!key+x}" ]]; then
+      export "${key}=${value}"
+    fi
+  done < "${env_file}"
+}
+
+load_local_env_file "${ROOT}/.env"
+load_local_env_file "${ROOT}/.env.validation"
+
 if [[ -f "${INTEGRATION_ROOT}/scripts/collect_validation_environment.py" ]]; then
   python "${INTEGRATION_ROOT}/scripts/collect_validation_environment.py" > "${EVIDENCE_ROOT}/environment.json"
 fi

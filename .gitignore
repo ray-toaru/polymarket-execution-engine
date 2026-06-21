@@ -6,6 +6,7 @@
 !.env.profiles.example
 !.env.runtime.example
 !.env.runtime.secrets.example
+!.env.validation.example
 *.db
 *.sqlite
 *.sqlite3

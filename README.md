@@ -45,10 +45,10 @@ Cross-repository checks such as lifecycle API parity, version consistency, Herme
 release packaging run from the integration repository that checks out this repo alongside
 `hermes-polymarket-executor-adapter`.
 
-Optional PostgreSQL and credentialed checks remain evidence-gated by `PMX_TEST_DATABASE_URL`, `PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE`, and `PMX_RUN_SIGN_ONLY_DRY_RUN`.
+Optional PostgreSQL and credentialed checks remain evidence-gated by `PMX_TEST_DATABASE_URL`, `PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE`, and `PMX_RUN_SIGN_ONLY_DRY_RUN`. Keep runtime/API settings such as `PMX_API_SERVICE_TOKEN`, `PMX_API_ADMIN_TOKEN`, and `PMX_DATABASE_URL` in `.env`; keep test DSNs and optional gate switches in `.env.validation`.
 
-For local PostgreSQL-backed canary/runtime-truth work, inspect the exact `.env`
-target before retrying higher-level validation:
+For local PostgreSQL-backed canary/runtime-truth work, inspect the exact local
+env target before retrying higher-level validation:
 
 ```bash
 PYTHONPATH=validation python validation/check_local_postgres_target.py

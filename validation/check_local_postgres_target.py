@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect the local PostgreSQL target referenced by .env without mutating system state."""
+"""Inspect the local PostgreSQL target referenced by local env files without mutating system state."""
 from __future__ import annotations
 
 import json
@@ -46,9 +46,10 @@ def load_env_file(path: Path) -> None:
 
 def database_url() -> str:
     load_env_file(ROOT / ".env")
+    load_env_file(ROOT / ".env.validation")
     url = os.environ.get("PMX_TEST_DATABASE_URL") or os.environ.get("PMX_DATABASE_URL")
     if not url or not url.strip():
-        raise SystemExit("PMX_TEST_DATABASE_URL or PMX_DATABASE_URL is required")
+        raise SystemExit("PMX_TEST_DATABASE_URL or PMX_DATABASE_URL is required in env, .env.validation, or .env")
     return url
 
 
@@ -147,8 +148,13 @@ def pg_isready(target: dict[str, Any]) -> dict[str, Any]:
 def recommendations(target: dict[str, Any], cluster: dict[str, str] | None, readiness: dict[str, Any]) -> list[str]:
     actions: list[str] = []
     if cluster is None:
+        if readiness.get("returncode") == 0:
+            actions.append(
+                "pg_isready reports the endpoint is reachable; no pg_lsclusters entry matched, so this may be a manually managed or temporary PostgreSQL listener."
+            )
+            return actions
         actions.append(
-            "No local PostgreSQL cluster matches the configured port; align .env with a real listener or create a cluster."
+            "No local PostgreSQL cluster matches the configured port; align .env.validation or .env with a real listener or create a cluster."
         )
         return actions
     if cluster.get("status") != "online":
@@ -160,7 +166,7 @@ def recommendations(target: dict[str, Any], cluster: dict[str, str] | None, read
             "pg_isready still fails for the configured endpoint; verify host, port, database, user, and pg_hba.conf access."
         )
     if not actions:
-        actions.append("Local PostgreSQL target is reachable and matches the configured .env endpoint.")
+        actions.append("Local PostgreSQL target is reachable and matches the configured env endpoint.")
     return actions
 
 
@@ -170,7 +176,7 @@ def inspect() -> dict[str, Any]:
     clusters = pg_lsclusters()
     cluster = matching_cluster(target, clusters)
     readiness = pg_isready(target)
-    ok = cluster is not None and cluster.get("status") == "online" and readiness.get("returncode") == 0
+    ok = readiness.get("returncode") == 0 and (cluster is None or cluster.get("status") == "online")
     return {
         "status": "pass" if ok else "fail",
         "database_target": target,

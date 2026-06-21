@@ -14,8 +14,8 @@ async fn http_postgres_runtime_rows_can_reach_ready_plan_but_submit_still_blocks
         return;
     };
     unsafe {
-        std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-pg-runtime");
-        std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-pg-runtime");
+        std::env::set_var("PMX_API_SERVICE_TOKEN", "service-token-pg-runtime");
+        std::env::set_var("PMX_API_ADMIN_TOKEN", "admin-token-pg-runtime");
     }
     let suffix = unique_suffix("runtime-allow");
     let app = pmx_api::try_postgres_app(database_url.clone(), true)

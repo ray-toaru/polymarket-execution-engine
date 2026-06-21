@@ -22,9 +22,13 @@ The root issue is validation structure, not an established business logic regres
 6. Authenticated non-trading and sign-only dry-run only behind explicit environment gates.
 7. Release hygiene on a clean release snapshot.
 
+Local env files are split by purpose. Runtime/API settings belong in `.env`.
+PostgreSQL test DSNs and optional validation gate switches belong in
+`.env.validation`. Explicit shell exports still take precedence over both files.
+
 ## Why not run everything in one cargo test command?
 
-A single `cargo test --workspace` command becomes ambiguous when local developer environment variables are exported. If `PMX_TEST_DATABASE_URL` exists, PostgreSQL integration tests will run and can couple a generic code-quality gate to database lifecycle. Splitting gates makes each failure class attributable.
+A single `cargo test --workspace` command becomes ambiguous when local developer environment variables are exported. If `PMX_TEST_DATABASE_URL` exists, PostgreSQL integration tests will run and can couple a generic code-quality gate to database lifecycle. Splitting gates and putting validation-only values in `.env.validation` makes each failure class attributable.
 
 ## Required conclusion style
 

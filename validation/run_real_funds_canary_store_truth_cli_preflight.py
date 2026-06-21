@@ -83,6 +83,8 @@ def load_env_file(path: Path) -> None:
 
 
 def load_default_env_files(*, runtime_secrets_env_file: Path | None = None) -> None:
+    load_env_file(ROOT / ".env")
+    load_env_file(ROOT / ".env.validation")
     if runtime_secrets_env_file is not None:
         load_env_file(runtime_secrets_env_file)
 

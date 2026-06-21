@@ -4,8 +4,8 @@ use super::*;
 async fn http_auth_and_fake_e2e_smoke() {
     let _guard = env_lock().await;
     unsafe {
-        std::env::set_var("PM_EXEC_SERVICE_TOKEN", "service-token-test");
-        std::env::set_var("PM_EXEC_ADMIN_TOKEN", "admin-token-test");
+        std::env::set_var("PMX_API_SERVICE_TOKEN", "service-token-test");
+        std::env::set_var("PMX_API_ADMIN_TOKEN", "admin-token-test");
     }
 
     let app = pmx_api::app();
