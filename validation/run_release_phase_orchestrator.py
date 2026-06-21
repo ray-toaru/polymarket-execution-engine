@@ -21,6 +21,15 @@ REVIEWED_GO_DECISION_WORKFLOW = INTEGRATION_ROOT / "scripts" / "run_reviewed_go_
 CONTRACT_VALIDATION_SCRIPT = INTEGRATION_ROOT / "scripts" / "validate_contracts.py"
 
 
+def non_authorizing_report_fields() -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "authorization_scope": "no_authorization",
+        "production_ready": False,
+        "live_trading_ready": False,
+    }
+
+
 def load_module(path: Path, name: str):
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
@@ -171,6 +180,7 @@ def build_stage_plans(args: argparse.Namespace) -> dict[str, Any]:
     promotion_module = load_module(LIVE_SUBMIT_PROMOTION_SUITE, "run_live_submit_promotion_suite")
 
     plans: dict[str, Any] = {
+        **non_authorizing_report_fields(),
         "status": "ready",
         "workflow": "release_phase_orchestrator",
         "stages": {
@@ -303,6 +313,7 @@ def execute_orchestrator(args: argparse.Namespace) -> dict[str, Any]:
             "workflow": reviewed_go_name,
         }
         return {
+            **non_authorizing_report_fields(),
             "status": "fail",
             "workflow": "release_phase_orchestrator",
             "stages": stage_results,
@@ -335,6 +346,7 @@ def execute_orchestrator(args: argparse.Namespace) -> dict[str, Any]:
         if isinstance(result, dict)
     )
     return {
+        **non_authorizing_report_fields(),
         "status": "fail" if fail else "pass",
         "workflow": "release_phase_orchestrator",
         "stages": stage_results,
