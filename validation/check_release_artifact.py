@@ -139,6 +139,9 @@ SECRET_CONTENT_TEST_FIXTURES = {
     "tests/test_prepare_canary_candidate_market.py": (
         b"class PrepareCanaryCandidateMarketTests",
     ),
+    "tests/test_release_hygiene.py": (
+        b"class ReleaseHygieneTests",
+    ),
 }
 
 

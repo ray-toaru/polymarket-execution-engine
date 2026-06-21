@@ -68,6 +68,36 @@ class ReleaseArtifactSecretScanTests(unittest.TestCase):
             )
         )
 
+    def test_allows_release_hygiene_negative_fixture_by_exact_path_and_marker(self) -> None:
+        member = "release-root/tests/test_release_hygiene.py"
+        fixture = (
+            b"class ReleaseHygieneTests(unittest.TestCase):\n"
+            b"    def test_zip_hygiene_rejects_local_env_layers_but_allows_examples(self):\n"
+            b"        zf.writestr(\"release-root/.env.runtime.secrets\", "
+            b"\"POLY_API_SECRET=example\\n\")\n"
+        )
+        self.assertTrue(
+            self.module.allowed_secret_content_test_fixture(
+                member,
+                "release-root",
+                fixture,
+            )
+        )
+        self.assertFalse(
+            self.module.allowed_secret_content_test_fixture(
+                member,
+                "release-root",
+                b"POLY_API_SECRET=example\n",
+            )
+        )
+        self.assertFalse(
+            self.module.allowed_secret_content_test_fixture(
+                "release-root/docs/test_release_hygiene.py",
+                "release-root",
+                fixture,
+            )
+        )
+
     def test_archive_validation_rejects_secret_like_content(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_name:
             archive = Path(tmp_name) / "release.zip"
