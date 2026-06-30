@@ -55,6 +55,18 @@ CURRENT_STATUS_DOCS = (
     "IMPLEMENTATION_STATUS.md",
     "RELEASE_DECISION.md",
 )
+SOURCE_PIN_DRIFT_PHRASES = (
+    "current source",
+    "current checked source",
+    "current source binding",
+    "current source and evidence",
+)
+SOURCE_PIN_ALLOWED_CONTEXTS = (
+    "reviewed packet",
+    "historical",
+    "archive",
+)
+HEX_SHA_RE = re.compile(r"\b[0-9a-f]{40}\b")
 
 
 def fail(message: str) -> int:
@@ -197,6 +209,7 @@ def validate_current_manifest(failures: list[str]) -> None:
             if (ROOT / name).exists()
         }
         failures.extend(current_status_binding_failures(data, docs))
+        failures.extend(active_source_pin_drift_failures(ROOT))
 
 
 def current_status_binding_failures(
@@ -224,6 +237,37 @@ def current_status_binding_failures(
                     f"{doc_name} current status for {section} is "
                     f"{documented_status}, manifest is {manifest_status}"
                 )
+    return failures
+
+
+def active_source_pin_drift_failures(root: Path) -> list[str]:
+    if not INTEGRATION_MODE:
+        return []
+    try:
+        from active_docs import ACTIVE_DOCS
+    except Exception as exc:
+        return [f"unable to load active docs list: {exc}"]
+
+    failures: list[str] = []
+    for doc_name in ACTIVE_DOCS:
+        path = root / doc_name
+        if not path.exists():
+            continue
+        lines = path.read_text(errors="replace").splitlines()
+        for index, line in enumerate(lines):
+            lowered = line.lower()
+            if not any(phrase in lowered for phrase in SOURCE_PIN_DRIFT_PHRASES):
+                continue
+            window = "\n".join(lines[index : index + 8])
+            window_lower = window.lower()
+            if not HEX_SHA_RE.search(window):
+                continue
+            if any(context in window_lower for context in SOURCE_PIN_ALLOWED_CONTEXTS):
+                continue
+            failures.append(
+                f"{doc_name}:{index + 1} uses current-source wording with fixed commit pins; "
+                "use reviewed-packet or generated snapshot wording"
+            )
     return failures
 
 

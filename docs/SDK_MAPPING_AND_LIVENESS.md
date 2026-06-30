@@ -1,8 +1,14 @@
 # Official SDK Mapping / Error / Liveness Notes
 
-> Status: current v0.26.1 controlled real-funds canary source-candidate documentation. Historical gate-specific notes are archived under `docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
+Status: current production-live-candidate mapping note for the isolated
+`pmx-official-sdk-adapter`. Historical gate-specific notes are archived under
+`docs/archive/`; current validation entrypoint is `validation/run_current_gates.sh`.
 
-Status: historical v0.23 implementation note for `pmx-official-sdk-adapter`.
+The adapter remains outside the default workspace and default execution path.
+SDK typecheck, authenticated smoke, sign-only dry-run, data-readback, and live
+submit code paths must stay feature/env gated. The 2026-06-21 Lei
+evidence-sufficiency review artifact allows entering an operator production/live
+decision gate only; it does not authorize SDK-backed remote side effects.
 
 ## Plan -> order builder mapping
 
