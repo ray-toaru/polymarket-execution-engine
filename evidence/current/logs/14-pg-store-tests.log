@@ -1,4 +1,4 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.21s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.22s
      Running unittests src/lib.rs (target/debug/deps/pmx_store-5e874a654e539b61)
 
 running 31 tests
@@ -34,5 +34,5 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 35 filtered out; finished in 2.17s
+test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 35 filtered out; finished in 2.26s
 

@@ -1,4 +1,5 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
+   Compiling pmx-api v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/crates/pmx-api)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.41s
      Running tests/http_postgres_e2e.rs (target/debug/deps/http_postgres_e2e-a084a7e49e17af30)
 
 running 6 tests
@@ -9,5 +10,5 @@ test smoke::compile_submit::compile_flow_propagates_header_correlation_id_across
 test smoke::compile_submit::submit_plan_propagates_header_correlation_id_into_lifecycle_events ... ok
 test smoke::http_postgres_backed_e2e_smoke ... ok
 
-test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.40s
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.47s
 
