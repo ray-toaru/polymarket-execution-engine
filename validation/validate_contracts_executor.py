@@ -1031,12 +1031,24 @@ def validate_v08_dependency_and_sdk_policy() -> None:
     workspace = root_cargo.get("workspace", {})
     workspace_package = workspace.get("package", {})
     workspace_dependencies = workspace.get("dependencies", {})
+    workspace_members = workspace.get("members", [])
     if workspace_package.get("edition") != "2024":
         fail("root Cargo baseline must keep workspace.package.edition=2024")
     if workspace_package.get("rust-version") != "1.96":
         fail("root Cargo baseline must keep workspace.package.rust-version=1.96")
     if workspace_package.get("version") != (ROOT / "VERSION").read_text().strip():
         fail("root Cargo baseline must keep workspace.package.version aligned with VERSION")
+    if not isinstance(workspace_members, list):
+        fail("root Cargo workspace.members must stay an explicit list")
+    isolated_adapter_members = {
+        "adapters/pmx-official-sdk-adapter",
+        "adapters/pmx-official-sdk-spike",
+    }
+    for member in isolated_adapter_members:
+        if member in workspace_members:
+            fail(f"root Cargo workspace must not include isolated official SDK adapter member: {member}")
+    if "polymarket_client_sdk_v2" in workspace_dependencies:
+        fail("root Cargo workspace.dependencies must not include polymarket_client_sdk_v2")
     tokio_dep = workspace_dependencies.get("tokio", {})
     if tokio_dep.get("version") != "1.52.3":
         fail("root Cargo baseline must keep tokio pinned to 1.52.3")
@@ -1051,6 +1063,18 @@ def validate_v08_dependency_and_sdk_policy() -> None:
         fail("executor rust toolchain must keep rustfmt and clippy components")
     if toolchain_spec.get("profile") != "minimal":
         fail("executor rust toolchain must keep profile=minimal")
+    protected_crate_manifests = {
+        "pmx-core": EXECUTOR / "crates/pmx-core/Cargo.toml",
+        "pmx-policy": EXECUTOR / "crates/pmx-policy/Cargo.toml",
+        "pmx-store": EXECUTOR / "crates/pmx-store/Cargo.toml",
+        "pmx-service": EXECUTOR / "crates/pmx-service/Cargo.toml",
+        "pmx-api": EXECUTOR / "crates/pmx-api/Cargo.toml",
+    }
+    for crate_name, manifest_path in protected_crate_manifests.items():
+        manifest = cargo_toml(manifest_path)
+        for section_name in ["dependencies", "dev-dependencies", "build-dependencies"]:
+            if "polymarket_client_sdk_v2" in manifest.get(section_name, {}):
+                fail(f"{crate_name} must not depend directly on polymarket_client_sdk_v2")
     sdk_spike_manifest = cargo_toml(SDK_SPIKE_TOML)
     package = sdk_spike_manifest.get("package", {})
     if package.get("name") != "pmx-official-sdk-spike":
@@ -1141,6 +1165,7 @@ def validate_v08_dependency_and_sdk_policy() -> None:
     for line in [
         "- Official SDK dependencies stay isolated in adapter crates.",
         "- Core, policy, store, service, and public API crates must not depend directly on the official SDK.",
+        "- The root Rust workspace must not include `adapters/pmx-official-sdk-adapter`, `adapters/pmx-official-sdk-spike`, or `polymarket_client_sdk_v2` in default workspace dependencies.",
         "- The official SDK remains exactly pinned until a newer version is separately reviewed and validated.",
     ]:
         if line not in dependency_policy_lines:
