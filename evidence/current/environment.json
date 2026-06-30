@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-06-20T01:58:49.573559+00:00",
+  "captured_at": "2026-06-30T07:44:38.789457+00:00",
   "dependency_locks": {
     "polymarket-execution-engine/Cargo.lock": {
       "exists": true,
@@ -15,8 +15,8 @@
     }
   },
   "environment": {
-    "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE": null,
-    "PMX_RUN_SIGN_ONLY_DRY_RUN": null,
+    "PMX_RUN_AUTHENTICATED_NON_TRADING_SMOKE": "0",
+    "PMX_RUN_SIGN_ONLY_DRY_RUN": "0",
     "PMX_TEST_DATABASE_URL_set": true,
     "python_executable": "/usr/local/python/current/bin/python",
     "python_version": "3.14.2 (main, Jan 20 2026, 13:54:38) [GCC 13.3.0]"
@@ -24,26 +24,26 @@
   "git": {
     "execution": {
       "branch": "main",
-      "head": "eacd6dbb94802e0402d213361c06649caaaf6386",
+      "head": "4d9e155903dbae4152c50033378a21a547cfe7e9",
       "path": "polymarket-execution-engine",
       "status_clean": true,
       "status_entry_count": 0
     },
     "hermes": {
       "branch": "main",
-      "head": "49fb4b6c209e744f57b87b255bbf92003eacb557",
+      "head": "c3c644571ae28067ad7ed2c8ab4dd042a1d54923",
       "path": "hermes-polymarket-executor-adapter",
       "status_clean": true,
       "status_entry_count": 0
     },
     "integration": {
       "branch": "main",
-      "head": "91b5eba56decb1a76706d5c2ed2a55d5ee11baf5",
+      "head": "bd02842ac918aaa1c833da2a6645f46b5134ae3e",
       "path": ".",
-      "status_clean": true,
-      "status_entry_count": 0
+      "status_clean": false,
+      "status_entry_count": 2
     },
-    "submodules": "49fb4b6c209e744f57b87b255bbf92003eacb557 hermes-polymarket-executor-adapter (v0.28.0-34-g49fb4b6)\n eacd6dbb94802e0402d213361c06649caaaf6386 polymarket-execution-engine (v0.28.0-206-geacd6db)"
+    "submodules": "c3c644571ae28067ad7ed2c8ab4dd042a1d54923 hermes-polymarket-executor-adapter (v0.28.0-35-gc3c6445)\n 4d9e155903dbae4152c50033378a21a547cfe7e9 polymarket-execution-engine (v0.28.0-222-g4d9e155)"
   },
   "integration_root": "/workspaces/universal/rust/polymarket_dual_project",
   "platform": {

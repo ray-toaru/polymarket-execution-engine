@@ -1,12 +1,13 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.29s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
      Running tests/http_and_fake_e2e.rs (target/debug/deps/http_and_fake_e2e-0c1b24865a8c9369)
 
-running 5 tests
+running 6 tests
 test negative::admin_read_token_reports_limited_session_and_cannot_cancel ... ok
 test negative::equal_service_and_admin_tokens_fail_closed_at_app_construction ... ok
+test negative::legacy_executor_client_tokens_do_not_configure_engine_api ... ok
 test negative::mismatched_object_graph_is_rejected ... ok
 test scaffold::full_scaffold_path_compile_submit_cancel_and_reconcile ... ok
 test smoke::http_auth_and_fake_e2e_smoke ... ok
 
-test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 

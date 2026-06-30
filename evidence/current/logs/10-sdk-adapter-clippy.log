@@ -1,1 +1,29 @@
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.00s
+    Checking yoke v0.8.3
+    Checking zerovec v0.11.6
+    Checking serde_with v3.21.0
+    Checking tinystr v0.8.3
+    Checking icu_locale_core v2.2.0
+    Checking alloy-eips v1.8.3
+    Checking zerotrie v0.2.4
+    Checking potential_utf v0.1.5
+    Checking icu_collections v2.2.0
+    Checking alloy-consensus v1.8.3
+    Checking icu_provider v2.2.0
+    Checking icu_properties v2.2.0
+    Checking icu_normalizer v2.2.0
+    Checking alloy-network-primitives v1.8.3
+    Checking alloy-consensus-any v1.8.3
+    Checking alloy-rpc-types-eth v1.8.3
+    Checking idna_adapter v1.2.2
+    Checking idna v1.1.0
+    Checking alloy-rpc-types-any v1.8.3
+    Checking alloy-network v1.8.3
+    Checking url v2.5.8
+    Checking tower-http v0.6.11
+    Checking alloy-signer-local v1.8.3
+    Checking reqwest v0.13.4
+    Checking alloy v1.8.3
+    Checking bon v3.9.2
+    Checking polymarket_client_sdk_v2 v0.6.0-canary.1
+    Checking pmx-official-sdk-adapter v0.28.0 (/workspaces/universal/rust/polymarket_dual_project/polymarket-execution-engine/adapters/pmx-official-sdk-adapter)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 21.23s

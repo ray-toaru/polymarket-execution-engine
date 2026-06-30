@@ -1,4 +1,4 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.29s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
      Running unittests src/lib.rs (target/debug/deps/pmx_authz-7abd4fdd11f8bd80)
 
 running 5 tests
@@ -167,7 +167,7 @@ test service::tests::sign_only::standard::service_records_standard_sign_only_con
 test service::tests::sign_only::standard::service_rejects_malformed_standard_sign_only_digest ... ok
 test submit::fingerprint::tests::request_fingerprint_ignores_correlation_metadata ... ok
 
-test result: ok. 49 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.70s
+test result: ok. 49 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
 
      Running unittests src/lib.rs (target/debug/deps/pmx_store-5e874a654e539b61)
 
@@ -239,7 +239,7 @@ test postgres::postgres_tests::schema::postgres_records_schema_migrations ... ok
 test postgres::postgres_tests::sign_only::concurrency::postgres_sign_only_client_event_id_is_idempotent_under_concurrent_replay ... ok
 test postgres::postgres_tests::sign_only::persistence::postgres_persists_sign_only_lifecycle_records ... ok
 
-test result: ok. 66 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.67s
+test result: ok. 66 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.24s
 
    Doc-tests pmx_authz
 
