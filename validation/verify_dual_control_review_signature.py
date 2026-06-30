@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify offline dual-control review signatures against a reviewer registry."""
+"""Verify offline review signatures against a reviewer registry."""
 from __future__ import annotations
 
 import argparse
@@ -64,6 +64,46 @@ def reviewer_record(registry: dict[str, Any], identity_ref: str) -> dict[str, An
     return matches[0]
 
 
+def reviewer_record_by_ssh_principal(registry: dict[str, Any], principal: str) -> dict[str, Any]:
+    if registry.get("schema_version") != 1:
+        raise SystemExit("reviewer registry schema_version must be 1")
+    reviewers = registry.get("reviewers")
+    if not isinstance(reviewers, list):
+        raise SystemExit("reviewer registry reviewers must be a list")
+    matches = [
+        item
+        for item in reviewers
+        if isinstance(item, dict) and item.get("ssh_principal") == principal
+    ]
+    if len(matches) != 1:
+        raise SystemExit("reviewer registry must contain exactly one matching reviewer ssh_principal")
+    return matches[0]
+
+
+def review_identity_and_record(
+    review: dict[str, Any],
+    registry: dict[str, Any],
+) -> tuple[str, dict[str, Any], str | None, bool]:
+    legacy_identity = review.get("reviewer_identity_ref")
+    if legacy_identity not in (None, ""):
+        identity = require_text(legacy_identity, "dual-control review reviewer_identity_ref")
+        return identity, reviewer_record(registry, identity), None, True
+
+    reviewer = review.get("reviewer")
+    if not isinstance(reviewer, dict):
+        raise SystemExit("review must include reviewer_identity_ref or reviewer.identity_ref")
+    signed_principal = require_text(
+        reviewer.get("identity_ref"),
+        "review reviewer.identity_ref",
+    )
+    record = reviewer_record_by_ssh_principal(registry, signed_principal)
+    identity = require_text(
+        record.get("reviewer_identity_ref"),
+        "reviewer registry reviewer_identity_ref",
+    )
+    return identity, record, signed_principal, False
+
+
 def validate_reviewer_record(record: dict[str, Any], *, now: datetime) -> None:
     status = require_text(record.get("status"), "reviewer registry status")
     if status != "active":
@@ -102,6 +142,30 @@ def validate_signature_evidence(review: dict[str, Any], record: dict[str, Any], 
         raise SystemExit("review_signature_evidence_sha256 does not match signing-key attestation")
     attestation = load_json(evidence_path)
     if attestation.get("reviewer_identity_ref") != review.get("reviewer_identity_ref"):
+        raise SystemExit("signing-key attestation reviewer_identity_ref mismatch")
+    if attestation.get("signing_method") != record.get("allowed_signing_method"):
+        raise SystemExit("signing-key attestation signing_method mismatch")
+    fingerprint = record.get("signing_key_fingerprint")
+    if fingerprint and attestation.get("signing_key_fingerprint") != fingerprint:
+        raise SystemExit("signing-key attestation fingerprint mismatch")
+
+
+def validate_optional_signature_evidence(
+    review: dict[str, Any],
+    record: dict[str, Any],
+    registry_path: Path,
+) -> None:
+    evidence_ref = record.get("signing_key_attestation_file")
+    if not evidence_ref:
+        return
+    evidence_path = resolve_relative(
+        require_text(evidence_ref, "reviewer registry signing_key_attestation_file"),
+        registry_path,
+    )
+    if not evidence_path.is_file():
+        raise SystemExit(f"reviewer signing-key attestation missing: {evidence_path}")
+    attestation = load_json(evidence_path)
+    if attestation.get("reviewer_identity_ref") != record.get("reviewer_identity_ref"):
         raise SystemExit("signing-key attestation reviewer_identity_ref mismatch")
     if attestation.get("signing_method") != record.get("allowed_signing_method"):
         raise SystemExit("signing-key attestation signing_method mismatch")
@@ -215,10 +279,12 @@ def verify_review_signature(
     validate_canonical_review(approved_review_file, canonical_review_file)
     review = load_json(approved_review_file)
     registry = load_json(reviewer_registry_file)
-    identity = require_text(review.get("reviewer_identity_ref"), "dual-control review reviewer_identity_ref")
-    record = reviewer_record(registry, identity)
+    identity, record, signed_principal, requires_bound_evidence = review_identity_and_record(review, registry)
     validate_reviewer_record(record, now=now or datetime.now(timezone.utc))
-    validate_signature_evidence(review, record, reviewer_registry_file)
+    if requires_bound_evidence:
+        validate_signature_evidence(review, record, reviewer_registry_file)
+    else:
+        validate_optional_signature_evidence(review, record, reviewer_registry_file)
     method = record["allowed_signing_method"]
     if method == "gpg":
         result = verify_gpg_signature(
@@ -242,7 +308,11 @@ def verify_review_signature(
         "signature_method": result["method"],
         "canonical_review_sha256": sha256(canonical_review_file),
         "signature_file_sha256": sha256(signature_file),
-    } | {k: v for k, v in result.items() if k != "method"}
+    } | (
+        {"signed_reviewer_principal": signed_principal}
+        if signed_principal is not None
+        else {}
+    ) | {k: v for k, v in result.items() if k != "method"}
 
 
 def parse_args() -> argparse.Namespace:
